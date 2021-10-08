@@ -7,8 +7,9 @@ import { MichelsonMap, MichelsonMapKey } from "@taquito/michelson-encoder";
 import { MetadataStorage } from "./helpers/types";
 const standard = process.env.EXCHANGE_TOKEN_STANDARD;
 const CMetadataStorage = "MetadataStorage.ligo";
-if (standard !== "MIXED") {
-  describe("MetadataStorage", () => {
+
+describe("MetadataStorage", () => {
+  if (standard !== "MIXED") {
     let metadataStorage: Metadata;
     const aliceAddress: string = accounts.alice.pkh;
     const bobAddress: string = accounts.bob.pkh;
@@ -46,9 +47,7 @@ if (standard !== "MIXED") {
         }),
       };
       const contract = await global.deployContract(CMetadataStorage, storage);
-      metadataStorage = await Metadata.init(
-        contract.address
-      );
+      metadataStorage = await Metadata.init(contract.address);
       return true;
     });
 
@@ -104,7 +103,8 @@ if (standard !== "MIXED") {
       matadataFailCase(
         "revert in case of updating by an unprivileged user",
         "eve",
-        async () => metadataStorage.updateMetadata(
+        async () =>
+          metadataStorage.updateMetadata(
             MichelsonMap.fromLiteral({
               some: Buffer.from("new", "ascii").toString("hex"),
             })
@@ -146,5 +146,6 @@ if (standard !== "MIXED") {
         false
       );
     });
-  });
-}
+  }
+  else test("MIXED. skip.", async () => true);
+});
