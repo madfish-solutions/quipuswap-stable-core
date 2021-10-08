@@ -22,7 +22,6 @@ describe("Dex", () => {
     storage.storage.admin = eveAddress;
     storage.storage.dev_address = aliceAddress;
     dex_contract = await global.deployContract("Dex.ligo", storage);
-    console.log(dex_contract);
     dex = await Dex.init(dex_contract.address);
   });
 
