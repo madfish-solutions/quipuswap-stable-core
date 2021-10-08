@@ -1,4 +1,4 @@
-# quipuswap-stable-dex-core
+# QuipuSwap StableDex core
 
 ## Requirements
 This repository's toolset for development it's entirely based on [Docker](https://www.docker.com) and [Node.js](https://nodejs.org/).
