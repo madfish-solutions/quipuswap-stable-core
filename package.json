@@ -26,8 +26,7 @@
     "compile": "ts-node ./scripts/cli.ts compile",
     "start-sandbox": "ts-node ./scripts/cli.ts start-sandbox",
     "test": "ts-node ./scripts/cli.ts test",
-    "test-all": "yarn test && yarn e2e-test",
-    "compile-n-test-all": "yarn compile && yarn test-all",
+    "compile-n-test": "yarn compile && yarn test",
     "deploy": "ts-node ./scripts/cli.ts deploy"
   },
   "keywords": [
