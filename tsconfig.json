@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "allowJs": true,
+    "noImplicitAny": false,
+    "downlevelIteration": true,
+    "esModuleInterop": true,
+    "typeRoots": ["./node_modules/@types", "./types"],
+    "types": ["node", "@types/jest"],
+    "resolveJsonModule": true,
+  },
+  "exclude": ["node_modules", "build", "cache", "artifacts", "scripts"],
+  "include": ["./**/*.ts"]
+}
