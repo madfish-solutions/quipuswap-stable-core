@@ -28,8 +28,7 @@
     "test": "ts-node ./scripts/cli.ts test",
     "test-all": "yarn test && yarn e2e-test",
     "compile-n-test-all": "yarn compile && yarn test-all",
-    "deploy": "ts-node ./scripts/cli.ts deploy",
-    "postinstall": "ts-node ./scripts/cli.ts postinstall"
+    "deploy": "ts-node ./scripts/cli.ts deploy"
   },
   "keywords": [
     "quipuswap",

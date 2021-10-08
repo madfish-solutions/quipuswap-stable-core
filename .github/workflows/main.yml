@@ -23,7 +23,7 @@ jobs:
       - name: Install modules
         run: yarn
       - name: Compile and test the contracts
-        run: yarn compile && yarn test
+        run: yarn compile-n-test-all
         env:
           EXCHANGE_TOKEN_STANDARD: ${{ matrix.standard }}
           LIGO_VERSION: "0.26.0"
