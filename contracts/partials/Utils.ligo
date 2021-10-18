@@ -2,12 +2,9 @@
 function get_account(
   const key             : (address * nat);
   const s               : storage_type)
-                        : account_info is
+                        : nat is
   case s.ledger[key] of
-    None -> record [
-      balance    = 0n;
-      allowances = (set [] : set (address));
-    ]
+    None -> 0n
   | Some(instance) -> instance
   end;
 
@@ -16,8 +13,8 @@ function get_pair(
   const pair_id         : nat;
   const s               : storage_type)
                         : pair_type is
-  case s.pairs[pair_id] of
-  | None -> failwith(err_pair_not_listed)
+  case s.pools[pair_id] of
+  | None -> (failwith(err_pair_not_listed): pair_type)
   | Some(instance) -> instance
   end;
 
@@ -27,7 +24,7 @@ function get_tokens(
   const s               : storage_type)
                         : tokens_type is
   case s.tokens[pair_id] of
-  | None -> failwith(err_pair_not_listed)
+  | None -> (failwith(err_pair_not_listed): tokens_type)
   | Some(instance) -> instance
   end;
 
@@ -39,26 +36,31 @@ function get_pair_info(
   block {
     const token_bytes : bytes = Bytes.pack(key);
     const token_id : nat =
-      case s.token_to_id[token_bytes] of
-      | None -> s.pairs_count
+      case s.pool_to_id[token_bytes] of
+      | None -> s.pools_count
       | Some(instance) -> instance
       end;
     const pair : pair_type =
-      case s.pairs[token_id] of
+      case s.pools[token_id] of
         None -> (record [
-          initial_A       = 0n;
-          future_A        = 0n;
-          initial_A_time  = (0: timestamp);
-          future_A_time   = (0: timestamp);
-          tokens_count    = 0n;
-          tokens          = (map []: tokens_type);
-          token_rates     = (map []: map(nat, nat));
-          dev_balances    = (map []: map(nat, nat));
-          pools           = (map []: map(nat, nat));
-          virtual_pools   = (map []: map(nat, nat));
-          proxy_contract  = (None: option (address));
-          proxy_limits    = (map []: map(nat, nat));
-          total_supply    = 0n;
+          initial_A         = 0n;
+          future_A          = 0n;
+          initial_A_time    = (0: timestamp);
+          future_A_time     = (0: timestamp);
+          token_rates       = (map []: map(nat, nat));
+          reserves          = (map []: map(nat, nat));
+          virtual_reserves  = (map []: map(nat, nat));
+          proxy_contract    = (None: option (address));
+          proxy_limits      = (map []: map(nat, nat));
+          staker_accumulator= (map []: map(nat, nat));
+          fee               = record[
+            dev_fee           = 0n;
+            lp_fee            = 0n;
+            ref_fee           = 0n;
+            stakers_fee       = 0n;
+          ];
+          stakers_interest  = (map []: map((address * token_type), nat));
+          total_supply      = 0n;
         ]: pair_type)
       | Some(instance) -> instance
       end;
@@ -177,5 +179,5 @@ function div_ceil(
     Some(result) -> if result.1 > 0n
       then result.0 + 1n
       else result.0
-  | None -> failwith(err_no_liquidity)
+  | None -> (failwith(err_no_liquidity): nat)
   end;

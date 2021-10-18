@@ -16,10 +16,11 @@ function main(
 )                       : full_return_type is
   case p of
   | Use_dex(params)           -> call_dex(params, s)
-  | Use_token(params)         -> call_token(params, s)
-  // | Transfer(params)          -> call_token(ITransfer(params), 0n, s)
-  // | Balance_of(params)        -> call_token(IBalance_of(params), 2n, s)
-  // | Update_operators(params)  -> call_token(IUpdate_operators(params), 1n, s)
+  // | Use_token(params)         -> call_token(params, s)
+  | Transfer(params)          -> call_token(ITransfer(params), s)
+  | Balance_of(params)        -> call_token(IBalanceOf(params), s)
+  | Update_operators(params)  -> call_token(IUpdateOperators(params), s)
+  | Update_metadata(params)   -> call_token(IUpdateMetadata(params), s)
   // | Get_reserves(params)      -> get_reserves(params, s)
   // | Close                     -> (no_operations, close(s))
   | SetDexFunction(params)    -> (
@@ -38,7 +39,6 @@ function main(
   | Set_dev_address(addr)     -> set_dev_address(addr, s)
   | Set_reward_rate(params)   -> set_reward_rate(params, s)
   | Set_admin(addr)           -> set_admin(addr, s)
-  | Set_public_init           -> set_public_init(s)
   | Set_fees(params)          -> set_fees(params, s)
-  | Get_fees(cb)              -> get_fees(cb, s)
+  | Get_fees(params)          -> get_fees(params, s)
   end

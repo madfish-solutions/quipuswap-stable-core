@@ -15,7 +15,7 @@ function call_dex(
     const idx : nat = case p of
     | AddPair(_)              -> 0n
     // | Swap(_)                 -> 1n
-    // | Invest(_)               -> 2n
+    | Invest(_)               -> 2n
     // | Divest(_)               -> 3n
     // | Invest_one(_)           -> 4n
     // | Divest_one(_)           -> 5n
@@ -28,17 +28,22 @@ function call_dex(
     // | Total_supply(_)         -> 12n
     // | Min_received(_)         -> 13n
     // | Tokens_per_shares(_)    -> 14n
-    // | Price_cummulative(_)    -> 15n
-    // | Calc_divest_one_coin(_) -> 16n
-    // | Get_dy(_)               -> 17n
-    // | Get_a(_)                -> 18n
+    // | Calc_divest_one_coin(_) -> 15n
+    // | Get_dy(_)               -> 16n
+    // | Get_a(_)                -> 17n
 
     end;
 
-    var res : return_type := case s.dex_lambdas[idx] of
-    | Some(f) -> f(p, s.storage)
-    | None    -> (failwith(err_unknown_func) : return_type)
-    end;
+    const lambda_bytes : bytes = case s.dex_lambdas[idx] of
+        | Some(l) -> l
+        | None -> (failwith(err_unknown_func) : bytes)
+      end;
+
+    const res : return_type = case (Bytes.unpack(lambda_bytes) : option(dex_func_type)) of
+        | Some(f) -> f(p, s.storage)
+        | None -> (failwith("cant-unpack-use-lambda"): return_type)
+      end;
+
     s.storage := res.1;
     // res.0 := Tezos.transaction(
     //   unit,
@@ -60,18 +65,22 @@ function call_token(
                         : full_return_type is
   block {
     const idx : nat = case p of
-    | Transfer(_)         -> 0n
-    | Balance_of(_)       -> 1n
-    | Update_operators(_) -> 2n
-    | Update_metadata(_)  -> 3n
+    | ITransfer(_)        -> 0n
+    | IBalanceOf(_)       -> 1n
+    | IUpdateOperators(_) -> 2n
+    | IUpdateMetadata(_)  -> 3n
     end;
 
-    const res : return_type = case s.token_lambdas[idx] of
-    | Some(f) -> f(p, s.storage)
-    | None -> (failwith(err_unknown_func) : return_type)
-    end;
-    s.storage := res.1;
-  } with (res.0, s)
+    const lambda_bytes : bytes = case s.token_lambdas[idx] of
+        | Some(l) -> l
+        | None -> (failwith(err_unknown_func) : bytes)
+      end;
+
+    const (operations, new_storage) : full_return_type = case (Bytes.unpack(lambda_bytes) : option(token_func_type)) of
+        | Some(f) -> f(p, s)
+        | None -> (failwith("cant-unpack-use-lambda"): full_return_type)
+      end;
+  } with (operations, new_storage)
 
 // [@inline]
 // function close(
@@ -89,7 +98,7 @@ function call_token(
 [@inline]
 function set_dex_function(
   const idx             : nat;
-  const f               : dex_func_type;
+  const f               : bytes;
   var   s               : full_storage_type)
                         : full_storage_type is
   block {
@@ -103,7 +112,7 @@ function set_dex_function(
 [@inline]
 function set_token_function(
   const idx             : nat;
-  const f               : token_func_type;
+  const f               : bytes;
   var s                 : full_storage_type)
                         : full_storage_type is
   block {
@@ -116,12 +125,14 @@ function set_token_function(
 
 
 function set_fees(
-  const fees            : fees_storage_type;
-  var s                 : full_storage_type)
-                        : full_return_type is
+  const params          : set_fee_type;
+  var s                 : full_storage_type
+  )                     : full_return_type is
   block {
     is_admin(s.storage);
-    s.storage.fee := fees;
+    var pair := get_pair(params.pool_id, s.storage);
+    pair.fee := params.fee;
+    s.storage.pools[params.pool_id] := pair;
   } with (no_operations, s)
 
 function add_rem_managers(
@@ -161,10 +172,3 @@ function set_admin(
     is_admin(s.storage);
     s.storage.admin := new_admin;
   } with (no_operations, s)
-
-function set_public_init(var s: full_storage_type): full_return_type is
-  block {
-    is_admin(s.storage);
-    s.storage.is_public_init := not s.storage.is_public_init;
-  } with (no_operations, s)
-

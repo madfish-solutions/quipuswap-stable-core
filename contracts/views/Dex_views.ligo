@@ -7,7 +7,17 @@ function get_reserves(
                         : full_return_type is
   block {
     const pair : pair_type = get_pair(params.pair_id, s.storage)
-  } with (list [Tezos.transaction(pair.pools, 0tez, params.receiver)], s)
+  } with (list [Tezos.transaction(pair.reserves, 0tez, params.receiver)], s)
+
+(* reserves per pool *)
+[@inline]
+function get_virt_reserves(
+  const params          : reserves_type;
+  const s               : full_storage_type)
+                        : full_return_type is
+  block {
+    const pair : pair_type = get_pair(params.pair_id, s.storage)
+  } with (list [Tezos.transaction(pair.virtual_reserves, 0tez, params.receiver)], s)
 
 (* LP total supply per pool *)
 function get_total_supply(
@@ -32,8 +42,7 @@ function get_min_received(
       | None -> (failwith("no such index") : nat)
       end;
     var dy := abs(xp_j - y - 1);
-    const fees = calc_fee(dy, s.storage);
-    const dy_fee = fees.0;
+    const dy_fee = sum_all_fee(pair) * dy / _C_fee_denominator;
 
     const rate_j = case pair.token_rates[params.j] of
       | Some(value) -> value
@@ -67,7 +76,7 @@ function get_max_defi_rate(
     const pair : pair_type = get_pair(params.pair_id, s.storage);
     function count_limits(const key:nat; const value:nat): nat is
       block {
-        const bal : nat = case pair.pools[key] of
+        const bal : nat = case pair.virtual_reserves[key] of
           | Some(balc) -> balc
           | None -> (failwith("no such balance") : nat)
           end;
@@ -83,7 +92,7 @@ function calc_withdraw_one_coin(
   const s               : full_storage_type)
                         : full_return_type is
   block {
-    const result : (nat * map(nat, fees_storage_type) * nat) = _calc_withdraw_one_coin(
+    const result : (nat * nat * nat) = _calc_withdraw_one_coin(
       params.token_amount,
       params.i,
       params.pair_id,
@@ -127,8 +136,7 @@ function get_dy(
     const y: nat = get_y(params.i, params.j, x, xp, pair);
     assert(abs(xp_j-1)>=y);
     const dy: nat = abs(xp_j - y - 1);
-    const c_fees = calc_fee(dy, s.storage);
-    const fee: nat = c_fees.0;
+    const fee: nat = sum_all_fee(pair) * dy / _C_fee_denominator;
   } with (list [Tezos.transaction((abs(dy-fee) * _C_precision / rate_j), 0tez, params.receiver)], s)
 
 (* Get A constant *)
@@ -144,7 +152,9 @@ function get_A(
 (* Fees *)
 [@inline]
 function get_fees(
-  const receiver  : contract(fees_storage_type);
+  const params    : get_fee_type;
   const s         : full_storage_type)
                   : full_return_type is
-  (list [Tezos.transaction(s.storage.fee, 0tez, receiver)], s)
+  block {
+    const pair : pair_type = get_pair(params.pool_id, s.storage);
+  } with (list[Tezos.transaction(pair.fee, 0tez, params.receiver)], s)

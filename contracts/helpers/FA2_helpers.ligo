@@ -7,8 +7,8 @@ function check_permissions(const from_account: address; const allowances: set(ad
 
 (* Balance check *)
 [@inline]
-function check_balance(const account: account_info; const to_spend: nat): unit is
-  if account.balance < to_spend
+function check_balance(const account_bal: nat; const to_spend: nat): unit is
+  if account_bal < to_spend
     then failwith("FA2_INSUFFICIENT_BALANCE")
   else Unit;
 
