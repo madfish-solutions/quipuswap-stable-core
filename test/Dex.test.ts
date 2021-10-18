@@ -1,9 +1,8 @@
-import { ContractAbstraction, ContractProvider } from "@taquito/taquito";
 import { Dex } from "./helpers/dexFA2";
 import BigNumber from "bignumber.js";
-import { sandbox, outputDirectory } from "../config.json";
+import { sandbox } from "../config.json";
 import { prepareProviderOptions, AccountsLiteral } from "./helpers/utils";
-import { ok, rejects, strictEqual, notStrictEqual } from "assert";
+import { rejects } from "assert";
 import { FeeType } from "./helpers/types";
 import storage from "./storage/Dex";
 
@@ -11,7 +10,7 @@ const accounts = sandbox.accounts;
 
 describe("Dex", () => {
   let dex: Dex;
-  let dex_contract: ContractAbstraction<ContractProvider>;
+  let dex_contract;
   const aliceAddress: string = accounts.alice.pkh;
   const bobAddress: string = accounts.bob.pkh;
   const eveAddress: string = accounts.eve.pkh;
@@ -19,10 +18,12 @@ describe("Dex", () => {
   // Contract will be deployed before every single test, to make sure we
   // do a proper unit test in a stateless testing process
   beforeAll(async () => {
-    storage.storage.admin = eveAddress;
-    storage.storage.dev_address = aliceAddress;
+    storage.storage.admin = aliceAddress;
+    storage.storage.dev_address = eveAddress;
     dex_contract = await global.deployContract("Dex.ligo", storage);
+    console.log(dex_contract.address);
     dex = await Dex.init(dex_contract.address);
+    return true;
   });
 
   function failCase(
@@ -31,12 +32,14 @@ describe("Dex", () => {
     act,
     errorMsg: string
   ) {
-    it(decription, async function () {
+    test(decription, async function () {
       let config = await prepareProviderOptions(sender);
       global.Tezos.setProvider(config);
-      await rejects(act(), (err: any) => {
-        ok(err.message == errorMsg, "Error message mismatch");
-        return true;
+      console.log(config);
+      console.log(global.Tezos);
+      rejects(act(), (err: any) => {
+        if (err.message == errorMsg) return true;
+        else throw err;
       });
     });
   }
@@ -47,30 +50,34 @@ describe("Dex", () => {
       sender: AccountsLiteral,
       admin: string
     ) {
-      it(decription, async function () {
+      test(decription, async function () {
         let config = await prepareProviderOptions(sender);
         global.Tezos.setProvider(config);
+        console.log(config);
+        console.log(global.Tezos);
         await dex.updateStorage({});
         const initAdmin = dex.storage.storage.admin;
 
         await dex.setAdmin(admin);
         await dex.updateStorage({});
         const updatedAdmin = dex.storage.storage.admin;
-        strictEqual(updatedAdmin, admin);
+        expect(admin).toEqual(updatedAdmin);
       });
     }
 
     function updateManagersSuccessCase(decription, sender, manager, add) {
-      it(decription, async function () {
+      test(decription, async function () {
         let config = await prepareProviderOptions(sender);
         global.Tezos.setProvider(config);
         await dex.updateStorage({});
+        console.log(config);
+        console.log(global.Tezos);
         const initManagers = dex.storage.storage.managers;
 
         await dex.addRemManager(add, manager);
         await dex.updateStorage({});
         const updatedManagers = dex.storage.storage.managers;
-        strictEqual(updatedManagers.includes(manager), add);
+        expect(updatedManagers.includes(manager)).toBe(add);
       });
     }
 
@@ -79,135 +86,250 @@ describe("Dex", () => {
       sender: AccountsLiteral,
       dev: string
     ) {
-      it(decription, async function () {
+      test(decription, async function () {
         let config = await prepareProviderOptions(sender);
         global.Tezos.setProvider(config);
         await dex.updateStorage({});
+        console.log(config);
+        console.log(global.Tezos);
         const initDev = dex.storage.storage.dev_address;
 
         await dex.setDevAddress(dev);
         await dex.updateStorage({});
         const updatedDev = dex.storage.storage.dev_address;
-        strictEqual(updatedDev, dev);
-      });
-    }
-    function togglePubInitSuccessCase(
-      decription: string,
-      sender: AccountsLiteral
-    ) {
-      it(decription, async function () {
-        let config = await prepareProviderOptions(sender);
-        global.Tezos.setProvider(config);
-        await dex.updateStorage({});
-        const initial: boolean = dex.storage.storage.is_public_init;
-
-        await dex.togglePubInit();
-        await dex.updateStorage({});
-        const updated: boolean = dex.storage.storage.is_public_init;
-        notStrictEqual(updated, initial);
+        expect(dev).toEqual(updatedDev);
       });
     }
 
     function setFeesSuccessCase(
       decription: string,
       sender: AccountsLiteral,
+      pool_id: BigNumber,
       fees: FeeType
     ) {
-      it(decription, async function () {
+      test(decription, async function () {
         let config = await prepareProviderOptions(sender);
         global.Tezos.setProvider(config);
+        console.log(config);
+        console.log(global.Tezos);
         await dex.updateStorage();
-        const initFees = dex.storage.storage.fee;
-        await dex.setFees(fees);
+        const initFees = dex.storage.storage.pools[pool_id.toString()].fee;
+        await dex.setFees(pool_id, fees);
         await dex.updateStorage();
-        const updatedFees = dex.storage.storage.fee as FeeType;
-        strictEqual(
-          updatedFees.lp_fee.toNumber(),
-          fees.lp_fee.toNumber()
-        );
-        strictEqual(
-          updatedFees.stakers_fee.toNumber(),
-          fees.stakers_fee.toNumber()
-        );
-        strictEqual(
-          updatedFees.ref_fee.toNumber(),
-          fees.ref_fee.toNumber()
-        );
-        strictEqual(
-          updatedFees.dev_fee.toNumber(),
-          fees.dev_fee.toNumber()
-        );
+        const updatedFees = dex.storage.storage.pools[pool_id.toString()].fee as FeeType;
+        for (let i in updatedFees) {
+          console.log(i);
+          expect(updatedFees[i].toNumber()).toEqual(fees[i].toNumber());
+        }
+        expect(updatedFees.lp_fee.toNumber()).toEqual(fees.lp_fee.toNumber());
+        expect(updatedFees.stakers_fee.toNumber()).toEqual(fees.stakers_fee.toNumber());
+        expect(updatedFees.ref_fee.toNumber()).toEqual(fees.ref_fee.toNumber());
+        expect(updatedFees.dev_fee.toNumber()).toEqual(fees.dev_fee.toNumber());
       });
     }
     describe("Test setting new admin", () => {
       failCase(
         "should fail if not admin try to set admin",
         "bob",
-        async () => dex.setAdmin(aliceAddress),
+        async () => await dex.setAdmin(eveAddress),
         "Dex/not-contact-admin"
       );
-      setAdminSuccessCase("should change admin", "eve", aliceAddress);
+      setAdminSuccessCase("should change admin", "alice", eveAddress);
     });
 
     describe("Test setting new dev_address", () => {
       failCase(
         "should fail if not admin try to set dev_address",
         "bob",
-        async () => dex.setDevAddress(eveAddress),
+        async () => await dex.setDevAddress(eveAddress),
         "Dex/not-contact-admin"
       );
       setDevAddrSuccessCase("should change dev address", "alice", eveAddress);
     });
 
-    describe("Test setting new fees", () => {
-      const fees: FeeType = {
-        lp_fee: new BigNumber("1000000"),
-        stakers_fee: new BigNumber("1000000"),
-        ref_fee: new BigNumber("1000000"),
-        dev_fee: new BigNumber("1000000"),
-      };
-      failCase(
-        "should fail if not admin try to set fees",
-        "bob",
-        async () => dex.setFees(fees),
-        "Dex/not-contact-admin"
-      );
-      setFeesSuccessCase("should change fees", "alice", fees);
-    });
-
-    describe("Test toggle public init flag", () => {
-      failCase(
-        "should fail if not admin try to toggle public init flag",
-        "bob",
-        async () => dex.togglePubInit(),
-        "Dex/not-contact-admin"
-      );
-      togglePubInitSuccessCase("should change is_public_init flag", "alice");
-    });
+    // describe("Test setting new fees", () => {
+    //   const fees: FeeType = {
+    //     lp_fee: new BigNumber("1000000"),
+    //     stakers_fee: new BigNumber("1000000"),
+    //     ref_fee: new BigNumber("1000000"),
+    //     dev_fee: new BigNumber("1000000"),
+    //   };
+    //   failCase(
+    //     "should fail if not admin try to set fees",
+    //     "bob",
+    //     async () => dex.setFees(new BigNumber("0"), fees),
+    //     "Dex/not-contact-admin"
+    //   );
+    //   setFeesSuccessCase("should change fees", "alice", new BigNumber("0"), fees);
+    // });
 
     describe("Test setting managers", () => {
       failCase(
         "should fail if not admin try set manager",
         "bob",
-        async () => dex.addRemManager(true, eveAddress),
+        async () => await dex.addRemManager(true, aliceAddress),
         "Dex/not-contact-admin"
       );
       updateManagersSuccessCase(
         "should set new manager",
-        "alice",
-        eveAddress,
+        "eve",
+        aliceAddress,
         true
       );
       updateManagersSuccessCase(
         "should remove manager",
-        "alice",
-        eveAddress,
+        "eve",
+        aliceAddress,
         false
       );
     });
+  });
 
-    test("it should be views here", async () => {
-      return true;
+  describe("Testing Pools endpoints", () => {
+    function addNewPair(
+      decription: string,
+      sender: AccountsLiteral,
+      admin: string
+    ) {
+      test(decription, async function () {
+        let config = await prepareProviderOptions(sender);
+        global.Tezos.setProvider(config);
+        console.log(config);
+        console.log(global.Tezos);
+        await dex.updateStorage({});
+        const initPairCount = new BigNumber(dex.storage.storage.pools_count);
+
+        await dex.addPair(admin);
+        await dex.updateStorage({});
+        const updatedPairCount = new BigNumber(dex.storage.storage.pools_count);
+        expect(initPairCount.toNumber() + 1).toEqual(
+          updatedPairCount.toNumber()
+        );
+      });
+    }
+
+    function investLiquidity(decription, sender, pool_id, params) {
+      test(decription, async function () {
+        let config = await prepareProviderOptions(sender);
+        global.Tezos.setProvider(config);
+        await dex.updateStorage({});
+        console.log(config);
+        console.log(global.Tezos);
+        const initLPBalance = new BigNumber(dex.storage.storage.pools[pool_id].total_supply);
+
+        await dex.addLiqidity(pair_id, manager);
+        await dex.updateStorage({});
+        const updatedManagers = dex.storage.storage.managers;
+        expect(updatedManagers.includes(manager)).toBe(add);
+      });
+    }
+
+    function setDevAddrSuccessCase(
+      decription: string,
+      sender: AccountsLiteral,
+      dev: string
+    ) {
+      test(decription, async function () {
+        let config = await prepareProviderOptions(sender);
+        global.Tezos.setProvider(config);
+        await dex.updateStorage({});
+        console.log(config);
+        console.log(global.Tezos);
+        const initDev = dex.storage.storage.dev_address;
+
+        await dex.setDevAddress(dev);
+        await dex.updateStorage({});
+        const updatedDev = dex.storage.storage.dev_address;
+        expect(dev).toEqual(updatedDev);
+      });
+    }
+
+    function setFeesSuccessCase(
+      decription: string,
+      sender: AccountsLiteral,
+      pool_id: BigNumber,
+      fees: FeeType
+    ) {
+      test(decription, async function () {
+        let config = await prepareProviderOptions(sender);
+        global.Tezos.setProvider(config);
+        console.log(config);
+        console.log(global.Tezos);
+        await dex.updateStorage();
+        const initFees = dex.storage.storage.pools[pool_id.toString()].fee;
+        await dex.setFees(pool_id, fees);
+        await dex.updateStorage();
+        const updatedFees = dex.storage.storage.pools[pool_id.toString()]
+          .fee as FeeType;
+        for (let i in updatedFees) {
+          console.log(i);
+          expect(updatedFees[i].toNumber()).toEqual(fees[i].toNumber());
+        }
+        expect(updatedFees.lp_fee.toNumber()).toEqual(fees.lp_fee.toNumber());
+        expect(updatedFees.stakers_fee.toNumber()).toEqual(
+          fees.stakers_fee.toNumber()
+        );
+        expect(updatedFees.ref_fee.toNumber()).toEqual(fees.ref_fee.toNumber());
+        expect(updatedFees.dev_fee.toNumber()).toEqual(fees.dev_fee.toNumber());
+      });
+    }
+    describe("Test setting new admin", () => {
+      failCase(
+        "should fail if not admin try to set admin",
+        "bob",
+        async () => await dex.setAdmin(eveAddress),
+        "Dex/not-contact-admin"
+      );
+      setAdminSuccessCase("should change admin", "alice", eveAddress);
+    });
+
+    describe("Test setting new dev_address", () => {
+      failCase(
+        "should fail if not admin try to set dev_address",
+        "bob",
+        async () => await dex.setDevAddress(eveAddress),
+        "Dex/not-contact-admin"
+      );
+      setDevAddrSuccessCase("should change dev address", "alice", eveAddress);
+    });
+
+    // describe("Test setting new fees", () => {
+    //   const fees: FeeType = {
+    //     lp_fee: new BigNumber("1000000"),
+    //     stakers_fee: new BigNumber("1000000"),
+    //     ref_fee: new BigNumber("1000000"),
+    //     dev_fee: new BigNumber("1000000"),
+    //   };
+    //   failCase(
+    //     "should fail if not admin try to set fees",
+    //     "bob",
+    //     async () => dex.setFees(new BigNumber("0"), fees),
+    //     "Dex/not-contact-admin"
+    //   );
+    //   setFeesSuccessCase("should change fees", "alice", new BigNumber("0"), fees);
+    // });
+
+    describe("Test setting managers", () => {
+      failCase(
+        "should fail if not admin try set manager",
+        "bob",
+        async () => await dex.addRemManager(true, aliceAddress),
+        "Dex/not-contact-admin"
+      );
+      updateManagersSuccessCase(
+        "should set new manager",
+        "eve",
+        aliceAddress,
+        true
+      );
+      updateManagersSuccessCase(
+        "should remove manager",
+        "eve",
+        aliceAddress,
+        false
+      );
     });
   });
+
+  test.todo("it should be views here");
 });

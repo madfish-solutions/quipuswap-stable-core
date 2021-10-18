@@ -275,62 +275,62 @@ export class Dex extends TokenFA2 {
   //   return operation;
   // }
 
-  // async investLiquidity(
-  //   pairId: string,
-  //   tokenAAmount: number,
-  //   tokenBAmount: number,
-  //   minShares: number
-  // ): Promise<TransactionOperation> {
-  //   await this.updateStorage({ tokens: [pairId] });
-  //   let pair = this.storage.storage.tokens[pairId];
-  //   if (["FA2", "MIXED"].includes(standard)) {
-  //     await this.approveFA2Token(
-  //       pair.token_a_address,
-  //       pair.token_a_id,
+  async investLiquidity(
+    pairId: string,
+    tokenAmounts: Map<BigNumber, BigNumber>,
+    minShares: number,
+    refferal: string
+  ): Promise<TransactionOperation> {
+    await this.updateStorage({ tokens: [pairId] });
+    let pair = this.storage.storage.tokens[pairId];
+    if (["FA2", "MIXED"].includes(standard)) {
+      await this.approveFA2Token(
+        pair.token_a_address,
+        pair.token_a_id,
 
-  //       tokenAAmount,
-  //       this.contract.address
-  //     );
-  //   } else {
-  //     await this.approveFA12Token(
-  //       pair.token_a_address,
-  //       tokenAAmount,
-  //       this.contract.address
-  //     );
-  //   }
-  //   if ("FA2" == standard) {
-  //     await this.approveFA2Token(
-  //       pair.token_b_address,
-  //       pair.token_b_id,
-  //       tokenBAmount,
-  //       this.contract.address
-  //     );
-  //   } else {
-  //     await this.approveFA12Token(
-  //       pair.token_b_address,
-  //       tokenBAmount,
-  //       this.contract.address
-  //     );
-  //   }
-  //   const operation = await this.contract.methods
-  //     .use(
-  //       "invest",
-  //       pair.token_a_address,
-  //       pair.token_a_id,
-  //       standard.toLowerCase() == "mixed" ? "fa2" : standard.toLowerCase(),
-  //       null,
-  //       pair.token_b_address,
-  //       pair.token_b_id,
-  //       standard.toLowerCase() == "mixed" ? "fa12" : standard.toLowerCase(),
-  //       null,
-  //       minShares,
-  //       tokenAAmount,
-  //       tokenBAmount
-  //     )
-  //     .send();
-  //   await confirmOperation(global.Tezos, operation.hash);
-  //   return operation;
-  // }
+        tokenAAmount,
+        this.contract.address
+      );
+    } else {
+      await this.approveFA12Token(
+        pair.token_a_address,
+        tokenAAmount,
+        this.contract.address
+      );
+    }
+    if ("FA2" == standard) {
+      await this.approveFA2Token(
+        pair.token_b_address,
+        pair.token_b_id,
+        tokenBAmount,
+        this.contract.address
+      );
+    } else {
+      await this.approveFA12Token(
+        pair.token_b_address,
+        tokenBAmount,
+        this.contract.address
+      );
+    }
+    const operation = await this.contract.methods
+      .use(
+        "invest",
+        pair.token_a_address,
+        pair.token_a_id,
+        standard.toLowerCase() == "mixed" ? "fa2" : standard.toLowerCase(),
+        null,
+        pair.token_b_address,
+        pair.token_b_id,
+        standard.toLowerCase() == "mixed" ? "fa12" : standard.toLowerCase(),
+        null,
+        minShares,
+        tokenAAmount,
+        tokenBAmount
+      )
+      .send();
+    await confirmOperation(global.Tezos, operation.hash);
+    return operation;
+  }
 
   // async divestLiquidity(
   //   pairId: string,

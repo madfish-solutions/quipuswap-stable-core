@@ -203,8 +203,8 @@ export class Context {
       pairConfig.tokenAAmount,
       pairConfig.tokenBAmount
     );
-    return this.dex.storage.token_to_id[
-      this.dex.storage.pairs_count.toString()
+    return this.dex.storage.storage.token_to_id[
+      this.dex.storage.storage.pairs_count.toString()
     ];
   }
 
