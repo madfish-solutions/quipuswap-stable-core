@@ -1,28 +1,28 @@
 import { MichelsonMap } from "@taquito/michelson-encoder";
 
-export default {
+const dex_storage = {
   storage: {
-    admin: null,
+    admin: null as string,
     managers: [],
-    dev_address: null,
-    fee: {
-      lp_fee: "0",
-      stakers_fee: "0",
-      ref_fee: "0",
-      dev_fee: "0",
+    dev_address: null as string,
+    reward_rate: "0",
 
-    },
-    is_public_init: false,
-    reward_rate: '0',
-    pairs_count: "0",
+    pools_count: "0",
     tokens: MichelsonMap.fromLiteral({}),
-    token_to_id: MichelsonMap.fromLiteral({}),
-    metadata:MichelsonMap.fromLiteral({}),
-    token_metadata:MichelsonMap.fromLiteral({}),
-    pairs: MichelsonMap.fromLiteral({}),
+    pool_to_id: MichelsonMap.fromLiteral({}),
+    pools: MichelsonMap.fromLiteral({}),
     ledger: MichelsonMap.fromLiteral({}),
+    allowances: MichelsonMap.fromLiteral({}),
+    dev_rewards: MichelsonMap.fromLiteral({}),
+    referral_rewards: MichelsonMap.fromLiteral({}),
+    stakers_balance: MichelsonMap.fromLiteral({}),
+    pool_interest_rewards: MichelsonMap.fromLiteral({}),
+    providers_rewards: MichelsonMap.fromLiteral({}),
+    permits: MichelsonMap.fromLiteral({}),
   },
   metadata: MichelsonMap.fromLiteral({}),
+  token_metadata: MichelsonMap.fromLiteral({}),
   dex_lambdas: MichelsonMap.fromLiteral({}),
   token_lambdas: MichelsonMap.fromLiteral({}),
 };
+export default dex_storage;

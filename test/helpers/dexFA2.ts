@@ -3,10 +3,12 @@ import { BatchOperation } from "@taquito/taquito/dist/types/operations/batch-ope
 import { TransactionOperation } from "@taquito/taquito/dist/types/operations/transaction-operation";
 import { BigNumber } from "bignumber.js";
 import { TokenFA2 } from "./tokenFA2";
-import { DexStorage, FeeType, SwapSliceType } from "./types";
+import { DexStorage, FeeType, LambdaFunctionType, SwapSliceType } from "./types";
 import { getLigo } from "./utils";
 import { execSync } from "child_process";
 import { confirmOperation } from "./confirmation";
+import { dexLambdas, tokenLambdas } from "../storage/Functions";
+
 
 const standard = process.env.EXCHANGE_TOKEN_STANDARD;
 
@@ -19,7 +21,12 @@ export class Dex extends TokenFA2 {
   }
 
   static async init(dexAddress: string): Promise<Dex> {
-    return new Dex(await global.Tezos.contract.at(dexAddress));
+    const dex = new Dex(await global.Tezos.contract.at(dexAddress));
+    console.log("Lambdas");
+    await dex.setTokenFunctionBatch();
+    await dex.setDexFunctionBatch();
+    console.log("Lambdas set.");
+    return dex
   }
 
   async updateStorage(
@@ -38,19 +45,25 @@ export class Dex extends TokenFA2 {
         admin: storage.storage.admin,
         managers: storage.storage.managers,
         dev_address: storage.storage.dev_address,
-        fee: storage.storage.fee,
-        is_public_init: storage.storage.is_public_init,
         reward_rate: storage.storage.reward_rate,
-        pairs_count: storage.storage.pairs_count,
+        pools_count: storage.storage.pairs_count,
         tokens: {},
-        token_to_id: {},
-        pairs: {},
+        pool_to_id: {},
+        pools: {},
         ledger: {},
+        allowances: {},
+        dev_rewards: {},
+        referral_rewards: {},
+        stakers_balance: {},
+        pool_interest_rewards: {},
+        providers_rewards: {},
+        permits: {},
       },
       dex_lambdas: {},
       token_lambdas: {},
       ledger: {},
-      metadata: {}
+      metadata: {},
+      token_metadata: {},
     };
     for (let key in maps) {
       if (["dex_lambdas", "token_lambdas"].includes(key)) continue;
@@ -393,16 +406,44 @@ export class Dex extends TokenFA2 {
       amount: 0,
       parameter: {
         entrypoint: "setDexFunction",
-        value: JSON.parse(stdout.toString()).args[0].args[0].args[0],
+        value: JSON.parse(stdout.toString()).args[0].args[0].args[0].args[0],
       },
     });
     await confirmOperation(global.Tezos, operation.hash);
   }
 
+  async setDexFunctionBatch(
+    funcs_map: LambdaFunctionType[] = dexLambdas
+  ): Promise<void> {
+    let batch = await global.Tezos.contract.batch();
+    let ligo = getLigo(true);
+    for (const lambdaFunction of funcs_map) {
+      console.log(`${lambdaFunction.index}\t${lambdaFunction.name}`);
+      const stdout = execSync(
+        `${ligo} compile-parameter --michelson-format=json $PWD/contracts/main/Dex.ligo main 'SetDexFunction(record [index =${lambdaFunction.index}n; func = Bytes.pack(${lambdaFunction.name});])'`,
+        { maxBuffer: 1024 * 500 }
+      );
+      console.log(stdout.toString());
+      batch = batch.withTransfer({
+        to: this.contract.address,
+        amount: 0,
+        parameter: {
+          entrypoint: "setDexFunction",
+          value: Buffer.from(
+            JSON.parse(stdout.toString()).args[0].args[0].args[0].args[0],
+            "ascii"
+          ).toString("hex"),
+        },
+      });
+    }
+    const batchOp = await batch.send();
+    await confirmOperation(global.Tezos, batchOp.hash);
+  }
+
   async setTokenFunction(index: number, lambdaName: string): Promise<void> {
     let ligo = getLigo(true);
     const stdout = execSync(
-      `${ligo} compile-parameter --michelson-format=json $PWD/contracts/main/Dex.ligo main 'SetTokenFunction(record index =${index}n; func = ${lambdaName}; end)'`,
+      `${ligo} compile-parameter --michelson-format=json $PWD/contracts/main/Dex.ligo main 'SetTokenFunction(record [index =${index}n; func = Bytes.pack(${lambdaName})])'`,
       { maxBuffer: 1024 * 500 }
     );
     const operation = await global.Tezos.contract.transfer({
@@ -410,43 +451,89 @@ export class Dex extends TokenFA2 {
       amount: 0,
       parameter: {
         entrypoint: "setTokenFunction",
-        value: JSON.parse(stdout.toString()).args[0].args[0].args[0],
+        value: JSON.parse(stdout.toString()).args[0].args[0].args[0].args[0],
       },
     });
     await confirmOperation(global.Tezos, operation.hash);
   }
+
+  async setTokenFunctionBatch(
+    funcs_map: LambdaFunctionType[] = tokenLambdas
+  ): Promise<void> {
+    let batch = await global.Tezos.contract.batch();
+    let ligo = getLigo(true);
+    for (const lambdaFunction of funcs_map) {
+      console.log(`${lambdaFunction.index}\t${lambdaFunction.name}`);
+      const stdout = execSync(
+        `${ligo} compile-parameter --michelson-format=json $PWD/contracts/main/Dex.ligo main 'SetTokenFunction(record [index =${lambdaFunction.index}n; func = Bytes.pack(${lambdaFunction.name})])'`,
+        { maxBuffer: 1024 * 500 }
+      );
+      batch = batch.withTransfer({
+        to: this.contract.address,
+        amount: 0,
+        parameter: {
+          entrypoint: "setDexFunction",
+          value: JSON.parse(stdout.toString()).args[0].args[0].args[0].args[0],
+        },
+      });
+    }
+    const batchOp = await batch.send();
+    await confirmOperation(global.Tezos, batchOp.hash);
+  }
+
   async setAdmin(new_admin: string): Promise<TransactionOperation> {
     await this.updateStorage({});
+    console.log(global.Tezos);
+    console.log(this.storage);
     const operation = await this.contract.methods.set_admin(new_admin).send();
+    console.log(operation.hash);
     await confirmOperation(global.Tezos, operation.hash);
     return operation;
   }
-  async addRemManager(add: boolean, manager: string): Promise<TransactionOperation> {
+  async addRemManager(
+    add: boolean,
+    manager: string
+  ): Promise<TransactionOperation> {
     await this.updateStorage({});
-    const operation = await this.contract.methods.addRemManagers(add, manager).send();
+    console.log(global.Tezos);
+    console.log(this.storage);
+    const operation = await this.contract.methods
+      .addRemManagers(add, manager)
+      .send();
+    console.log(operation.hash);
     await confirmOperation(global.Tezos, operation.hash);
     return operation;
   }
   async setDevAddress(dev: string): Promise<TransactionOperation> {
     await this.updateStorage({});
+    console.log(global.Tezos);
+    console.log(this.storage);
     const operation = await this.contract.methods.set_dev_address(dev).send();
+    console.log(operation.hash);
     await confirmOperation(global.Tezos, operation.hash);
     return operation;
   }
   async togglePubInit(): Promise<TransactionOperation> {
     await this.updateStorage({});
+    console.log(global.Tezos);
+    console.log(this.storage);
     const operation = await this.contract.methods.set_public_init(null).send();
+    console.log(operation.hash);
     await confirmOperation(global.Tezos, operation.hash);
     return operation;
   }
-  async setFees(fees: FeeType): Promise<TransactionOperation> {
+  async setFees(pool_id: BigNumber, fees: FeeType): Promise<TransactionOperation> {
     await this.updateStorage({});
-    const operation = await this.contract.methods.set_fees(
-      fees.lp_fee,
-      fees.stakers_fee,
-      fees.ref_fee,
-      fees.dev_fee
-    ).send();
+    const params = {
+      pair_id: pool_id,
+      fee: fees,
+    };
+    console.log(global.Tezos);
+    console.log(this.storage);
+    const operation = await this.contract.methods
+      .set_fees(params)
+      .send();
+    console.log(operation.hash);
     await confirmOperation(global.Tezos, operation.hash);
     return operation;
   }

@@ -1,7 +1,7 @@
 import { execSync } from "child_process";
 import { InMemorySigner } from "@taquito/signer";
 import { TransactionOperation } from "@taquito/taquito/dist/types/operations/transaction-operation";
-import { sandbox, outputDirectory } from "../../config.json";
+import { sandbox, outputDirectory, ligoVersion } from "../../config.json";
 const accounts = sandbox.accounts;
 import { confirmOperation } from "./confirmation";
 export const tezPrecision = 1e6;
@@ -15,7 +15,6 @@ export declare type AccountsLiteral = typeof senders[number];
 
 export function getLigo(isDockerizedLigo: boolean): string {
   let path = "ligo";
-  let ligoVersion = process.env.LIGO_VERSION;
   if (isDockerizedLigo) {
     path = `docker run -v $PWD:$PWD --rm -i ligolang/ligo:${ligoVersion}`;
     try {

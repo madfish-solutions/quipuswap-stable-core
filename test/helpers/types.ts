@@ -7,6 +7,11 @@ export declare type FeeType = {
   dev_fee: BigNumber;
 }
 
+export declare type LambdaFunctionType = {
+  index: number;
+  name: string;
+};
+
 export declare type TokenType =
   string
   | {
@@ -26,16 +31,16 @@ export declare type TokenInfo = {
 export declare type PairInfo = {
   initial_A: BigNumber;
   initial_A_time: Date;
-  tokens_count: BigNumber;
-  tokens: { [key: string]: TokenType };
   token_rates: { [key: string]: BigNumber };
-  dev_balances: { [key: string]: BigNumber };
-  pools: { [key: string]: BigNumber };
-  virtual_pools: { [key: string]: BigNumber };
+  reserves: { [key: string]: BigNumber };
+  virtual_reserves: { [key: string]: BigNumber };
   future_A: BigNumber;
   future_A_time: Date;
+  fee: FeeType;
+  staker_accumulator: { [key: string]: BigNumber };
   proxy_contract?: string;
   proxy_limits: { [key: string]: BigNumber };
+  stakers_interest: { [key: string]: BigNumber };
   total_supply: BigNumber;
 };
 
@@ -51,17 +56,23 @@ export declare type DexStorage = {
     admin: string;
     managers: string[];
     dev_address: string;
-    fee: FeeType | { [key: string]: BigNumber };
-    is_public_init: boolean;
-    reward_rate: BigNumber;
-    pairs_count: BigNumber;
-    tokens: { [key: string]: [value: { [key: string]: TokenType }] };
-    token_to_id: { [key: string]: BigNumber };
-    pairs: { [key: string]: PairInfo };
-    ledger: { [key: string]: AccountInfo };
+    reward_rate: BigNumber | string;
+    pools_count: BigNumber | string;
+    tokens: { [key: string]: { [key: string]: TokenType } };
+    pool_to_id: { [key: string]: BigNumber };
+    pools: { [key: string]: PairInfo };
+    ledger: { [key: string]: BigNumber };
+    allowances: { [key: string]: Array<string> };
+    dev_rewards: { [key: string]: BigNumber };
+    referral_rewards: { [key: string]: { [key: string]: BigNumber } };
+    stakers_balance: { [key: string]: StakerInfo };
+    pool_interest_rewards: { [key: string]: BigNumber };
+    providers_rewards: { [key: string]: ProviderReward };
+    permits: { [key: string]: any };
   };
   ledger: { [key: string]: AccountInfo };
   metadata: { [key: string]: any };
+  token_metadata: { [key: string]: any };
 };
 
 export declare type MetadataStorage = {
@@ -80,16 +91,28 @@ export declare type AccountInfo = {
   allowances: { [key: string]: BigNumber };
 };
 
-export declare type AccountTokenInfo = {
+export declare type StakerInfo = {
   balance: BigNumber;
-  allowances: { [key: string]: BigNumber };
+  reward: { [key: string]: BigNumber };
+  former: { [key: string]: BigNumber };
 };
+
+export declare type ProviderReward = {
+  reward: { [key: string]: BigNumber };
+  former: { [key: string]: BigNumber };
+};
+
 
 export declare type VoteInfo = {
   candidate: string | null | undefined;
   vote: BigNumber;
   veto: BigNumber;
   last_veto: number;
+};
+
+export declare type AccountTokenInfo = {
+  balance: BigNumber;
+  allowances: { [key: string]: BigNumber };
 };
 
 export declare type TokenStorage = {
