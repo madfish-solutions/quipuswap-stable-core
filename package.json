@@ -24,9 +24,12 @@
   "scripts": {
     "start": "ts-node ./scripts/cli.ts --help",
     "compile": "ts-node ./scripts/cli.ts compile",
+    "compile-lambda": "ts-node ./scripts/cli.ts compile-lambda",
+    "compile-lambda-dex": "yarn -s compile-lambda -T Dex -J ./test/lambdas/Dex_lambdas.json -C ./contracts/main/Dex.ligo",
+    "compile-lambda-token": "yarn -s compile-lambda -T Token -J ./test/lambdas/Token_lambdas.json -C ./contracts/main/Dex.ligo",
     "start-sandbox": "ts-node ./scripts/cli.ts start-sandbox",
     "test": "ts-node ./scripts/cli.ts test",
-    "compile-n-test": "yarn compile && yarn test",
+    "compile-n-test": "yarn compile && yarn compile-lambda-dex && yarn compile-lambda-token && yarn test",
     "deploy": "ts-node ./scripts/cli.ts deploy"
   },
   "keywords": [

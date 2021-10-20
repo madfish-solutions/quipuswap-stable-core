@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-import { addCompileCommand } from './commands/compile';
+import { addCompileCommand, addCompileLambdaCommand } from './commands/compile';
 import { addDeployCommand } from './commands/deploy';
 import { addE2ETestCommand } from './commands/e2e-test';
 import { addPostInstallCommand } from './commands/postinstall';
@@ -41,6 +41,7 @@ const debugHook = (cmd: Command) => {
 
 addStartSandboxCommand(program, debugHook);
 addCompileCommand(program, debugHook);
+addCompileLambdaCommand(program, debugHook);
 addTestCommand(program, debugHook);
 addE2ETestCommand(program, debugHook);
 addDeployCommand(program, debugHook);

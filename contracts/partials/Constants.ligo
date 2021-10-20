@@ -1,8 +1,9 @@
 (* define noop for readability *)
+[@inline]
 const no_operations: list(operation) = nil;
 
-const dex_func_count      : nat = 3n;
-const token_func_count    : nat = 2n;
+const dex_func_count      : nat = 17n;
+const token_func_count    : nat = 5n;
 
 (* StableSwap constants *)
 const _C_max_tokens_index : nat = 3n; (* Max available tokens in pair *)

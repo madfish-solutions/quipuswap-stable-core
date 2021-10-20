@@ -2,11 +2,12 @@ import { Metadata } from "./helpers/metadataStorage";
 import { strictEqual, ok, notStrictEqual, rejects } from "assert";
 import { sandbox, outputDirectory } from "../config.json";
 const accounts = sandbox.accounts;
-import { prepareProviderOptions } from "./helpers/utils";
+import { prepareProviderOptions, Tezos } from "./helpers/utils";
 import { MichelsonMap, MichelsonMapKey } from "@taquito/michelson-encoder";
 import { MetadataStorage } from "./helpers/types";
+import { confirmOperation } from "./helpers/confirmation";
 const standard = process.env.EXCHANGE_TOKEN_STANDARD;
-const CMetadataStorage = "MetadataStorage.ligo";
+import CMetadataStorage from "../build/MetadataStorage.ligo.json";
 
 describe("MetadataStorage", () => {
   if (standard !== "MIXED") {
@@ -16,6 +17,8 @@ describe("MetadataStorage", () => {
     const eveAddress: string = accounts.eve.pkh;
 
     beforeAll(async () => {
+      let config = await prepareProviderOptions("alice");
+      Tezos.setProvider(config);
       const storage = {
         owners: [aliceAddress],
         metadata: MichelsonMap.fromLiteral({
@@ -46,15 +49,19 @@ describe("MetadataStorage", () => {
           ).toString("hex"),
         }),
       };
-      const contract = await global.deployContract(CMetadataStorage, storage);
-      metadataStorage = await Metadata.init(contract.address);
+      const contract = await Tezos.contract.originate({
+        code: JSON.parse(CMetadataStorage.michelson),
+        storage: storage,
+      });
+      await confirmOperation(Tezos, contract.hash);
+      metadataStorage = await Metadata.init(contract.contractAddress);
       return true;
     });
 
     function updateOwnerSuccessCase(decription, sender, owner, add) {
       it(decription, async function () {
         let config = await prepareProviderOptions(sender);
-        global.Tezos.setProvider(config);
+        Tezos.setProvider(config);
         await metadataStorage.updateStorage({});
         const initOwners = metadataStorage.storage.owners;
 
@@ -68,7 +75,7 @@ describe("MetadataStorage", () => {
     function updateMetadataSuccessCase(decription, sender, metadata) {
       it(decription, async function () {
         let config = await prepareProviderOptions(sender);
-        global.Tezos.setProvider(config);
+        Tezos.setProvider(config);
         await metadataStorage.updateMetadata(metadata);
       });
     }
@@ -76,7 +83,7 @@ describe("MetadataStorage", () => {
     function matadataFailCase(decription, sender, act, errorMsg) {
       it(decription, async function () {
         let config = await prepareProviderOptions(sender);
-        global.Tezos.setProvider(config);
+        Tezos.setProvider(config);
         await rejects(act(), (err: any) => {
           ok(err.message == errorMsg, "Error message mismatch");
           return true;
@@ -147,5 +154,5 @@ describe("MetadataStorage", () => {
       );
     });
   }
-  else test("MIXED. skip.", async () => true);
+  else test.skip("MIXED. skip.");
 });

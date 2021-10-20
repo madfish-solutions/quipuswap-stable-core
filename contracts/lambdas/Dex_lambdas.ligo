@@ -1,17 +1,16 @@
 function add_liq(
-    const params  : record[
+    const params  : record [
                       referral: option(address);
                       pair_id :nat;
                       pair    : pair_type;
                       inputs  : map(nat, nat);
                       min_mint_amount: nat;
                     ];
-    const s       : storage_type
+    var   s       : storage_type
   ): return_type is
   block {
-    var operations: list(operation) := no_operations;
     var pair : pair_type := params.pair;
-    const tokens_count = get_token_count(pair);
+    const tokens = get_tokens(params.pair_id, s);
     const amp = _A(pair);
     const init_reserves = pair.virtual_reserves;
     // Initial invariant
@@ -25,71 +24,110 @@ function add_liq(
           end;
         const new_reserve = value + input;
       } with new_reserve;
-    var _new_reserves := Map.map(add_inputs, init_reserves);
+    var new_reserves := Map.map(add_inputs, init_reserves);
 
-    const d1 = _get_D_mem(_new_reserves, amp, pair);
+    const d1 = _get_D_mem(new_reserves, amp, pair);
 
     assert(d1 > d0);
     var mint_amount := 0n;
-    var new_storage: storage_type := s;
     if token_supply > 0n
       then {
         // Only account for fees if we are not the first to deposit
         // const fee = sum_all_fee(pair) * tokens_count / (4 * (tokens_count - 1));
         // const wo_lp_fee = sum_wo_lp_fee(pair) * tokens_count / (4 * (tokens_count - 1));
-        var _d2 := d1;
-        for _i := 0 to int(tokens_count)
+        const init = record [
+          reserves = new_reserves;
+          storage = s;
+        ];
+        // const referral: address = case (params.referral: option(address)) of
+        //         Some(ref) -> ref
+        //       | None -> get_default_refer(s)
+        //       end;
+
+        function calc_invests(
+          const acc: record [
+            reserves: map(token_pool_index, nat);
+            storage: storage_type;
+          ];
+          const entry: (token_pool_index * token_type)
+          ): record [
+            reserves: map(token_pool_index, nat);
+            storage: storage_type;
+          ] is
           block {
-            const i = case is_nat(_i) of
-                Some(i) -> i
-              | None -> (failwith("below zero"): nat)
-              end;
+            var result := acc;
+            const i = entry.0;
             const old_balance = case init_reserves[i] of
                             Some(bal) -> bal
                           | None -> (failwith("No such reserve"): nat)
                           end;
-            const new_balance = case _new_reserves[i] of
+            const new_balance = case acc.reserves[i] of
                             Some(bal) -> bal
                           | None -> (failwith("No such reserve"): nat)
                           end;
 
-            const ideal_balance = d1 * old_balance / d0;
-            const difference = abs(ideal_balance - new_balance);
+            const _ideal_balance = d1 * old_balance / d0;
+            // const difference = abs(ideal_balance - new_balance);
             // const fee_norm = fee * difference / FEE_DENOMINATOR;
-            const referral: address = case (params.referral: option(address)) of
-                Some(ref) -> ref
-              | None -> get_default_refer(s)
-              end;
-
-            const after_fees = apply_invest_fee(referral, params.pair_id, i, difference, new_balance, new_storage);
-
+            // const after_fees = apply_invest_fee(referral, params.pair_id, i, difference, new_balance, acc.storage);
             // pair.virtual_reserves[i] := abs(new_balance - (wo_lp_fee / FEE_DENOMINATOR));
-            _new_reserves[i] := after_fees.0; // abs(new_balance - fee_norm);
-            new_storage := after_fees.1;
-          };
-        pair := get_pair(params.pair_id, new_storage);
-        _d2 := _get_D_mem(_new_reserves, amp, pair);
-        mint_amount := token_supply * abs(_d2 - d0) / d0;
+            result.reserves[i] := new_balance; // abs(new_balance - fee_norm);
+            // result.storage := after_fees.1;
+          } with result;
+
+        const upd = Map.fold(calc_invests, tokens, init);
+
+
+        // for _i := 0 to int(tokens_count)
+        //   block {
+        //     const i = case is_nat(_i) of
+        //         Some(i) -> i
+        //       | None -> (failwith("below zero"): nat)
+        //       end;
+        //     const old_balance = case init_reserves[i] of
+        //                     Some(bal) -> bal
+        //                   | None -> (failwith("No such reserve"): nat)
+        //                   end;
+        //     const new_balance = case _new_reserves[i] of
+        //                     Some(bal) -> bal
+        //                   | None -> (failwith("No such reserve"): nat)
+        //                   end;
+
+        //     const ideal_balance = d1 * old_balance / d0;
+        //     const difference = abs(ideal_balance - new_balance);
+        //     // const fee_norm = fee * difference / FEE_DENOMINATOR;
+        //     const referral: address = case (params.referral: option(address)) of
+        //         Some(ref) -> ref
+        //       | None -> get_default_refer(s)
+        //       end;
+
+        //     const after_fees = apply_invest_fee(referral, params.pair_id, i, difference, new_balance, new_storage);
+
+        //     // pair.virtual_reserves[i] := abs(new_balance - (wo_lp_fee / FEE_DENOMINATOR));
+        //     _new_reserves[i] := after_fees.0; // abs(new_balance - fee_norm);
+        //     new_storage := after_fees.1;
+        //   };
+        s := upd.storage;
+        pair := get_pair(params.pair_id, s);
+        const d2 = _get_D_mem(upd.reserves, amp, pair);
+        mint_amount := token_supply * abs(d2 - d0) / d0;
       }
     else {
-        pair.virtual_reserves := _new_reserves;
+        pair.virtual_reserves := new_reserves;
         mint_amount := d1;  // Take the dust if there was any
     };
     assert(mint_amount >= params.min_mint_amount); // "Slippage screwed you"
-
-    function transfer_to_pool(const acc : list(operation); const input : nat * nat) : list(operation) is
-      typed_transfer(
+    function transfer_to_pool(const acc : return_type; const input : nat * nat) : return_type is
+      (typed_transfer(
         Tezos.sender,
         Tezos.self_address,
         input.1,
-        get_token_by_id(input.0, params.pair_id, s)
-      ) # acc;
-
-    operations := Map.fold(transfer_to_pool, params.inputs, operations);
-    new_storage.ledger[(Tezos.sender, params.pair_id)] := mint_amount;
+        get_token_by_id(input.0, params.pair_id, acc.1)
+      ) # acc.0, acc.1);
     pair.total_supply := pair.total_supply + mint_amount;
-    new_storage.pools[params.pair_id] := pair;
-  } with (operations, new_storage)
+    s.ledger[(Tezos.sender, params.pair_id)] := mint_amount;
+    s.pools[params.pair_id] := pair;
+  } with Map.fold(transfer_to_pool, params.inputs, (no_operations, s))
 
 
 
@@ -101,105 +139,119 @@ function initialize_exchange(
   block {
     var operations: list(operation) := no_operations;
     case p of
-      AddPair(params) -> {
-        (* Params check *)
-        const inp_len = Map.size(params.input_tokens);
-        const max_index = abs(params.n_tokens - 1n);
-        if (
-          (max_index > _C_max_tokens_index)
-          or (params.n_tokens < 2n)
-          or (inp_len =/= params.n_tokens)
-        )
-          then failwith(err_wrong_tokens_count);
+    | AddPair(params) -> {
+      (* Params check *)
+      const inp_len = Map.size(params.input_tokens);
+      const max_index = abs(params.n_tokens - 1n);
+      if (
+        (max_index > _C_max_tokens_index)
+        or (params.n_tokens < 2n)
+        or (inp_len =/= params.n_tokens)
+      )
+        then failwith(err_wrong_tokens_count);
+      else skip;
+
+      function get_tokens_from_param(
+        const _key   : nat;
+        const value : input_token): token_type is
+        value.asset;
+
+      const tokens: tokens_type = Map.map(get_tokens_from_param, params.input_tokens);
+
+      (* Params ordering check *)
+
+      function get_asset(const key: nat): token_type is
+        case tokens[key] of
+          Some(input) -> input
+        | None -> (failwith("Unable to locate token"): token_type)
+        end;
+
+      const fst_token = get_asset(0n);
+      const snd_token = get_asset(1n);
+
+      if snd_token >= fst_token
+        then failwith(err_wrong_pair_order);
+      else
+        if max_index > 2n
+          then {
+            const trd_token = get_asset(2n);
+            if trd_token >= snd_token
+              then failwith(err_wrong_pair_order);
+            else
+              if max_index > 3n
+                then {
+                  const fth_token = get_asset(3n);
+                  if fth_token >= trd_token
+                    then failwith(err_wrong_pair_order);
+                  else skip;
+                }
+              else skip;
+          }
         else skip;
 
-        function get_tokens_from_param(
-          const _key   : nat;
-          const value : input_token): token_type is
-          value.asset;
+      const (pair_i, token_id) = get_pair_info(tokens, s);
 
-        const tokens: tokens_type = Map.map(get_tokens_from_param, params.input_tokens);
+      if s.pools_count = token_id
+      then {
+        s.pool_to_id[Bytes.pack(tokens)] := token_id;
+        s.pools_count := s.pools_count + 1n;
+      }
+      else skip;
 
-        (* Params ordering check *)
+      s.tokens[token_id] := tokens;
 
-        function get_asset(const key: nat): token_type is
-          case tokens[key] of
-            Some(input) -> input
-          | None -> (failwith("Unable to locate token"): token_type)
-          end;
-
-        const fst_token = get_asset(0n);
-        const snd_token = get_asset(1n);
-
-
-        if snd_token >= fst_token
-          then failwith(err_wrong_pair_order);
-        else
-          if max_index > 2n
-            then {
-              const trd_token = get_asset(2n);
-              if trd_token >= snd_token
-                then failwith(err_wrong_pair_order);
-              else
-                if max_index > 3n
-                  then {
-                    const fth_token = get_asset(3n);
-                    if fth_token >= trd_token
-                      then failwith(err_wrong_pair_order);
-                    else skip;
-                  }
-                else skip;
-            }
-          else skip;
-
-        const (pair_i, token_id) = get_pair_info(tokens, s);
-        var _pair := pair_i;
-        if s.pools_count = token_id
-        then {
-          s.pool_to_id[Bytes.pack(tokens)] := token_id;
-          s.pools_count := s.pools_count + 1n;
-        }
-        else skip;
-        s.tokens[token_id] := tokens;
-        _pair.initial_A := params.a_constant;
-        _pair.future_A := params.a_constant;
-        _pair.initial_A_time := Tezos.now;
-        _pair.future_A_time := Tezos.now;
-
-        if _pair.total_supply =/= 0n
-        then failwith(err_pair_listed)
-        else skip;
-
-        function map_rates_outs(
-          const acc   : (map(token_pool_index, nat) * map(token_pool_index, nat));
-          const entry : (token_pool_index * input_token)
-        )             : (map(token_pool_index, nat) * map(token_pool_index, nat)) is
-          (
-            Map.add(entry.0, entry.1.rate,      acc.0),
-            Map.add(entry.0, entry.1.in_amount, acc.1)
-          );
-
-        const (token_rates, inputs) = Map.fold(
-          map_rates_outs,
-          params.input_tokens,
-          (
-            (map[]: map(token_pool_index, nat)),
-            (map[]: map(token_pool_index, nat))
-          )
+      function map_rates_outs_zeros(
+        const acc   : (
+          map(token_pool_index, nat) *
+          map(token_pool_index, nat) *
+          map(token_pool_index, nat)
+        );
+        const entry : (token_pool_index * input_token)
+      )             : (
+          map(token_pool_index, nat) *
+          map(token_pool_index, nat) *
+          map(token_pool_index, nat)
+        ) is (
+          Map.add(entry.0, entry.1.rate,      acc.0),
+          Map.add(entry.0, entry.1.in_amount, acc.1),
+          Map.add(entry.0, 0n,                acc.2)
         );
 
-        _pair.token_rates := token_rates;
-        const prms = record[
-          referral= (None: option(address));
-          pair_id = token_id;
-          pair    = _pair;
-          inputs  = inputs;
-          min_mint_amount = 1n;
-        ];
-        const res = add_liq(prms, s);
-        operations := res.0;
-        s := res.1;
-      }
+      const (token_rates, inputs, zeros) = Map.fold(
+        map_rates_outs_zeros,
+        params.input_tokens,
+        (
+          (map[]: map(token_pool_index, nat)),
+          (map[]: map(token_pool_index, nat)),
+          (map[]: map(token_pool_index, nat))
+        )
+      );
+
+      if pair_i.total_supply =/= 0n
+      then failwith(err_pair_listed)
+      else skip;
+
+      var new_pair: pair_type := pair_i;
+      new_pair.initial_A := params.a_constant;
+      new_pair.future_A := params.a_constant;
+      new_pair.initial_A_time := Tezos.now;
+      new_pair.future_A_time := Tezos.now;
+      new_pair.token_rates := token_rates;
+      new_pair.reserves := zeros;
+      new_pair.virtual_reserves := zeros;
+      new_pair.proxy_limits := zeros;
+
+      const res = add_liq(record [
+        referral= (None: option(address));
+        pair_id = token_id;
+        pair    = new_pair;
+        inputs  = inputs;
+        min_mint_amount = 1n;
+      ], s);
+
+      operations := res.0;
+      s := res.1;
+    }
     | _                 -> skip
     end
 } with (operations, s)

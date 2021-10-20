@@ -25,12 +25,11 @@ function call_dex(
     | SetProxy(_)             -> 9n
     | UpdateProxyLimits(_)    -> 10n
     // | Get_reserves(_)         -> 11n
-    // | Total_supply(_)         -> 12n
-    // | Min_received(_)         -> 13n
-    // | Tokens_per_shares(_)    -> 14n
-    // | Calc_divest_one_coin(_) -> 15n
-    // | Get_dy(_)               -> 16n
-    // | Get_a(_)                -> 17n
+    // | Min_received(_)         -> 12n
+    // | Tokens_per_shares(_)    -> 13n
+    // | Calc_divest_one_coin(_) -> 14n
+    // | Get_dy(_)               -> 15n
+    // | Get_a(_)                -> 16n
 
     end;
 
@@ -69,6 +68,7 @@ function call_token(
     | IBalanceOf(_)       -> 1n
     | IUpdateOperators(_) -> 2n
     | IUpdateMetadata(_)  -> 3n
+    | ITotalSupply(_)     -> 4n
     end;
 
     const lambda_bytes : bytes = case s.token_lambdas[idx] of

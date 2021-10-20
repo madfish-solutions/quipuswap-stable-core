@@ -21,6 +21,7 @@ function main(
   | Balance_of(params)        -> call_token(IBalanceOf(params), s)
   | Update_operators(params)  -> call_token(IUpdateOperators(params), s)
   | Update_metadata(params)   -> call_token(IUpdateMetadata(params), s)
+  | Total_supply(params)      -> call_token(ITotalSupply(params), s)
   // | Get_reserves(params)      -> get_reserves(params, s)
   // | Close                     -> (no_operations, close(s))
   | SetDexFunction(params)    -> (

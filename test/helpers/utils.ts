@@ -1,9 +1,10 @@
 import { execSync } from "child_process";
 import { InMemorySigner } from "@taquito/signer";
 import { TransactionOperation } from "@taquito/taquito/dist/types/operations/transaction-operation";
-import { sandbox, outputDirectory, ligoVersion } from "../../config.json";
+import { sandbox, ligoVersion } from "../../config.json";
 const accounts = sandbox.accounts;
 import { confirmOperation } from "./confirmation";
+import { MichelsonMap, TezosToolkit } from "@taquito/taquito";
 export const tezPrecision = 1e6;
 
 function stringLiteralArray<T extends string>(a: T[]) {
@@ -12,6 +13,15 @@ function stringLiteralArray<T extends string>(a: T[]) {
 
 const senders: string[] = stringLiteralArray(Object.keys(accounts));
 export declare type AccountsLiteral = typeof senders[number];
+
+let rpcNode: string = `http://${sandbox.host}:${sandbox.port}`;
+export let Tezos = new TezosToolkit(rpcNode);
+
+export async function initTezos() {
+  const config = await prepareProviderOptions('alice');
+  Tezos.setProvider(config);
+  return Tezos;
+}
 
 export function getLigo(isDockerizedLigo: boolean): string {
   let path = "ligo";
@@ -75,10 +85,35 @@ export function calculateFee(
 
 export async function bakeBlocks(count: number) {
   for (let i = 0; i < count; i++) {
-    let operation = await global.Tezos.contract.transfer({
-      to: await global.Tezos.signer.publicKeyHash(),
+    let operation = await Tezos.contract.transfer({
+      to: await Tezos.signer.publicKeyHash(),
       amount: 1,
     });
-    await confirmOperation(global.Tezos, operation.hash);
+    await confirmOperation(Tezos, operation.hash);
   }
 }
+
+export function destructObj(obj: any) {
+    let arr = [];
+
+    Object.keys(obj).map(function (k) {
+      if (k === "fa12" || k === "fa2") {
+        arr.push(k);
+      }
+
+      if (obj[k] instanceof MichelsonMap || Array.isArray(obj[k])) {
+        arr.push(obj[k]);
+      } else if (
+        typeof obj[k] === "object" &&
+        (!(obj[k] instanceof Date) ||
+          !(obj[k] instanceof null) ||
+          !(obj[k] instanceof undefined))
+      ) {
+        arr = arr.concat(destructObj(obj[k]));
+      } else {
+        arr.push(obj[k]);
+      }
+    });
+
+    return arr;
+  }

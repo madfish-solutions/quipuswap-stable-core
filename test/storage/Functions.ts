@@ -49,28 +49,24 @@ export const dexLambdas: LambdaFunctionType[] = [
     index: 11,
     name: "get_reserves",
   },
-  {
-    index: 12,
-    name: "get_total_supply",
-  },
   // {
-  //   index: 13,
+  //   index: 12,
   //   name: "get_min_received",
   // },
   // {
-  //   index: 14,
+  //   index: 13,
   //   name: "token_per_share",
   // },
   // {
-  //   index: 15,
+  //   index: 14,
   //   name: "calc_withdraw_one_coin",
   // },
   // {
-  //   index: 16,
+  //   index: 15,
   //   name: "get_dy",
   // },
   {
-    index: 17,
+    index: 16,
     name: "get_A",
   },
 ];
@@ -92,8 +88,12 @@ export const tokenLambdas: LambdaFunctionType[] = [
     index: 3,
     name: "update_token_metadata",
   },
+  {
+    index: 4,
+    name: "total_supply_view",
+  },
 ];
-module.exports.tokenFunctions = {
+export const tokenFunctions = {
   FA12: tokenLambdas,
   MIXED: tokenLambdas,
   FA2: tokenLambdas,

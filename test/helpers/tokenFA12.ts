@@ -18,7 +18,7 @@ export class TokenFA12 implements Token {
 
   async updateProvider(accountName: string): Promise<void> {
     let config = await prepareProviderOptions(accountName);
-    Tezos.setProvider(config);
+    await Tezos.setProvider(config);
   }
 
   async updateStorage(

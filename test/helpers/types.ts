@@ -12,6 +12,15 @@ export declare type LambdaFunctionType = {
   name: string;
 };
 
+export declare type FA2TokenType = {
+  address: string;
+  token_id: BigNumber;
+};
+
+export declare type FA12TokenType = {
+  address: string;
+};
+
 export declare type TokenType =
   string
   | {
@@ -37,10 +46,13 @@ export declare type PairInfo = {
   future_A: BigNumber;
   future_A_time: Date;
   fee: FeeType;
-  staker_accumulator: { [key: string]: BigNumber };
+  staker_accumulator: {
+    accumulator: { [key: string]: BigNumber };
+    total_staked: BigNumber;
+  };
   proxy_contract?: string;
   proxy_limits: { [key: string]: BigNumber };
-  stakers_interest: { [key: string]: BigNumber };
+  proxy_reward_acc: { [key: string]: BigNumber };
   total_supply: BigNumber;
 };
 
@@ -54,23 +66,26 @@ export declare type DexStorage = {
   token_lambdas: { [key: string]: any };
   storage: {
     admin: string;
+    default_referral: string;
     managers: string[];
     dev_address: string;
-    reward_rate: BigNumber | string;
-    pools_count: BigNumber | string;
+    reward_rate: BigNumber;
+    pools_count: BigNumber;
     tokens: { [key: string]: { [key: string]: TokenType } };
     pool_to_id: { [key: string]: BigNumber };
     pools: { [key: string]: PairInfo };
     ledger: { [key: string]: BigNumber };
-    allowances: { [key: string]: Array<string> };
+    account_data: {
+      [key: string]: {
+        allowances: { [key: string]: Array<string> };
+        earned_interest: { [key: string]: ProviderReward; };
+      };
+    };
     dev_rewards: { [key: string]: BigNumber };
-    referral_rewards: { [key: string]: { [key: string]: BigNumber } };
+    referral_rewards: { [key: string]: BigNumber };
     stakers_balance: { [key: string]: StakerInfo };
-    pool_interest_rewards: { [key: string]: BigNumber };
-    providers_rewards: { [key: string]: ProviderReward };
     permits: { [key: string]: any };
   };
-  ledger: { [key: string]: AccountInfo };
   metadata: { [key: string]: any };
   token_metadata: { [key: string]: any };
 };
@@ -117,7 +132,7 @@ export declare type AccountTokenInfo = {
 
 export declare type TokenStorage = {
   total_supply?: BigNumber;
-  ledger: { [key: string]: AccountTokenInfo };
+  ledger?: { [key: string]: AccountTokenInfo };
 };
 
 export declare type FactoryStorage = {

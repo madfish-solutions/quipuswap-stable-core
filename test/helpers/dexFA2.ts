@@ -1,14 +1,26 @@
-import { ContractAbstraction, ContractProvider } from "@taquito/taquito";
+import {
+  ContractAbstraction,
+  ContractProvider,
+  MichelsonMap,
+} from "@taquito/taquito";
 import { BatchOperation } from "@taquito/taquito/dist/types/operations/batch-operation";
 import { TransactionOperation } from "@taquito/taquito/dist/types/operations/transaction-operation";
 import { BigNumber } from "bignumber.js";
-import { TokenFA2 } from "./tokenFA2";
-import { DexStorage, FeeType, LambdaFunctionType, SwapSliceType } from "./types";
-import { getLigo } from "./utils";
+import { defaultTokenId, TokenFA2 } from "./tokenFA2";
+import {
+  DexStorage,
+  FeeType,
+  LambdaFunctionType,
+  FA2TokenType,
+  FA12TokenType,
+} from "./types";
+import { destructObj, getLigo, Tezos } from "./utils";
 import { execSync } from "child_process";
 import { confirmOperation } from "./confirmation";
 import { dexLambdas, tokenLambdas } from "../storage/Functions";
-
+import { TokenFA12 } from "./tokenFA12";
+import dex_lambdas_comp from "../../build/lambdas/Dex_lambdas.json";
+import token_lambdas_comp from "../../build/lambdas/Token_lambdas.json";
 
 const standard = process.env.EXCHANGE_TOKEN_STANDARD;
 
@@ -21,19 +33,19 @@ export class Dex extends TokenFA2 {
   }
 
   static async init(dexAddress: string): Promise<Dex> {
-    const dex = new Dex(await global.Tezos.contract.at(dexAddress));
+    const dex = new Dex(await Tezos.contract.at(dexAddress));
     console.log("Lambdas");
-    await dex.setTokenFunctionBatch();
-    await dex.setDexFunctionBatch();
+    await dex.setFunctionBatchCompilled('Dex', dex_lambdas_comp);
+    await dex.setFunctionBatchCompilled("Token", token_lambdas_comp);
     console.log("Lambdas set.");
-    return dex
+    return dex;
   }
 
   async updateStorage(
     maps: {
       tokens?: string[];
       token_to_id?: string[];
-      pairs?: string[];
+      pools?: string[];
       ledger?: any[];
       dex_lambdas?: number[];
       token_lambdas?: number[];
@@ -43,25 +55,23 @@ export class Dex extends TokenFA2 {
     this.storage = {
       storage: {
         admin: storage.storage.admin,
+        default_referral: storage.storage.default_referral,
         managers: storage.storage.managers,
         dev_address: storage.storage.dev_address,
         reward_rate: storage.storage.reward_rate,
-        pools_count: storage.storage.pairs_count,
+        pools_count: storage.storage.pools_count,
         tokens: {},
         pool_to_id: {},
         pools: {},
         ledger: {},
-        allowances: {},
+        account_data: {},
         dev_rewards: {},
         referral_rewards: {},
         stakers_balance: {},
-        pool_interest_rewards: {},
-        providers_rewards: {},
         permits: {},
       },
       dex_lambdas: {},
       token_lambdas: {},
-      ledger: {},
       metadata: {},
       token_metadata: {},
     };
@@ -101,61 +111,63 @@ export class Dex extends TokenFA2 {
   }
 
   async initializeExchange(
-    tokenAAddress: string,
-    tokenBAddress: string,
-    tokenAAmount: number,
-    tokenBAmount: number,
-    tokenAid: BigNumber = new BigNumber(0),
-    tokenBid: BigNumber = new BigNumber(0),
+    a_const: BigNumber = new BigNumber("100000"),
+    tokens_count: BigNumber = new BigNumber("3"),
+    inputs: {
+      asset: TokenFA12 | TokenFA2;
+      in_amount: BigNumber;
+      rate: BigNumber;
+    }[],
     approve: boolean = true
   ): Promise<TransactionOperation> {
     if (approve) {
-      if (["FA2", "MIXED"].includes(standard)) {
-        await this.approveFA2Token(
-          tokenAAddress,
-          tokenAid,
-          tokenAAmount,
-          this.contract.address
-        );
-      } else {
-        await this.approveFA12Token(
-          tokenAAddress,
-          tokenAAmount,
-          this.contract.address
-        );
-      }
-      if ("FA2" == standard) {
-        await this.approveFA2Token(
-          tokenBAddress,
-          tokenBid,
-          tokenBAmount,
-          this.contract.address
-        );
-      } else {
-        await this.approveFA12Token(
-          tokenBAddress,
-          tokenBAmount,
-          this.contract.address
+      for (const input of inputs) {
+        await input.asset.approve(
+          this.contract.address,
+          input.in_amount.toNumber()
         );
       }
     }
+    let input_tokens = new MichelsonMap<number, {
+      asset: unknown;
+      in_amount: BigNumber;
+      rate: BigNumber;
+    }>();
+    const input_params = inputs.map((item, i) => {
+      let mapped_item = (input) => {
+        if (input.asset instanceof TokenFA2) {
+          return {
+            asset: {
+              fa2: {
+                token_address: input.asset.contract.address,
+                token_id: defaultTokenId,
+              },
+            },
+            in_amount: input.in_amount,
+            rate: input.rate,
+          };
+        } else
+          return {
+            asset: {
+              fa12: input.asset.contract.address,
+            },
+            in_amount: input.in_amount,
+            rate: input.rate,
+          };
+      };
+      input_tokens.set(i, mapped_item(item));
 
-    const operation = await this.contract.methods
-      .use(
-        "addPair",
-        tokenAAddress,
-        tokenAid,
-        standard.toLowerCase() == "mixed" ? "fa2" : standard.toLowerCase(),
-        null,
-        tokenBAddress,
-        tokenBid,
-        standard.toLowerCase() == "mixed" ? "fa12" : standard.toLowerCase(),
-        null,
-        tokenAAmount,
-        tokenBAmount
-      )
-      .send();
-    await confirmOperation(global.Tezos, operation.hash);
+      return {
+        [i]: mapped_item(item),
+      };
+    }, {});
+    // console.log(this.contract.methods.addPair().schema());
+    const operation = await this.contract.methods.addPair(
+      a_const.toString(),
+      tokens_count.toString(),
+      input_tokens
+    ).send();
+    await confirmOperation(Tezos, operation.hash);
     return operation;
   }
 
@@ -202,7 +214,7 @@ export class Dex extends TokenFA2 {
   //   const operation = await this.contract.methods
   //     .use("swap", swaps, amountIn, minAmountOut, receiver)
   //     .send();
-  //   await confirmOperation(global.Tezos, operation.hash);
+  //   await confirmOperation(Tezos, operation.hash);
   //   return operation;
   // }
 
@@ -271,66 +283,66 @@ export class Dex extends TokenFA2 {
   //   const operation = await this.contract.methods
   //     .use("swap", swaps, amountIn, minAmountOut, receiver)
   //     .send();
-  //   await confirmOperation(global.Tezos, operation.hash);
+  //   await confirmOperation(Tezos, operation.hash);
   //   return operation;
   // }
 
-  async investLiquidity(
-    pairId: string,
-    tokenAmounts: Map<BigNumber, BigNumber>,
-    minShares: number,
-    refferal: string
-  ): Promise<TransactionOperation> {
-    await this.updateStorage({ tokens: [pairId] });
-    let pair = this.storage.storage.tokens[pairId];
-    if (["FA2", "MIXED"].includes(standard)) {
-      await this.approveFA2Token(
-        pair.token_a_address,
-        pair.token_a_id,
+  // async investLiquidity(
+  //   pairId: string,
+  //   tokenAmounts: Map<BigNumber, BigNumber>,
+  //   minShares: number,
+  //   refferal: string
+  // ): Promise<TransactionOperation> {
+  //   await this.updateStorage({ tokens: [pairId] });
+  //   let pair = this.storage.storage.tokens[pairId];
+  //   if (["FA2", "MIXED"].includes(standard)) {
+  //     await this.approveFA2Token(
+  //       pair.token_a_address,
+  //       pair.token_a_id,
 
-        tokenAAmount,
-        this.contract.address
-      );
-    } else {
-      await this.approveFA12Token(
-        pair.token_a_address,
-        tokenAAmount,
-        this.contract.address
-      );
-    }
-    if ("FA2" == standard) {
-      await this.approveFA2Token(
-        pair.token_b_address,
-        pair.token_b_id,
-        tokenBAmount,
-        this.contract.address
-      );
-    } else {
-      await this.approveFA12Token(
-        pair.token_b_address,
-        tokenBAmount,
-        this.contract.address
-      );
-    }
-    const operation = await this.contract.methods
-      .use(
-        "invest",
-        pair.token_a_address,
-        pair.token_a_id,
-        standard.toLowerCase() == "mixed" ? "fa2" : standard.toLowerCase(),
-        null,
-        pair.token_b_address,
-        pair.token_b_id,
-        standard.toLowerCase() == "mixed" ? "fa12" : standard.toLowerCase(),
-        null,
-        minShares,
-        tokenAAmount,
-        tokenBAmount
-      )
-      .send();
-    await confirmOperation(global.Tezos, operation.hash);
-    return operation;
-  }
+  //       tokenAAmount,
+  //       this.contract.address
+  //     );
+  //   } else {
+  //     await this.approveFA12Token(
+  //       pair.token_a_address,
+  //       tokenAAmount,
+  //       this.contract.address
+  //     );
+  //   }
+  //   if ("FA2" == standard) {
+  //     await this.approveFA2Token(
+  //       pair.token_b_address,
+  //       pair.token_b_id,
+  //       tokenBAmount,
+  //       this.contract.address
+  //     );
+  //   } else {
+  //     await this.approveFA12Token(
+  //       pair.token_b_address,
+  //       tokenBAmount,
+  //       this.contract.address
+  //     );
+  //   }
+  //   const operation = await this.contract.methods
+  //     .use(
+  //       "invest",
+  //       pair.token_a_address,
+  //       pair.token_a_id,
+  //       standard.toLowerCase() == "mixed" ? "fa2" : standard.toLowerCase(),
+  //       null,
+  //       pair.token_b_address,
+  //       pair.token_b_id,
+  //       standard.toLowerCase() == "mixed" ? "fa12" : standard.toLowerCase(),
+  //       null,
+  //       minShares,
+  //       tokenAAmount,
+  //       tokenBAmount
+  //     )
+  //     .send();
+  //   await confirmOperation(Tezos, operation.hash);
+  //   return operation;
+  // }
 
   // async divestLiquidity(
   //   pairId: string,
@@ -356,7 +368,7 @@ export class Dex extends TokenFA2 {
   //       sharesBurned
   //     )
   //     .send();
-  //   await confirmOperation(global.Tezos, operation.hash);
+  //   await confirmOperation(Tezos, operation.hash);
   //   return operation;
   // }
 
@@ -367,19 +379,19 @@ export class Dex extends TokenFA2 {
     address: string
   ): Promise<TransactionOperation> {
     await this.updateStorage();
-    let token = await global.Tezos.contract.at(tokenAddress);
+    let token = await Tezos.contract.at(tokenAddress);
     let operation = await token.methods
       .update_operators([
         {
           [tokenAmount ? "add_operator" : "remove_operator"]: {
-            owner: await global.Tezos.signer.publicKeyHash(),
+            owner: await Tezos.signer.publicKeyHash(),
             operator: address,
             token_id: tokenId,
           },
         },
       ])
       .send();
-    await confirmOperation(global.Tezos, operation.hash);
+    await confirmOperation(Tezos, operation.hash);
     return operation;
   }
 
@@ -389,19 +401,19 @@ export class Dex extends TokenFA2 {
     address: string
   ): Promise<TransactionOperation> {
     await this.updateStorage();
-    let token = await global.Tezos.contract.at(tokenAddress);
+    let token = await Tezos.contract.at(tokenAddress);
     let operation = await token.methods.approve(address, tokenAmount).send();
-    await confirmOperation(global.Tezos, operation.hash);
+    await confirmOperation(Tezos, operation.hash);
     return operation;
   }
 
   async setDexFunction(index: number, lambdaName: string): Promise<void> {
     let ligo = getLigo(true);
     const stdout = execSync(
-      `${ligo} compile-parameter --michelson-format=json $PWD/contracts/main/Dex.ligo main 'SetDexFunction(record index =${index}n; func = ${lambdaName}; end)'`,
+      `${ligo} compile expression pascaligo 'SetDexFunction(record [index =${index}n; func = Bytes.pack(${lambdaName})])' --michelson-format json --init-file $PWD/contracts/main/Dex.ligo`,
       { maxBuffer: 1024 * 500 }
     );
-    const operation = await global.Tezos.contract.transfer({
+    const operation = await Tezos.contract.transfer({
       to: this.contract.address,
       amount: 0,
       parameter: {
@@ -409,63 +421,18 @@ export class Dex extends TokenFA2 {
         value: JSON.parse(stdout.toString()).args[0].args[0].args[0].args[0],
       },
     });
-    await confirmOperation(global.Tezos, operation.hash);
+    await confirmOperation(Tezos, operation.hash);
   }
 
   async setDexFunctionBatch(
     funcs_map: LambdaFunctionType[] = dexLambdas
   ): Promise<void> {
-    let batch = await global.Tezos.contract.batch();
+    let batch = await Tezos.contract.batch();
     let ligo = getLigo(true);
     for (const lambdaFunction of funcs_map) {
       console.log(`${lambdaFunction.index}\t${lambdaFunction.name}`);
       const stdout = execSync(
-        `${ligo} compile-parameter --michelson-format=json $PWD/contracts/main/Dex.ligo main 'SetDexFunction(record [index =${lambdaFunction.index}n; func = Bytes.pack(${lambdaFunction.name});])'`,
-        { maxBuffer: 1024 * 500 }
-      );
-      console.log(stdout.toString());
-      batch = batch.withTransfer({
-        to: this.contract.address,
-        amount: 0,
-        parameter: {
-          entrypoint: "setDexFunction",
-          value: Buffer.from(
-            JSON.parse(stdout.toString()).args[0].args[0].args[0].args[0],
-            "ascii"
-          ).toString("hex"),
-        },
-      });
-    }
-    const batchOp = await batch.send();
-    await confirmOperation(global.Tezos, batchOp.hash);
-  }
-
-  async setTokenFunction(index: number, lambdaName: string): Promise<void> {
-    let ligo = getLigo(true);
-    const stdout = execSync(
-      `${ligo} compile-parameter --michelson-format=json $PWD/contracts/main/Dex.ligo main 'SetTokenFunction(record [index =${index}n; func = Bytes.pack(${lambdaName})])'`,
-      { maxBuffer: 1024 * 500 }
-    );
-    const operation = await global.Tezos.contract.transfer({
-      to: this.contract.address,
-      amount: 0,
-      parameter: {
-        entrypoint: "setTokenFunction",
-        value: JSON.parse(stdout.toString()).args[0].args[0].args[0].args[0],
-      },
-    });
-    await confirmOperation(global.Tezos, operation.hash);
-  }
-
-  async setTokenFunctionBatch(
-    funcs_map: LambdaFunctionType[] = tokenLambdas
-  ): Promise<void> {
-    let batch = await global.Tezos.contract.batch();
-    let ligo = getLigo(true);
-    for (const lambdaFunction of funcs_map) {
-      console.log(`${lambdaFunction.index}\t${lambdaFunction.name}`);
-      const stdout = execSync(
-        `${ligo} compile-parameter --michelson-format=json $PWD/contracts/main/Dex.ligo main 'SetTokenFunction(record [index =${lambdaFunction.index}n; func = Bytes.pack(${lambdaFunction.name})])'`,
+        `${ligo} compile expression pascaligo 'SetDexFunction(record [index =${lambdaFunction.index}n; func = Bytes.pack(${lambdaFunction.name})])' --michelson-format json --init-file $PWD/contracts/main/Dex.ligo`,
         { maxBuffer: 1024 * 500 }
       );
       batch = batch.withTransfer({
@@ -478,16 +445,75 @@ export class Dex extends TokenFA2 {
       });
     }
     const batchOp = await batch.send();
-    await confirmOperation(global.Tezos, batchOp.hash);
+    await confirmOperation(Tezos, batchOp.hash);
+  }
+  async setFunctionBatchCompilled(
+    type: "Dex"|"Token",
+    comp_funcs_map
+  ): Promise<void> {
+    let batch = await Tezos.contract.batch();
+    for (const lambdaFunction of comp_funcs_map) {
+      console.log(`${type}\t${lambdaFunction.args[1].int}`);
+      batch = batch.withTransfer({
+        to: this.contract.address,
+        amount: 0,
+        parameter: {
+          entrypoint: `set${type}Function`,
+          value: lambdaFunction,
+        },
+      });
+    }
+    const batchOp = await batch.send();
+    await confirmOperation(Tezos, batchOp.hash);
+  }
+
+  async setTokenFunction(index: number, lambdaName: string): Promise<void> {
+    let ligo = getLigo(true);
+    const stdout = execSync(
+      `${ligo} compile expression pascaligo 'SetTokenFunction(record [index =${index}n; func = Bytes.pack(${lambdaName})])' --michelson-format json --init-file $PWD/contracts/main/Dex.ligo`,
+      { maxBuffer: 1024 * 500 }
+    );
+    const operation = await Tezos.contract.transfer({
+      to: this.contract.address,
+      amount: 0,
+      parameter: {
+        entrypoint: "setTokenFunction",
+        value: JSON.parse(stdout.toString()).args[0].args[0].args[0].args[0],
+      },
+    });
+    await confirmOperation(Tezos, operation.hash);
+  }
+
+  async setTokenFunctionBatch(
+    funcs_map: LambdaFunctionType[] = tokenLambdas
+  ): Promise<void> {
+    let batch = await Tezos.contract.batch();
+    let ligo = getLigo(true);
+    for (const lambdaFunction of funcs_map) {
+      console.log(`${lambdaFunction.index}\t${lambdaFunction.name}`);
+      const stdout = execSync(
+        `${ligo} compile expression pascaligo 'SetTokenFunction(record [index =${lambdaFunction.index}n; func = Bytes.pack(${lambdaFunction.name})])' --michelson-format json --init-file $PWD/contracts/main/Dex.ligo`,
+        { maxBuffer: 1024 * 500 }
+      );
+      batch = batch.withTransfer({
+        to: this.contract.address,
+        amount: 0,
+        parameter: {
+          entrypoint: "setTokenFunction",
+          value: JSON.parse(stdout.toString()).args[0].args[0].args[0].args[0],
+        },
+      });
+    }
+    const batchOp = await batch.send();
+    await confirmOperation(Tezos, batchOp.hash);
+    console.log(`Tokens lambdas set: ${batchOp.hash}`);
   }
 
   async setAdmin(new_admin: string): Promise<TransactionOperation> {
     await this.updateStorage({});
-    console.log(global.Tezos);
-    console.log(this.storage);
     const operation = await this.contract.methods.set_admin(new_admin).send();
-    console.log(operation.hash);
-    await confirmOperation(global.Tezos, operation.hash);
+
+    await confirmOperation(Tezos, operation.hash);
     return operation;
   }
   async addRemManager(
@@ -495,46 +521,35 @@ export class Dex extends TokenFA2 {
     manager: string
   ): Promise<TransactionOperation> {
     await this.updateStorage({});
-    console.log(global.Tezos);
-    console.log(this.storage);
     const operation = await this.contract.methods
       .addRemManagers(add, manager)
       .send();
-    console.log(operation.hash);
-    await confirmOperation(global.Tezos, operation.hash);
+    await confirmOperation(Tezos, operation.hash);
     return operation;
   }
   async setDevAddress(dev: string): Promise<TransactionOperation> {
     await this.updateStorage({});
-    console.log(global.Tezos);
-    console.log(this.storage);
     const operation = await this.contract.methods.set_dev_address(dev).send();
-    console.log(operation.hash);
-    await confirmOperation(global.Tezos, operation.hash);
+
+    await confirmOperation(Tezos, operation.hash);
     return operation;
   }
-  async togglePubInit(): Promise<TransactionOperation> {
+  async setFees(
+    pool_id: BigNumber,
+    fees: FeeType
+  ): Promise<TransactionOperation> {
     await this.updateStorage({});
-    console.log(global.Tezos);
-    console.log(this.storage);
-    const operation = await this.contract.methods.set_public_init(null).send();
-    console.log(operation.hash);
-    await confirmOperation(global.Tezos, operation.hash);
-    return operation;
-  }
-  async setFees(pool_id: BigNumber, fees: FeeType): Promise<TransactionOperation> {
-    await this.updateStorage({});
-    const params = {
-      pair_id: pool_id,
-      fee: fees,
-    };
-    console.log(global.Tezos);
-    console.log(this.storage);
     const operation = await this.contract.methods
-      .set_fees(params)
+      .set_fees(
+        fees.lp_fee,
+        fees.ref_fee,
+        fees.dev_fee,
+        fees.stakers_fee,
+        pool_id
+      )
       .send();
-    console.log(operation.hash);
-    await confirmOperation(global.Tezos, operation.hash);
+
+    await confirmOperation(Tezos, operation.hash);
     return operation;
   }
 }

@@ -14,8 +14,8 @@ function iterate_transfer(
           (user_trx_params.from_,
           transfer.token_id);
         var sender_balance : nat := get_account(user_key, s.storage);
-        var sender_allowance: set(address) := case s.storage.allowances[user_key] of
-            Some(operators) -> operators
+        var sender_allowance: set(address) := case s.storage.account_data[user_key] of
+            Some(data) -> data.allowances
           | None -> (set[]: set(address))
           end;
         check_permissions(user_trx_params.from_, sender_allowance);
@@ -42,22 +42,28 @@ function iterate_update_operator(
       Add_operator(param) -> {
       is_owner(param.owner);
 
-      var sender_allowance: set(address) := case s.storage.allowances[(param.owner, param.token_id)] of
-            Some(operators) -> operators
-          | None -> (set[]: set(address))
+      var account_data: account_data_type := case s.storage.account_data[(param.owner, param.token_id)] of
+            Some(data) -> data
+          | None -> record [
+            allowances      = (set[]  : set(address));
+            earned_interest = (map[]  : map(token_type, acc_reward_type));
+          ]
           end;
-      sender_allowance := Set.add(param.operator, sender_allowance);
-      s.storage.allowances[(param.owner, param.token_id)] := sender_allowance;
+      account_data.allowances := Set.add(param.operator, account_data.allowances);
+      s.storage.account_data[(param.owner, param.token_id)] := account_data;
     }
     | Remove_operator(param) -> {
       is_owner(param.owner);
 
-      var sender_allowance: set(address) := case s.storage.allowances[(param.owner, param.token_id)] of
-            Some(operators) -> operators
-          | None -> (set[]: set(address))
+      var account_data: account_data_type := case s.storage.account_data[(param.owner, param.token_id)] of
+            Some(data) -> data
+          | None -> record [
+            allowances      = (set[]  : set(address));
+            earned_interest = (map[]  : map(token_type, acc_reward_type));
+          ]
           end;
-      sender_allowance := Set.remove(param.operator, sender_allowance);
-      s.storage.allowances[(param.owner, param.token_id)] := sender_allowance;
+      account_data.allowances := Set.remove(param.operator, account_data.allowances);
+      s.storage.account_data[(param.owner, param.token_id)] := account_data;
     }
     end
   } with s
@@ -134,3 +140,22 @@ function update_token_metadata(
     | _ -> skip
     end
   } with (no_operations, s)
+
+function total_supply_view(
+  const p               : token_action_type;
+  var   s               : full_storage_type)
+                        : full_return_type is
+  block {
+    var operations: list(operation) := no_operations;
+    case p of
+    | ITotalSupply(params) -> {
+      const pair : pair_type = get_pair(params.pool_id, s.storage);
+      operations := Tezos.transaction(
+        pair.total_supply,
+        0tz,
+        params.receiver
+      ) # operations;
+    }
+    | _ -> skip
+    end
+  } with (operations, s)

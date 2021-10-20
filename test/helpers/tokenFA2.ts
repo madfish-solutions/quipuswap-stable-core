@@ -3,24 +3,24 @@ import { TransactionOperation } from "@taquito/taquito/dist/types/operations/tra
 import { confirmOperation } from "./confirmation";
 import { Token } from "./token";
 import { TokenStorage } from "./types";
-import { prepareProviderOptions } from "./utils";
+import { prepareProviderOptions, Tezos } from "./utils";
 export const defaultTokenId = 0;
 
 export class TokenFA2 implements Token {
   public contract: ContractAbstraction<ContractProvider>;
-  public storage: TokenStorage;
+  public storage: TokenStorage | any;
 
   constructor(contract: ContractAbstraction<ContractProvider>) {
     this.contract = contract;
   }
 
   static async init(tokenAddress: string): Promise<TokenFA2> {
-    return new TokenFA2(await global.Tezos.contract.at(tokenAddress));
+    return new TokenFA2(await Tezos.contract.at(tokenAddress));
   }
 
   async updateProvider(accountName: string): Promise<void> {
     let config = await prepareProviderOptions(accountName);
-    global.Tezos.setProvider(config);
+    await Tezos.setProvider(config);
   }
 
   async updateStorage(
@@ -30,7 +30,7 @@ export class TokenFA2 implements Token {
   ): Promise<void> {
     const storage: any = await this.contract.storage();
     this.storage = {
-      total_supply: storage.total_supply,
+      total_supply: await storage.total_supply[defaultTokenId],
       ledger: {},
     };
     for (let key in maps) {
@@ -70,7 +70,7 @@ export class TokenFA2 implements Token {
       ])
       .send();
 
-    await confirmOperation(global.Tezos, operation.hash);
+    await confirmOperation(Tezos, operation.hash);
     return operation;
   }
 
@@ -79,7 +79,7 @@ export class TokenFA2 implements Token {
       {
         option: "add_operator",
         param: {
-          owner: await global.Tezos.signer.publicKeyHash(),
+          owner: await Tezos.signer.publicKeyHash(),
           operator: to,
           token_id: defaultTokenId,
         },
@@ -97,7 +97,7 @@ export class TokenFA2 implements Token {
     let operation = await this.contract.methods
       .balance_of({ requests, contract })
       .send();
-    await confirmOperation(global.Tezos, operation.hash);
+    await confirmOperation(Tezos, operation.hash);
     return operation;
   }
 
@@ -105,7 +105,7 @@ export class TokenFA2 implements Token {
     let operation = await this.contract.methods
       .token_metadata_registry(receiver)
       .send();
-    await confirmOperation(global.Tezos, operation.hash);
+    await confirmOperation(Tezos, operation.hash);
     return operation;
   }
 
@@ -128,7 +128,7 @@ export class TokenFA2 implements Token {
         })
       )
       .send();
-    await confirmOperation(global.Tezos, operation.hash);
+    await confirmOperation(Tezos, operation.hash);
     return operation;
   }
 }

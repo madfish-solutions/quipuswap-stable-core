@@ -19,15 +19,6 @@ function get_virt_reserves(
     const pair : pair_type = get_pair(params.pair_id, s.storage)
   } with (list [Tezos.transaction(pair.virtual_reserves, 0tez, params.receiver)], s)
 
-(* LP total supply per pool *)
-function get_total_supply(
-  const params          : total_supply_type;
-  const s               : full_storage_type)
-                        : full_return_type is
-  block {
-    const pair : pair_type = get_pair(params.pair_id, s.storage)
-  } with (list [Tezos.transaction(pair.total_supply, 0tez, params.receiver)], s)
-
 (* min received in the swap *)
 function get_min_received(
   const params          : min_received_type;

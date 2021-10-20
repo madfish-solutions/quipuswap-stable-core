@@ -4,8 +4,8 @@ function get_account(
   const s               : storage_type)
                         : nat is
   case s.ledger[key] of
-    None -> 0n
   | Some(instance) -> instance
+  | None -> 0n
   end;
 
 (* Helper function to get pair info *)
@@ -14,8 +14,8 @@ function get_pair(
   const s               : storage_type)
                         : pair_type is
   case s.pools[pair_id] of
-  | None -> (failwith(err_pair_not_listed): pair_type)
   | Some(instance) -> instance
+  | None -> (failwith(err_pair_not_listed): pair_type)
   end;
 
 (* Helper function to get pair info *)
@@ -24,8 +24,8 @@ function get_tokens(
   const s               : storage_type)
                         : tokens_type is
   case s.tokens[pair_id] of
-  | None -> (failwith(err_pair_not_listed): tokens_type)
   | Some(instance) -> instance
+  | None -> (failwith(err_pair_not_listed): tokens_type)
   end;
 
 (* Helper function to get token pair *)
@@ -37,32 +37,35 @@ function get_pair_info(
     const token_bytes : bytes = Bytes.pack(key);
     const token_id : nat =
       case s.pool_to_id[token_bytes] of
-      | None -> s.pools_count
       | Some(instance) -> instance
+      | None -> s.pools_count
       end;
     const pair : pair_type =
       case s.pools[token_id] of
-        None -> (record [
+      | Some(instance) -> instance
+      | None -> (record [
           initial_A         = 0n;
           future_A          = 0n;
           initial_A_time    = (0: timestamp);
           future_A_time     = (0: timestamp);
-          token_rates       = (map []: map(nat, nat));
-          reserves          = (map []: map(nat, nat));
-          virtual_reserves  = (map []: map(nat, nat));
-          proxy_contract    = (None: option (address));
-          proxy_limits      = (map []: map(nat, nat));
-          staker_accumulator= (map []: map(nat, nat));
+          token_rates       = (map []: map(token_pool_index, nat));
+          reserves          = (map []: map(token_pool_index, nat));
+          virtual_reserves  = (map []: map(token_pool_index, nat));
           fee               = record[
             dev_fee           = 0n;
             lp_fee            = 0n;
             ref_fee           = 0n;
             stakers_fee       = 0n;
           ];
-          stakers_interest  = (map []: map((address * token_type), nat));
+          staker_accumulator= record[
+            accumulator       = (map []: map(token_pool_index, nat));
+            total_staked      = 0n;
+          ];
+          proxy_contract    = (None: option (address));
+          proxy_limits      = (map []: map(token_pool_index, nat));
+          proxy_reward_acc  = (map []: map(token_type, nat));
           total_supply      = 0n;
         ]: pair_type)
-      | Some(instance) -> instance
       end;
   } with (pair, token_id)
 

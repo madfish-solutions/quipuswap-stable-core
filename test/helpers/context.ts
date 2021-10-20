@@ -2,16 +2,17 @@ const standard = process.env.EXCHANGE_TOKEN_STANDARD;
 
 import { Dex as DexFA2 } from "./DexFA2";
 import { TokenFA12 } from "./tokenFA12";
-import { prepareProviderOptions } from "./utils";
+import { prepareProviderOptions, Tezos } from "./utils";
 
 import dexStorage from "../storage/Dex";
 import tokenFA12Storage from "../storage/TokenFA12";
 import tokenFA2Storage from "../storage/TokenFA2";
-import { dexFunctions, tokenFunctions } from "../storage/Functions";
+import { dexLambdas, tokenLambdas, tokenFunctions } from "../storage/Functions";
 import { TokenFA2 } from "./tokenFA2";
 import { Token } from "./token";
 import { TezosToolkit } from "@taquito/taquito";
 import BigNumber from "bignumber.js";
+import { confirmOperation } from "./confirmation";
 
 type Dex = DexFA2;
 const CTokenFA12 = "TokenFA12.ligo";
@@ -46,13 +47,14 @@ export class Context {
     useDeployedDex: boolean = true
   ): Promise<Context> {
     let config = await prepareProviderOptions(accountName);
-    global.Tezos.setProvider(config);
+    Tezos.setProvider(config);
 
-    let dexInstance = await global.deployContract(CDex, dexStorage);
-      // useDeployedDex
-      // ? await deployContract(CDex, dexStorage)
-      // : await deployContract(CDex, dexStorage);
-    const dex = await DexFA2.init(dexInstance.address.toString());
+    const dex_op = await Tezos.contract.originate({
+      code: CDex,
+      storage: dexStorage,
+    });
+    await confirmOperation(Tezos, dex_op.hash);
+    const dex = await DexFA2.init(dex_op.contractAddress);
 
     let context = new Context(dex, []);
     if (setDexFunctions) {
@@ -96,7 +98,7 @@ export class Context {
   }
 
   async setDexFunctions(): Promise<void> {
-    for (let dexFunction of dexFunctions) {
+    for (let dexFunction of dexLambdas) {
       await this.dex.setDexFunction(dexFunction.index, dexFunction.name);
     }
     await this.dex.updateStorage({

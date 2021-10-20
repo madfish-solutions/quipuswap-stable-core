@@ -1,0 +1,35 @@
+[
+  {
+    "index": 0,
+    "name": "initialize_exchange"
+  },
+  {
+    "index": 2,
+    "name": "invest_liquidity"
+  },
+  {
+    "index": 7,
+    "name": "ramp_A"
+  },
+  {
+    "index": 8,
+    "name": "stop_ramp_A"
+  },
+  {
+    "index": 9,
+    "name": "set_proxy"
+  },
+  {
+    "index": 10,
+    "name": "update_proxy_limits"
+  },
+  {
+    "index": 11,
+    "name": "get_reserves"
+  },
+
+  {
+    "index": 16,
+    "name": "get_A"
+  }
+]

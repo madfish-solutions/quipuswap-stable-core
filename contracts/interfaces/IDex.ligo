@@ -2,29 +2,21 @@ type pool_id_type       is nat
 type token_id           is nat
 type token_pool_index   is nat
 
-type transfer_fa2_destination is
-  [@layout:comb]
-  record [
+type transfer_fa2_destination is [@layout:comb] record [
     to_       : address;
     token_id  : token_id;
     amount    : nat;
   ]
-type transfer_fa2_param is
-  [@layout:comb]
-  record [
+type transfer_fa2_param is [@layout:comb] record [
     from_   : address;
     txs     : list (transfer_fa2_destination);
   ]
 type bal_fa12_type      is address * contract(nat)
-type balance_of_fa2_request is
-  [@layout:comb]
-  record [
+type balance_of_fa2_request is [@layout:comb] record [
     owner       : address;
     token_id    : token_id;
   ]
-type balance_of_fa2_response is
-  [@layout:comb]
-  record [
+type balance_of_fa2_response is [@layout:comb] record [
     request     : balance_of_fa2_request;
     balance     : nat;
   ]
@@ -68,6 +60,11 @@ type token_type         is
 | Fa12                    of address
 | Fa2                     of fa2_token_type
 
+// type token_pool_data    is [@layout:comb] record [
+//   token_id      : nat;
+//   token_info    : token_type;
+// ]
+
 type tokens_type        is map(nat, token_type); (* NOTE: maximum 4 tokens from 0 to 3 *)
 
 type fees_storage_type  is record[
@@ -83,20 +80,30 @@ type staker_info_type   is [@layout:comb] record [
   former                  : map(token_pool_index, nat); (* previous amount of rewards minted for user *)
 ]
 
-type permit_parameter is record [
+type staker_acc_type    is [@layout:comb] record [
+  accumulator             : map(token_pool_index, nat);
+  total_staked            : nat;
+]
+
+type account_data_type  is [@layout:comb] record [
+  allowances              : set(address);
+  earned_interest         : map(token_type, acc_reward_type)
+]
+
+type permit_parameter   is record [
   paramHash: bytes;
   signature: signature;
   signerKey: key;
-];
+]
 
 type permits_type       is big_map(bytes, permit_parameter)
-
-type rewards_type       is map(token_pool_index, nat);
 
 type pair_type          is record [
   // exchange_admin          : address;
   initial_A               : nat; (* Constant that describes A constant *)
   initial_A_time          : timestamp;
+  future_A                : nat;
+  future_A_time           : timestamp;
   // tokens_count            : nat; (* from 2 to 4 tokens at one exchange pool *)
   // tokens                  : tokens_type; (* list of exchange tokens *)
   token_rates             : map(token_pool_index, nat); (* each value = 10eN
@@ -109,17 +116,15 @@ type pair_type          is record [
                                            *)
   reserves                : map(token_pool_index, nat); (* list of token reserves in the pool *)
   virtual_reserves        : map(token_pool_index, nat);
-  future_A                : nat;
-  future_A_time           : timestamp;
 
   fee                     : fees_storage_type;
 
-  staker_accumulator      : map(token_pool_index, nat);
+  staker_accumulator      : staker_acc_type;
 
   // proxy_enabled           : bool;
   proxy_contract          : option(address);
   proxy_limits            : map(token_pool_index, nat);
-  stakers_interest        : map((address * token_type), nat);
+  proxy_reward_acc        : map(token_type, nat);
 
   (* LP data *)
 
@@ -127,26 +132,31 @@ type pair_type          is record [
 ]
 
 type storage_type       is record [
+  (* Management *)
   admin                   : address;
-  managers                : set(address);
+  default_referral        : address;
   dev_address             : address;
+  managers                : set(address);
+
   reward_rate             : nat;
   // entered                 : bool; (* reentrancy protection *)
+
+  (* Pools data *)
   pools_count             : nat; (* total pools count *)
   tokens                  : big_map(pool_id_type, tokens_type); (* all the tokens list *)
   pool_to_id              : big_map(bytes, nat); (* all the tokens list *)
   pools                   : big_map(pool_id_type, pair_type); (* pair info per token id *)
-  ledger                  : big_map((address * pool_id_type), nat); (* account info per address *)
-  allowances              : big_map((address * pool_id_type), set (address));
 
+  (* FA2 data *)
+  ledger                  : big_map((address * pool_id_type), nat); (* account info per address *)
+  account_data            : big_map((address * pool_id_type), account_data_type); (* account info per each lp provider *)
+
+  (* Rewards and accumulators *)
   dev_rewards             : big_map(token_type, nat);
-  referral_rewards        : big_map((address * pool_id_type), rewards_type);
+  referral_rewards        : big_map((address * token_type), nat);
   stakers_balance         : big_map((address * pool_id_type), staker_info_type); (**)
 
-  pool_interest_rewards   : big_map ((pool_id_type * token_type), nat);
-
-  providers_rewards       : big_map ((pool_id_type * token_type * address), acc_reward_type);
-
+  (* Permits *)
   permits                 : permits_type;
 
 ]
@@ -223,7 +233,7 @@ type reserves_type      is [@layout:comb] record [
 
 type total_supply_type  is [@layout:comb] record [
   receiver                : contract(nat); (* response receiver *)
-  pair_id                 : nat; (* pair identifier *)
+  pool_id                 : pool_id_type; (* pair identifier *)
 ]
 
 type min_received_type  is [@layout:comb] record [
@@ -292,7 +302,6 @@ type action_type        is
 | UpdateProxyLimits       of upd_proxy_lim_params
 (* VIEWS *)
 // | Get_reserves            of reserves_type      (* returns the underlying token reserves *)
-// | Total_supply            of total_supply_type  (* returns totalSupply of LP tokens *)
 // | Min_received            of min_received_type  (* returns minReceived tokens after swapping *)
 // | Tokens_per_shares       of tps_type           (* returns map of tokens amounts to recieve 1 LP *)
 // | Price_cummulative       of price_cumm_type    (* returns price cumulative and timestamp per block *)
@@ -315,10 +324,11 @@ type get_fee_type       is record [
 ]
 
 type token_action_type  is
-| ITransfer               of transfer_type (* transfer asset from one account to another *)
+| ITransfer              of transfer_type (* transfer asset from one account to another *)
 | IBalanceOf             of bal_fa2_type (* returns the balance of the account *)
 | IUpdateOperators       of operator_type (* updates the token operators *)
 | IUpdateMetadata        of upd_meta_params
+| ITotalSupply           of total_supply_type
 
 type set_token_func_type is record [
   func                    : bytes; (* code of the function *)
@@ -337,6 +347,7 @@ type full_action_type   is
 | Balance_of              of bal_fa2_type (* returns the balance of the account *)
 | Update_operators        of operator_type (* updates the token operators *)
 | Update_metadata         of upd_meta_params
+| Total_supply            of total_supply_type
 // | Get_reserves            of reserves_type (* returns the underlying token reserves *)
 // | Close                   of unit (* entrypoint to prevent reentrancy *)
 | SetDexFunction          of set_dex_func_type (* sets the dex specific function. Is used before the whole system is launched *)

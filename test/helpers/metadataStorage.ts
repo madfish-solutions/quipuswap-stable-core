@@ -6,7 +6,7 @@ import {
 import { TransactionOperation } from "@taquito/taquito/dist/types/operations/transaction-operation";
 import { confirmOperation } from "./confirmation";
 import { MetadataStorage } from "./types";
-import { prepareProviderOptions } from "./utils";
+import { prepareProviderOptions, Tezos } from "./utils";
 
 export class Metadata {
   public contract: ContractAbstraction<ContractProvider>;
@@ -17,12 +17,12 @@ export class Metadata {
   }
 
   static async init(metadataAddress: string): Promise<Metadata> {
-    return new Metadata(await global.Tezos.contract.at(metadataAddress));
+    return new Metadata(await Tezos.contract.at(metadataAddress));
   }
 
   async updateProvider(accountName: string): Promise<void> {
     let config = await prepareProviderOptions(accountName);
-    global.Tezos.setProvider(config);
+    await Tezos.setProvider(config);
   }
 
   async updateStorage(
@@ -59,7 +59,7 @@ export class Metadata {
     let operation = await this.contract.methods
       .update_owners(add, owner)
       .send();
-    await confirmOperation(global.Tezos, operation.hash);
+    await confirmOperation(Tezos, operation.hash);
     return operation;
   }
 
@@ -67,14 +67,14 @@ export class Metadata {
     metadata: MichelsonMap<any, any>
   ): Promise<TransactionOperation> {
     let operation = await this.contract.methods.update_storage(metadata).send();
-    await confirmOperation(global.Tezos, operation.hash);
+    await confirmOperation(Tezos, operation.hash);
     return operation;
   }
   async getMetadata(contract: number): Promise<TransactionOperation> {
     let operation = await this.contract.methods
       .get_metadata(null, contract)
       .send();
-    await confirmOperation(global.Tezos, operation.hash);
+    await confirmOperation(Tezos, operation.hash);
     return operation;
   }
 }

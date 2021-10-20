@@ -88,7 +88,7 @@ function get_D(const _xp: map(nat, nat); const _amp: nat; const s: pair_type): n
     var sum_c: nat := Map.fold(sum, _xp, 0n);
     var _d_prev: nat := 0n;
 
-    if sum_c = 0n
+    if sum_c = 0n and s.total_supply =/= 0n
       then failwith(err_zero_in)
     else skip;
 
@@ -298,52 +298,52 @@ function _calc_withdraw_one_coin(
     const dy_0: nat = abs(xp_i - new_y) / precisions_i;  //# w/o s.fee
   } with (dy, abs(dy_0 - dy), total_supply)
 
-  function apply_invest_fee(
-    const referral  : address;
-    const pair_id   : pool_id_type;
-    const i         : token_pool_index;
-    const difference: nat;
-    var new_balance : nat;
-    var s           : storage_type
-  )                 : (nat * storage_type) is
-    block {
-      var pair : pair_type := get_pair(pair_id, s);
-      const initial_reserves = case pair.virtual_reserves[i] of
-          Some(val) -> val
-        | None -> (failwith("no such index"): nat)
-        end;
-      const fee_all = difference * sum_all_fee(pair);
-      const fee_wo_lp = difference * sum_wo_lp_fee(pair);
-      const dev_fee = difference * pair.fee.dev_fee;
-      const stakers_fee = difference * pair.fee.stakers_fee;
-      const referral_fee = difference * pair.fee.ref_fee;
-      const token = get_token_by_id(i, pair_id, s);
-      const new_reserves = abs(new_balance - fee_wo_lp / _C_fee_denominator);
-      new_balance := abs(new_balance - fee_all  / _C_fee_denominator);
-      pair.virtual_reserves[i] := new_reserves;
-      pair.reserves[i] := case pair.reserves[i] of
-          Some(reserve) -> reserve + abs(new_reserves - initial_reserves)
-        | None -> abs(new_reserves - initial_reserves)
-        end;
-      s.dev_rewards[token] := case s.dev_rewards[token] of
-          Some(rewards) -> rewards + dev_fee
-        | None -> (dev_fee: nat)
-        end;
-      const ref_key: address * pool_id_type = (referral, pair_id);
-      var ref_rew : rewards_type := case s.referral_rewards[ref_key] of
-          Some(reward_map) -> reward_map
-        | None -> (map []: rewards_type)
-        end;
-      ref_rew[i] := case ref_rew[i] of
-          Some(reward) -> reward + referral_fee
-        | None -> (referral_fee: nat)
-        end;
-      s.referral_rewards[ref_key] := ref_rew;
-      pair.staker_accumulator[i] := case pair.staker_accumulator[i] of
-          Some(val) -> val + stakers_fee
-        | None -> (stakers_fee: nat)
-        end;
-      s.pools[pair_id] := pair;
-    } with (new_balance, s)
+  // function apply_invest_fee(
+  //   const referral  : address;
+  //   const pair_id   : pool_id_type;
+  //   const i         : token_pool_index;
+  //   const difference: nat;
+  //   var new_balance : nat;
+  //   var s           : storage_type
+  // )                 : (nat * storage_type) is
+  //   block {
+  //     var pair : pair_type := get_pair(pair_id, s);
+  //     const initial_reserves = case pair.virtual_reserves[i] of
+  //         Some(val) -> val
+  //       | None -> (failwith("no such index"): nat)
+  //       end;
+  //     const fee_all = difference * sum_all_fee(pair);
+  //     const fee_wo_lp = difference * sum_wo_lp_fee(pair);
+  //     const dev_fee = difference * pair.fee.dev_fee;
+  //     const stakers_fee = difference * pair.fee.stakers_fee;
+  //     const referral_fee = difference * pair.fee.ref_fee;
+  //     const token = get_token_by_id(i, pair_id, s);
+  //     const new_reserves = abs(new_balance - fee_wo_lp / _C_fee_denominator);
+  //     new_balance := abs(new_balance - fee_all  / _C_fee_denominator);
+  //     pair.virtual_reserves[i] := new_reserves;
+  //     pair.reserves[i] := case pair.reserves[i] of
+  //         Some(reserve) -> reserve + abs(new_reserves - initial_reserves)
+  //       | None -> abs(new_reserves - initial_reserves)
+  //       end;
+  //     s.dev_rewards[token] := case s.dev_rewards[token] of
+  //         Some(rewards) -> rewards + dev_fee
+  //       | None -> (dev_fee: nat)
+  //       end;
+  //     const ref_key: address * pool_id_type = (referral, pair_id);
+  //     var ref_rew : rewards_type := case s.referral_rewards[ref_key] of
+  //         Some(reward_map) -> reward_map
+  //       | None -> (map []: rewards_type)
+  //       end;
+  //     ref_rew[i] := case ref_rew[i] of
+  //         Some(reward) -> reward + referral_fee
+  //       | None -> (referral_fee: nat)
+  //       end;
+  //     s.referral_rewards[ref_key] := ref_rew;
+  //     pair.staker_accumulator[i] := case pair.staker_accumulator[i] of
+  //         Some(val) -> val + stakers_fee
+  //       | None -> (stakers_fee: nat)
+  //       end;
+  //     s.pools[pair_id] := pair;
+  //   } with (new_balance, s)
 
-function get_default_refer(const s: storage_type): address is s.admin
+function get_default_refer(const s: storage_type): address is s.default_referral

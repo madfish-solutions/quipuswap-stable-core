@@ -1,10 +1,13 @@
 import { MichelsonMap } from "@taquito/michelson-encoder";
+import { DexStorage } from "../helpers/types";
 
 const dex_storage = {
   storage: {
     admin: null as string,
-    managers: [],
     dev_address: null as string,
+    default_referral: null as string,
+    managers: [],
+
     reward_rate: "0",
 
     pools_count: "0",
@@ -12,12 +15,10 @@ const dex_storage = {
     pool_to_id: MichelsonMap.fromLiteral({}),
     pools: MichelsonMap.fromLiteral({}),
     ledger: MichelsonMap.fromLiteral({}),
-    allowances: MichelsonMap.fromLiteral({}),
+    account_data: MichelsonMap.fromLiteral({}),
     dev_rewards: MichelsonMap.fromLiteral({}),
     referral_rewards: MichelsonMap.fromLiteral({}),
     stakers_balance: MichelsonMap.fromLiteral({}),
-    pool_interest_rewards: MichelsonMap.fromLiteral({}),
-    providers_rewards: MichelsonMap.fromLiteral({}),
     permits: MichelsonMap.fromLiteral({}),
   },
   metadata: MichelsonMap.fromLiteral({}),
