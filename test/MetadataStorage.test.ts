@@ -154,5 +154,5 @@ describe("MetadataStorage", () => {
       );
     });
   }
-  else test.skip("MIXED. skip.");
+  else test.skip("MIXED. skip.", () => true);
 });
