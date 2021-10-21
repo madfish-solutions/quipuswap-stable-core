@@ -14,9 +14,9 @@ function call_dex(
 
     const idx : nat = case p of
     | AddPair(_)              -> 0n
-    // | Swap(_)                 -> 1n
+    | Swap(_)                 -> 1n
     | Invest(_)               -> 2n
-    // | Divest(_)               -> 3n
+    | Divest(_)               -> 3n
     // | Invest_one(_)           -> 4n
     // | Divest_one(_)           -> 5n
     // | Claim_admin_rewards(_)  -> 6n

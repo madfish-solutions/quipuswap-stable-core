@@ -90,7 +90,7 @@ type account_data_type  is [@layout:comb] record [
   earned_interest         : map(token_type, acc_reward_type)
 ]
 
-type permit_parameter   is record [
+type permit_parameter   is [@layout:comb] record [
   paramHash: bytes;
   signature: signature;
   signerKey: key;
@@ -98,7 +98,7 @@ type permit_parameter   is record [
 
 type permits_type       is big_map(bytes, permit_parameter)
 
-type pair_type          is record [
+type pair_type          is [@layout:comb] record [
   // exchange_admin          : address;
   initial_A               : nat; (* Constant that describes A constant *)
   initial_A_time          : timestamp;
@@ -131,7 +131,7 @@ type pair_type          is record [
   total_supply            : nat; (* total shares count *)
 ]
 
-type storage_type       is record [
+type storage_type       is [@layout:comb] record [
   (* Management *)
   admin                   : address;
   default_referral        : address;
@@ -161,9 +161,14 @@ type storage_type       is record [
 
 ]
 
-// type swap_type          is
-// | A_to_b (* exchange token A to token B *)
-// | B_to_a (* exchange token B to token A *)
+type swap_type          is [@layout:comb] record [
+  pair_id                 : nat; (* pair identifier *)
+  idx_from                : token_pool_index;
+  idx_to                  : token_pool_index;
+  amount                  : nat;
+  min_amount_out          : nat;
+  receiver                : option(address);
+]
 
 // type swap_slice_type    is record [
 //   pair_id                 : nat; (* pair identifier *)
@@ -187,14 +192,6 @@ type storage_type       is record [
 //   operation               : option(operation); (* exchange operation type *)
 //   receiver                : address; (* address of the receiver *)
 // ]
-
-type swap_type          is [@layout:comb] record [
-  asset_id_in             : nat;
-  amount_in               : nat; (* amount of tokens to be exchanged *)
-  asset_id_out            : nat;
-  min_amount_out          : nat; (* min amount of tokens received to accept exchange *)
-  receiver                : address; (* tokens receiver *)
-]
 
 type input_token        is [@layout:comb] record [
   asset                   : token_type; (* exchange pair info *)
@@ -222,7 +219,7 @@ type invest_type        is [@layout:comb] record [
 
 type divest_type        is [@layout:comb] record [
   pair_id                 : nat; (* pair identifier *)
-  min_amounts_out         : map(nat, nat); (* min amount of tokens, where `index of value` == `index of token` to be received to accept the divestment *)
+  min_amounts_out         : map(token_pool_index, nat); (* min amount of tokens, where `index of value` == `index of token` to be received to accept the divestment *)
   shares                  : nat; (* amount of shares to be burnt *)
 ]
 
@@ -288,9 +285,9 @@ type upd_proxy_lim_params is [@layout:comb] record [
 type action_type        is
 (* Base actions *)
 | AddPair                 of initialize_params  (* sets initial liquidity *)
-// | Swap                    of swap_type          (* exchanges token to another token and sends them to receiver *)
+| Swap                    of swap_type          (* exchanges token to another token and sends them to receiver *)
 | Invest                  of invest_type        (* mints min shares after investing tokens *)
-// | Divest                  of divest_type        (* burns shares and sends tokens to the owner *)
+| Divest                  of divest_type        (* burns shares and sends tokens to the owner *)
 (* Custom actions *)
 // | Invest_one              of invest_one_coin_type
 // | Divest_one              of divest_one_coin_type
@@ -313,12 +310,12 @@ type transfer_type      is list (transfer_fa2_param)
 type operator_type      is list (update_operator_param)
 type upd_meta_params    is token_metadata_info
 
-type set_fee_type       is record [
+type set_fee_type       is [@layout:comb] record [
   pool_id                 : pool_id_type;
   fee                     : fees_storage_type;
 ]
 
-type get_fee_type       is record [
+type get_fee_type       is [@layout:comb] record [
   pool_id                 : pool_id_type;
   receiver                : contract(fees_storage_type);
 ]
@@ -330,12 +327,12 @@ type token_action_type  is
 | IUpdateMetadata        of upd_meta_params
 | ITotalSupply           of total_supply_type
 
-type set_token_func_type is record [
+type set_token_func_type is [@layout:comb] record [
   func                    : bytes; (* code of the function *)
   index                   : nat; (* the key in functions map *)
 ]
 
-type set_dex_func_type  is record [
+type set_dex_func_type  is [@layout:comb] record [
   func                    : bytes; (* code of the function *)
   index                   : nat; (* the key in functions map *)
 ]
@@ -359,7 +356,7 @@ type full_action_type   is
 | Set_fees                of set_fee_type
 | Get_fees                of get_fee_type
 
-type full_storage_type  is record [
+type full_storage_type  is [@layout:comb] record [
   storage                 : storage_type; (* real dex storage_type *)
   (* Token Metadata *)
   metadata                : big_map(string, bytes); (* metadata storage_type according to TZIP-016 *)

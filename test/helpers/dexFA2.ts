@@ -537,11 +537,11 @@ export class Dex extends TokenFA2 {
     await this.updateStorage({});
     const operation = await this.contract.methods
       .set_fees(
+        pool_id,
         fees.lp_fee,
         fees.ref_fee,
         fees.dev_fee,
         fees.stakers_fee,
-        pool_id
       )
       .send();
 
