@@ -32,7 +32,7 @@ function _xp_mem(const _balances: map(nat, nat); const s: pair_type): map(nat, n
       } with value * bal / _C_precision;
   } with Map.map(count_result, s.token_rates);
 
-function _xp(const s: pair_type): map(nat, nat) is _xp_mem(s.reserves, s);
+function _xp(const s: pair_type): map(nat, nat) is _xp_mem(s.virtual_reserves, s);
 
 (* Handle ramping A up or down *)
 function _A(const s: pair_type): nat is
@@ -347,3 +347,31 @@ function _calc_withdraw_one_coin(
   //   } with (new_balance, s)
 
 function get_default_refer(const s: storage_type): address is s.default_referral
+
+function preform_swap(
+  const i: token_pool_index;
+  const j: token_pool_index;
+  const dx: nat;
+  const pair: pair_type): nat is
+  block {
+    const xp = _xp(pair);
+    const xp_i = case xp[i] of
+      | Some(value) -> value
+      | None -> (failwith("no such index"): nat)
+      end;
+    const xp_j = case xp[j] of
+      | Some(value) -> value
+      | None -> (failwith("no such index"): nat)
+      end;
+    const rate_i = case pair.token_rates[i] of
+      | Some(value) -> value
+      | None -> (failwith("no such index"): nat)
+      end;
+    const rate_j = case pair.token_rates[j] of
+      | Some(value) -> value
+      | None -> (failwith("no such index"): nat)
+      end;
+    const x = xp_i + dx * rate_i / _C_precision;
+    const y = get_y(i, j, x, xp, pair);
+    const dy = abs(xp_j - y - 1);  // -1 just in case there were some rounding errors
+  } with dy * _C_precision / rate_j

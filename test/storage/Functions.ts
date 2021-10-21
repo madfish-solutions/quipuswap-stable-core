@@ -5,18 +5,18 @@ export const dexLambdas: LambdaFunctionType[] = [
     index: 0,
     name: "initialize_exchange",
   },
-  // {
-  //   index: 1,
-  //   name: "swap",
-  // },
+  {
+    index: 1,
+    name: "swap",
+  },
   {
     index: 2,
     name: "invest_liquidity",
   },
-  // {
-  //   index: 3,
-  //   name: "divest_liquidity",
-  // },
+  {
+    index: 3,
+    name: "divest_liquidity",
+  },
   // {
   //   index: 4,
   //   name: "invest_liquidity_imbalanced",
@@ -76,10 +76,10 @@ export const tokenLambdas: LambdaFunctionType[] = [
     index: 0,
     name: "transfer_ep",
   },
-  // {
-  //   index: 1,
-  //   name: "get_balance_of",
-  // },
+  {
+    index: 1,
+    name: "get_balance_of",
+  },
   {
     index: 2,
     name: "update_operators",

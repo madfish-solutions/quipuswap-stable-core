@@ -4,8 +4,16 @@
     "name": "initialize_exchange"
   },
   {
+    "index": 1,
+    "name": "swap"
+  },
+  {
     "index": 2,
     "name": "invest_liquidity"
+  },
+  {
+    "index": 3,
+    "name": "divest_liquidity"
   },
   {
     "index": 7,
@@ -27,7 +35,6 @@
     "index": 11,
     "name": "get_reserves"
   },
-
   {
     "index": 16,
     "name": "get_A"

@@ -204,6 +204,7 @@ describe("Dex", () => {
       let config = await prepareProviderOptions(sender);
       Tezos.setProvider(config);
       await dex.updateStorage({});
+      expect(await Tezos.signer.publicKeyHash()).toEqual(dex.storage.storage.admin);
       const initPairCount = new BigNumber(dex.storage.storage.pools_count);
       await dex.initializeExchange(a_const, tokens_count, inputs, approve);
       await dex.updateStorage({});
@@ -290,7 +291,7 @@ describe("Dex", () => {
         });
         tokens_count = new BigNumber(inputs.length);
       });
-      it.skip("2.1.1. should fail if not admin try to add pool", async () =>
+      it("2.1.1. should fail if not admin try to add pool", async () =>
         await failCase(
           "bob",
           async () =>

@@ -4,6 +4,10 @@
     "name": "transfer_ep"
   },
   {
+    "index": 1,
+    "name": "get_balance_of"
+  },
+  {
     "index": 2,
     "name": "update_operators"
   },
