@@ -16,6 +16,8 @@ const launchTests = async (options: JestCommandOptions): Promise<void> => {
 
     const args = [
       "--colors",
+      "--verbose",
+      "--expand"
     ];
 
     if (options.e2e) {

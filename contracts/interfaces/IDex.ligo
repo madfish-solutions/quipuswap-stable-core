@@ -41,7 +41,7 @@ type update_operator_param is
 | Add_operator            of operator_fa2_param
 | Remove_operator         of operator_fa2_param
 
-type fa2_token_type     is record [
+type fa2_token_type     is [@layout:comb] record [
   token_address           : address; (* token A address *)
   token_id                : nat; (* token A identifier *)
 ]

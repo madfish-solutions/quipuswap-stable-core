@@ -34,10 +34,8 @@ export class Dex extends TokenFA2 {
 
   static async init(dexAddress: string): Promise<Dex> {
     const dex = new Dex(await Tezos.contract.at(dexAddress));
-    console.log("Lambdas");
-    await dex.setFunctionBatchCompilled('Dex', dex_lambdas_comp);
+    await dex.setFunctionBatchCompilled("Dex", dex_lambdas_comp);
     await dex.setFunctionBatchCompilled("Token", token_lambdas_comp);
-    console.log("Lambdas set.");
     return dex;
   }
 
@@ -128,11 +126,14 @@ export class Dex extends TokenFA2 {
         );
       }
     }
-    let input_tokens = new MichelsonMap<number, {
-      asset: unknown;
-      in_amount: BigNumber;
-      rate: BigNumber;
-    }>();
+    let input_tokens = new MichelsonMap<
+      number,
+      {
+        asset: unknown;
+        in_amount: BigNumber;
+        rate: BigNumber;
+      }
+    >();
     const input_params = inputs.map((item, i) => {
       let mapped_item = (input) => {
         if (input.asset instanceof TokenFA2) {
@@ -161,12 +162,9 @@ export class Dex extends TokenFA2 {
         [i]: mapped_item(item),
       };
     }, {});
-    // console.log(this.contract.methods.addPair().schema());
-    const operation = await this.contract.methods.addPair(
-      a_const.toString(),
-      tokens_count.toString(),
-      input_tokens
-    ).send();
+    const operation = await this.contract.methods
+      .addPair(a_const, tokens_count, input_tokens)
+      .send();
     await confirmOperation(Tezos, operation.hash);
     return operation;
   }
@@ -448,12 +446,11 @@ export class Dex extends TokenFA2 {
     await confirmOperation(Tezos, batchOp.hash);
   }
   async setFunctionBatchCompilled(
-    type: "Dex"|"Token",
+    type: "Dex" | "Token",
     comp_funcs_map
   ): Promise<void> {
     let batch = await Tezos.contract.batch();
     for (const lambdaFunction of comp_funcs_map) {
-      console.log(`${type}\t${lambdaFunction.args[1].int}`);
       batch = batch.withTransfer({
         to: this.contract.address,
         amount: 0,
@@ -506,7 +503,6 @@ export class Dex extends TokenFA2 {
     }
     const batchOp = await batch.send();
     await confirmOperation(Tezos, batchOp.hash);
-    console.log(`Tokens lambdas set: ${batchOp.hash}`);
   }
 
   async setAdmin(new_admin: string): Promise<TransactionOperation> {

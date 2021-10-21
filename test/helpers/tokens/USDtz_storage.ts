@@ -7,7 +7,7 @@ const eveAddress: string = sandbox.accounts.eve.pkh;
 
 
 
-export const USDtzstorage = {
+const USDtzstorage = {
   admin: aliceAddress,
   ledger: MichelsonMap.fromLiteral({
     [aliceAddress]: {
@@ -26,3 +26,5 @@ export const USDtzstorage = {
   paused: false,
   totalSupply: "3000000000000",
 };
+
+export default USDtzstorage;

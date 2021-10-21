@@ -5,7 +5,7 @@ const aliceAddress: string = sandbox.accounts.alice.pkh;
 const bobAddress: string = sandbox.accounts.bob.pkh;
 const eveAddress: string = sandbox.accounts.eve.pkh;
 
-export const kUSDstorage = {
+const kUSDstorage = {
   administrator: aliceAddress,
   balances: MichelsonMap.fromLiteral({
     [aliceAddress]: {
@@ -229,3 +229,5 @@ export const kUSDstorage = {
   totalSupply: "6000000000000000000000000",
   paused: false,
 };
+
+export default kUSDstorage;

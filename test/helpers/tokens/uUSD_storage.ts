@@ -33,7 +33,7 @@ admins.set({
 }, null);
 
 
-export const uUSDstorage = {
+const uUSDstorage = {
   administrators: admins,
   ledger: ledger,
   operators: MichelsonMap.fromLiteral({}),
@@ -47,3 +47,5 @@ export const uUSDstorage = {
     [defaultTokenId]: "3000000000000000000000000",
   }),
 };
+
+export default uUSDstorage;

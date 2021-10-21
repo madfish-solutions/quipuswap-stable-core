@@ -1,20 +1,11 @@
-import { Dex } from "./helpers/dexFA2";
-import BigNumber from "bignumber.js";
-import { sandbox } from "../config.json";
-import { prepareProviderOptions, AccountsLiteral, Tezos } from "./helpers/utils";
-import { rejects, ok } from "assert";
-// import expect from "expect";
-import { FeeType } from "./helpers/types";
-import storage from "./storage/Dex";
-import { TokenFA12 } from "./helpers/tokenFA12";
-import { TokenFA2 } from "./helpers/tokenFA2";
-import { uUSDstorage } from "./helpers/tokens/uUSD_storage";
-import { USDtzstorage } from "./helpers/tokens/USDtz_storage";
-import { kUSDstorage } from "./helpers/tokens/kUSD_storage";
-import { confirmOperation } from "./helpers/confirmation";
-import { MichelsonMap, TezosToolkit } from "@taquito/taquito";
+import config from "../config.json";
 const fs = require("fs");
-
+const accounts = config.sandbox.accounts;
+import BigNumber from "bignumber.js";
+import storage from "./storage/Dex";
+import uUSDstorage from "./helpers/tokens/uUSD_storage";
+import USDtzstorage from "./helpers/tokens/USDtz_storage";
+import kUSDstorage from "./helpers/tokens/kUSD_storage";
 import dex_contract from "../build/Dex.ligo.json";
 const kUSD_contract = fs
   .readFileSync("./test/helpers/tokens/kUSD.tz")
@@ -25,8 +16,17 @@ const USDtz_contract = fs
 const uUSD_contract = fs
   .readFileSync("./test/helpers/tokens/uUSD.tz")
   .toString();
-
-const accounts = sandbox.accounts;
+import { Dex } from "./helpers/dexFA2";
+import {
+  prepareProviderOptions,
+  AccountsLiteral,
+  Tezos,
+} from "./helpers/utils";
+import { FeeType } from "./helpers/types";
+import { TokenFA12 } from "./helpers/tokenFA12";
+import { TokenFA2 } from "./helpers/tokenFA2";
+import { confirmOperation } from "./helpers/confirmation";
+import { TezosToolkit } from "@taquito/taquito";
 
 describe("Dex", () => {
   let dex: Dex;
@@ -57,9 +57,9 @@ describe("Dex", () => {
   ) {
     let config = await prepareProviderOptions(sender);
     Tezos.setProvider(config);
-    return rejects(act, (err: any) => {
-      ok(err.message == errorMsg, "Error message mismatch");
-      return true;
+    expect.assertions(1);
+    return await expect(act).rejects.toMatchObject({
+      message: errorMsg,
     });
   }
 
@@ -84,7 +84,6 @@ describe("Dex", () => {
       Tezos.setProvider(config);
       await dex.updateStorage({});
       const initManagers = dex.storage.storage.managers;
-
       await dex.addRemManager(add, manager);
       await dex.updateStorage({});
       const updatedManagers = dex.storage.storage.managers;
@@ -157,32 +156,28 @@ describe("Dex", () => {
   });
 
   describe("2. Testing Pools endpoints", () => {
-
     type TokensMap = {
       kUSD: TokenFA12;
       USDtz: TokenFA12;
       uUSD: TokenFA2;
-    }
+    };
 
     let tokens: TokensMap;
 
     async function setupTrioTokens(tezos: TezosToolkit): Promise<TokensMap> {
       let result: any = {};
-      console.log("Originating kUSD");
       const kUSD = await tezos.contract.originate({
         code: kUSD_contract,
         storage: kUSDstorage,
       });
       await confirmOperation(tezos, kUSD.hash);
       result.kUSD = await TokenFA12.init(kUSD.contractAddress);
-      console.log("Originating USDtz");
       const USDtz = await tezos.contract.originate({
         code: USDtz_contract,
         storage: USDtzstorage,
       });
       await confirmOperation(tezos, USDtz.hash);
       result.USDtz = await TokenFA12.init(USDtz.contractAddress);
-      console.log("Originating uUSD");
       const uUSD = await tezos.contract.originate({
         code: uUSD_contract,
         storage: uUSDstorage,
@@ -192,12 +187,9 @@ describe("Dex", () => {
       return result as TokensMap;
     }
 
-
     beforeAll(async () => {
-      console.log("Setup tokens");
       tokens = await setupTrioTokens(Tezos);
-      console.log("Setup T Finished");
-    })
+    });
     async function addNewPair(
       sender: AccountsLiteral,
       a_const: BigNumber = new BigNumber("100000"),
@@ -245,12 +237,13 @@ describe("Dex", () => {
       Tezos.setProvider(config);
       await dex.updateStorage({ pools: [pool_id.toString()] });
       const initStorage = (await dex.contract.storage()) as any;
-      const initFee = (await initStorage.storage.pools.get(pool_id)
-      ).fee as FeeType;
+      const initFee = (await initStorage.storage.pools.get(pool_id))
+        .fee as FeeType;
       await dex.setFees(pool_id, fees);
       await dex.updateStorage({ pools: [pool_id.toString()] });
       const updStorage = (await dex.contract.storage()) as any;
-      const updatedFees = (await updStorage.storage.pools.get(pool_id)).fee as FeeType;
+      const updatedFees = (await updStorage.storage.pools.get(pool_id))
+        .fee as FeeType;
       for (let i in updatedFees) {
         expect(updatedFees[i].toNumber()).toEqual(fees[i].toNumber());
       }
@@ -262,39 +255,41 @@ describe("Dex", () => {
       expect(updatedFees.dev_fee.toNumber()).toEqual(fees.dev_fee.toNumber());
       return true;
     }
-      describe("2.1. Test adding new pool", () => {
-        let inputs;
-        const a_const = new BigNumber("100000");
-        let tokens_count: BigNumber;
-        beforeAll(async () => {
-          inputs = [
-            {
-              asset: tokens.kUSD,
-              in_amount: new BigNumber(10).pow(18 + 6),
-              rate: new BigNumber(10).pow(18 - 18),
-            },
-            {
-              asset: tokens.USDtz,
-              in_amount: new BigNumber(10).pow(6 + 6),
-              rate: new BigNumber(10).pow(18 - 6),
-            },
-            {
-              asset: tokens.uUSD,
-              in_amount: new BigNumber(10).pow(12 + 6),
-              rate: new BigNumber(10).pow(18 - 12),
-            },
-          ];
-          inputs = inputs.sort(
-            (a, b) => {
-              if (a instanceof TokenFA2 && b instanceof TokenFA12) return 1;
-              else if (b instanceof TokenFA2 && a instanceof TokenFA12) return -1;
-              else if (a.asset.contract.address < b.asset.contract.address) return 1;
-              else if (a.asset.contract.address > b.asset.contract.address) return -1;
-              else 0;
-            }
-          );
-          tokens_count = new BigNumber(inputs.length);
+    describe("2.1. Test adding new pool", () => {
+      let inputs;
+      const a_const = new BigNumber("100000");
+      let tokens_count: BigNumber;
+      beforeAll(async () => {
+        inputs = [
+          {
+            asset: tokens.kUSD,
+            in_amount: new BigNumber(10).pow(18 + 6),
+            rate: new BigNumber(10).pow(18 - 18),
+          },
+          {
+            asset: tokens.USDtz,
+            in_amount: new BigNumber(10).pow(6 + 6),
+            rate: new BigNumber(10).pow(18 - 6),
+          },
+          {
+            asset: tokens.uUSD,
+            in_amount: new BigNumber(10).pow(12 + 6),
+            rate: new BigNumber(10).pow(18 - 12),
+          },
+        ];
+        inputs = inputs.sort((a, b) => {
+          if (a.asset instanceof TokenFA2 && b.asset instanceof TokenFA12)
+            return -1;
+          else if (b.asset instanceof TokenFA2 && a.asset instanceof TokenFA12)
+            return 1;
+          else if (a.asset.contract.address < b.asset.contract.address)
+            return 1;
+          else if (a.asset.contract.address > b.asset.contract.address)
+            return -1;
+          else 0;
         });
+        tokens_count = new BigNumber(inputs.length);
+      });
       it.skip("2.1.1. should fail if not admin try to add pool", async () =>
         await failCase(
           "bob",
