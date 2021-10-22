@@ -22,11 +22,11 @@ import {
   AccountsLiteral,
   Tezos,
 } from "./helpers/utils";
-import { FeeType } from "./helpers/types";
+import { FA12TokenType, FA2TokenType, FeeType } from "./helpers/types";
 import { TokenFA12 } from "./helpers/tokenFA12";
 import { TokenFA2 } from "./helpers/tokenFA2";
 import { confirmOperation } from "./helpers/confirmation";
-import { TezosToolkit } from "@taquito/taquito";
+import { MichelsonMap, TezosToolkit, VIEW_LAMBDA } from "@taquito/taquito";
 
 describe("Dex", () => {
   let dex: Dex;
@@ -125,22 +125,6 @@ describe("Dex", () => {
         await setDevAddrSuccessCase("eve", aliceAddress));
     });
 
-    // describe("Test setting new fees", () => {
-    //   const fees: FeeType = {
-    //     lp_fee: new BigNumber("1000000"),
-    //     stakers_fee: new BigNumber("1000000"),
-    //     ref_fee: new BigNumber("1000000"),
-    //     dev_fee: new BigNumber("1000000"),
-    //   };
-    //   failCase(
-    //     "should fail if not admin try to set fees",
-    //     "bob",
-    //     async () => dex.setFees(new BigNumber("0"), fees),
-    //     "Dex/not-contact-admin"
-    //   );
-    //   setFeesSuccessCase("should change fees", "alice", new BigNumber("0"), fees);
-    // });
-
     describe("1.3. Test setting managers", () => {
       it("1.3.1. should fail if not admin try set manager", async () =>
         await failCase(
@@ -190,76 +174,45 @@ describe("Dex", () => {
     beforeAll(async () => {
       tokens = await setupTrioTokens(Tezos);
     });
-    async function addNewPair(
-      sender: AccountsLiteral,
-      a_const: BigNumber = new BigNumber("100000"),
-      tokens_count: BigNumber = new BigNumber("3"),
-      inputs: {
-        asset: TokenFA12 | TokenFA2;
-        in_amount: BigNumber;
-        rate: BigNumber;
-      }[],
-      approve: boolean = true
-    ) {
-      let config = await prepareProviderOptions(sender);
-      Tezos.setProvider(config);
-      await dex.updateStorage({});
-      expect(await Tezos.signer.publicKeyHash()).toEqual(dex.storage.storage.admin);
-      const initPairCount = new BigNumber(dex.storage.storage.pools_count);
-      await dex.initializeExchange(a_const, tokens_count, inputs, approve);
-      await dex.updateStorage({});
-      const updatedPairCount = new BigNumber(dex.storage.storage.pools_count);
-      expect(initPairCount.toNumber() + 1).toEqual(updatedPairCount.toNumber());
-      return true;
-    }
 
-    // function investLiquidity(decription, sender, pool_id, params) {
-    //   test(decription, async function () {
-    //     let config = await prepareProviderOptions(sender);
-    //     await global.Tezos.setProvider(config);
-    //     await dex.updateStorage({});
-    //     console.log(config);
-    //     console.log(global.Tezos);
-    //     const initLPBalance = new BigNumber(dex.storage.storage.pools[pool_id].total_supply);
-
-    //     await dex.addLiqidity(pair_id, manager);
-    //     await dex.updateStorage({});
-    //     const updatedManagers = dex.storage.storage.managers;
-    //     expect(updatedManagers.includes(manager)).toBe(add);
-    //   });
-    // }
-
-    async function setFeesSuccessCase(
-      sender: AccountsLiteral,
-      pool_id: BigNumber,
-      fees: FeeType
-    ) {
-      let config = await prepareProviderOptions(sender);
-      Tezos.setProvider(config);
-      await dex.updateStorage({ pools: [pool_id.toString()] });
-      const initStorage = (await dex.contract.storage()) as any;
-      const initFee = (await initStorage.storage.pools.get(pool_id))
-        .fee as FeeType;
-      await dex.setFees(pool_id, fees);
-      await dex.updateStorage({ pools: [pool_id.toString()] });
-      const updStorage = (await dex.contract.storage()) as any;
-      const updatedFees = (await updStorage.storage.pools.get(pool_id))
-        .fee as FeeType;
-      for (let i in updatedFees) {
-        expect(updatedFees[i].toNumber()).toEqual(fees[i].toNumber());
-      }
-      expect(updatedFees.lp_fee.toNumber()).toEqual(fees.lp_fee.toNumber());
-      expect(updatedFees.stakers_fee.toNumber()).toEqual(
-        fees.stakers_fee.toNumber()
-      );
-      expect(updatedFees.ref_fee.toNumber()).toEqual(fees.ref_fee.toNumber());
-      expect(updatedFees.dev_fee.toNumber()).toEqual(fees.dev_fee.toNumber());
-      return true;
-    }
     describe("2.1. Test adding new pool", () => {
       let inputs;
       const a_const = new BigNumber("100000");
       let tokens_count: BigNumber;
+
+      async function addNewPair(
+        sender: AccountsLiteral,
+        a_const: BigNumber = new BigNumber("100000"),
+        tokens_count: BigNumber = new BigNumber("3"),
+        inputs: {
+          asset: TokenFA12 | TokenFA2;
+          in_amount: BigNumber;
+          rate: BigNumber;
+        }[],
+        approve: boolean = true
+      ) {
+        let config = await prepareProviderOptions(sender);
+        Tezos.setProvider(config);
+        await dex.updateStorage({});
+        expect(await Tezos.signer.publicKeyHash()).toEqual(
+          dex.storage.storage.admin
+        );
+        const initPairCount = new BigNumber(dex.storage.storage.pools_count);
+        await dex.initializeExchange(a_const, tokens_count, inputs, approve);
+        await dex.updateStorage({});
+        await dex.updateStorage({
+          pools: [(dex.storage.storage.pools_count.toNumber() - 1).toString()],
+          ledger: [[accounts[sender].pkh, 0]],
+        });
+        const updatedPairCount = new BigNumber(dex.storage.storage.pools_count);
+        expect(initPairCount.toNumber() + 1).toEqual(
+          updatedPairCount.toNumber()
+        );
+        expect(
+          dex.storage.storage.ledger[accounts[sender].pkh].toNumber()
+        ).toBeGreaterThan(0);
+        return true;
+      }
       beforeAll(async () => {
         inputs = [
           {
@@ -302,23 +255,283 @@ describe("Dex", () => {
         await addNewPair("eve", a_const, tokens_count, inputs, true));
     });
 
-    describe("2.2. Test setting new fees", () => {
-      const fees: FeeType = {
-        lp_fee: new BigNumber("1000000"),
-        stakers_fee: new BigNumber("1000000"),
-        ref_fee: new BigNumber("1000000"),
-        dev_fee: new BigNumber("1000000"),
-      };
-      it("2.2.1. should fail if not admin try to set new fee", async () =>
+    describe("2.2. Test pool administration", () => {
+      describe("2.2.1. Ramping A constant", () => {
+        it.todo("2.2.1.1. should fail if not admin performs ramp A");
+        it.todo("2.2.1.2. should ramp A");
+        it.todo("2.2.1.3. should fail if not admin performs stopping ramp A");
+        it.todo("2.2.1.4. should stop ramp A");
+      });
+      describe("2.2.2. Ramping A constant", () => {
+        it.todo("2.2.2.1. should fail if not admin performs ramp A");
+        it.todo("2.2.2.2. should ramp A");
+        it.todo("2.2.2.3. should fail if not admin performs stopping ramp A");
+        it.todo("2.2.2.4. should stop ramp A");
+      });
+      describe("2.2.3 Setting fees", () => {
+        const fees: FeeType = {
+          lp_fee: new BigNumber("1000000"),
+          stakers_fee: new BigNumber("1000000"),
+          ref_fee: new BigNumber("1000000"),
+          dev_fee: new BigNumber("1000000"),
+        };
+        async function setFeesSuccessCase(
+          sender: AccountsLiteral,
+          pool_id: BigNumber,
+          fees: FeeType
+        ) {
+          let config = await prepareProviderOptions(sender);
+          Tezos.setProvider(config);
+          await dex.updateStorage({ pools: [pool_id.toString()] });
+          expect(await Tezos.signer.publicKeyHash()).toEqual(
+            dex.storage.storage.admin
+          );
+          const initFee = dex.storage.storage.pools[pool_id.toString()]
+            .fee as FeeType;
+          expect(initFee).not.toMatchObject(fees);
+          await dex.setFees(pool_id, fees);
+          await dex.updateStorage({ pools: [pool_id.toString()] });
+          const updStorage = (await dex.contract.storage()) as any;
+          const updatedFees = (await updStorage.storage.pools.get(pool_id))
+            .fee as FeeType;
+          for (let i in updatedFees) {
+            expect(updatedFees[i].toNumber()).toEqual(fees[i].toNumber());
+          }
+          expect(updatedFees.lp_fee.toNumber()).toEqual(fees.lp_fee.toNumber());
+          expect(updatedFees.stakers_fee.toNumber()).toEqual(
+            fees.stakers_fee.toNumber()
+          );
+          expect(updatedFees.ref_fee.toNumber()).toEqual(
+            fees.ref_fee.toNumber()
+          );
+          expect(updatedFees.dev_fee.toNumber()).toEqual(
+            fees.dev_fee.toNumber()
+          );
+          return true;
+        }
+        it("2.2.3.1. should fail if not admin try to set new fee", async () =>
+          await failCase(
+            "bob",
+            async () => await dex.setFees(new BigNumber("0"), fees),
+            "Dex/not-contact-admin"
+          ));
+        it("2.2.3.2. should change fees", async () =>
+          await setFeesSuccessCase("eve", new BigNumber("0"), fees));
+      });
+      describe("2.2.4 Setting proxy", () => {
+        it.todo("2.2.4.1. should fail if not admin try to set new proxy");
+        it.todo("2.2.4.2. should set proxy");
+        it.todo("2.2.4.3. should remove proxy");
+      });
+      describe("2.2.5 Update proxy limits", () => {
+        it.todo(
+          "2.2.5.1. should fail if not admin try to set new proxy limits"
+        );
+        it.todo("2.2.5.2. should set proxy limits");
+      });
+    });
+
+    describe("2.3. Test invest liq", () => {
+      let amounts: Map<BigNumber, BigNumber>;
+      const kUSDAmount = new BigNumber("1000000000000000000000");
+      const uUSDAmount = new BigNumber("1000000000000000");
+      const USDtzAmount = new BigNumber("1000000000");
+      const min_shares = new BigNumber("1000");
+      let pool_id: BigNumber;
+      const referral = aliceAddress;
+
+      async function investLiquidity(
+        sender,
+        pool_id: BigNumber,
+        referral: string,
+        min_shares: BigNumber,
+        in_amounts: Map<BigNumber, BigNumber>
+      ) {
+        let config = await prepareProviderOptions(sender);
+        await global.Tezos.setProvider(config);
+        await dex.updateStorage({ pools: [pool_id.toString()] });
+        const initLPBalance = new BigNumber(
+          dex.storage.storage.pools[pool_id.toNumber()].total_supply
+        );
+
+        await dex.investLiquidity(pool_id, in_amounts, min_shares, referral);
+        await dex.updateStorage({ pools: [pool_id.toString()] });
+        const updatedLPBalance = new BigNumber(
+          dex.storage.storage.pools[pool_id.toNumber()].total_supply
+        );
+        expect(updatedLPBalance.toNumber()).toBeGreaterThan(
+          initLPBalance.toNumber()
+        );
+      }
+
+      beforeAll(async () => {
+        amounts = new Map<BigNumber, BigNumber>();
+        await dex.updateStorage({});
+        pool_id = dex.storage.storage.pools_count.minus(new BigNumber(1));
+        await dex.updateStorage({ tokens: [pool_id.toString()] });
+        const tokens_map = dex.storage.storage.tokens[
+          pool_id.toNumber()
+        ] as any as Map<string, FA2TokenType | FA12TokenType>;
+        for (let [k, v] of tokens_map.entries()) {
+          let token: FA2TokenType | FA12TokenType = v as FA2TokenType;
+          let contract_address;
+          if (token.fa2) {
+            contract_address = token.fa2.token_address;
+          } else {
+            token = v as FA12TokenType;
+            contract_address = token.fa12;
+          }
+          if (contract_address) {
+            let input_amount = new BigNumber("0");
+            if (contract_address == tokens.USDtz.contract.address) {
+              input_amount = USDtzAmount;
+              await tokens.USDtz.approve(
+                dex.contract.address,
+                input_amount.toNumber()
+              );
+            } else if (contract_address == tokens.kUSD.contract.address) {
+              input_amount = kUSDAmount;
+              await tokens.kUSD.approve(
+                dex.contract.address,
+                input_amount.toNumber()
+              );
+            } else if (contract_address == tokens.uUSD.contract.address) {
+              input_amount = uUSDAmount;
+              await tokens.uUSD.approve(
+                dex.contract.address,
+                input_amount.toNumber()
+              );
+            }
+            amounts.set(new BigNumber(k), input_amount);
+          }
+        }
+      });
+
+      it("2.3.1. should fail if zero input", async () => {
+        const zero_amount = new BigNumber("0");
+        const zero_amounts: Map<BigNumber, BigNumber> = new Map<
+          BigNumber,
+          BigNumber
+        >(Array.from(amounts.entries()).map(([k, v]) => [k, zero_amount]));
         await failCase(
           "bob",
-          async () => await dex.setFees(new BigNumber("0"), fees),
-          "Dex/not-contact-admin"
-        ));
-      it("2.2.2. should change fees", async () =>
-        await setFeesSuccessCase("eve", new BigNumber("0"), fees));
+          async () =>
+            await dex.investLiquidity(
+              pool_id,
+              zero_amounts,
+              min_shares,
+              referral
+            ),
+          "Dex/zero-amount-in"
+        );
+      });
+      it("2.3.2. should fail if wrong indexes", async () => {
+        const wrong_idx_amounts: Map<BigNumber, BigNumber> = new Map<
+          BigNumber,
+          BigNumber
+        >(Array.from(amounts.entries()).map(([k, v]) => [k.plus("5"), v]));
+        await failCase(
+          "bob",
+          async () =>
+            await dex.investLiquidity(
+              pool_id,
+              wrong_idx_amounts,
+              min_shares,
+              referral
+            ),
+          "Dex/zero-amount-in"
+        );
+      });
+      it("2.3.3. should invest liq balanced", async () => {
+        return await investLiquidity(
+          "bob",
+          pool_id,
+          referral,
+          min_shares,
+          amounts
+        );
+      });
+
+      it.todo("2.3.4. should invest liq imbalanced");
+    });
+
+    describe("2.4. Test swap", () => {
+      it.todo("2.4.1. should fail if zero input");
+      it.todo("2.4.2. should swap");
+    });
+
+    describe("2.5. Test divest liq", () => {
+      it.todo("2.5.1. should fail if zero input");
+      it.todo("2.5.2. should divest liq balanced");
+      it.todo("2.5.3. should divest liq imbalanced");
     });
   });
 
-  it.todo("3. it should be views here");
+  describe("3. Testing Token endpoints", () => {
+    describe("3.1. Test transfer from self", () => {
+      it.todo("3.1.1. should fail if low balance");
+      it.todo("3.1.2. should send from self");
+    });
+    describe("3.2. Test approve", () => {
+      it.todo("3.2.1. should fail send if not approved");
+      it.todo("3.2.2. should update operator");
+      it.todo("3.2.3. should send as operator");
+    });
+  });
+
+  describe("4. Views", () => {
+    let lambdaContract;
+    let lambdaContractAddress;
+    beforeAll(async () => {
+      const op = await Tezos.contract.originate({
+        code: VIEW_LAMBDA.code,
+        storage: VIEW_LAMBDA.storage,
+      });
+      await confirmOperation(Tezos, op.hash);
+      lambdaContractAddress = op.contractAddress;
+      lambdaContract = await Tezos.contract.at(lambdaContractAddress);
+    });
+    describe("4.1. Dex views", () => {
+      it.todo("4.1.1. Should return A");
+      it.todo("4.1.2. Should return fees");
+      it.todo("4.1.3. Should return reserves");
+      it.todo("4.1.4. Should return virtual reserves");
+      it.todo("4.1.5. Should return fees");
+      it.todo("4.1.6. Should return min received");
+      it.todo("4.1.7. Should return dy");
+      it.todo("4.1.8. Should return price");
+    });
+    describe("4.2.Token views", () => {
+      it("4.2.1. Should return balance of account", async () => {
+        const accounts = [
+          {
+            owner: aliceAddress,
+            token_id: "0",
+          },
+          {
+            owner: bobAddress,
+            token_id: "0",
+          },
+          {
+            owner: eveAddress,
+            token_id: "0",
+          },
+        ];
+        console.log(dex.contract.views);
+        const balances = await dex.contract.views
+          .balance_of(accounts)
+          .read(lambdaContractAddress);
+        expect(balances[0].balance.toNumber()).toBeGreaterThanOrEqual(0);
+        expect(balances[1].balance.toNumber()).toBeGreaterThanOrEqual(0);
+        expect(balances[2].balance.toNumber()).toBeGreaterThanOrEqual(0);
+      });
+      it("4.2.2. Should return total supply", async () => {
+        console.log(dex.contract.views);
+        const total_supply = await dex.contract.views
+          .total_supply("0")
+          .read(lambdaContractAddress);
+        expect(total_supply.toNumber()).toBeGreaterThan(0);
+      });
+    });
+  });
 });

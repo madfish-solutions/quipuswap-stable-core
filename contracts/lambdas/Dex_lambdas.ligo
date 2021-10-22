@@ -28,7 +28,9 @@ function add_liq(
 
     const d1 = _get_D_mem(new_reserves, amp, pair);
 
-    assert(d1 > d0);
+    if(d1 <= d0)
+    then failwith(err_zero_in);
+    else skip;
     var mint_amount := 0n;
     if token_supply > 0n
       then {

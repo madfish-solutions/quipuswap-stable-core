@@ -11,8 +11,8 @@ import {
   DexStorage,
   FeeType,
   LambdaFunctionType,
-  FA2TokenType,
   FA12TokenType,
+  FA2TokenType
 } from "./types";
 import { destructObj, getLigo, Tezos } from "./utils";
 import { execSync } from "child_process";
@@ -75,21 +75,24 @@ export class Dex extends TokenFA2 {
     };
     for (let key in maps) {
       if (["dex_lambdas", "token_lambdas"].includes(key)) continue;
-      this.storage[key] = await maps[key].reduce(async (prev, current) => {
-        try {
-          return {
-            ...(await prev),
-            [key == "ledger" ? current[0] : current]: await storage.storage[
-              key
-            ].get(current),
-          };
-        } catch (ex) {
-          console.log(ex);
-          return {
-            ...(await prev),
-          };
-        }
-      }, Promise.resolve({}));
+      this.storage.storage[key] = await maps[key].reduce(
+        async (prev, current) => {
+          try {
+            return {
+              ...(await prev),
+              [key == "ledger" ? current[0] : current]: await storage.storage[
+                key
+              ].get(current),
+            };
+          } catch (ex) {
+            console.log(ex);
+            return {
+              ...(await prev),
+            };
+          }
+        },
+        Promise.resolve({})
+      );
     }
     for (let key in maps) {
       if (!["dex_lambdas", "token_lambdas"].includes(key)) continue;
@@ -285,90 +288,34 @@ export class Dex extends TokenFA2 {
   //   return operation;
   // }
 
-  // async investLiquidity(
-  //   pairId: string,
-  //   tokenAmounts: Map<BigNumber, BigNumber>,
-  //   minShares: number,
-  //   refferal: string
-  // ): Promise<TransactionOperation> {
-  //   await this.updateStorage({ tokens: [pairId] });
-  //   let pair = this.storage.storage.tokens[pairId];
-  //   if (["FA2", "MIXED"].includes(standard)) {
-  //     await this.approveFA2Token(
-  //       pair.token_a_address,
-  //       pair.token_a_id,
+  async investLiquidity(
+    poolId: BigNumber,
+    tokenAmounts: Map<BigNumber, BigNumber>,
+    minShares: BigNumber,
+    refferal: string
+  ): Promise<TransactionOperation> {
+    let in_amounts = new MichelsonMap();
+    tokenAmounts.forEach((value, key) => {
+      in_amounts.set(key, value);
+    })
+    const operation = await this.contract.methods
+      .invest(refferal, poolId, minShares, in_amounts)
+      .send();
+    await confirmOperation(Tezos, operation.hash);
+    return operation;
+  }
 
-  //       tokenAAmount,
-  //       this.contract.address
-  //     );
-  //   } else {
-  //     await this.approveFA12Token(
-  //       pair.token_a_address,
-  //       tokenAAmount,
-  //       this.contract.address
-  //     );
-  //   }
-  //   if ("FA2" == standard) {
-  //     await this.approveFA2Token(
-  //       pair.token_b_address,
-  //       pair.token_b_id,
-  //       tokenBAmount,
-  //       this.contract.address
-  //     );
-  //   } else {
-  //     await this.approveFA12Token(
-  //       pair.token_b_address,
-  //       tokenBAmount,
-  //       this.contract.address
-  //     );
-  //   }
-  //   const operation = await this.contract.methods
-  //     .use(
-  //       "invest",
-  //       pair.token_a_address,
-  //       pair.token_a_id,
-  //       standard.toLowerCase() == "mixed" ? "fa2" : standard.toLowerCase(),
-  //       null,
-  //       pair.token_b_address,
-  //       pair.token_b_id,
-  //       standard.toLowerCase() == "mixed" ? "fa12" : standard.toLowerCase(),
-  //       null,
-  //       minShares,
-  //       tokenAAmount,
-  //       tokenBAmount
-  //     )
-  //     .send();
-  //   await confirmOperation(Tezos, operation.hash);
-  //   return operation;
-  // }
-
-  // async divestLiquidity(
-  //   pairId: string,
-  //   tokenAAmount: number,
-  //   tokenBAmount: number,
-  //   sharesBurned: number
-  // ): Promise<TransactionOperation> {
-  //   await this.updateStorage({ tokens: [pairId] });
-  //   let pair = this.storage.storage.tokens[pairId];
-  //   const operation = await this.contract.methods
-  //     .use(
-  //       "divest",
-  //       pair.token_a_address,
-  //       pair.token_a_id,
-  //       standard.toLowerCase() == "mixed" ? "fa2" : standard.toLowerCase(),
-  //       null,
-  //       pair.token_b_address,
-  //       pair.token_b_id,
-  //       standard.toLowerCase() == "mixed" ? "fa12" : standard.toLowerCase(),
-  //       null,
-  //       tokenAAmount,
-  //       tokenBAmount,
-  //       sharesBurned
-  //     )
-  //     .send();
-  //   await confirmOperation(Tezos, operation.hash);
-  //   return operation;
-  // }
+  async divestLiquidity(
+    pairId: string,
+    mintokenAmounts: Map<BigNumber, BigNumber>,
+    sharesBurned: number
+  ): Promise<TransactionOperation> {
+    const operation = await this.contract.methods
+      .use("divest", pairId, mintokenAmounts, sharesBurned)
+      .send();
+    await confirmOperation(Tezos, operation.hash);
+    return operation;
+  }
 
   async approveFA2Token(
     tokenAddress: string,
@@ -541,7 +488,7 @@ export class Dex extends TokenFA2 {
         fees.lp_fee,
         fees.ref_fee,
         fees.dev_fee,
-        fees.stakers_fee,
+        fees.stakers_fee
       )
       .send();
 

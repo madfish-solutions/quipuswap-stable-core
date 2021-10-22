@@ -13,12 +13,11 @@ export declare type LambdaFunctionType = {
 };
 
 export declare type FA2TokenType = {
-  address: string;
-  token_id: BigNumber;
+  fa2: { token_address: string; token_id: BigNumber };
 };
 
 export declare type FA12TokenType = {
-  address: string;
+  fa12: string;
 };
 
 export declare type TokenType =
@@ -71,7 +70,7 @@ export declare type DexStorage = {
     dev_address: string;
     reward_rate: BigNumber;
     pools_count: BigNumber;
-    tokens: { [key: string]: { [key: string]: TokenType } };
+    tokens: { [key: string]: { [key: string]: FA12TokenType | FA2TokenType } };
     pool_to_id: { [key: string]: BigNumber };
     pools: { [key: string]: PairInfo };
     ledger: { [key: string]: BigNumber };
