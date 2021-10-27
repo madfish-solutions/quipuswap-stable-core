@@ -33,10 +33,26 @@
   },
   {
     "index": 11,
+    "name": "set_fees"
+  },
+  {
+    "index": 12,
     "name": "get_reserves"
   },
   {
-    "index": 16,
+    "index": 13,
+    "name": "get_virt_reserves"
+  },
+  {
+    "index": 14,
+    "name": "get_fees"
+  },
+  {
+    "index": 19,
+    "name": "get_dy"
+  },
+  {
+    "index": 20,
     "name": "get_A"
   }
 ]

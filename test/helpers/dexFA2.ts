@@ -125,7 +125,7 @@ export class Dex extends TokenFA2 {
       for (const input of inputs) {
         await input.asset.approve(
           this.contract.address,
-          input.in_amount.toNumber()
+          input.in_amount
         );
       }
     }
@@ -219,85 +219,40 @@ export class Dex extends TokenFA2 {
   //   return operation;
   // }
 
-  // async tokenToTokenPayment(
-  //   tokenAAddress: string,
-  //   tokenBAddress: string,
-  //   opType: string,
-  //   amountIn: number,
-  //   minAmountOut: number,
-  //   receiver: string,
-  //   tokenAid: BigNumber = new BigNumber(0),
-  //   tokenBid: BigNumber = new BigNumber(0)
-  // ): Promise<TransactionOperation> {
-  //   if (opType == "buy") {
-  //     if (["FA2"].includes(standard)) {
-  //       await this.approveFA2Token(
-  //         tokenBAddress,
-  //         tokenBid,
-  //         amountIn,
-  //         this.contract.address
-  //       );
-  //     } else {
-  //       await this.approveFA12Token(
-  //         tokenBAddress,
-  //         amountIn,
-  //         this.contract.address
-  //       );
-  //     }
-  //   } else {
-  //     if (["FA2", "MIXED"].includes(standard)) {
-  //       await this.approveFA2Token(
-  //         tokenAAddress,
-  //         tokenAid,
-  //         amountIn,
-  //         this.contract.address
-  //       );
-  //     } else {
-  //       await this.approveFA12Token(
-  //         tokenAAddress,
-  //         amountIn,
-  //         this.contract.address
-  //       );
-  //     }
-  //   }
-  //   const swaps = [
-  //     {
-  //       pair: {
-  //         token_a_address: tokenAAddress,
-  //         token_b_address: tokenBAddress,
-  //         token_a_id: tokenAid,
-  //         token_b_id: tokenBid,
-  //         token_a_type: {
-  //           [standard.toLowerCase() == "mixed"
-  //             ? "fa2"
-  //             : standard.toLowerCase()]: null,
-  //         },
-  //         token_b_type: {
-  //           [standard.toLowerCase() == "mixed"
-  //             ? "fa12"
-  //             : standard.toLowerCase()]: null,
-  //         },
-  //       },
-  //       operation: { [opType]: null },
-  //     },
-  //   ];
-  //   const operation = await this.contract.methods
-  //     .use("swap", swaps, amountIn, minAmountOut, receiver)
-  //     .send();
-  //   await confirmOperation(Tezos, operation.hash);
-  //   return operation;
-  // }
+  async swap(
+    poolId: BigNumber,
+    inIdx: BigNumber,
+    toIdx: BigNumber,
+    amountIn: BigNumber,
+    minAmountOut: BigNumber,
+    receiver: string = null,
+    referral: string = null
+  ): Promise<TransactionOperation> {
+    const operation = await this.contract.methods
+      .swap(
+        poolId,
+        inIdx,
+        toIdx,
+        amountIn,
+        minAmountOut,
+        referral,
+        receiver
+      )
+      .send();
+    await confirmOperation(Tezos, operation.hash);
+    return operation;
+  }
 
   async investLiquidity(
     poolId: BigNumber,
-    tokenAmounts: Map<BigNumber, BigNumber>,
+    tokenAmounts: Map<string, BigNumber>,
     minShares: BigNumber,
     refferal: string
   ): Promise<TransactionOperation> {
     let in_amounts = new MichelsonMap();
     tokenAmounts.forEach((value, key) => {
       in_amounts.set(key, value);
-    })
+    });
     const operation = await this.contract.methods
       .invest(refferal, poolId, minShares, in_amounts)
       .send();
@@ -306,12 +261,12 @@ export class Dex extends TokenFA2 {
   }
 
   async divestLiquidity(
-    pairId: string,
-    mintokenAmounts: Map<BigNumber, BigNumber>,
-    sharesBurned: number
+    pairId: BigNumber,
+    mintokenAmounts: Map<string, BigNumber>,
+    sharesBurned: BigNumber
   ): Promise<TransactionOperation> {
     const operation = await this.contract.methods
-      .use("divest", pairId, mintokenAmounts, sharesBurned)
+      .divest(pairId, MichelsonMap.fromLiteral(mintokenAmounts), sharesBurned)
       .send();
     await confirmOperation(Tezos, operation.hash);
     return operation;
@@ -454,7 +409,7 @@ export class Dex extends TokenFA2 {
 
   async setAdmin(new_admin: string): Promise<TransactionOperation> {
     await this.updateStorage({});
-    const operation = await this.contract.methods.set_admin(new_admin).send();
+    const operation = await this.contract.methods.setAdmin(new_admin).send();
 
     await confirmOperation(Tezos, operation.hash);
     return operation;
@@ -472,7 +427,7 @@ export class Dex extends TokenFA2 {
   }
   async setDevAddress(dev: string): Promise<TransactionOperation> {
     await this.updateStorage({});
-    const operation = await this.contract.methods.set_dev_address(dev).send();
+    const operation = await this.contract.methods.setDevAddress(dev).send();
 
     await confirmOperation(Tezos, operation.hash);
     return operation;
@@ -483,7 +438,7 @@ export class Dex extends TokenFA2 {
   ): Promise<TransactionOperation> {
     await this.updateStorage({});
     const operation = await this.contract.methods
-      .set_fees(
+      .setFees(
         pool_id,
         fees.lp_fee,
         fees.ref_fee,

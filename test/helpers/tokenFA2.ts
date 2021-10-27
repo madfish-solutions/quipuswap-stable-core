@@ -2,6 +2,7 @@ import { ContractAbstraction, ContractProvider } from "@taquito/taquito";
 import { TransactionOperation } from "@taquito/taquito/dist/types/operations/transaction-operation";
 import { confirmOperation } from "./confirmation";
 import { Token } from "./token";
+import BigNumber from "bignumber.js";
 import { TokenStorage } from "./types";
 import { prepareProviderOptions, Tezos } from "./utils";
 export const defaultTokenId = 0;
@@ -51,9 +52,10 @@ export class TokenFA2 implements Token {
   }
 
   async transfer(
+    tokenId: BigNumber,
     from: string,
     to: string,
-    amount: number
+    amount: BigNumber
   ): Promise<TransactionOperation> {
     let operation = await this.contract.methods
       .transfer([
@@ -61,7 +63,7 @@ export class TokenFA2 implements Token {
           from_: from,
           txs: [
             {
-              token_id: defaultTokenId,
+              token_id: tokenId,
               amount: amount,
               to_: to,
             },
@@ -74,7 +76,7 @@ export class TokenFA2 implements Token {
     return operation;
   }
 
-  async approve(to: string, amount: number): Promise<TransactionOperation> {
+  async approve(to: string, amount: BigNumber): Promise<TransactionOperation> {
     return await this.updateOperators([
       {
         option: "add_operator",
@@ -90,7 +92,7 @@ export class TokenFA2 implements Token {
   async balanceOf(
     requests: {
       owner: string;
-      token_id: number;
+      token_id: BigNumber;
     }[],
     contract: string
   ): Promise<TransactionOperation> {

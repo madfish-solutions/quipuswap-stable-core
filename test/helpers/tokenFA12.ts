@@ -4,6 +4,8 @@ import { confirmOperation } from "./confirmation";
 import { Token } from "./token";
 import { TokenStorage } from "./types";
 import { prepareProviderOptions, Tezos } from "./utils";
+import BigNumber from "bignumber.js";
+
 export class TokenFA12 implements Token {
   public contract: ContractAbstraction<ContractProvider>;
   public storage: TokenStorage;
@@ -49,9 +51,10 @@ export class TokenFA12 implements Token {
   }
 
   async transfer(
+    tokenId: BigNumber = new BigNumber(0),
     from: string,
     to: string,
-    amount: number
+    amount: BigNumber
   ): Promise<TransactionOperation> {
     let operation = await this.contract.methods
       .transfer(from, to, amount)
@@ -60,7 +63,7 @@ export class TokenFA12 implements Token {
     return operation;
   }
 
-  async approve(to: string, amount: number): Promise<TransactionOperation> {
+  async approve(to: string, amount: BigNumber): Promise<TransactionOperation> {
     let operation = await this.contract.methods.approve(to, amount).send();
     await confirmOperation(Tezos, operation.hash);
     return operation;
