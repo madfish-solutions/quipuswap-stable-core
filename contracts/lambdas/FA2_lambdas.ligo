@@ -19,9 +19,7 @@ function iterate_transfer(
           | None -> (set[]: set(address))
           end;
         check_permissions(user_trx_params.from_, sender_allowance);
-        check_balance(sender_balance, transfer.amount);
-
-        sender_balance := abs(sender_balance - transfer.amount);
+        sender_balance := nat_or_error(sender_balance - transfer.amount, "FA2_INSUFFICIENT_BALANCE");
         s.storage.ledger[user_key] := sender_balance;
 
         var dest_account : nat :=

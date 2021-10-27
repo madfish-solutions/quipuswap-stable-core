@@ -10,26 +10,31 @@ function call_dex(
   var s                 : full_storage_type)
                         : full_return_type is
   block {
-    // s.storage.entered := check_reentrancy(s.storage.entered);
-
-    const idx : nat = case p of
+    const idx : nat = case (p: action_type) of
+    (* Base actions *)
     | AddPair(_)              -> 0n
     | Swap(_)                 -> 1n
     | Invest(_)               -> 2n
     | Divest(_)               -> 3n
+    (* Custom actions *)
     // | Invest_one(_)           -> 4n
     // | Divest_one(_)           -> 5n
+    (* Admin actions *)
     // | Claim_admin_rewards(_)  -> 6n
     | RampA(_)                -> 7n
     | StopRampA(_)            -> 8n
     | SetProxy(_)             -> 9n
     | UpdateProxyLimits(_)    -> 10n
-    // | Get_reserves(_)         -> 11n
-    // | Min_received(_)         -> 12n
-    // | Tokens_per_shares(_)    -> 13n
-    // | Calc_divest_one_coin(_) -> 14n
-    // | Get_dy(_)               -> 15n
-    // | Get_a(_)                -> 16n
+    | SetFees(_)              -> 11n
+    (* VIEWS *)
+    | Get_reserves(_)         -> 12n
+    | Get_virt_reserves(_)    -> 13n
+    | Get_fees(_)             -> 14n
+    // | Min_received(_)         -> 15n
+    // | Tokens_per_shares(_)    -> 16n
+    // | Calc_divest_one_coin(_) -> 18n
+    | Get_dy(_)               -> 19n
+    | Get_a(_)                -> 20n
 
     end;
 
@@ -122,18 +127,6 @@ function set_token_function(
     | None -> s.token_lambdas[idx] := f
     end;
   } with s
-
-
-function set_fees(
-  const params          : set_fee_type;
-  var s                 : full_storage_type
-  )                     : full_return_type is
-  block {
-    is_admin(s.storage);
-    var pair := get_pair(params.pool_id, s.storage);
-    pair.fee := params.fee;
-    s.storage.pools[params.pool_id] := pair;
-  } with (no_operations, s)
 
 function add_rem_managers(
   const params          : add_rem_man_params;

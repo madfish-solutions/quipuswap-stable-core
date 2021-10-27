@@ -2,7 +2,7 @@
 [@inline]
 const no_operations: list(operation) = nil;
 
-const dex_func_count      : nat = 17n;
+const dex_func_count      : nat = 21n;
 const token_func_count    : nat = 5n;
 
 (* StableSwap constants *)

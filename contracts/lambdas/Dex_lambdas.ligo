@@ -1,138 +1,3 @@
-function add_liq(
-    const params  : record [
-                      referral: option(address);
-                      pair_id :nat;
-                      pair    : pair_type;
-                      inputs  : map(nat, nat);
-                      min_mint_amount: nat;
-                    ];
-    var   s       : storage_type
-  ): return_type is
-  block {
-    var pair : pair_type := params.pair;
-    const tokens = get_tokens(params.pair_id, s);
-    const amp = _A(pair);
-    const init_reserves = pair.virtual_reserves;
-    // Initial invariant
-    const d0 = _get_D_mem(init_reserves, amp, pair);
-    var token_supply := pair.total_supply;
-    function add_inputs (const key : token_pool_index; const value : nat) : nat is
-      block {
-        const input = case params.inputs[key] of
-            Some(res) -> res
-          | None -> 0n
-          end;
-        const new_reserve = value + input;
-      } with new_reserve;
-    var new_reserves := Map.map(add_inputs, init_reserves);
-
-    const d1 = _get_D_mem(new_reserves, amp, pair);
-
-    if(d1 <= d0)
-    then failwith(err_zero_in);
-    else skip;
-    var mint_amount := 0n;
-    if token_supply > 0n
-      then {
-        // Only account for fees if we are not the first to deposit
-        // const fee = sum_all_fee(pair) * tokens_count / (4 * (tokens_count - 1));
-        // const wo_lp_fee = sum_wo_lp_fee(pair) * tokens_count / (4 * (tokens_count - 1));
-        const init = record [
-          reserves = new_reserves;
-          storage = s;
-        ];
-        // const referral: address = case (params.referral: option(address)) of
-        //         Some(ref) -> ref
-        //       | None -> get_default_refer(s)
-        //       end;
-
-        function calc_invests(
-          const acc: record [
-            reserves: map(token_pool_index, nat);
-            storage: storage_type;
-          ];
-          const entry: (token_pool_index * token_type)
-          ): record [
-            reserves: map(token_pool_index, nat);
-            storage: storage_type;
-          ] is
-          block {
-            var result := acc;
-            const i = entry.0;
-            const old_balance = case init_reserves[i] of
-                            Some(bal) -> bal
-                          | None -> (failwith("No such reserve"): nat)
-                          end;
-            const new_balance = case acc.reserves[i] of
-                            Some(bal) -> bal
-                          | None -> (failwith("No such reserve"): nat)
-                          end;
-
-            const _ideal_balance = d1 * old_balance / d0;
-            // const difference = abs(ideal_balance - new_balance);
-            // const fee_norm = fee * difference / FEE_DENOMINATOR;
-            // const after_fees = apply_invest_fee(referral, params.pair_id, i, difference, new_balance, acc.storage);
-            // pair.virtual_reserves[i] := abs(new_balance - (wo_lp_fee / FEE_DENOMINATOR));
-            result.reserves[i] := new_balance; // abs(new_balance - fee_norm);
-            // result.storage := after_fees.1;
-          } with result;
-
-        const upd = Map.fold(calc_invests, tokens, init);
-
-
-        // for _i := 0 to int(tokens_count)
-        //   block {
-        //     const i = case is_nat(_i) of
-        //         Some(i) -> i
-        //       | None -> (failwith("below zero"): nat)
-        //       end;
-        //     const old_balance = case init_reserves[i] of
-        //                     Some(bal) -> bal
-        //                   | None -> (failwith("No such reserve"): nat)
-        //                   end;
-        //     const new_balance = case _new_reserves[i] of
-        //                     Some(bal) -> bal
-        //                   | None -> (failwith("No such reserve"): nat)
-        //                   end;
-
-        //     const ideal_balance = d1 * old_balance / d0;
-        //     const difference = abs(ideal_balance - new_balance);
-        //     // const fee_norm = fee * difference / FEE_DENOMINATOR;
-        //     const referral: address = case (params.referral: option(address)) of
-        //         Some(ref) -> ref
-        //       | None -> get_default_refer(s)
-        //       end;
-
-        //     const after_fees = apply_invest_fee(referral, params.pair_id, i, difference, new_balance, new_storage);
-
-        //     // pair.virtual_reserves[i] := abs(new_balance - (wo_lp_fee / FEE_DENOMINATOR));
-        //     _new_reserves[i] := after_fees.0; // abs(new_balance - fee_norm);
-        //     new_storage := after_fees.1;
-        //   };
-        s := upd.storage;
-        pair := get_pair(params.pair_id, s);
-        const d2 = _get_D_mem(upd.reserves, amp, pair);
-        mint_amount := token_supply * abs(d2 - d0) / d0;
-      }
-    else {
-        pair.virtual_reserves := new_reserves;
-        mint_amount := d1;  // Take the dust if there was any
-    };
-    assert(mint_amount >= params.min_mint_amount); // "Slippage screwed you"
-    function transfer_to_pool(const acc : return_type; const input : nat * nat) : return_type is
-      (typed_transfer(
-        Tezos.sender,
-        Tezos.self_address,
-        input.1,
-        get_token_by_id(input.0, params.pair_id, acc.1)
-      ) # acc.0, acc.1);
-    pair.total_supply := pair.total_supply + mint_amount;
-    s.ledger[(Tezos.sender, params.pair_id)] := mint_amount;
-    s.pools[params.pair_id] := pair;
-  } with Map.fold(transfer_to_pool, params.inputs, (no_operations, s))
-
-
-
 (* Initialize exchange after the previous liquidity was drained *)
 function initialize_exchange(
   const p               : action_type;
@@ -145,7 +10,7 @@ function initialize_exchange(
       is_admin(s);
       (* Params check *)
       const inp_len = Map.size(params.input_tokens);
-      const max_index = abs(params.n_tokens - 1n);
+      const max_index = nat_or_error(params.n_tokens - 1n, "tokens_less_1n");
       if (
         (max_index > _C_max_tokens_index)
         or (params.n_tokens < 2n)
@@ -269,8 +134,12 @@ function invest_liquidity(
     var operations: list(operation) := no_operations;
     case p of
     | Invest(params) -> {
+        const referral: address = case (params.referral: option(address)) of
+          | Some(ref) -> ref
+          | None -> get_default_refer(s)
+          end;
         const result = add_liq(record[
-          referral= Some(params.referral);
+          referral= Some(referral);
           pair_id = params.pair_id;
           pair    = get_pair(params.pair_id, s);
           inputs  = params.in_amounts;
@@ -296,6 +165,10 @@ function swap(
         const dx = params.amount;
         const j = params.idx_to;
         const min_y = params.min_amount_out;
+        // const referral: address = case (params.referral: option(address)) of
+        //   | Some(ref) -> ref
+        //   | None -> get_default_refer(s)
+        //   end;
 
         if dx = 0n
           then failwith(err_zero_in)
@@ -337,14 +210,15 @@ function swap(
 
         const dy = preform_swap(i, j, dx, pair);
         // TODO: perform fee separation
+
         if dy < min_y
           then failwith(err_high_min_out)
         else skip;
 
         pair.virtual_reserves[i] := old_virt_reserves_i + dx;
         pair.reserves[i] := old_reserves_i + dx;
-        pair.virtual_reserves[j] := abs(old_virt_reserves_j - dy);
-        pair.reserves[j] := abs(old_reserves_j - dy);
+        pair.virtual_reserves[j] := nat_or_error(old_virt_reserves_j - dy, "dy>reserves");
+        pair.reserves[j] := nat_or_error(old_reserves_j - dy, "dy>reserves");
 
         s.pools[params.pair_id] := pair;
 
@@ -389,29 +263,25 @@ function divest_liquidity(
         const tokens        : tokens_type = get_tokens(params.pair_id, s);
         const share         : nat = get_account((Tezos.sender, params.pair_id), s);
         const total_supply  : nat = pair.total_supply;
-
-        if params.shares > share
-          then failwith(err_insufficient_lp)
+        if params.shares = 0n
+         then failwith(err_zero_in)
         else skip;
+        const new_shares = nat_or_error(share - params.shares, err_insufficient_lp);
+        const init_virt_reserves = pair.virtual_reserves;
+        const init_reserves = pair.reserves;
 
         function divest_reserves(
-          const acc: (
-            map(token_pool_index, nat) *
+          var acc: (
             map(token_pool_index, nat) *
             list(operation)
           );
           const entry: (token_pool_index * token_type)
         ) : (
             map(token_pool_index, nat) *
-            map(token_pool_index, nat) *
             list(operation)
           ) is
           block {
-            const old_balance = case acc.0[entry.0] of
-              | Some(reserve) -> reserve
-              | None -> 0n
-              end;
-            const old_virt_balance = case acc.1[entry.0] of
+            const old_balance = case init_virt_reserves[entry.0] of
               | Some(reserve) -> reserve
               | None -> 0n
               end;
@@ -424,41 +294,38 @@ function divest_liquidity(
               | None -> (failwith("wrong token index"): token_type)
               end;
 
-            const value = old_virt_balance * params.shares / total_supply;
+            const value = old_balance * params.shares / total_supply;
+            const init_res = case init_reserves[entry.0] of
+              | Some(res) -> res
+              | None -> (failwith("wrong res index"): nat)
+              end;
+
+            const new_res = nat_or_error(old_balance - value, "value>virt_reserves");
 
             if value < min_amount_out
               then failwith(err_high_min_out);
             else if value = 0n
               then failwith(err_dust_out)
-            else if value > old_balance
-              then if value <= old_virt_balance
-                    then skip; //TODO: add request to proxy;
-                   else failwith(err_no_liquidity);
+            else if value > init_res
+              then skip; //TODO: add request to proxy;
             else skip;
 
-            var result := acc;
-
-            result.0[entry.0] := abs(old_balance - value);
-            result.1[entry.0] := abs(old_virt_balance - value);
-            result.2 := typed_transfer(
+            acc.0[entry.0] := new_res;
+            acc.1 := typed_transfer(
               Tezos.sender,
               Tezos.self_address,
               value,
               token
-            ) # result.2;
+            ) # acc.1;
 
-          } with result;
-
-        const res = Map.fold(divest_reserves, tokens, (pair.reserves, pair.virtual_reserves, operations));
-
-        pair.total_supply := abs(pair.total_supply - params.shares);
-        pair.reserves := res.0;
-        pair.virtual_reserves := res.1;
-
-        s.ledger[(Tezos.sender, params.pair_id)] := abs(share - params.shares);
+          } with acc;
+        const res = Map.fold(divest_reserves, tokens, (init_reserves, operations));
+        pair := set_reserves_from_diff(init_reserves, res.0, pair);
+        pair.total_supply := nat_or_error(pair.total_supply - params.shares, "total_supply<shares");
+        s.ledger[(Tezos.sender, params.pair_id)] := new_shares;
         s.pools[params.pair_id] := pair;
 
-        operations := res.2;
+        operations := res.1;
       }
     | _                 -> skip
     end
@@ -552,6 +419,23 @@ function update_proxy_limits(
       pair.proxy_limits := params.limits;
       s.pools[params.pair_id] := pair;
       (* TODO: claim rewards and old staked values *)
+      }
+    | _ -> skip
+    end
+  } with (operations, s)
+
+function set_fees(
+  const p               : action_type;
+  var s                 : storage_type
+  )                     : return_type is
+  block {
+    var operations: list(operation) := no_operations;
+    case p of
+    | SetFees(params) -> {
+      is_admin(s);
+      var pair := get_pair(params.pool_id, s);
+      pair.fee := params.fee;
+      s.pools[params.pool_id] := pair;
       }
     | _ -> skip
     end

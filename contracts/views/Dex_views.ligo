@@ -19,29 +19,6 @@ function get_virt_reserves(
     const pair : pair_type = get_pair(params.pair_id, s.storage)
   } with (list [Tezos.transaction(pair.virtual_reserves, 0tez, params.receiver)], s)
 
-(* min received in the swap *)
-function get_min_received(
-  const params          : min_received_type;
-  const s               : full_storage_type)
-                        : full_return_type is
-  block {
-    const pair : pair_type = get_pair(params.pair_id, s.storage);
-    const xp: map(nat, nat) = _xp(pair);
-    const y = get_y(params.i, params.j, params.x, xp, pair);
-    const xp_j = case xp[params.j] of
-      | Some(value) -> value
-      | None -> (failwith("no such index") : nat)
-      end;
-    var dy := abs(xp_j - y - 1);
-    const dy_fee = sum_all_fee(pair) * dy / _C_fee_denominator;
-
-    const rate_j = case pair.token_rates[params.j] of
-      | Some(value) -> value
-      | None -> (failwith("no such index") : nat)
-      end;
-    dy := abs(dy - dy_fee) * _C_precision / rate_j;
-  } with (list [Tezos.transaction(dy, 0tez, params.receiver)], s)
-
 
 (* tokens per 1 pair's share *)
 function get_tok_per_share(
@@ -56,6 +33,30 @@ function get_price_cumm(
   const s               : full_storage_type)
                         : full_return_type is
   (no_operations, s)
+
+(* min received in the swap *)
+function get_min_received(
+  const params          : min_received_type;
+  const s               : full_storage_type)
+                        : full_return_type is
+  block {
+    const pair : pair_type = get_pair(params.pair_id, s.storage);
+    const xp: map(nat, nat) = _xp(pair);
+    const y = get_y(params.i, params.j, params.x, xp, pair);
+    const xp_j = case xp[params.j] of
+      | Some(value) -> value
+      | None -> (failwith("no such index") : nat)
+      end;
+    var dy := nat_or_error(xp_j - y - 1, "y>xp_j");
+    const dy_fee = sum_all_fee(pair) * dy / _C_fee_denominator;
+
+    const rate_j = case pair.token_rates[params.j] of
+      | Some(value) -> value
+      | None -> (failwith("no such index") : nat)
+      end;
+    dy := nat_or_error(dy - dy_fee, "dy_fee>dy") * _C_precision / rate_j;
+  } with (list [Tezos.transaction(dy, 0tez, params.receiver)], s)
+
 
 (* max defi rate *)
 [@inline]
@@ -125,10 +126,9 @@ function get_dy(
       end;
     const x: nat = xp_i + (params.dx * rate_i / _C_precision);
     const y: nat = get_y(params.i, params.j, x, xp, pair);
-    assert(abs(xp_j-1)>=y);
-    const dy: nat = abs(xp_j - y - 1);
+    const dy: nat = nat_or_error(xp_j - y - 1, "y>xp_j");
     const fee: nat = sum_all_fee(pair) * dy / _C_fee_denominator;
-  } with (list [Tezos.transaction((abs(dy-fee) * _C_precision / rate_j), 0tez, params.receiver)], s)
+  } with (list [Tezos.transaction((nat_or_error(dy - fee, "fee>dy") * _C_precision / rate_j), 0tez, params.receiver)], s)
 
 (* Get A constant *)
 [@inline]

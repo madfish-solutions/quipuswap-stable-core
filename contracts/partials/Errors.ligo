@@ -20,5 +20,5 @@ const err_empty_route               : string = "Dex/empty-route";
 const err_low_max_a_in              : string = "Dex/low-max-token-a-in";
 const err_low_max_b_in              : string = "Dex/low-max-token-b-in";
 const err_not_admin                 : string = "Dex/not-admin";
-const err_not_contract_admin        : string = "Dex/not-contact-admin";
+const err_not_contract_admin        : string = "Dex/not-contract-admin";
 const err_wrong_tokens_count        : string = "Dex/wrong-tokens-count";

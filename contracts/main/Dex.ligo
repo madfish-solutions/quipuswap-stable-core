@@ -37,9 +37,7 @@ function main(
       else (failwith(err_high_func_index): full_storage_type)
     )
   | AddRemManagers(params)    -> add_rem_managers(params, s)
-  | Set_dev_address(addr)     -> set_dev_address(addr, s)
-  | Set_reward_rate(params)   -> set_reward_rate(params, s)
-  | Set_admin(addr)           -> set_admin(addr, s)
-  | Set_fees(params)          -> set_fees(params, s)
-  | Get_fees(params)          -> get_fees(params, s)
+  | SetDevAddress(addr)     -> set_dev_address(addr, s)
+  | SetRewardRate(params)   -> set_reward_rate(params, s)
+  | SetAdmin(addr)           -> set_admin(addr, s)
   end

@@ -8,6 +8,16 @@ function get_account(
   | None -> 0n
   end;
 
+[@inline]
+function nat_or_error(
+  const value: int;
+  const err: string
+  ): nat is
+  case is_nat(value) of
+  | Some(natural) -> natural
+  | None -> (failwith(err): nat)
+  end;
+
 (* Helper function to get pair info *)
 function get_pair(
   const pair_id         : nat;

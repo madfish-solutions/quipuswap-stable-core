@@ -167,6 +167,7 @@ type swap_type          is [@layout:comb] record [
   idx_to                  : token_pool_index;
   amount                  : nat;
   min_amount_out          : nat;
+  referral                : option(address);
   receiver                : option(address);
 ]
 
@@ -211,7 +212,7 @@ type add_rem_man_params is [@layout:comb] record [
 ]
 
 type invest_type        is [@layout:comb] record [
-  referral                : address;
+  referral                : option(address);
   pair_id                 : nat; (* pair identifier *)
   shares                  : nat; (* the amount of shares to receive *)
   in_amounts              : map(nat, nat); (* amount of tokens, where `index of value` == `index of token` to be invested *)
@@ -224,62 +225,78 @@ type divest_type        is [@layout:comb] record [
 ]
 
 type reserves_type      is [@layout:comb] record [
-  receiver                : contract(map(nat, nat)); (* response receiver *)
+  
   pair_id                 : nat; (* pair identifier *)
+  receiver                : contract(map(nat, nat)); (* response receiver *)
 ]
 
 type total_supply_type  is [@layout:comb] record [
-  receiver                : contract(nat); (* response receiver *)
   pool_id                 : pool_id_type; (* pair identifier *)
+   receiver                : contract(nat); (* response receiver *)
 ]
 
 type min_received_type  is [@layout:comb] record [
-  receiver                : contract(nat); (* response receiver *)
   pair_id                 : nat; (* pair identifier *)
   i                       : nat;
   j                       : nat;
   x                       : nat;
+  receiver                : contract(nat); (* response receiver *)
 ]
 
 type max_rate_params    is [@layout:comb] record [
-  receiver                : contract(map(nat, nat)); (* response receiver *)
   pair_id                 : nat; (* pair identifier *)
+  receiver                : contract(map(nat, nat)); (* response receiver *)
 ]
 
 type get_A_params       is [@layout:comb] record [
-  receiver                : contract(nat); (* response receiver *)
   pair_id                 : nat; (* pair identifier *)
+  receiver                : contract(nat); (* response receiver *)
 ]
 
 type calc_w_one_c_params is [@layout:comb] record [
-  receiver                : contract(nat); (* response receiver *)
   pair_id                 : nat; (* pair identifier *)
   token_amount            : nat; (* LP to burn *)
   i                       : nat; (* token index in pair *)
+  receiver                : contract(nat); (* response receiver *)
 ]
 
 type get_dy_params      is [@layout:comb] record [
-  receiver                : contract(nat); (* response receiver *)
   pair_id                 : nat; (* pair identifier *)
   i                       : nat; (* token index *)
   j                       : nat;
   dx                      : nat;
+  receiver                : contract(nat); (* response receiver *)
 ]
 
 type ramp_a_params      is [@layout:comb] record [
+  pair_id                 : nat; (* pair identifier *)
   future_A                : nat;
   future_time             : timestamp; (* response receiver *)
-  pair_id                 : nat; (* pair identifier *)
 ]
 
 type set_proxy_params   is [@layout:comb] record [
-  proxy                   : option(address);
   pair_id                 : nat; (* pair identifier *)
+  proxy                   : option(address);
+]
+
+type get_a_type         is [@layout:comb] record [
+  pair_id                 : nat; (* pair identifier *)
+  receiver                : contract(nat);
 ]
 
 type upd_proxy_lim_params is [@layout:comb] record [
-  limits                  : map(nat, nat);
   pair_id                 : nat; (* pair identifier *)
+  limits                  : map(nat, nat);
+]
+
+type set_fee_type       is [@layout:comb] record [
+  pool_id                 : pool_id_type;
+  fee                     : fees_storage_type;
+]
+
+type get_fee_type       is [@layout:comb] record [
+  pool_id                 : pool_id_type;
+  receiver                : contract(fees_storage_type);
 ]
 
 type action_type        is
@@ -297,28 +314,21 @@ type action_type        is
 | StopRampA               of nat
 | SetProxy                of set_proxy_params
 | UpdateProxyLimits       of upd_proxy_lim_params
+| SetFees                 of set_fee_type
 (* VIEWS *)
-// | Get_reserves            of reserves_type      (* returns the underlying token reserves *)
+| Get_reserves            of reserves_type      (* returns the underlying token reserves *)
+| Get_virt_reserves       of reserves_type      (* returns the virtual underlying token reserves *)
+| Get_fees                of get_fee_type
 // | Min_received            of min_received_type  (* returns minReceived tokens after swapping *)
 // | Tokens_per_shares       of tps_type           (* returns map of tokens amounts to recieve 1 LP *)
 // | Price_cummulative       of price_cumm_type    (* returns price cumulative and timestamp per block *)
 // | Calc_divest_one_coin    of calc_divest_one_coin
-// | Get_dy                  of get_dy_type        (* returns the current output dy given input dx *)
-// | Get_a                   of get_a_type
+| Get_dy                  of get_dy_params        (* returns the current output dy given input dx *)
+| Get_a                   of get_a_type
 
 type transfer_type      is list (transfer_fa2_param)
 type operator_type      is list (update_operator_param)
 type upd_meta_params    is token_metadata_info
-
-type set_fee_type       is [@layout:comb] record [
-  pool_id                 : pool_id_type;
-  fee                     : fees_storage_type;
-]
-
-type get_fee_type       is [@layout:comb] record [
-  pool_id                 : pool_id_type;
-  receiver                : contract(fees_storage_type);
-]
 
 type token_action_type  is
 | ITransfer              of transfer_type (* transfer asset from one account to another *)
@@ -345,16 +355,12 @@ type full_action_type   is
 | Update_operators        of operator_type (* updates the token operators *)
 | Update_metadata         of upd_meta_params
 | Total_supply            of total_supply_type
-// | Get_reserves            of reserves_type (* returns the underlying token reserves *)
-// | Close                   of unit (* entrypoint to prevent reentrancy *)
 | SetDexFunction          of set_dex_func_type (* sets the dex specific function. Is used before the whole system is launched *)
 | SetTokenFunction        of set_token_func_type (* sets the FA function, is used before the whole system is launched *)
 | AddRemManagers          of add_rem_man_params (* adds a manager to manage LP token metadata *)
-| Set_dev_address         of address
-| Set_reward_rate         of nat
-| Set_admin               of address
-| Set_fees                of set_fee_type
-| Get_fees                of get_fee_type
+| SetDevAddress         of address
+| SetRewardRate         of nat
+| SetAdmin               of address
 
 type full_storage_type  is [@layout:comb] record [
   storage                 : storage_type; (* real dex storage_type *)
