@@ -72,23 +72,27 @@ function initialize_exchange(
         const acc   : (
           map(token_pool_index, nat) *
           map(token_pool_index, nat) *
+          map(token_pool_index, nat) *
           map(token_pool_index, nat)
         );
         const entry : (token_pool_index * input_token)
       )             : (
           map(token_pool_index, nat) *
           map(token_pool_index, nat) *
+          map(token_pool_index, nat) *
           map(token_pool_index, nat)
         ) is (
-          Map.add(entry.0, entry.1.rate,      acc.0),
-          Map.add(entry.0, entry.1.in_amount, acc.1),
-          Map.add(entry.0, 0n,                acc.2)
+          Map.add(entry.0, entry.1.rate,                      acc.0),
+          Map.add(entry.0, entry.1.precision_multiplier,      acc.1),
+          Map.add(entry.0, entry.1.in_amount,                 acc.2),
+          Map.add(entry.0, 0n,                                acc.3)
         );
 
-      const (token_rates, inputs, zeros) = Map.fold(
+      const (token_rates, precision_multipliers, inputs, zeros) = Map.fold(
         map_rates_outs_zeros,
         params.input_tokens,
         (
+          (map[]: map(token_pool_index, nat)),
           (map[]: map(token_pool_index, nat)),
           (map[]: map(token_pool_index, nat)),
           (map[]: map(token_pool_index, nat))
@@ -100,11 +104,15 @@ function initialize_exchange(
       else skip;
 
       var new_pair: pair_type := pair_i;
+      if _C_max_a < params.a_constant
+      then failwith("A const limit")
+      else skip;
       new_pair.initial_A := params.a_constant;
       new_pair.future_A := params.a_constant;
       new_pair.initial_A_time := Tezos.now;
       new_pair.future_A_time := Tezos.now;
       new_pair.token_rates := token_rates;
+      new_pair.precision_multipliers := precision_multipliers;
       new_pair.reserves := zeros;
       new_pair.virtual_reserves := zeros;
       new_pair.proxy_limits := zeros;

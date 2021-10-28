@@ -54,27 +54,28 @@ function get_pair_info(
       case s.pools[token_id] of
       | Some(instance) -> instance
       | None -> (record [
-          initial_A         = 0n;
-          future_A          = 0n;
-          initial_A_time    = (0: timestamp);
-          future_A_time     = (0: timestamp);
-          token_rates       = (map []: map(token_pool_index, nat));
-          reserves          = (map []: map(token_pool_index, nat));
-          virtual_reserves  = (map []: map(token_pool_index, nat));
-          fee               = record[
-            dev_fee           = 0n;
-            lp_fee            = 0n;
-            ref_fee           = 0n;
-            stakers_fee       = 0n;
+          initial_A             = 0n;
+          future_A              = 0n;
+          initial_A_time        = (0: timestamp);
+          future_A_time         = (0: timestamp);
+          token_rates           = (map []: map(token_pool_index, nat));
+          precision_multipliers = (map []: map(token_pool_index, nat));
+          reserves              = (map []: map(token_pool_index, nat));
+          virtual_reserves      = (map []: map(token_pool_index, nat));
+          fee                   = record[
+            dev_fee               = 0n;
+            lp_fee                = 0n;
+            ref_fee               = 0n;
+            stakers_fee           = 0n;
           ];
-          staker_accumulator= record[
-            accumulator       = (map []: map(token_pool_index, nat));
-            total_staked      = 0n;
+          staker_accumulator    = record[
+            accumulator           = (map []: map(token_pool_index, nat));
+            total_staked          = 0n;
           ];
-          proxy_contract    = (None: option (address));
-          proxy_limits      = (map []: map(token_pool_index, nat));
-          proxy_reward_acc  = (map []: map(token_type, nat));
-          total_supply      = 0n;
+          proxy_contract        = (None: option (address));
+          proxy_limits          = (map []: map(token_pool_index, nat));
+          proxy_reward_acc      = (map []: map(token_type, nat));
+          total_supply          = 0n;
         ]: pair_type)
       end;
   } with (pair, token_id)

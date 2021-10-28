@@ -182,38 +182,62 @@ function get_y(
     (* x in the input is converted to the same price/precision *)
 
     assert(i =/= j);               (* dev: same coin *)
-    assert(j >= 0n);               (* dev: j below zero *)
-    assert(j < tokens_count);   (* dev: j above N_COINS *)
+    assert(j >= 0n and j < tokens_count);               (* dev: j below zero *)
 
     (* should be unreachable, but good for safety *)
 
-    assert(i >= 0n);
-    assert(i < tokens_count);
+    assert(i >= 0n and i < tokens_count);
 
     const amp   : nat = _A(s);
     const a_nn  : nat = amp * tokens_count;
     const d     : nat = get_D(xp, amp, s);
-    var   s_    : nat := 0n;
-    var   _x    : nat := 0n;
-    var   c     : nat := d;
 
-    for _i := 0 to (tokens_count - 1)
-      block {
-        const iter: nat = nat_or_error(_i, "index_not_nat");
-        if iter =/= j
+    function prepare_params(
+      var acc: record[
+        s_  : nat;
+        c   : nat;
+      ];
+      const entry : nat * nat
+    ): record[
+        s_  : nat;
+        c   : nat;
+      ] is
+    block {
+      var   _x  : nat := 0n;
+      const iter: nat = entry.0;
+      if iter =/= j
           then {
           if iter = i
             then _x := x
-          else _x := case xp[iter] of
-                    Some(val) -> val
-                  | None -> (failwith("no such xp[iter] index"): nat)
-                  end;
-          s_ := s_ + _x;
-          c := c * d / (_x * tokens_count);
+          else _x := entry.1;
+          acc.s_ := acc.s_ + _x;
+          acc.c := acc.c * d / (_x * tokens_count);
         }
         else skip;
-      };
-  } with calc_y(c, a_nn, s_, d, s)
+    } with acc;
+
+    const res = Map.fold(prepare_params, xp, record[
+        s_  = 0n;
+        c   = d;
+      ])
+
+    // for _i := 0 to (tokens_count - 1)
+    //   block {
+    //     const iter: nat = nat_or_error(_i, "index_not_nat");
+    //     if iter =/= j
+    //       then {
+    //       if iter = i
+    //         then _x := x
+    //       else _x := case xp[iter] of
+    //                 Some(val) -> val
+    //               | None -> (failwith("no such xp[iter] index"): nat)
+    //               end;
+    //       s_ := s_ + _x;
+    //       c := c * d / (_x * tokens_count);
+    //     }
+    //     else skip;
+    //   };
+  } with calc_y(res.c, a_nn, res.s_, d, s)
 
 function _get_y_D(
   const amp : nat;
@@ -239,25 +263,33 @@ function _get_y_D(
     assert(i < tokens_count);  // dev: i above N_COINS
 
     const a_nn  : nat = amp * tokens_count;
-    var   s_    : nat := 0n;
-    var   _x    : nat := 0n;
-    var   c     : nat := d;
-
-    for _i := 0 to (tokens_count - 1)
-      block {
-        const iter: nat = nat_or_error(_i, "index_not_nat");
-        if iter =/= i
+    function prepare_params(
+      var acc: record[
+        s_  : nat;
+        c   : nat;
+      ];
+      const entry : nat * nat
+    ): record[
+        s_  : nat;
+        c   : nat;
+      ] is
+    block{
+      var   _x  : nat := 0n;
+      const iter: nat = entry.0;
+      if iter =/= i
           then {
-            _x := case _xp[iter] of
-                  | Some(val) -> val
-                  | None -> (failwith("no such _xp[iter] index"): nat)
-                  end;
-            s_ := s_ + _x;
-            c := c * d / (_x * tokens_count);
+          _x := entry.1;
+          acc.s_ := acc.s_ + _x;
+          acc.c := acc.c * d / (_x * tokens_count);
         }
         else skip;
-      }
-  } with calc_y(c, a_nn, s_, d, s)
+    } with acc;
+
+    const res = Map.fold(prepare_params, _xp, record[
+        s_  = 0n;
+        c   = d;
+      ]);
+  } with calc_y(res.c, a_nn, res.s_, d, s)
 
 
 function _calc_withdraw_one_coin(
@@ -314,7 +346,7 @@ function _calc_withdraw_one_coin(
       | None -> (failwith("no such xp_reduced[i] index"): nat)
       end;
     var dy: nat := nat_or_error(xp_red_i - _get_y_D(amp, i, xp_reduced, d1, pair), "dy_less_0n");
-    var precisions: map(nat, nat) := pair.token_rates;
+    var precisions: map(nat, nat) := pair.precision_multipliers;
     const precisions_i = case precisions[i] of
       | Some(value) -> value
       | None -> (failwith("no such precisions[i] index"): nat)
@@ -400,7 +432,7 @@ function preform_swap(
       | Some(value) -> value
       | None -> (failwith("no such rate[j] index"): nat)
       end;
-    const x = xp_i + dx * rate_i / _C_precision;
+    const x = xp_i + ((dx * rate_i) / _C_precision);
     const y = get_y(i, j, x, xp, pair);
     const dy = nat_or_error(xp_j - y - 1, "dy_less_0n");  // -1 just in case there were some rounding errors
   } with dy * _C_precision / rate_j

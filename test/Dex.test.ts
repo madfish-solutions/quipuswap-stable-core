@@ -208,12 +208,12 @@ describe("Dex", () => {
 
     describe("2.1. Test adding new pool", () => {
       let inputs;
-      const a_const = new BigNumber("1000000000000");
+      const a_const = new BigNumber("2000");
       const input = new BigNumber(10).pow(6);
       let tokens_count: BigNumber;
       async function addNewPair(
         sender: AccountsLiteral,
-        a_const: BigNumber = new BigNumber("1000000000000"),
+        a_const: BigNumber = new BigNumber("1000000"),
         tokens_count: BigNumber = new BigNumber("3"),
         inputs: {
           asset: TokenFA12 | TokenFA2;
@@ -241,7 +241,7 @@ describe("Dex", () => {
         );
         expect(
           dex.storage.storage.ledger[accounts[sender].pkh].toNumber()
-        ).toBe(new BigNumber("3000000").toNumber()); //TODO: change to be calculated from inputs
+        ).toBe(new BigNumber(10).pow(18).multipliedBy(input).multipliedBy(3).toNumber()); //TODO: change to be calculated from inputs
         return true;
       }
       beforeAll(async () => {
@@ -249,17 +249,20 @@ describe("Dex", () => {
           {
             asset: tokens.kUSD,
             in_amount: new BigNumber(10).pow(18).multipliedBy(input),
-            rate: new BigNumber(10).pow(18 - 18),
+            rate: new BigNumber(10).pow(18),
+            precision_multiplier: new BigNumber(1),
           },
           {
             asset: tokens.USDtz,
             in_amount: new BigNumber(10).pow(6).multipliedBy(input),
-            rate: new BigNumber(10).pow(18 - 6),
+            rate: new BigNumber(10).pow(18 + 12),
+            precision_multiplier: new BigNumber(10).pow(12),
           },
           {
             asset: tokens.uUSD,
             in_amount: new BigNumber(10).pow(12).multipliedBy(input),
-            rate: new BigNumber(10).pow(18 - 12),
+            rate: new BigNumber(10).pow(18 + 6),
+            precision_multiplier: new BigNumber(10).pow(6),
           },
         ];
         inputs = inputs.sort((a, b) => {
@@ -293,7 +296,7 @@ describe("Dex", () => {
         pool_id = dex.storage.storage.pools_count.minus(new BigNumber(1));
       });
       describe("2.2.1. Ramping A constant", () => {
-        const future_a_const = new BigNumber("10000000000000000");
+        const future_a_const = new BigNumber("100000");
         const future_a_time = new BigNumber("86400");
         it("Should fail if not admin performs ramp A", async () =>
           await failCase(
@@ -404,7 +407,8 @@ describe("Dex", () => {
           await dex.updateStorage({ pools: [pool_id.toString()] });
           const init_proxy: string = dex.storage.storage.pools[pool_id.toString()].proxy_contract;
           expect(init_proxy).not.toBeNull();
-          await dex.contract.methods.setProxy(pool_id).send();
+          const op = await dex.contract.methods.setProxy(pool_id, proxy).send();
+          await confirmOperation(Tezos, op.hash);
           await dex.updateStorage({ pools: [pool_id.toString()] });
           const upd_proxy: string =
             dex.storage.storage.pools[pool_id.toString()].proxy_contract;
@@ -424,7 +428,6 @@ describe("Dex", () => {
           tokens_map.forEach((v, k) => {
             limits.set(k, new BigNumber(10).pow(6).multipliedBy(3).multipliedBy(k));
           })
-          console.log(limits);
         })
         it("Should fail if not admin try to set new proxy limits",
           async () => {
@@ -566,7 +569,7 @@ describe("Dex", () => {
 
       describe("2.4. Test swap", () => {
         let amounts: Map<string, BigNumber>;
-        const normalized = new BigNumber("1");
+        const normalized = new BigNumber(10).pow(2);
         const kUSDAmount = new BigNumber(10).pow(18).multipliedBy(normalized);
         const uUSDAmount = new BigNumber(10).pow(12).multipliedBy(normalized);
         const USDtzAmount = new BigNumber(10).pow(6).multipliedBy(normalized);
@@ -638,7 +641,10 @@ describe("Dex", () => {
         });
         it.each([
           ["kUSD", "uUSD"],
+          ["kUSD", "USDtz"],
+          ["uUSD", "kUSD"],
           ["uUSD", "USDtz"],
+          ["USDtz", "uUSD"],
           ["USDtz", "kUSD"],
         ])(
           `Should swap [${normalized.toString()} %s, ~ ${normalized.toString()} %s]`,
@@ -649,11 +655,27 @@ describe("Dex", () => {
             // console.log(dex.storage.storage.pools[pool_id.toString()]);
             const init_reserves = dex.storage.storage.pools[pool_id.toString()]
               .reserves as any as Map<string, BigNumber>;
+            const rates = {};
+            (
+              dex.storage.storage.pools[pool_id.toString()]
+                .token_rates as any as Map<string, BigNumber>
+            ).forEach((v, k) => {
+              rates[k] = new BigNumber(10).pow(18).dividedBy(v);
+            });
             const in_amount = amounts.get(i);
-            console.log(i, in_amount);
+            console.log(i, in_amount.toFormat());
             let min_out = amounts.get(j);
             min_out = min_out.minus(min_out.multipliedBy(10).div(100));
-            console.log(j, min_out);
+            console.log(j, min_out.toFormat());
+            console.log(
+              `Swapping ${t_in} with amount ${in_amount
+                .dividedBy(rates[i])
+                .div(new BigNumber(10).pow(18))
+                .toFormat()} to ${t_to} with min amount ${min_out
+                .dividedBy(rates[j])
+                .div(new BigNumber(10).pow(18))
+                .toFormat()}`
+            );
             await dex.swap(
               pool_id,
               new BigNumber(i),
@@ -669,8 +691,20 @@ describe("Dex", () => {
             expect(upd_reserves.get(i.toString())).toEqual(
               init_reserves.get(i.toString()).plus(amounts.get(i))
             );
-            expect(upd_reserves.get(j.toString())).toEqual(
-              init_reserves.get(j.toString()).minus(amounts.get(j))
+            const output = init_reserves
+              .get(j.toString())
+              .minus(upd_reserves.get(j.toString()));
+            console.log(
+              `Swapped to ${output
+                .dividedBy(rates[j])
+                .div(new BigNumber(10).pow(18))
+                .toFormat(10)} ${t_to}.`
+            );
+            expect(output.toNumber()).toBeGreaterThanOrEqual(
+              min_out.toNumber()
+            );
+            expect(output.toNumber()).toBeLessThanOrEqual(
+              amounts.get(j).toNumber()
             );
           }
         );
@@ -678,18 +712,16 @@ describe("Dex", () => {
 
       describe("2.5. Test divest liq", () => {
         let min_amounts: Map<string, BigNumber>;
-        const kUSDAmount = new BigNumber("10000000000000000000");
-        const uUSDAmount = new BigNumber("10000000000000");
-        const USDtzAmount = new BigNumber("10000000");
-        const normalized = new BigNumber("1");
-        const amount_in = new BigNumber("30000");
+        const kUSDAmount = new BigNumber(10).pow(18 + 3);
+        const uUSDAmount = new BigNumber(10).pow(12 + 3);
+        const USDtzAmount = new BigNumber(10).pow(6 + 3);
+        const amount_in = new BigNumber(10).pow(18 + 4).multipliedBy(3);
         let pool_id: BigNumber;
         let map_tokens_idx: {
           kUSD: string;
           uUSD: string;
           USDtz: string;
         };
-
         async function divestLiquidity(
           sender,
           pool_id: BigNumber,
@@ -717,11 +749,12 @@ describe("Dex", () => {
             (value, key) => (virt_res[key] = value.toFormat(0).toString())
           );
           console.log(virt_res);
-          console.log(initLPBalance);
+          console.log(initLPBalance.toFormat());
           const init_ledger = dex.storage.storage.ledger[accounts[sender].pkh];
-          console.log(init_ledger);
+          console.log(init_ledger.toFormat());
           await dex.divestLiquidity(pool_id, min_amounts, shares);
           await dex.updateStorage({
+
             pools: [pool_id.toString()],
             ledger: [[accounts[sender].pkh, pool_id.toNumber()]],
           });
@@ -732,7 +765,7 @@ describe("Dex", () => {
             initLPBalance.toNumber()
           );
           console.log(
-            dex.storage.storage.ledger[accounts[sender].pkh].toNumber()
+            dex.storage.storage.ledger[accounts[sender].pkh].toFormat()
           );
           expect(
             dex.storage.storage.ledger[accounts[sender].pkh]
@@ -835,7 +868,7 @@ describe("Dex", () => {
     });
   });
 
-  describe.skip("4. Views", () => {
+  describe("4. Views", () => {
     let lambdaContract;
     let lambdaContractAddress;
     let pool_id: BigNumber;
@@ -888,8 +921,7 @@ describe("Dex", () => {
         const a = await dex.contract.views
           .get_a(pool_id)
           .read(lambdaContractAddress);
-        console.log(exp_A, a)
-        expect(a.toNumber()).toEqual(exp_A.toNumber());
+        expect(a.toNumber()).toEqual(exp_A.dividedBy(100).toNumber());
       });
       it("Should return fees", async () => {
         await dex.updateStorage({ pools: [pool_id.toString()] })
@@ -915,16 +947,16 @@ describe("Dex", () => {
         const v_reserves = await dex.contract.views
           .get_reserves(pool_id)
           .read(lambdaContractAddress);
-        console.log(exp_v_reserves.toString(), v_reserves.toString());
+        console.log(exp_v_reserves, v_reserves);
         expect(v_reserves).toMatchObject(exp_v_reserves);
       });
       it.todo("Should return min received");
       it("Should return dy", async () => {
         await dex.updateStorage({ pools: [pool_id.toString()] });
-        const dx = new BigNumber(10).pow(18 + 6);
-        const exp_dy = new BigNumber('1000000');
-        const i = map_tokens_idx.kUSD;
-        const j = map_tokens_idx.USDtz
+        const dx = new BigNumber(10).pow(12 + 3);
+        const exp_dy = new BigNumber(10).pow(6 + 3);
+        const i = map_tokens_idx.uUSD;
+        const j = map_tokens_idx.USDtz;
         const dy = await dex.contract.views
           .get_dy(pool_id, i, j, dx)
           .read(lambdaContractAddress);
@@ -949,11 +981,9 @@ describe("Dex", () => {
             token_id: pool_id,
           },
         ];
-        console.log(dex.contract.views);
         const balances = await dex.contract.views
           .balance_of(accounts)
           .read(lambdaContractAddress);
-        console.log(balances);
         expect(balances[0].balance.toNumber()).toBeGreaterThanOrEqual(0);
         expect(balances[1].balance.toNumber()).toBeGreaterThanOrEqual(0);
         expect(balances[2].balance.toNumber()).toBeGreaterThanOrEqual(0);
@@ -962,8 +992,10 @@ describe("Dex", () => {
         const total_supply = await dex.contract.views
           .total_supply(pool_id)
           .read(lambdaContractAddress);
-        console.log(total_supply);
-        expect(total_supply.toNumber()).toBeGreaterThan(0);
+        await dex.updateStorage({
+          pools: [pool_id.toString()],
+        });
+        expect(total_supply.toNumber()).toEqual(dex.storage.storage.pools[pool_id.toString()].total_supply.toNumber());
       });
     });
   });

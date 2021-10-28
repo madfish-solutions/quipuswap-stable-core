@@ -2,22 +2,36 @@
 (* reserves per pool *)
 [@inline]
 function get_reserves(
-  const params          : reserves_type;
-  const s               : full_storage_type)
-                        : full_return_type is
+  const p               : action_type;
+  var s                 : storage_type)
+                        : return_type is
   block {
-    const pair : pair_type = get_pair(params.pair_id, s.storage)
-  } with (list [Tezos.transaction(pair.reserves, 0tez, params.receiver)], s)
+    var operations: list(operation) := no_operations;
+    case p of
+      Get_reserves(params) -> {
+      const pair : pair_type = get_pair(params.pair_id, s);
+      operations := Tezos.transaction(pair.reserves, 0tez, params.receiver) # operations;
+      }
+    | _ -> skip
+    end;
+  } with (operations, s)
 
 (* reserves per pool *)
 [@inline]
 function get_virt_reserves(
-  const params          : reserves_type;
-  const s               : full_storage_type)
-                        : full_return_type is
+  const p               : action_type;
+  var s                 : storage_type)
+                        : return_type is
   block {
-    const pair : pair_type = get_pair(params.pair_id, s.storage)
-  } with (list [Tezos.transaction(pair.virtual_reserves, 0tez, params.receiver)], s)
+    var operations: list(operation) := no_operations;
+    case p of
+      Get_virt_reserves(params) -> {
+        const pair : pair_type = get_pair(params.pair_id, s);
+        operations := Tezos.transaction(pair.virtual_reserves, 0tez, params.receiver) # operations;
+      }
+    | _ -> skip
+    end;
+  } with (operations, s)
 
 
 (* tokens per 1 pair's share *)
@@ -101,51 +115,72 @@ function calc_withdraw_one_coin(
 (* Calculate the current output dy given input dx *)
 [@inline]
 function get_dy(
-  const params          : get_dy_params;
-  const s               : full_storage_type)
-                        : full_return_type is
+  const p               : action_type;
+  var s                 : storage_type)
+                        : return_type is
   block {
-    const pair : pair_type = get_pair(params.pair_id, s.storage);
-    const xp: map(nat, nat) = _xp(pair);
-    const xp_i = case xp[params.i] of
-      | Some(value) -> value
-      | None -> (failwith("no such index") : nat)
-      end;
-    const xp_j = case xp[params.j] of
-      | Some(value) -> value
-      | None -> (failwith("no such index") : nat)
-      end;
-    const rates: map(nat, nat) = pair.token_rates;
-    const rate_i = case rates[params.i] of
-      | Some(value) -> value
-      | None -> (failwith("no such index") : nat)
-      end;
-    const rate_j = case rates[params.j] of
-      | Some(value) -> value
-      | None -> (failwith("no such index") : nat)
-      end;
-    const x: nat = xp_i + (params.dx * rate_i / _C_precision);
-    const y: nat = get_y(params.i, params.j, x, xp, pair);
-    const dy: nat = nat_or_error(xp_j - y - 1, "y>xp_j");
-    const fee: nat = sum_all_fee(pair) * dy / _C_fee_denominator;
-  } with (list [Tezos.transaction((nat_or_error(dy - fee, "fee>dy") * _C_precision / rate_j), 0tez, params.receiver)], s)
+    var operations: list(operation) := no_operations;
+    case p of
+      Get_dy(params) -> {
+        const pair : pair_type = get_pair(params.pair_id, s);
+        const xp: map(nat, nat) = _xp(pair);
+        const xp_i = case xp[params.i] of
+          | Some(value) -> value
+          | None -> (failwith("no such index") : nat)
+          end;
+        const xp_j = case xp[params.j] of
+          | Some(value) -> value
+          | None -> (failwith("no such index") : nat)
+          end;
+        const rates: map(nat, nat) = pair.token_rates;
+        const rate_i = case rates[params.i] of
+          | Some(value) -> value
+          | None -> (failwith("no such index") : nat)
+          end;
+        const rate_j = case rates[params.j] of
+          | Some(value) -> value
+          | None -> (failwith("no such index") : nat)
+          end;
+        const x: nat = xp_i + (params.dx * rate_i / _C_precision);
+        const y: nat = get_y(params.i, params.j, x, xp, pair);
+        const dy: nat = nat_or_error(xp_j - y - 1, "y>xp_j") * _C_precision / rate_j;
+        const fee: nat = sum_all_fee(pair) * dy / _C_fee_denominator;
+        operations := Tezos.transaction((nat_or_error(dy - fee, "fee>dy")), 0tez, params.receiver) # operations;
+      }
+    | _ -> skip
+    end;
+  } with (operations, s)
 
 (* Get A constant *)
 [@inline]
 function get_A(
-  const params          : get_A_params;
-  const s               : full_storage_type)
-                        : full_return_type is
+  const p               : action_type;
+  var s                 : storage_type)
+                        : return_type is
   block {
-    const pair : pair_type = get_pair(params.pair_id, s.storage);
-  } with (list[Tezos.transaction(_A(pair) / _C_a_precision, 0tez, params.receiver)], s)
+    var operations: list(operation) := no_operations;
+    case p of
+      Get_a(params) -> {
+    const pair : pair_type = get_pair(params.pair_id, s);
+    operations := Tezos.transaction(_A(pair) / _C_a_precision, 0tez, params.receiver) # operations;
+   }
+    | _ -> skip
+    end;
+  } with (operations, s)
 
 (* Fees *)
 [@inline]
 function get_fees(
-  const params    : get_fee_type;
-  const s         : full_storage_type)
-                  : full_return_type is
+  const p               : action_type;
+  var s                 : storage_type)
+                        : return_type is
   block {
-    const pair : pair_type = get_pair(params.pool_id, s.storage);
-  } with (list[Tezos.transaction(pair.fee, 0tez, params.receiver)], s)
+    var operations: list(operation) := no_operations;
+    case p of
+      Get_fees(params) -> {
+    const pair : pair_type = get_pair(params.pool_id, s);
+    operations := Tezos.transaction(pair.fee, 0tez, params.receiver) # operations;
+     }
+    | _ -> skip
+    end;
+  } with (operations, s)

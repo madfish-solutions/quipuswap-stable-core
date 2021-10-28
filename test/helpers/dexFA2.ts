@@ -135,6 +135,7 @@ export class Dex extends TokenFA2 {
         asset: unknown;
         in_amount: BigNumber;
         rate: BigNumber;
+        precision_multiplier: BigNumber;
       }
     >();
     const input_params = inputs.map((item, i) => {
@@ -149,6 +150,7 @@ export class Dex extends TokenFA2 {
             },
             in_amount: input.in_amount,
             rate: input.rate,
+            precision_multiplier: input.precision_multiplier,
           };
         } else
           return {
@@ -157,6 +159,7 @@ export class Dex extends TokenFA2 {
             },
             in_amount: input.in_amount,
             rate: input.rate,
+            precision_multiplier: input.precision_multiplier,
           };
       };
       input_tokens.set(i, mapped_item(item));

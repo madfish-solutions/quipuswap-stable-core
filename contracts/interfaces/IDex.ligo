@@ -106,14 +106,24 @@ type pair_type          is [@layout:comb] record [
   future_A_time           : timestamp;
   // tokens_count            : nat; (* from 2 to 4 tokens at one exchange pool *)
   // tokens                  : tokens_type; (* list of exchange tokens *)
-  token_rates             : map(token_pool_index, nat); (* each value = 10eN
-                                              where N is the number of decimal places to normalize to 10e18.
-                                              Example: {  0n: 100000n;      // 1st token has 13 decimal places.
-                                                          1n: 1n;           // 2nd token has 18 decimal places.
-                                                          2n: 10n;          // 3rd token has 17 decimal places.
-                                                          3n: 10000000000n; // 4th token has 8 decimal places.
-                                                        }
-                                           *)
+  token_rates             : map(token_pool_index, nat);
+  (* each value = 10eN
+      where N is the number of decimal places to normalize to 10e18.
+      Example: {
+        0n: 1_000_000_000_000_000_000n;                 // 1st token has 18 decimal places.
+        1n: 1_000_000_000_000_000_000_000_000n;         // 2nd token has 12 decimal places.
+        2n: 1_000_000_000_000_000_000_000_000_000_000n; // 3rd token has 6 decimal places.
+      }
+    *)
+  precision_multipliers   : map(token_pool_index, nat);
+   (* each value = 10eN
+      where N is the number of decimal places to normalize to 10e18.
+      Example: {
+        0n: 1n;                 // 1st token has 18 decimal places and rate are 10e18.
+        1n: 1_000_000n;         // 2nd token has 12 decimal places and rate are 10e24.
+        2n: 1_000_000_000_000n; // 3rd token has 6 decimal places and rate are 10e30.
+      }
+    *)
   reserves                : map(token_pool_index, nat); (* list of token reserves in the pool *)
   virtual_reserves        : map(token_pool_index, nat);
 
@@ -198,6 +208,7 @@ type input_token        is [@layout:comb] record [
   asset                   : token_type; (* exchange pair info *)
   in_amount               : nat; (* amount of tokens, where `index of value` == `index of token` to be invested *)
   rate                    : nat; (* = 10eN where N is the number of decimal places to normalize to 10e18 *)
+  precision_multiplier    : nat; (* = 10eN where N is the number of decimal places to normalize to 10e18 *)
 ]
 
 type initialize_params  is [@layout:comb] record [
