@@ -122,11 +122,19 @@ const _compileFile = async (contractFileName: string, ligoVersion: LIGOVersions,
     });
 
     ligo.stderr.on("data", (data) => {
-      const message = data.toString();
-
-      error(message);
-      reject(ligo.stderr);
-      process.exit(1);
+      const message: string = data.toString();
+      if (
+        message.includes("WARNING") ||
+        message.includes("Warning") ||
+        message.includes("warning")
+      ) {
+        warn(message);
+        return;
+      } else {
+        error(message);
+        reject(ligo.stderr);
+        process.exit(1);
+      }
     });
   });
 };
