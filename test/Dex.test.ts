@@ -51,6 +51,15 @@ describe("Dex", () => {
   };
 
   let tokens: TokensMap;
+  const swap_routes = [
+    ["kUSD", "uUSD"],
+    ["uUSD", "USDtz"],
+    ["USDtz", "kUSD"],
+
+    ["kUSD", "USDtz"],
+    ["USDtz", "uUSD"],
+    ["uUSD", "kUSD"],
+  ];
   let dex: Dex;
   const aliceAddress: string = accounts.alice.pkh;
   const bobAddress: string = accounts.bob.pkh;
@@ -97,6 +106,53 @@ describe("Dex", () => {
     await result.uUSD.approve(dex.contract.address, new BigNumber(10).pow(45));
     await result.USDtz.approve(dex.contract.address, new BigNumber(10).pow(45));
     return result as TokensMap;
+  }
+
+  async function setupTokenAmounts(
+    dex: Dex,
+    USDtzAmount: BigNumber,
+    kUSDAmount: BigNumber,
+    uUSDAmount: BigNumber
+  ): Promise<{ pool_id: BigNumber; amounts: Map<string, BigNumber> }> {
+    let amounts = new Map<string, BigNumber>();
+    await dex.updateStorage({});
+    const pool_id = dex.storage.storage.pools_count.minus(new BigNumber(1));
+    await dex.updateStorage({ tokens: [pool_id.toString()] });
+    const tokens_map = dex.storage.storage.tokens[
+      pool_id.toNumber()
+    ] as any as Map<string, FA2TokenType | FA12TokenType>;
+    for (let [k, v] of tokens_map.entries()) {
+      let token: FA2TokenType | FA12TokenType = v as FA2TokenType;
+      let contract_address: string;
+      if (token.fa2) {
+        contract_address = token.fa2.token_address;
+      } else {
+        token = v as FA12TokenType;
+        contract_address = token.fa12;
+      }
+      if (contract_address) {
+        let input_amount = new BigNumber("0");
+        if (contract_address == tokens.USDtz.contract.address) {
+          // await tokens.USDtz.approve(dex.contract.address, zero_amount);
+          input_amount = USDtzAmount;
+          // if (!input_amount.isEqualTo(zero_amount))
+          //   await tokens.USDtz.approve(dex.contract.address, input_amount);
+          // console.log('USDtz', input_amount.toFormat());
+        } else if (contract_address == tokens.kUSD.contract.address) {
+          // await tokens.kUSD.approve(dex.contract.address, zero_amount);
+          input_amount = kUSDAmount;
+          // if (!input_amount.isEqualTo(zero_amount))
+          //   await tokens.kUSD.approve(dex.contract.address, input_amount);
+          // console.log("kUSD", input_amount.toFormat());
+        } else if (contract_address == tokens.uUSD.contract.address) {
+          input_amount = uUSDAmount;
+          // await tokens.uUSD.approve(dex.contract.address, input_amount);
+          // console.log("uUSD", input_amount.toFormat());
+        }
+        amounts.set(k, input_amount);
+      }
+    }
+    return { pool_id, amounts };
   }
 
   beforeAll(async () => {
@@ -212,53 +268,6 @@ describe("Dex", () => {
 
   describe("2. Testing Pools endpoints", () => {
     const zero_amount = new BigNumber("0");
-
-    async function setupTokenAmounts(
-      dex: Dex,
-      USDtzAmount: BigNumber,
-      kUSDAmount: BigNumber,
-      uUSDAmount: BigNumber
-    ): Promise<{ pool_id: BigNumber; amounts: Map<string, BigNumber> }> {
-      let amounts = new Map<string, BigNumber>();
-      await dex.updateStorage({});
-      const pool_id = dex.storage.storage.pools_count.minus(new BigNumber(1));
-      await dex.updateStorage({ tokens: [pool_id.toString()] });
-      const tokens_map = dex.storage.storage.tokens[
-        pool_id.toNumber()
-      ] as any as Map<string, FA2TokenType | FA12TokenType>;
-      for (let [k, v] of tokens_map.entries()) {
-        let token: FA2TokenType | FA12TokenType = v as FA2TokenType;
-        let contract_address: string;
-        if (token.fa2) {
-          contract_address = token.fa2.token_address;
-        } else {
-          token = v as FA12TokenType;
-          contract_address = token.fa12;
-        }
-        if (contract_address) {
-          let input_amount = new BigNumber("0");
-          if (contract_address == tokens.USDtz.contract.address) {
-            // await tokens.USDtz.approve(dex.contract.address, zero_amount);
-            input_amount = USDtzAmount;
-            // if (!input_amount.isEqualTo(zero_amount))
-            //   await tokens.USDtz.approve(dex.contract.address, input_amount);
-            // console.log('USDtz', input_amount.toFormat());
-          } else if (contract_address == tokens.kUSD.contract.address) {
-            // await tokens.kUSD.approve(dex.contract.address, zero_amount);
-            input_amount = kUSDAmount;
-            // if (!input_amount.isEqualTo(zero_amount))
-            //   await tokens.kUSD.approve(dex.contract.address, input_amount);
-            // console.log("kUSD", input_amount.toFormat());
-          } else if (contract_address == tokens.uUSD.contract.address) {
-            input_amount = uUSDAmount;
-            // await tokens.uUSD.approve(dex.contract.address, input_amount);
-            // console.log("uUSD", input_amount.toFormat());
-          }
-          amounts.set(k, input_amount);
-        }
-      }
-      return { pool_id, amounts };
-    }
 
     describe("2.1. Test adding new pool", () => {
       let inputs: any[];
@@ -386,10 +395,10 @@ describe("Dex", () => {
       });
       describe("2.2.2 Setting fees", () => {
         const fees: FeeType = {
-          lp_fee: new BigNumber("1000000"),
-          stakers_fee: new BigNumber("1000000"),
-          ref_fee: new BigNumber("1000000"),
-          dev_fee: new BigNumber("1000000"),
+          lp_fee: new BigNumber("2000000"),
+          stakers_fee: new BigNumber("2000000"),
+          ref_fee: new BigNumber("500000"),
+          dev_fee: new BigNumber("500000"),
         };
         async function setFeesSuccessCase(
           sender: AccountsLiteral,
@@ -410,9 +419,6 @@ describe("Dex", () => {
           const updStorage = (await dex.contract.storage()) as any;
           const updatedFees = (await updStorage.storage.pools.get(pool_id))
             .fee as FeeType;
-          for (let i in updatedFees) {
-            expect(updatedFees[i].toNumber()).toEqual(fees[i].toNumber());
-          }
           expect(updatedFees.lp_fee.toNumber()).toEqual(fees.lp_fee.toNumber());
           expect(updatedFees.stakers_fee.toNumber()).toEqual(
             fees.stakers_fee.toNumber()
@@ -691,45 +697,34 @@ describe("Dex", () => {
         }
         map_tokens_idx = mapping;
       });
-      it.each([
-        ["kUSD", "uUSD"],
-        ["uUSD", "USDtz"],
-        ["USDtz", "kUSD"],
-      ])("Should fail if zero input [%s, %s]", async (t_in, t_to) => {
-        const zero_amount = new BigNumber("0");
-        const i = map_tokens_idx[t_in];
-        const j = map_tokens_idx[t_to];
-        min_out = new BigNumber(0);
-        await failCase(
-          "bob",
-          async () =>
-            await dex.swap(
-              pool_id,
-              new BigNumber(i),
-              new BigNumber(j),
-              zero_amount,
-              min_out,
-              referral,
-              null
-            ),
-          "Dex/zero-amount-in"
-        );
-      });
-      it.each([
-        ["kUSD", "uUSD"],
-        ["uUSD", "USDtz"],
-        ["USDtz", "kUSD"],
-
-        ["kUSD", "USDtz"],
-        ["USDtz", "uUSD"],
-        ["uUSD", "kUSD"],
-      ])(
+      it.each(swap_routes)(
+        "Should fail if zero input [%s, %s]",
+        async (t_in, t_to) => {
+          const zero_amount = new BigNumber("0");
+          const i = map_tokens_idx[t_in];
+          const j = map_tokens_idx[t_to];
+          min_out = new BigNumber(0);
+          await failCase(
+            "bob",
+            async () =>
+              await dex.swap(
+                pool_id,
+                new BigNumber(i),
+                new BigNumber(j),
+                zero_amount,
+                min_out,
+                referral,
+                null
+              ),
+            "Dex/zero-amount-in"
+          );
+        }
+      );
+      it.each(swap_routes)(
         `Should swap [${normalized.toString()} %s, ~ ${normalized.toString()} %s]`,
         async (t_in, t_to) => {
           let config = await prepareProviderOptions(sender);
           await Tezos.setProvider(config);
-          console.log(await Tezos.signer.publicKeyHash());
-          console.log(accounts[sender].pkh);
           const i = map_tokens_idx[t_in];
           const j = map_tokens_idx[t_to];
           await dex.updateStorage({ pools: [pool_id.toString()] });
@@ -814,7 +809,11 @@ describe("Dex", () => {
               .dividedBy(rates[j])
               .dividedBy(new BigNumber(10).pow(18))
               .toNumber()
-          ).toBeCloseTo(normalized.toNumber());
+          ).toBeCloseTo(
+            normalized
+              .minus(normalized.multipliedBy(5).dividedBy(10000))
+              .toNumber()
+          );
 
           init_in = init_in instanceof BigNumber ? init_in : init_in[0].balance;
           init_out =
@@ -830,7 +829,11 @@ describe("Dex", () => {
 
           expect(
             upd_out.minus(init_out).dividedBy(decimals[t_to]).toNumber()
-          ).toBeCloseTo(normalized.toNumber());
+          ).toBeCloseTo(
+            normalized
+              .minus(normalized.multipliedBy(5).dividedBy(10000))
+              .toNumber()
+          );
         }
       );
     });
@@ -992,12 +995,107 @@ describe("Dex", () => {
   });
 
   describe("4. Testing rewards separation", () => {
+    let pool_id: BigNumber;
+    const referral = 'alice';
+    const staker = "bob";
+    let dev_address: string;
+
+    async function batchSwap(times: number, poolId: BigNumber, amount: BigNumber, ref: string): Promise<void> {
+      let amounts: Map<string, BigNumber>;
+      const kUSDAmount = decimals.kUSD.multipliedBy(amount);
+      const uUSDAmount = decimals.uUSD.multipliedBy(amount);
+      const USDtzAmount = decimals.USDtz.multipliedBy(amount);
+      let map_tokens_idx: {
+        kUSD: string;
+        uUSD: string;
+        USDtz: string;
+      };
+      const stp = await setupTokenAmounts(
+        dex,
+        USDtzAmount.multipliedBy(2),
+        kUSDAmount.multipliedBy(2),
+        uUSDAmount.multipliedBy(2)
+      );
+      amounts = new Map<string, BigNumber>();
+      stp.amounts.forEach((v, k) => {
+        amounts.set(k, v.dividedBy(2));
+      });
+      const tokens_map = dex.storage.storage.tokens[
+        poolId.toNumber()
+      ] as any as Map<string, FA2TokenType | FA12TokenType>;
+      let mapping = {} as any;
+      for (let [k, v] of tokens_map.entries()) {
+        let token: FA2TokenType | FA12TokenType = v as FA2TokenType;
+        let contract_address: string;
+        if (token.fa2) {
+          contract_address = token.fa2.token_address;
+        } else {
+          token = v as FA12TokenType;
+          contract_address = token.fa12;
+        }
+        if (contract_address) {
+          if (contract_address == tokens.USDtz.contract.address) {
+            mapping.USDtz = k;
+          } else if (contract_address == tokens.kUSD.contract.address) {
+            mapping.kUSD = k;
+          } else if (contract_address == tokens.uUSD.contract.address) {
+            mapping.uUSD = k;
+          }
+        }
+      }
+      map_tokens_idx = mapping;
+      for (let i = 0; i < times; i++) {
+        let batch = await Tezos.contract.batch();
+        for (const [t_in, t_out] of swap_routes) {
+          const i = map_tokens_idx[t_in];
+          const j = map_tokens_idx[t_out];
+          let min_out = amounts.get(j);
+          min_out = min_out.minus(min_out.multipliedBy(1).div(100));
+          batch.withContractCall(
+            dex.contract.methods.swap(
+              poolId,
+              i,
+              j,
+              amounts.get(i),
+              min_out,
+              null,
+              ref
+            )
+          );
+        }
+        const op = await batch.send();
+        await confirmOperation(Tezos, op.hash);
+        console.log(`${i + 1} BatchSwap ${op.hash}`);
+        await dex.updateStorage({pools: [pool_id.toString()]})
+        const res = dex.storage.storage.pools[pool_id.toNumber()]
+          .reserves as any as MichelsonMap<string, BigNumber>;
+        let raw_res = {};
+        res.forEach(
+          (value, key) => (raw_res[key] = value.toFormat(0).toString())
+        );
+        console.log(raw_res);
+      }
+    }
+
+    beforeAll(async () => {
+      await dex.updateStorage({});
+      dev_address = dex.storage.storage.dev_address;
+      const amount = new BigNumber(10).pow(4);
+      pool_id = dex.storage.storage.pools_count.minus(new BigNumber(1));
+      await batchSwap(5, pool_id, amount, accounts[referral].pkh);
+    });
     describe("4.1. Referral reward", () => {
-      const referral = "bob";
-      it.todo("Should get referral rewards");
+      it("Should get referral rewards", async () => {
+        await dex.updateStorage({ pools: [pool_id.toString()] })
+        const ref_address = accounts[referral].pkh
+        const ref_stor = await dex.contract.storage().then((storage: any) => {
+          return storage.storage.referral_rewards
+        });
+        console.log(ref_stor);
+        const init_referral_rewards = dex.storage.storage.referral_rewards;
+      });
     });
     describe("4.2. QT stakers reward", () => {
-      const staker = "bob";
       it.todo("Should get staking rewards");
     });
 

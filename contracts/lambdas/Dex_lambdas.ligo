@@ -188,8 +188,30 @@ function swap(
           end;
 
 
-        const dy = preform_swap(i, j, dx, pair);
+        var dy := preform_swap(i, j, dx, pair);
         // TODO: perform fee separation
+        const after_fees = perform_fee_slice(dy, pair);
+        dy := after_fees.0;
+        const to_ref = after_fees.1;
+        const to_dev = after_fees.2;
+        const to_stakers = after_fees.3;
+
+        const referral: address = case (params.referral: option(address)) of
+          | Some(ref) -> ref
+          | None -> get_default_refer(s)
+          end;
+        s.referral_rewards[(referral, token_j)] := case s.referral_rewards[(referral, token_j)] of
+          | Some(rew) -> rew + to_ref
+          | None -> to_ref
+        end;
+        s.dev_rewards[token_j] := case s.dev_rewards[token_j] of
+          | Some(rew) -> rew + to_dev
+          | None -> to_dev
+        end;
+        pair.staker_accumulator.accumulator[j] := case pair.staker_accumulator.accumulator[j] of
+          | Some(rew) -> rew + to_stakers
+          | None -> to_stakers
+        end;
 
         if dy < min_y
           then failwith(ERRORS.high_min_out)

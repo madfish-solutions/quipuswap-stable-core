@@ -46,6 +46,27 @@ function set_reserves_from_diff(
     pool.virtual_reserves := Map.map(map_diff, pool.virtual_reserves);
   } with pool
 
+function perform_fee_slice(
+    const dy          : nat;
+    const pool        : pair_type
+  )                   : nat * nat * nat * nat is
+  block {
+    var new_dy := dy;
+
+    const to_ref = dy * pool.fee.ref_fee / CONSTANTS.fee_denominator;
+
+    const to_dev = dy * pool.fee.dev_fee / CONSTANTS.fee_denominator;
+
+    var to_prov := dy * pool.fee.lp_fee / CONSTANTS.fee_denominator;
+
+    var to_stakers := 0n;
+    if (pool.staker_accumulator.total_staked =/= 0n)
+      then to_stakers := dy * pool.fee.stakers_fee / CONSTANTS.fee_denominator;
+    else to_prov := to_prov + dy * pool.fee.stakers_fee / CONSTANTS.fee_denominator;
+
+    new_dy := nat_or_error(new_dy - to_prov - to_ref - to_dev - to_stakers, "Fee is too large");
+  } with (new_dy, to_ref, to_dev, to_stakers)
+
 function _xp_mem(const _balances: map(nat, nat); const s: pair_type): map(nat, nat) is
   block {
     function count_result(const key: nat; const value: nat): nat is
@@ -449,7 +470,7 @@ function preform_swap(
   ): return_type is
   block {
     var pair : pair_type := params.pair;
-    const tokens = get_tokens(params.pair_id, s);
+    // const tokens = get_tokens(params.pair_id, s);
     const amp = _A(pair);
     const init_reserves = pair.virtual_reserves;
     // Initial invariant
@@ -471,91 +492,26 @@ function preform_swap(
     then failwith(ERRORS.zero_in);
     else skip;
     var mint_amount := 0n;
+    pair := set_reserves_from_diff(init_reserves, new_reserves, pair);
     if token_supply > 0n
       then {
         // Only account for fees if we are not the first to deposit
         // const fee = sum_all_fee(pair) * tokens_count / (4 * (tokens_count - 1));
         // const wo_lp_fee = sum_wo_lp_fee(pair) * tokens_count / (4 * (tokens_count - 1));
-        const init = record [
-          reserves = new_reserves;
-          storage = s;
-        ];
         // const referral: address = case (params.referral: option(address)) of
-        //         Some(ref) -> ref
-        //       | None -> get_default_refer(s)
-        //       end;
+        //     Some(ref) -> ref
+        //   | None -> get_default_refer(s)
+        //   end;
 
-        function calc_invests(
-          const acc: record [
-            reserves: map(token_pool_index, nat);
-            storage: storage_type;
-          ];
-          const entry: (token_pool_index * token_type)
-          ): record [
-            reserves: map(token_pool_index, nat);
-            storage: storage_type;
-          ] is
-          block {
-            var result := acc;
-            const i = entry.0;
-            const old_balance = case init_reserves[i] of
-                            Some(bal) -> bal
-                          | None -> (failwith("No such reserve"): nat)
-                          end;
-            const new_balance = case acc.reserves[i] of
-                            Some(bal) -> bal
-                          | None -> (failwith("No such reserve"): nat)
-                          end;
+        
 
-            const _ideal_balance = d1 * old_balance / d0;
-            // const difference = abs(ideal_balance - new_balance);
-            // const fee_norm = fee * difference / FEE_DENOMINATOR;
-            // const after_fees = apply_invest_fee(referral, params.pair_id, i, difference, new_balance, acc.storage);
-            // pair.virtual_reserves[i] := abs(new_balance - (wo_lp_fee / FEE_DENOMINATOR));
-            result.reserves[i] := new_balance; // abs(new_balance - fee_norm);
-            // result.storage := after_fees.1;
-          } with result;
-
-        const upd = Map.fold(calc_invests, tokens, init);
-
-
-        // for _i := 0 to int(tokens_count)
-        //   block {
-        //     const i = case is_nat(_i) of
-        //         Some(i) -> i
-        //       | None -> (failwith("below zero"): nat)
-        //       end;
-        //     const old_balance = case init_reserves[i] of
-        //                     Some(bal) -> bal
-        //                   | None -> (failwith("No such reserve"): nat)
-        //                   end;
-        //     const new_balance = case _new_reserves[i] of
-        //                     Some(bal) -> bal
-        //                   | None -> (failwith("No such reserve"): nat)
-        //                   end;
-
-        //     const ideal_balance = d1 * old_balance / d0;
-        //     const difference = abs(ideal_balance - new_balance);
-        //     // const fee_norm = fee * difference / FEE_DENOMINATOR;
-        //     const referral: address = case (params.referral: option(address)) of
-        //         Some(ref) -> ref
-        //       | None -> get_default_refer(s)
-        //       end;
-
-        //     const after_fees = apply_invest_fee(referral, params.pair_id, i, difference, new_balance, new_storage);
-
-        //     // pair.virtual_reserves[i] := abs(new_balance - (wo_lp_fee / FEE_DENOMINATOR));
-        //     _new_reserves[i] := after_fees.0; // abs(new_balance - fee_norm);
-        //     new_storage := after_fees.1;
-        //   };
-        s := upd.storage;
-        pair := get_pair(params.pair_id, s);
-        const d2 = _get_D_mem(upd.reserves, amp, pair);
-        pair := set_reserves_from_diff(init_reserves, upd.reserves, pair);
-        mint_amount := token_supply * nat_or_error(d2 - d0, "d2<d0") / d0;
-      }
+        // s := upd.storage;
+        // pair := get_pair(params.pair_id, s);
+        // const d2 = _get_D_mem(new_reserves, amp, pair);
+        // pair := set_reserves_from_diff(init_reserves, new_reserves, pair);
+        mint_amount := token_supply * nat_or_error(d1 - d0, "d1<d0") / d0;
+    }
     else {
-        pair := set_reserves_from_diff(init_reserves, new_reserves, pair);
         mint_amount := d1;  // Take the dust if there was any
     };
     case is_nat(mint_amount - params.min_mint_amount) of
@@ -563,12 +519,15 @@ function preform_swap(
     | _ -> skip
     end;
     function transfer_to_pool(const acc : return_type; const input : nat * nat) : return_type is
-      (typed_transfer(
-        Tezos.sender,
-        Tezos.self_address,
-        input.1,
-        get_token_by_id(input.0, params.pair_id, acc.1)
-      ) # acc.0, acc.1);
+      (
+        typed_transfer(
+          Tezos.sender,
+          Tezos.self_address,
+          input.1,
+          get_token_by_id(input.0, params.pair_id, acc.1)
+        ) # acc.0,
+        acc.1
+      );
     pair.total_supply := pair.total_supply + mint_amount;
     s.ledger[(Tezos.sender, params.pair_id)] := mint_amount;
     s.pools[params.pair_id] := pair;

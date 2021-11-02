@@ -444,9 +444,9 @@ export class Dex extends TokenFA2 {
       .setFees(
         pool_id,
         fees.lp_fee,
+        fees.stakers_fee,
         fees.ref_fee,
-        fees.dev_fee,
-        fees.stakers_fee
+        fees.dev_fee
       )
       .send();
 

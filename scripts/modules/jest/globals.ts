@@ -165,4 +165,4 @@ jestGlobal.deployContract = deployContract;
 jestGlobal.toBytes = toBytes;
 
 // Extend jest timeout
-jest.setTimeout(180000);
+jest.setTimeout(300000);
