@@ -25,7 +25,7 @@ function get_pair(
                         : pair_type is
   case s.pools[pair_id] of
   | Some(instance) -> instance
-  | None -> (failwith(err_pair_not_listed): pair_type)
+  | None -> (failwith(ERRORS.pair_not_listed): pair_type)
   end;
 
 (* Helper function to get pair info *)
@@ -35,7 +35,7 @@ function get_tokens(
                         : tokens_type is
   case s.tokens[pair_id] of
   | Some(instance) -> instance
-  | None -> (failwith(err_pair_not_listed): tokens_type)
+  | None -> (failwith(ERRORS.pair_not_listed): tokens_type)
   end;
 
 (* Helper function to get token pair *)
@@ -133,7 +133,7 @@ function get_fa2_token_contract(
   case (Tezos.get_entrypoint_opt("%transfer", token_address)
       : option(contract(entry_fa2_type))) of
     Some(contr) -> contr
-  | None -> (failwith(err_wrong_token_entrypoint) : contract(entry_fa2_type))
+  | None -> (failwith(ERRORS.wrong_token_entrypoint) : contract(entry_fa2_type))
   end;
 
 (* Helper function to get fa1.2 token contract *)
@@ -143,7 +143,7 @@ function get_fa12_token_contract(
   case (Tezos.get_entrypoint_opt("%transfer", token_address)
      : option(contract(entry_fa12_type))) of
     Some(contr) -> contr
-  | None -> (failwith(err_wrong_token_entrypoint) : contract(entry_fa12_type))
+  | None -> (failwith(ERRORS.wrong_token_entrypoint) : contract(entry_fa12_type))
   end;
 
 (* Helper function to transfer the asset based on its standard *)
@@ -181,7 +181,7 @@ function typed_transfer(
 //   const entered         : bool)
 //                         : bool is
 //   if entered
-//   then failwith(err_reentrancy)
+//   then failwith(ERRORS.reentrancy)
 //   else True
 
 [@inline]
@@ -193,5 +193,5 @@ function div_ceil(
     Some(result) -> if result.1 > 0n
       then result.0 + 1n
       else result.0
-  | None -> (failwith(err_no_liquidity): nat)
+  | None -> (failwith(ERRORS.no_liquidity): nat)
   end;

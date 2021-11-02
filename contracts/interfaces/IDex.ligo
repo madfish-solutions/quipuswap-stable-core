@@ -177,8 +177,8 @@ type swap_type          is [@layout:comb] record [
   idx_to                  : token_pool_index;
   amount                  : nat;
   min_amount_out          : nat;
-  referral                : option(address);
   receiver                : option(address);
+  referral                : option(address);
 ]
 
 // type swap_slice_type    is record [
@@ -236,7 +236,6 @@ type divest_type        is [@layout:comb] record [
 ]
 
 type reserves_type      is [@layout:comb] record [
-  
   pair_id                 : nat; (* pair identifier *)
   receiver                : contract(map(nat, nat)); (* response receiver *)
 ]

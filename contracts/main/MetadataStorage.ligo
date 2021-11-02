@@ -1,4 +1,4 @@
-#include "../partials/Constants.ligo"
+#import "../partials/Constants.ligo" "CONSTANTS"
 #include "../interfaces/IMetadataStorage.ligo"
 
 [@inline]
@@ -18,7 +18,7 @@ function update_owner(
     if params.add
       then s.owners := Set.add(params.owner, s.owners)
     else s.owners := Set.remove(params.owner, s.owners);
-  } with (no_operations, s)
+  } with (CONSTANTS.no_operations, s)
 
 (* Update the metadata for the token;
 only called by one of the current owners *)
@@ -26,7 +26,7 @@ function update_metadata(
   const new_metadata    : metadata_type;
   var s                 : storage_type)
                         : return_type is
-  block { check_pemission(s); s.metadata := new_metadata; } with (no_operations, s)
+  block { check_pemission(s); s.metadata := new_metadata; } with (CONSTANTS.no_operations, s)
 
 (* MetadataStorage - Contract to store and upgrade the shares token metadata *)
 function main(

@@ -1,10 +1,10 @@
-(* Initialize exchange after the previous liquidity was drained *)
+(* 0n Initialize exchange after the previous liquidity was drained *)
 function initialize_exchange(
   const p               : action_type;
   var s                 : storage_type)
                         : return_type is
   block {
-    var operations: list(operation) := no_operations;
+    var operations: list(operation) := CONSTANTS.no_operations;
     case p of
     | AddPair(params) -> {
       is_admin(s);
@@ -12,11 +12,11 @@ function initialize_exchange(
       const inp_len = Map.size(params.input_tokens);
       const max_index = nat_or_error(params.n_tokens - 1n, "tokens_less_1n");
       if (
-        (max_index > _C_max_tokens_index)
+        (max_index > CONSTANTS.max_tokens_index)
         or (params.n_tokens < 2n)
         or (inp_len =/= params.n_tokens)
       )
-        then failwith(err_wrong_tokens_count);
+        then failwith(ERRORS.wrong_tokens_count);
       else skip;
 
       function get_tokens_from_param(
@@ -38,19 +38,19 @@ function initialize_exchange(
       const snd_token = get_asset(1n);
 
       if snd_token >= fst_token
-        then failwith(err_wrong_pair_order);
+        then failwith(ERRORS.wrong_pair_order);
       else
         if max_index > 2n
           then {
             const trd_token = get_asset(2n);
             if trd_token >= snd_token
-              then failwith(err_wrong_pair_order);
+              then failwith(ERRORS.wrong_pair_order);
             else
               if max_index > 3n
                 then {
                   const fth_token = get_asset(3n);
                   if fth_token >= trd_token
-                    then failwith(err_wrong_pair_order);
+                    then failwith(ERRORS.wrong_pair_order);
                   else skip;
                 }
               else skip;
@@ -100,11 +100,11 @@ function initialize_exchange(
       );
 
       if pair_i.total_supply =/= 0n
-      then failwith(err_pair_listed)
+      then failwith(ERRORS.pair_listed)
       else skip;
 
       var new_pair: pair_type := pair_i;
-      if _C_max_a < params.a_constant
+      if CONSTANTS.max_a < params.a_constant
       then failwith("A const limit")
       else skip;
       new_pair.initial_A := params.a_constant;
@@ -130,43 +130,15 @@ function initialize_exchange(
     }
     | _                 -> skip
     end
-} with (operations, s)
-
-(* Provide liquidity (balanced) to the pool,
-note: tokens should be approved before the operation *)
-function invest_liquidity(
-  const p               : action_type;
-  var s                 : storage_type)
-                        : return_type is
-  block {
-    var operations: list(operation) := no_operations;
-    case p of
-    | Invest(params) -> {
-        const referral: address = case (params.referral: option(address)) of
-          | Some(ref) -> ref
-          | None -> get_default_refer(s)
-          end;
-        const result = add_liq(record[
-          referral= Some(referral);
-          pair_id = params.pair_id;
-          pair    = get_pair(params.pair_id, s);
-          inputs  = params.in_amounts;
-          min_mint_amount = params.shares;
-        ], s);
-        operations := result.0;
-        s := result.1;
-    }
-    | _ -> skip
-    end
   } with (operations, s)
 
-// (* Swap tokens *)
+(* 1n Swap tokens *)
 function swap(
   const p               : action_type;
   var s                 : storage_type)
                         : return_type is
   block {
-    var operations: list(operation) := no_operations;
+    var operations: list(operation) := CONSTANTS.no_operations;
     case p of
     | Swap(params) -> {
         const i = params.idx_from;
@@ -179,7 +151,7 @@ function swap(
         //   end;
 
         if dx = 0n
-          then failwith(err_zero_in)
+          then failwith(ERRORS.zero_in)
         else skip;
 
         var pair : pair_type := get_pair(params.pair_id, s);
@@ -220,7 +192,7 @@ function swap(
         // TODO: perform fee separation
 
         if dy < min_y
-          then failwith(err_high_min_out)
+          then failwith(ERRORS.high_min_out)
         else skip;
 
         pair.virtual_reserves[i] := old_virt_reserves_i + dx;
@@ -229,13 +201,6 @@ function swap(
         pair.reserves[j] := nat_or_error(old_reserves_j - dy, "dy>reserves");
 
         s.pools[params.pair_id] := pair;
-
-        operations := typed_transfer(
-          Tezos.sender,
-          Tezos.self_address,
-          dx,
-          token_i
-        ) # operations;
 
         const receiver = case params.receiver of
           | Some(receiver) -> receiver
@@ -248,23 +213,60 @@ function swap(
           dy,
           token_j
         ) # operations;
+
+        operations := typed_transfer(
+          Tezos.sender,
+          Tezos.self_address,
+          dx,
+          token_i
+        ) # operations;
+
     }
     | _ -> skip
     end
   } with (operations, s)
 
-(* Remove liquidity (balanced) from the pool by burning shares *)
+(* 2n Provide liquidity (balanced) to the pool,
+note: tokens should be approved before the operation *)
+function invest_liquidity(
+  const p               : action_type;
+  var s                 : storage_type)
+                        : return_type is
+  block {
+    var operations: list(operation) := CONSTANTS.no_operations;
+    case p of
+    | Invest(params) -> {
+        const referral: address = case (params.referral: option(address)) of
+          | Some(ref) -> ref
+          | None -> get_default_refer(s)
+          end;
+        const result = add_liq(record[
+          referral= Some(referral);
+          pair_id = params.pair_id;
+          pair    = get_pair(params.pair_id, s);
+          inputs  = params.in_amounts;
+          min_mint_amount = params.shares;
+        ], s);
+        operations := result.0;
+        s := result.1;
+    }
+    | _ -> skip
+    end
+  } with (operations, s)
+
+
+(* 3n Remove liquidity (balanced) from the pool by burning shares *)
 function divest_liquidity(
   const p               : action_type;
   var s                 : storage_type)
                         : return_type is
   block {
-    var operations: list(operation) := no_operations;
+    var operations: list(operation) := CONSTANTS.no_operations;
     case p of
       Divest(params) -> {
 
         if s.pools_count <= params.pair_id
-          then failwith(err_pair_not_listed)
+          then failwith(ERRORS.pair_not_listed)
         else skip;
 
         var   pair          : pair_type := get_pair(params.pair_id, s);
@@ -272,9 +274,9 @@ function divest_liquidity(
         const share         : nat = get_account((Tezos.sender, params.pair_id), s);
         const total_supply  : nat = pair.total_supply;
         if params.shares = 0n
-         then failwith(err_zero_in)
+         then failwith(ERRORS.zero_in)
         else skip;
-        const new_shares = nat_or_error(share - params.shares, err_insufficient_lp);
+        const new_shares = nat_or_error(share - params.shares, ERRORS.insufficient_lp);
         const init_virt_reserves = pair.virtual_reserves;
         const init_reserves = pair.reserves;
 
@@ -311,9 +313,9 @@ function divest_liquidity(
             const new_res = nat_or_error(old_balance - value, "value>virt_reserves");
 
             if value < min_amount_out
-              then failwith(err_high_min_out);
+              then failwith(ERRORS.high_min_out);
             else if value = 0n
-              then failwith(err_dust_out)
+              then failwith(ERRORS.dust_out)
             else if value > init_res
               then skip; //TODO: add request to proxy;
             else skip;
@@ -341,28 +343,28 @@ function divest_liquidity(
 
 (* DEX admin methods *)
 
-(* ramping A constant *)
+(* 7n ramping A constant *)
 function ramp_A(
   const p               : action_type;
   var s                 : storage_type)
                         : return_type is
   block {
-    var operations: list(operation) := no_operations;
+    var operations: list(operation) := CONSTANTS.no_operations;
     case p of
     | RampA(params) -> {
         is_admin(s);
         var pair : pair_type := get_pair(params.pair_id, s);
         const current = Tezos.now;
-        assert(current >= pair.initial_A_time + _C_min_ramp_time);
-        assert(params.future_time >= current + _C_min_ramp_time); //  # dev: insufficient time
+        assert(current >= pair.initial_A_time + CONSTANTS.min_ramp_time);
+        assert(params.future_time >= current + CONSTANTS.min_ramp_time); //  # dev: insufficient time
 
         const initial_A: nat = _A(pair);
-        const future_A_p: nat = params.future_A * _C_a_precision;
+        const future_A_p: nat = params.future_A * CONSTANTS.a_precision;
 
-        assert((params.future_A > 0n) and (params.future_A < _C_max_a));
+        assert((params.future_A > 0n) and (params.future_A < CONSTANTS.max_a));
         if future_A_p < initial_A
-          then assert(future_A_p * _C_max_a_change >= initial_A)
-        else assert(future_A_p <= initial_A * _C_max_a_change);
+          then assert(future_A_p * CONSTANTS.max_a_change >= initial_A)
+        else assert(future_A_p <= initial_A * CONSTANTS.max_a_change);
 
         pair.initial_A := initial_A;
         pair.future_A := future_A_p;
@@ -374,12 +376,13 @@ function ramp_A(
     end
   } with (operations, s)
 
+(* 8n stop ramping A constant *)
 function stop_ramp_A(
   const p               : action_type;
   var s                 : storage_type)
                         : return_type is
   block {
-    var operations: list(operation) := no_operations;
+    var operations: list(operation) := CONSTANTS.no_operations;
     case p of
     | StopRampA(pair_id) -> {
       is_admin(s);
@@ -396,12 +399,13 @@ function stop_ramp_A(
     end
   } with (operations, s)
 
+(* 9n set or remove proxy *)
 function set_proxy(
   const p               : action_type;
   var s                 : storage_type)
                         : return_type is
   block {
-    var operations: list(operation) := no_operations;
+    var operations: list(operation) := CONSTANTS.no_operations;
     case p of
     | SetProxy(params) -> {
       is_admin(s);
@@ -414,12 +418,13 @@ function set_proxy(
     end
   } with (operations, s)
 
+(* 10n updates limits percent for proxy *)
 function update_proxy_limits(
   const p               : action_type;
   var s                 : storage_type)
                         : return_type is
   block {
-    var operations: list(operation) := no_operations;
+    var operations: list(operation) := CONSTANTS.no_operations;
     case p of
     | UpdateProxyLimits(params) -> {
       is_admin(s);
@@ -432,12 +437,13 @@ function update_proxy_limits(
     end
   } with (operations, s)
 
+(* 11n updates fees percents *)
 function set_fees(
   const p               : action_type;
   var s                 : storage_type
   )                     : return_type is
   block {
-    var operations: list(operation) := no_operations;
+    var operations: list(operation) := CONSTANTS.no_operations;
     case p of
     | SetFees(params) -> {
       is_admin(s);
@@ -454,7 +460,7 @@ function set_fees(
 //   var s                 : storage_type)
 //                         : return_type is
 //   block {
-//     var operations: list(operation) := no_operations;
+//     var operations: list(operation) := CONSTANTS.no_operations;
 //     case p of
 //     | ClaimAdminRewards(params) -> {
 //       is_admin(s);

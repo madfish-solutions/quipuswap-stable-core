@@ -1,9 +1,10 @@
-#include "../partials/Constants.ligo"
-#include "../partials/Errors.ligo"
+#import "../partials/Constants.ligo" "CONSTANTS"
+#import "../partials/Errors.ligo" "ERRORS"
 #include "../interfaces/IDex.ligo"
 #include "../partials/Utils.ligo"
 #include "../helpers/FA2_helpers.ligo"
 #include "../lambdas/FA2_lambdas.ligo"
+#include "../views/FA2_views.ligo"
 #include "../helpers/Dex_helpers.ligo"
 #include "../lambdas/Dex_lambdas.ligo"
 #include "../partials/Dex_methods.ligo"
@@ -23,18 +24,18 @@ function main(
   | Update_metadata(params)   -> call_token(IUpdateMetadata(params), s)
   | Total_supply(params)      -> call_token(ITotalSupply(params), s)
   // | Get_reserves(params)      -> get_reserves(params, s)
-  // | Close                     -> (no_operations, close(s))
+  // | Close                     -> (CONSTANTS.no_operations, close(s))
   | SetDexFunction(params)    -> (
-      no_operations,
-      if params.index <= dex_func_count
+      CONSTANTS.no_operations,
+      if params.index <= CONSTANTS.dex_func_count
         then set_dex_function(params.index, params.func, s)
-      else (failwith(err_high_func_index): full_storage_type)
+      else (failwith(ERRORS.high_func_index): full_storage_type)
     )
   | SetTokenFunction(params)  -> (
-      no_operations,
-      if params.index <= token_func_count
+      CONSTANTS.no_operations,
+      if params.index <= CONSTANTS.token_func_count
         then set_token_function(params.index, params.func, s)
-      else (failwith(err_high_func_index): full_storage_type)
+      else (failwith(ERRORS.high_func_index): full_storage_type)
     )
   | AddRemManagers(params)    -> add_rem_managers(params, s)
   | SetDevAddress(addr)       -> set_dev_address(addr, s)

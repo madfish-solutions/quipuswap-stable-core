@@ -2,7 +2,7 @@
 [@inline]
 function is_admin(const s: storage_type): unit is
   if Tezos.sender =/= s.admin
-    then failwith(err_not_contract_admin)
+    then failwith(ERRORS.not_contract_admin)
   else Unit;
 
 
@@ -54,7 +54,7 @@ function _xp_mem(const _balances: map(nat, nat); const s: pair_type): map(nat, n
           | Some(bal) -> bal
           | None -> (failwith("balance not provided"): nat)
           end;
-      } with (value * bal) / _C_precision;
+      } with (value * bal) / CONSTANTS.precision;
   } with Map.map(count_result, s.token_rates);
 
 function _xp(const s: pair_type): map(nat, nat) is _xp_mem(s.virtual_reserves, s);
@@ -90,7 +90,7 @@ function get_token_by_id(
   block {
     const tokens = case s.tokens[pool_id] of
         Some(tokens) -> tokens
-      | None -> (failwith(err_pair_not_listed): tokens_type)
+      | None -> (failwith(ERRORS.pair_not_listed): tokens_type)
       end;
     const token = case tokens[token_id] of
         Some(token) -> token
@@ -116,7 +116,7 @@ function get_D(const _xp: map(nat, nat); const _amp: nat; const s: pair_type): n
     var _d_prev: nat := 0n;
 
     if sum_c = 0n and s.total_supply =/= 0n
-      then failwith(err_zero_in)
+      then failwith(ERRORS.zero_in)
     else skip;
 
     var d: nat := sum_c;
@@ -133,8 +133,8 @@ function get_D(const _xp: map(nat, nat); const _amp: nat; const s: pair_type): n
         const (d_P_n, d_n) = Map.fold(count_D_P, _xp, (_d_P, d));
         _d_P := d_P_n;
         d := d_n;
-        d := (                                            a_nn * sum_c / _C_a_precision + _d_P * tokens_count) * d / (
-              nat_or_error(a_nn - _C_a_precision, "Precision_err") * d / _C_a_precision + (tokens_count + 1n) * _d_P ); (* Equality with the precision of 1 *)
+        d := (                                            a_nn * sum_c / CONSTANTS.a_precision + _d_P * tokens_count) * d / (
+              nat_or_error(a_nn - CONSTANTS.a_precision, "Precision_err") * d / CONSTANTS.a_precision + (tokens_count + 1n) * _d_P ); (* Equality with the precision of 1 *)
       };
   } with d
 
@@ -158,9 +158,9 @@ function calc_y(
   block {
     const tokens_count = Map.size(s.reserves);
     var _y_prev: nat := 0n;
-    c := c * d * _C_a_precision / (a_nn * tokens_count);
+    c := c * d * CONSTANTS.a_precision / (a_nn * tokens_count);
 
-    const b: nat = s_ + d * _C_a_precision / a_nn;
+    const b: nat = s_ + d * CONSTANTS.a_precision / a_nn;
     var y: nat := d;
 
     while abs(y - _y_prev) > 1n
@@ -321,7 +321,7 @@ function _calc_withdraw_one_coin(
         if key = i
           then dx_expected := nat_or_error((value * d1 / d0) - new_y, "dx_exp_lower_0n");
         else   dx_expected := nat_or_error(value - (value * d1 / d0), "dx_exp_lower_0n");
-        const tok_fee = base_fee * dx_expected / _C_fee_denominator;
+        const tok_fee = base_fee * dx_expected / CONSTANTS.fee_denominator;
         xp_reduced[key] := nat_or_error(value - tok_fee, "fee_more_value");
       };
     // function reduce_Xp(const key: nat; const value: nat): nat is
@@ -379,8 +379,8 @@ function _calc_withdraw_one_coin(
   //     const stakers_fee = difference * pair.fee.stakers_fee;
   //     const referral_fee = difference * pair.fee.ref_fee;
   //     const token = get_token_by_id(i, pair_id, s);
-  //     const new_reserves = abs(new_balance - fee_wo_lp / _C_fee_denominator);
-  //     new_balance := abs(new_balance - fee_all  / _C_fee_denominator);
+  //     const new_reserves = abs(new_balance - fee_wo_lp / CONSTANTS.fee_denominator);
+  //     new_balance := abs(new_balance - fee_all  / CONSTANTS.fee_denominator);
   //     pair.virtual_reserves[i] := new_reserves;
   //     pair.reserves[i] := case pair.reserves[i] of
   //         Some(reserve) -> reserve + abs(new_reserves - initial_reserves)
@@ -432,10 +432,10 @@ function preform_swap(
       | Some(value) -> value
       | None -> (failwith("no such rate[j] index"): nat)
       end;
-    const x = xp_i + ((dx * rate_i) / _C_precision);
+    const x = xp_i + ((dx * rate_i) / CONSTANTS.precision);
     const y = get_y(i, j, x, xp, pair);
     const dy = nat_or_error(xp_j - y - 1, "dy_less_0n");  // -1 just in case there were some rounding errors
-  } with dy * _C_precision / rate_j
+  } with dy * CONSTANTS.precision / rate_j
 
   function add_liq(
     const params  : record [
@@ -468,7 +468,7 @@ function preform_swap(
     const d1 = _get_D_mem(new_reserves, amp, pair);
 
     if(d1 <= d0)
-    then failwith(err_zero_in);
+    then failwith(ERRORS.zero_in);
     else skip;
     var mint_amount := 0n;
     if token_supply > 0n
@@ -572,5 +572,5 @@ function preform_swap(
     pair.total_supply := pair.total_supply + mint_amount;
     s.ledger[(Tezos.sender, params.pair_id)] := mint_amount;
     s.pools[params.pair_id] := pair;
-  } with Map.fold(transfer_to_pool, params.inputs, (no_operations, s))
+  } with Map.fold(transfer_to_pool, params.inputs, (CONSTANTS.no_operations, s))
 

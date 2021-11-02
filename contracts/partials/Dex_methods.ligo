@@ -40,7 +40,7 @@ function call_dex(
 
     const lambda_bytes : bytes = case s.dex_lambdas[idx] of
         | Some(l) -> l
-        | None -> (failwith(err_unknown_func) : bytes)
+        | None -> (failwith(ERRORS.unknown_func) : bytes)
       end;
 
     const res : return_type = case (Bytes.unpack(lambda_bytes) : option(dex_func_type)) of
@@ -78,7 +78,7 @@ function call_token(
 
     const lambda_bytes : bytes = case s.token_lambdas[idx] of
         | Some(l) -> l
-        | None -> (failwith(err_unknown_func) : bytes)
+        | None -> (failwith(ERRORS.unknown_func) : bytes)
       end;
 
     const (operations, new_storage) : full_return_type = case (Bytes.unpack(lambda_bytes) : option(token_func_type)) of
@@ -93,9 +93,9 @@ function call_token(
 //                         : full_storage_type is
 //   block {
 //     if not s.storage.entered
-//     then failwith(err_not_entered)
+//     then failwith(ERRORS.not_entered)
 //     else if Tezos.sender =/= Tezos.self_address
-//     then failwith(err_sender_not_self)
+//     then failwith(ERRORS.sender_not_self)
 //     else skip;
 //     s.storage.entered := False;
 //   } with s
@@ -109,7 +109,7 @@ function set_dex_function(
   block {
     is_admin(s.storage);
     case s.dex_lambdas[idx] of
-    | Some(_) -> failwith(err_func_set)
+    | Some(_) -> failwith(ERRORS.func_set)
     | None -> s.dex_lambdas[idx] := f
     end;
   } with s
@@ -123,7 +123,7 @@ function set_token_function(
   block {
     is_admin(s.storage);
     case s.token_lambdas[idx] of
-    | Some(_) -> failwith(err_func_set)
+    | Some(_) -> failwith(ERRORS.func_set)
     | None -> s.token_lambdas[idx] := f
     end;
   } with s
@@ -137,7 +137,7 @@ function add_rem_managers(
     s.storage.managers := if params.add
       then Set.add(params.candidate, s.storage.managers)
     else Set.remove(params.candidate, s.storage.managers);
-  } with (no_operations, s)
+  } with (CONSTANTS.no_operations, s)
 
 function set_dev_address(
   const new_addr        : address;
@@ -146,7 +146,7 @@ function set_dev_address(
   block {
     is_admin(s.storage);
     s.storage.dev_address := new_addr;
-  } with (no_operations, s)
+  } with (CONSTANTS.no_operations, s)
 
 function set_reward_rate(
   const rate            : nat;
@@ -155,7 +155,7 @@ function set_reward_rate(
   block {
     is_admin(s.storage);
     s.storage.reward_rate := rate;
-  } with (no_operations, s)
+  } with (CONSTANTS.no_operations, s)
 
 function set_admin(
   const new_admin       : address;
@@ -164,4 +164,4 @@ function set_admin(
   block {
     is_admin(s.storage);
     s.storage.admin := new_admin;
-  } with (no_operations, s)
+  } with (CONSTANTS.no_operations, s)
