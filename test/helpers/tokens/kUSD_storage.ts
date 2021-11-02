@@ -9,19 +9,19 @@ const kUSDstorage = {
   administrator: aliceAddress,
   balances: MichelsonMap.fromLiteral({
     [aliceAddress]: {
-      balance: "1000000000000000000000000",
+      balance: "1000000000000000000000000000000",
       approvals: MichelsonMap.fromLiteral({}),
     },
     [bobAddress]: {
-      balance: "1000000000000000000000000",
+      balance: "1000000000000000000000000000000",
       approvals: MichelsonMap.fromLiteral({}),
     },
     [eveAddress]: {
-      balance: "1000000000000000000000000",
+      balance: "1000000000000000000000000000000",
       approvals: MichelsonMap.fromLiteral({}),
     },
   }),
-  debtCeiling: "8000000000000000000000000",
+  debtCeiling: "8000000000000000000000000000000",
   governorContractAddress: "tz1ZZZZZZZZZZZZZZZZZZZZZZZZZZZZNkiRg",
   token_metadata: MichelsonMap.fromLiteral({}),
   metadata: MichelsonMap.fromLiteral({
@@ -226,7 +226,7 @@ const kUSDstorage = {
       "ascii"
     ).toString("hex"),
   }),
-  totalSupply: "6000000000000000000000000",
+  totalSupply: "6000000000000000000000000000000",
   paused: false,
 };
 

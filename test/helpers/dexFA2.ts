@@ -238,8 +238,8 @@ export class Dex extends TokenFA2 {
         toIdx,
         amountIn,
         minAmountOut,
-        referral,
-        receiver
+        receiver,
+        referral
       )
       .send();
     await confirmOperation(Tezos, operation.hash);
