@@ -10,9 +10,6 @@ on:
 jobs:
   compile-and-test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        standard: ["FA12", "FA2", "MIXED"]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
@@ -24,6 +21,3 @@ jobs:
         run: yarn
       - name: Compile and test the contracts
         run: yarn compile-n-test
-        env:
-          EXCHANGE_TOKEN_STANDARD: ${{ matrix.standard }}
-          LIGO_VERSION: "0.26.0"
