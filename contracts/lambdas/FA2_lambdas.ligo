@@ -75,24 +75,24 @@ function get_balance_of(
     | Balance_of(bal_fa2_type) -> {
 
       function look_up_balance(
-        const l         : list (balance_of_response);
-        const request   : balance_of_request)
-                        : list (balance_of_response) is
+        const l         : list (balance_of_fa2_response);
+        const request   : balance_of_fa2_request)
+                        : list (balance_of_fa2_response) is
         block {
 
           const sender_account : account_info = get_account((request.owner, request.token_id), s);
 
-          const response : balance_of_response = record [
+          const response : balance_of_fa2_response = record [
             request   = request;
             balance   = sender_account.balance;
           ];
 
         } with response # l;
 
-      const accumulated_response : list (balance_of_response) = List.fold(
+      const accumulated_response : list (balance_of_fa2_response) = List.fold(
         look_up_balance,
         bal_fa2_type.requests,
-        (nil: list(balance_of_response))
+        (nil: list(balance_of_fa2_response))
       );
 
       operations := list[Tezos.transaction(accumulated_response, 0mutez, bal_fa2_type.callback)];

@@ -1,10 +1,39 @@
-#include "./ITokenFA2.ligo"
+type token_id is nat
 
+type account_info       is record [
+  balance                 : nat; (* tokens *)
+  allowances              : set (address); (* accounts allowed to act on behalf of the user *)
+]
+
+type transfer_destination is [@layout:comb] record [
+    to_       : address;
+    token_id  : token_id;
+    amount    : nat;
+  ]
+
+type transfer_param     is [@layout:comb] record [
+    from_   : address;
+    txs     : list (transfer_destination);
+  ]
+
+type balance_of_fa2_request is [@layout:comb] record [
+    owner       : address;
+    token_id    : token_id;
+  ]
+
+type balance_of_fa2_response is [@layout:comb] record [
+    request     : balance_of_fa2_request;
+    balance     : nat;
+  ]
 type transfer_fa2_type  is list (transfer_param)
 type transfer_fa12_type is michelson_pair(address, "from", michelson_pair(address, "to", nat, "value"), "")
 type entry_fa12_type    is TransferTypeFA12 of transfer_fa12_type
 type entry_fa2_type     is TransferTypeFA2 of transfer_fa2_type
 type bal_fa12_type      is address * contract(nat)
+type bal_fa2_type       is [@layout:comb] record [
+    requests              : list (balance_of_fa2_request);
+    callback              : contract (list (balance_of_fa2_response));
+  ]
 type balance_fa12_type  is BalanceOfTypeFA12 of bal_fa12_type
 type balance_fa2_type   is BalanceOfTypeFA2 of bal_fa2_type
 
@@ -226,6 +255,16 @@ type action_type        is
 // | Get_a                   of get_a_type
 
 type transfer_type      is list (transfer_param)
+type operator_param is [@layout:comb] record [
+    owner                 : address;
+    operator              : address;
+    token_id              : token_id;
+  ]
+
+type update_operator_param is
+| Add_operator            of operator_param
+| Remove_operator         of operator_param
+
 type operator_type      is list (update_operator_param)
 type upd_meta_params    is [@layout:comb] record [
   token_id                : nat; (* response receiver *)
