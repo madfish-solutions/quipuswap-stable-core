@@ -1,26 +1,11 @@
 import { Command } from 'commander';
 import { getLigo } from '../../../test/helpers/utils';
 
-import { em, debug, getCWD } from "../../console";
-import { ContractsBundle } from '../../modules/bundle';
-import { compileWithLigo, LigoCompilerOptions, LIGOVersions } from '../../modules/ligo';
-import { toLigoVersion } from '../../modules/ligo/parameters';
+import { em, debug, getCWD } from "create-tezos-smart-contract/dist/console";
+import { ContractsBundle } from "create-tezos-smart-contract/dist/modules/bundle";
+import {preferredLigoFlavor } from '../../../config.json'
 const fs = require("fs");
 import { execSync } from "child_process";
-
-export const addCompileCommand = (program: Command, debugHook: (cmd: Command) => void) => {
-  program
-    .command('compile')
-    .description('Compile contract(s) using LIGO compiler.')
-      .option('-c, --contract <contract>', 'Compile a single smart contract source file')
-      .option('-l, --ligo-version <version>', `Choose a specific LIGO version. Default is "next", available are: ${Object.values(LIGOVersions).join(', ')}`)
-      .option('-f, --force', 'Force the compilation avoiding LIGO version warnings')
-    .action((options) => {
-      compile(options);
-    })
-    .hook('preAction', debugHook);
-}
-
 export const addCompileLambdaCommand = (
   program: Command,
   debugHook: (cmd: Command) => void
@@ -46,37 +31,18 @@ export const addCompileLambdaCommand = (
     .hook("preAction", debugHook);
 };
 
+
 // Run LIGO compiler
-export const compile = async (options: Partial<LigoCompilerOptions>) => {
-  em(`Compiling contracts...\n`);
-
-  // Read configfile
-  const contractsBundle = new ContractsBundle(getCWD());
-  const { ligoVersion } = await contractsBundle.readConfigFile();
-
-  // Extract the needed settings, with typecheck
-  const compilerConfig: LigoCompilerOptions = {
-    ligoVersion,
-  };
-
-  // Validate versions
-  if (options.ligoVersion) {
-    options.ligoVersion = toLigoVersion(options.ligoVersion);
-  }
-
-  // Build final options
-  const compilerOptions = Object.assign({}, compilerConfig, options);
-
-  await compileWithLigo(contractsBundle, compilerOptions);
-};
-
 export const compileLambdas = async (
   json: string,
   contract: string,
   type: string
 ) => {
+  em(`Compiling ${contract} contract lambdas of ${type} type...\n`);
+  // Read configfile
   const contractsBundle = new ContractsBundle(getCWD());
-  const { ligoVersion, outputDirectory } = await contractsBundle.readConfigFile();
+  const { ligoVersion, outputDirectory } =
+    await contractsBundle.readConfigFile();
 
   const ligo = getLigo(true);
   const pwd = execSync("echo $PWD").toString();
@@ -84,15 +50,25 @@ export const compileLambdas = async (
     fs.readFileSync(`${pwd.slice(0, pwd.length - 1)}/${json}`)
   );
   let res = [];
-
+  const old_cli = Number(ligoVersion.split(".")[2]) > 25;
+  let ligo_command: string;
+  if (old_cli) {
+    ligo_command = "compile-expression";
+  }
+  else {
+    ligo_command = "compile expression";
+  }
+  const init_file = `$PWD/${contract}`;
   try {
     for (const lambda of lambdas) {
-      const command = `${ligo} compile expression pascaligo 'Set${type}Function(record [index=${lambda.index}n; func=Bytes.pack(${lambda.name})])' --michelson-format json --init-file $PWD/${contract}`;
+      const func = `Set${type}Function(record [index=${lambda.index}n; func=Bytes.pack(${lambda.name})])`;
+      const params = `'${func}' --michelson-format json --init-file ${init_file}`;
+      const command = `${ligo} ${ligo_command} ${preferredLigoFlavor} ${params}`;
       const michelson = execSync(command, { maxBuffer: 1024 * 500 }).toString();
 
       res.push(JSON.parse(michelson).args[0].args[0].args[0].args[0]);
-
-      console.log(
+      debug(JSON.parse(michelson).args[0].args[0].args[0].args[0]);
+      em(
         lambda.index + 1 + ". " + lambda.name + " successfully compiled."
       );
     }
@@ -101,11 +77,12 @@ export const compileLambdas = async (
       fs.mkdirSync(`${outputDirectory}/lambdas`);
     }
     const json_file_path = json.split("/");
-    const file_name = json_file_path[json_file_path.length-1];
+    const file_name = json_file_path[json_file_path.length - 1];
     fs.writeFileSync(
-        `${outputDirectory}/lambdas/${file_name}`,
-        JSON.stringify(res)
-      );
+      `${outputDirectory}/lambdas/${file_name}`,
+      JSON.stringify(res)
+    );
+    em(`Saved to ${outputDirectory}/lambdas/${file_name}`);
   } catch (e) {
     console.error(e);
   }

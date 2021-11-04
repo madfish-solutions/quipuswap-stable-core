@@ -1,12 +1,11 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-import { addCompileCommand, addCompileLambdaCommand } from './commands/compile';
-import { addDeployCommand } from './commands/deploy';
-import { addE2ETestCommand } from './commands/e2e-test';
-import { addPostInstallCommand } from './commands/postinstall';
-import { addStartSandboxCommand } from './commands/start-sandbox';
-import { addTestCommand } from './commands/test';
-import { debug, setCWD, setDebug } from './console';
+import { addCompileLambdaCommand } from './commands/compile';
+import {
+  debug,
+  setCWD,
+  setDebug,
+} from "create-tezos-smart-contract/dist/console";
 
 const program = new Command();
 
@@ -20,7 +19,6 @@ program
     if (options.debug) {
       setDebug(true);
     }
-    
     if (options.folder) {
       debug(`Change working directory to ${options.folder}`);
       setCWD(options.folder);
@@ -39,12 +37,7 @@ const debugHook = (cmd: Command) => {
   }
 }
 
-addStartSandboxCommand(program, debugHook);
-addCompileCommand(program, debugHook);
+
 addCompileLambdaCommand(program, debugHook);
-addTestCommand(program, debugHook);
-addE2ETestCommand(program, debugHook);
-addDeployCommand(program, debugHook);
-addPostInstallCommand(program, debugHook);
 
 program.parse(process.argv);
