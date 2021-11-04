@@ -3,7 +3,7 @@
 * https://jestjs.io/docs/configuration
 */
 
-import { setupJestEnv } from "./scripts/modules/jest/env";
+import { setupJestEnv } from "./node_modules/create-tezos-smart-contract/dist/modules/jest/env";
 
 const config = {
   coverageProvider: "v8",
@@ -12,10 +12,11 @@ const config = {
   maxWorkers: "1",
 
   // The paths to modules that run some code to configure or set up the testing environment before each test
-  setupFiles: ["./scripts/modules/jest/globals.ts"],
+  setupFiles: [
+    "./node_modules/create-tezos-smart-contract/dist/modules/jest/globals.js",
+  ],
   preset: "ts-jest/presets/js-with-ts",
   testEnvironment: "node",
-  
 };
 
 /** @type {import('ts-jest/dist/types').InitialOptionsTsJest} */
