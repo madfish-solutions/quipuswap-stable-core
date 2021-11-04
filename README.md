@@ -5,6 +5,7 @@ Contracts of DEX with Curve-like invariant implementation. This contracts allows
 Core concept is to provide low slippage swap between stablecoins like uUSD, kUSD, USDtz, etc.
 
 ## Project structure
+Project based on [lava](https://github.com/uconomy/lava) toolset for fast generating all needed structure and tools.
 
 ```
 .
@@ -31,7 +32,7 @@ Core concept is to provide low slippage swap between stablecoins like uUSD, kUSD
 
 ## Requirements
 
-This repository's toolset for development it's entirely based on [Docker](https://www.docker.com) and [Node.js](https://nodejs.org/).
+This repository based on [Docker](https://www.docker.com) and [Node.js](https://nodejs.org/).
 
 You can download Docker Desktop for your operative system at <https://www.docker.com/products/docker-desktop>. When download is ready, you can proceed to install it.
 
@@ -121,3 +122,5 @@ yarn deploy
 
 It will guide you through all the step needed to Deploy the smart contract.
 Pass `--network=testnet` or `--network=mainnet` to deploy in the specific network.
+
+<p align="center"> Made with ❤️ by <a href=https://www.madfish.solutions>Madfish.Solutions</a>
