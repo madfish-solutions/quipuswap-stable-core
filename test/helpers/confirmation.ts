@@ -5,7 +5,7 @@ import {
 } from "@taquito/rpc";
 import { TezosToolkit, OpKind } from "@taquito/taquito";
 
-export const SYNC_INTERVAL = 0;
+export const SYNC_INTERVAL = 500;
 export const CONFIRM_TIMEOUT = 50_000 * 3;
 
 export type ConfirmOperationOptions = {
@@ -59,7 +59,11 @@ export async function confirmOperation(
   const timeToWait = Math.max(startedAt + SYNC_INTERVAL - Date.now(), 0);
   await new Promise((r) => setTimeout(r, timeToWait));
 
-  return confirmOperation(tezos, opHash, {
+  // let result = 
+
+  // await new Promise((r) => setTimeout(r, 1000));
+
+  return await confirmOperation(tezos, opHash, {
     initializedAt,
     fromBlockLevel: currentBlockLevel ? currentBlockLevel + 1 : fromBlockLevel,
     signal,

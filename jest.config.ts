@@ -12,7 +12,7 @@ const config = {
   maxWorkers: "1",
 
   // The paths to modules that run some code to configure or set up the testing environment before each test
-  setupFiles: ["create-tezos-smart-contract/dist/modules/jest/globals.js"],
+  //setupFiles: ["create-tezos-smart-contract/dist/modules/jest/globals.js"],
   setupFilesAfterEnv: ['./jest.setup.ts'],
   preset: "ts-jest/presets/js-with-ts",
   testEnvironment: "node",

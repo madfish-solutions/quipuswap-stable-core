@@ -3,7 +3,6 @@ import {
   ContractAbstraction,
   ContractProvider,
   MichelsonMap,
-  TezosToolkit,
   VIEW_LAMBDA,
 } from "@taquito/taquito";
 import expect from "expect";
@@ -24,6 +23,9 @@ import {
   Tezos,
 } from "./helpers/utils";
 import storage from "./storage/Dex";
+
+import dex_lambdas_comp from "../build/lambdas/Dex_lambdas.json";
+import token_lambdas_comp from "../build/lambdas/Token_lambdas.json";
 
 const fs = require("fs");
 const accounts = config.sandbox.accounts;
@@ -71,41 +73,64 @@ describe("Dex", () => {
   // Contract will be deployed before every single test, to make sure we
   // do a proper unit test in a stateless testing process
 
-  async function setupTrioTokens(tezos: TezosToolkit): Promise<TokensMap> {
+  async function setupTrioTokens(): Promise<TokensMap> {
     let result: any = {};
-    const kUSD = await tezos.contract.originate({
+    const kUSD = await Tezos.contract.originate({
       code: kUSD_contract,
       storage: kUSDstorage,
     });
-    await confirmOperation(tezos, kUSD.hash);
-    result.kUSD = await TokenFA12.init(kUSD.contractAddress);
-    const USDtz = await tezos.contract.originate({
+    await confirmOperation(Tezos, kUSD.hash);
+    console.log("kUSD")
+    result.kUSD = await TokenFA12.init(Tezos, kUSD.contractAddress);
+    await new Promise((r) => setTimeout(r, 2000));
+    const USDtz = await Tezos.contract.originate({
       code: USDtz_contract,
       storage: USDtzstorage,
     });
-    await confirmOperation(tezos, USDtz.hash);
-    result.USDtz = await TokenFA12.init(USDtz.contractAddress);
-    const uUSD = await tezos.contract.originate({
+    await confirmOperation(Tezos, USDtz.hash);
+    console.log("USDtz");
+    result.USDtz = await TokenFA12.init(Tezos, USDtz.contractAddress);
+    await new Promise((r) => setTimeout(r, 2000));
+    const uUSD = await Tezos.contract.originate({
       code: uUSD_contract,
       storage: uUSDstorage,
     });
-    await confirmOperation(tezos, uUSD.hash);
-    result.uUSD = await TokenFA2.init(uUSD.contractAddress);
+    await confirmOperation(Tezos, uUSD.hash);
+    console.log("uUSD");
+    result.uUSD = await TokenFA2.init(Tezos, uUSD.contractAddress);
+    await new Promise((r) => setTimeout(r, 2000));
     let config = await prepareProviderOptions("alice");
     Tezos.setProvider(config);
     await result.kUSD.approve(dex.contract.address, new BigNumber(10).pow(45));
+    console.log("alice kUSD approve");
+    await new Promise((r) => setTimeout(r, 1000));
     await result.uUSD.approve(dex.contract.address, new BigNumber(10).pow(45));
+    console.log("alice uUSD approve");
+    await new Promise((r) => setTimeout(r, 1000));
     await result.USDtz.approve(dex.contract.address, new BigNumber(10).pow(45));
+    console.log("alice USDtz approve");
+    await new Promise((r) => setTimeout(r, 1000));
     config = await prepareProviderOptions("bob");
     Tezos.setProvider(config);
     await result.kUSD.approve(dex.contract.address, new BigNumber(10).pow(45));
+    console.log("bob kUSD approve");
+    await new Promise((r) => setTimeout(r, 1000));
     await result.uUSD.approve(dex.contract.address, new BigNumber(10).pow(45));
+    console.log("bob uUSD approve");
+    await new Promise((r) => setTimeout(r, 1000));
     await result.USDtz.approve(dex.contract.address, new BigNumber(10).pow(45));
+    console.log("bob USDtz approve");
+    await new Promise((r) => setTimeout(r, 1000));
     config = await prepareProviderOptions("eve");
     Tezos.setProvider(config);
     await result.kUSD.approve(dex.contract.address, new BigNumber(10).pow(45));
+    console.log("eve kUSD approve");
+    await new Promise((r) => setTimeout(r, 1000));
     await result.uUSD.approve(dex.contract.address, new BigNumber(10).pow(45));
+    console.log("eve uUSD approve");
+    await new Promise((r) => setTimeout(r, 1000));
     await result.USDtz.approve(dex.contract.address, new BigNumber(10).pow(45));
+    console.log("eve USDtz approve");
     return result as TokensMap;
   }
 
@@ -156,6 +181,19 @@ describe("Dex", () => {
     return { pool_id, amounts };
   }
 
+  async function setupLambdasToStorage(lambdas_comp) {
+    let lambda_func_storage = new MichelsonMap<number, string>();
+    for (const lambda of lambdas_comp) {
+      const key = lambda.args[1].int;
+      const bytes = lambda.args[0].bytes;
+      lambda_func_storage.set(key, bytes);
+    }
+    for (const [key, value] of lambda_func_storage.entries()) {
+      console.log(key, value);
+    }
+    return lambda_func_storage;
+  }
+
   beforeAll(async () => {
     let config = await prepareProviderOptions("alice");
     Tezos.setProvider(config);
@@ -170,6 +208,8 @@ describe("Dex", () => {
     storage.storage.admin = aliceAddress;
     storage.storage.default_referral = aliceAddress;
     storage.storage.dev_address = eveAddress;
+    // storage.dex_lambdas = await setupLambdasToStorage(dex_lambdas_comp);
+    storage.token_lambdas = await setupLambdasToStorage(token_lambdas_comp);
     const dex_op = await Tezos.contract.originate({
       code: JSON.parse(dex_contract.michelson),
       storage: storage,
@@ -177,11 +217,12 @@ describe("Dex", () => {
     console.log("DEX op hash", dex_op.hash);
     await confirmOperation(Tezos, dex_op.hash);
     console.log("DEX", dex_op.contractAddress)
-    dex = await Dex.init(dex_op.contractAddress);
+    dex = await Dex.init(Tezos, dex_op.contractAddress);
     console.log("DEX init finished");
-    //console.log(dex.contract.methods);
-    tokens = await setupTrioTokens(Tezos);
-  }, 300000);
+    await new Promise((r) => setTimeout(r, 2000));
+    tokens = await setupTrioTokens();
+    return true;
+  });
 
   describe("1. Testing Admin endpoints", () => {
     async function setAdminSuccessCase(sender: AccountsLiteral, admin: string) {
@@ -241,7 +282,7 @@ describe("Dex", () => {
       it(
         "Should change admin",
         async () => await setAdminSuccessCase("alice", eveAddress),
-        20000
+        30000
       );
     });
 
