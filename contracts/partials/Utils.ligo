@@ -1,9 +1,10 @@
 (* Helper function to get account *)
-function get_account(
-  const key             : (address * nat);
-  const s               : storage_type)
+[@inline]
+function get_account_balance(
+  const key             : (address * pool_id_type);
+  const ledger          : big_map((address * pool_id_type), nat))
                         : nat is
-  case s.ledger[key] of
+  case ledger[key] of
   | Some(instance) -> instance
   | None -> 0n
   end;
@@ -21,9 +22,9 @@ function nat_or_error(
 (* Helper function to get pair info *)
 function get_pair(
   const pair_id         : nat;
-  const s               : storage_type)
+  const pools_bm        : big_map(pool_id_type, pair_type))
                         : pair_type is
-  case s.pools[pair_id] of
+  case pools_bm[pair_id] of
   | Some(instance) -> instance
   | None -> (failwith(ERRORS.pair_not_listed): pair_type)
   end;
@@ -31,9 +32,9 @@ function get_pair(
 (* Helper function to get pair info *)
 function get_tokens(
   const pair_id         : nat;
-  const s               : storage_type)
+  const tokens          : big_map(pool_id_type, tokens_type))
                         : tokens_type is
-  case s.tokens[pair_id] of
+  case tokens[pair_id] of
   | Some(instance) -> instance
   | None -> (failwith(ERRORS.pair_not_listed): tokens_type)
   end;

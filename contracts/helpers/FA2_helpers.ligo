@@ -19,6 +19,19 @@ function is_owner(const owner: address): unit is
     then failwith("FA2_NOT_OWNER")
   else Unit;
 
+[@inline]
+function get_account_data(
+  const key: address * token_id;
+  const acc_bm: big_map((address * pool_id_type), account_data_type)
+  ): account_data_type is
+  case acc_bm[key] of
+    Some(data) -> data
+  | None -> (record [
+    allowances      = (set[]  : set(address));
+    earned_interest = (map[]  : map(token_type, acc_reward_type));
+  ]: account_data_type)
+  end;
+
 (* Perform transfers from one owner *)
 [@inline]
 function iterate_transfer(
@@ -34,7 +47,7 @@ function iterate_transfer(
         const user_key : (address * nat) =
           (user_trx_params.from_,
           transfer.token_id);
-        var sender_balance : nat := get_account(user_key, s.storage);
+        var sender_balance : nat := get_account_balance(user_key, s.storage.ledger);
         var sender_allowance: set(address) := case s.storage.account_data[user_key] of
             Some(data) -> data.allowances
           | None -> (set[]: set(address))
@@ -44,7 +57,7 @@ function iterate_transfer(
         s.storage.ledger[user_key] := sender_balance;
 
         var dest_account : nat :=
-          get_account((transfer.to_, transfer.token_id), s.storage);
+          get_account_balance((transfer.to_, transfer.token_id), s.storage.ledger);
 
         dest_account := dest_account + transfer.amount;
         s.storage.ledger[(transfer.to_, transfer.token_id)] := dest_account;
@@ -61,29 +74,17 @@ function iterate_update_operator(
     case params of
       Add_operator(param) -> {
       is_owner(param.owner);
-
-      var account_data: account_data_type := case s.storage.account_data[(param.owner, param.token_id)] of
-            Some(data) -> data
-          | None -> record [
-            allowances      = (set[]  : set(address));
-            earned_interest = (map[]  : map(token_type, acc_reward_type));
-          ]
-          end;
+      const owner_key = (param.owner, param.token_id);
+      var account_data: account_data_type := get_account_data(owner_key, s.storage.account_data);
       account_data.allowances := Set.add(param.operator, account_data.allowances);
-      s.storage.account_data[(param.owner, param.token_id)] := account_data;
+      s.storage.account_data[owner_key] := account_data;
     }
     | Remove_operator(param) -> {
       is_owner(param.owner);
-
-      var account_data: account_data_type := case s.storage.account_data[(param.owner, param.token_id)] of
-            Some(data) -> data
-          | None -> record [
-            allowances      = (set[]  : set(address));
-            earned_interest = (map[]  : map(token_type, acc_reward_type));
-          ]
-          end;
+      const owner_key = (param.owner, param.token_id);
+      var account_data: account_data_type := get_account_data(owner_key, s.storage.account_data);
       account_data.allowances := Set.remove(param.operator, account_data.allowances);
-      s.storage.account_data[(param.owner, param.token_id)] := account_data;
+      s.storage.account_data[owner_key] := account_data;
     }
     end
   } with s

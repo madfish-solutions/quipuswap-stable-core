@@ -1,10 +1,32 @@
 (* Contract admin check *)
 [@inline]
-function is_admin(const s: storage_type): unit is
-  if Tezos.sender =/= s.admin
+function is_admin(const admin: address): unit is
+  if Tezos.sender =/= admin
     then failwith(ERRORS.not_contract_admin)
   else Unit;
 
+(* Contract admin or dev check *)
+[@inline]
+function is_admin_or_dev(const admin: address; const dev: address): unit is
+  if Tezos.sender =/= admin or Tezos.sender =/= dev
+    then failwith(ERRORS.not_contract_admin)
+  else Unit;
+
+[@inline]
+function get_staker_acc(
+  const stkr_key: (address * pool_id_type);
+  const stkr_bm : big_map((address * pool_id_type), staker_info_type)
+  )             : staker_info_type is
+  case (stkr_bm[stkr_key]: option(staker_info_type)) of
+  | Some(acc) -> acc
+  | None -> (
+      record [
+        balance   = 0n;
+        earnings  = (map []: map(token_pool_index, acc_reward_type));
+      ]
+      : staker_info_type
+    )
+  end;
 
 function sum_all_fee(
   const s     : pair_type
@@ -103,21 +125,21 @@ function _A(const s: pair_type): nat is
 function get_token_count(const s: pair_type): nat is Map.size(s.reserves);
 
 (* Gets token count by size of reserves map *)
+[@inline]
 function get_token_by_id(
     const token_id  : token_pool_index;
-    const pool_id   : pool_id_type;
-    const s         : storage_type
+    const map_entry : option(tokens_type)
   )                 : token_type is
   block {
-    const tokens = case s.tokens[pool_id] of
-        Some(tokens) -> tokens
-      | None -> (failwith(ERRORS.pair_not_listed): tokens_type)
-      end;
+    const tokens = case map_entry of
+    | Some(tokens) -> tokens
+    | None -> (failwith(ERRORS.pair_not_listed): tokens_type)
+    end;
     const token = case tokens[token_id] of
-        Some(token) -> token
-      | None -> (failwith("wrong_id"): token_type)
-      end;
-  } with token
+    | Some(token) -> token
+    | None -> (failwith("wrong_id"): token_type)
+    end;
+   } with token;
 
 (*
   D invariant calculation in non-overflowing integer operations iteratively
@@ -324,7 +346,7 @@ function _calc_withdraw_one_coin(
      *  Get current D
      *  Solve Eqn against y_i for D - _token_amount
      *)
-    const pair          : pair_type = get_pair(pair_id, s);
+    const pair          : pair_type = get_pair(pair_id, s.pools);
     const tokens_count = Map.size(pair.reserves);
     const amp           : nat = _A(pair);
     const xp            : map(nat, nat) = _xp(pair);
@@ -524,7 +546,7 @@ function preform_swap(
           Tezos.sender,
           Tezos.self_address,
           input.1,
-          get_token_by_id(input.0, params.pair_id, acc.1)
+          get_token_by_id(input.0, acc.1.tokens[params.pair_id])
         ) # acc.0,
         acc.1
       );

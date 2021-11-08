@@ -34,8 +34,8 @@ export class Dex extends TokenFA2 {
 
   static async init(dexAddress: string): Promise<Dex> {
     const dex = new Dex(await Tezos.contract.at(dexAddress));
-    await dex.setFunctionBatchCompilled("Dex", dex_lambdas_comp);
     await dex.setFunctionBatchCompilled("Token", token_lambdas_comp);
+    await dex.setFunctionCompilled("Dex", dex_lambdas_comp);
     return dex;
   }
 
@@ -123,10 +123,7 @@ export class Dex extends TokenFA2 {
   ): Promise<TransactionOperation> {
     if (approve) {
       for (const input of inputs) {
-        await input.asset.approve(
-          this.contract.address,
-          input.in_amount
-        );
+        await input.asset.approve(this.contract.address, input.in_amount);
       }
     }
     let input_tokens = new MichelsonMap<
@@ -232,15 +229,7 @@ export class Dex extends TokenFA2 {
     referral: string = null
   ): Promise<TransactionOperation> {
     const operation = await this.contract.methods
-      .swap(
-        poolId,
-        inIdx,
-        toIdx,
-        amountIn,
-        minAmountOut,
-        receiver,
-        referral
-      )
+      .swap(poolId, inIdx, toIdx, amountIn, minAmountOut, receiver, referral)
       .send();
     await confirmOperation(Tezos, operation.hash);
     return operation;
@@ -356,7 +345,7 @@ export class Dex extends TokenFA2 {
   ): Promise<void> {
     let batch = await Tezos.contract.batch();
     for (const lambdaFunction of comp_funcs_map) {
-      batch = batch.withTransfer({
+      batch = await batch.withTransfer({
         to: this.contract.address,
         amount: 0,
         parameter: {
@@ -364,6 +353,43 @@ export class Dex extends TokenFA2 {
           value: lambdaFunction,
         },
       });
+    }
+    const batchOp = await batch.send();
+    await confirmOperation(Tezos, batchOp.hash);
+    console.log(batchOp.hash);
+  }
+
+  async setFunctionCompilled(
+    type: "Dex" | "Token",
+    comp_funcs_map,
+  ): Promise<void> {
+    let batch = await Tezos.contract.batch();
+    let idx = 0;
+    for (const lambdaFunction of comp_funcs_map) {
+      // const operation = await Tezos.contract.transfer({
+      //   to: this.contract.address,
+      //   amount: 0,
+      //   parameter: {
+      //     entrypoint: `set${type}Function`,
+      //     value: lambdaFunction,
+      //   },
+      // });
+      console.log(idx++, type, lambdaFunction.args[1].int);
+      // await confirmOperation(Tezos, operation.hash);
+      batch = await batch.withTransfer({
+        to: this.contract.address,
+        amount: 0,
+        parameter: {
+          entrypoint: `set${type}Function`,
+          value: lambdaFunction,
+        },
+      });
+      if (idx % 8 == 7) {
+        const batchOp = await batch.send();
+        await confirmOperation(Tezos, batchOp.hash);
+        console.log(this.contract.methods)
+        batch = await Tezos.contract.batch();
+      }
     }
     const batchOp = await batch.send();
     await confirmOperation(Tezos, batchOp.hash);

@@ -19,8 +19,8 @@ function call_dex(
     (* Custom actions *)
     // | Invest_one(_)           -> 4n
     // | Divest_one(_)           -> 5n
+    | Claim(_)                -> 6n
     (* Admin actions *)
-    // | Claim_admin_rewards(_)  -> 6n
     | RampA(_)                -> 7n
     | StopRampA(_)            -> 8n
     | SetProxy(_)             -> 9n
@@ -107,7 +107,7 @@ function set_dex_function(
   var   s               : full_storage_type)
                         : full_storage_type is
   block {
-    is_admin(s.storage);
+    is_admin(s.storage.admin);
     case s.dex_lambdas[idx] of
     | Some(_) -> failwith(ERRORS.func_set)
     | None -> s.dex_lambdas[idx] := f
@@ -121,7 +121,7 @@ function set_token_function(
   var s                 : full_storage_type)
                         : full_storage_type is
   block {
-    is_admin(s.storage);
+    is_admin(s.storage.admin);
     case s.token_lambdas[idx] of
     | Some(_) -> failwith(ERRORS.func_set)
     | None -> s.token_lambdas[idx] := f
@@ -133,7 +133,7 @@ function add_rem_managers(
   var s                 : full_storage_type)
                         : full_return_type is
   block {
-    is_admin(s.storage);
+    is_admin(s.storage.admin);
     s.storage.managers := if params.add
       then Set.add(params.candidate, s.storage.managers)
     else Set.remove(params.candidate, s.storage.managers);
@@ -144,7 +144,7 @@ function set_dev_address(
   var s                 : full_storage_type)
                         : full_return_type is
   block {
-    is_admin(s.storage);
+    is_admin(s.storage.admin);
     s.storage.dev_address := new_addr;
   } with (CONSTANTS.no_operations, s)
 
@@ -153,7 +153,7 @@ function set_reward_rate(
   var s                 : full_storage_type)
                         : full_return_type is
   block {
-    is_admin(s.storage);
+    is_admin(s.storage.admin);
     s.storage.reward_rate := rate;
   } with (CONSTANTS.no_operations, s)
 
@@ -162,6 +162,6 @@ function set_admin(
   var s                 : full_storage_type)
                         : full_return_type is
   block {
-    is_admin(s.storage);
+    is_admin(s.storage.admin);
     s.storage.admin := new_admin;
   } with (CONSTANTS.no_operations, s)

@@ -16,6 +16,8 @@ const rate_precision    : nat = 100_00000n;
 
 (* Fee constants *)
 
+const stkr_acc_precision: nat = 10_000_000_000n;
+
 const fee_denominator   : nat = 10_000_000_000n;
 
 const max_admin_fee     : nat = 10_000_000_000n;

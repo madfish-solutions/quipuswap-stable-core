@@ -9,7 +9,7 @@ function get_reserves(
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
       Get_reserves(params) -> {
-      const pair : pair_type = get_pair(params.pair_id, s);
+      const pair : pair_type = get_pair(params.pair_id, s.pools);
       operations := Tezos.transaction(pair.reserves, 0tez, params.receiver) # operations;
       }
     | _ -> skip
@@ -26,7 +26,7 @@ function get_virt_reserves(
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
       Get_virt_reserves(params) -> {
-        const pair : pair_type = get_pair(params.pair_id, s);
+        const pair : pair_type = get_pair(params.pair_id, s.pools);
         operations := Tezos.transaction(pair.virtual_reserves, 0tez, params.receiver) # operations;
       }
     | _ -> skip
@@ -47,7 +47,7 @@ function get_min_received(
   const s               : full_storage_type)
                         : full_return_type is
   block {
-    const pair : pair_type = get_pair(params.pair_id, s.storage);
+    const pair : pair_type = get_pair(params.pair_id, s.storage.pools);
     const xp: map(nat, nat) = _xp(pair);
     const y = get_y(params.i, params.j, params.x, xp, pair);
     const xp_j = case xp[params.j] of
@@ -72,7 +72,7 @@ function get_max_defi_rate(
   const s               : full_storage_type)
                         : full_return_type is
   block {
-    const pair : pair_type = get_pair(params.pair_id, s.storage);
+    const pair : pair_type = get_pair(params.pair_id, s.storage.pools);
     function count_limits(const key:nat; const value:nat): nat is
       block {
         const bal : nat = case pair.virtual_reserves[key] of
@@ -115,7 +115,7 @@ function get_dy(
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
       Get_dy(params) -> {
-        const pair : pair_type = get_pair(params.pair_id, s);
+        const pair : pair_type = get_pair(params.pair_id, s.pools);
         const xp: map(nat, nat) = _xp(pair);
         const xp_i = case xp[params.i] of
           | Some(value) -> value
@@ -154,7 +154,7 @@ function get_A(
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
       Get_a(params) -> {
-    const pair : pair_type = get_pair(params.pair_id, s);
+    const pair : pair_type = get_pair(params.pair_id, s.pools);
     operations := Tezos.transaction(_A(pair) / CONSTANTS.a_precision, 0tez, params.receiver) # operations;
    }
     | _ -> skip
@@ -171,7 +171,7 @@ function get_fees(
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
       Get_fees(params) -> {
-    const pair : pair_type = get_pair(params.pool_id, s);
+    const pair : pair_type = get_pair(params.pool_id, s.pools);
     operations := Tezos.transaction(pair.fee, 0tez, params.receiver) # operations;
      }
     | _ -> skip

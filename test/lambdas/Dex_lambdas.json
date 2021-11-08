@@ -16,6 +16,10 @@
     "name": "divest_liquidity"
   },
   {
+    "index": 6,
+    "name": "claim_middle"
+  },
+  {
     "index": 7,
     "name": "ramp_A"
   },

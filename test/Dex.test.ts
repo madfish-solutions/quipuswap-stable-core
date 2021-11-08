@@ -6,6 +6,7 @@ import {
   TezosToolkit,
   VIEW_LAMBDA,
 } from "@taquito/taquito";
+import expect from "expect";
 import dex_contract from "../build/Dex.ligo.json";
 import config from "../config.json";
 import { failCase } from "./fail-test";
@@ -163,6 +164,7 @@ describe("Dex", () => {
       storage: VIEW_LAMBDA.storage,
     });
     await confirmOperation(Tezos, op.hash);
+    console.log('Lambda view set');
     lambdaContractAddress = op.contractAddress;
     lambdaContract = await Tezos.contract.at(lambdaContractAddress);
     storage.storage.admin = aliceAddress;
@@ -172,8 +174,11 @@ describe("Dex", () => {
       code: JSON.parse(dex_contract.michelson),
       storage: storage,
     });
+    console.log("DEX op hash", dex_op.hash);
     await confirmOperation(Tezos, dex_op.hash);
+    console.log("DEX", dex_op.contractAddress)
     dex = await Dex.init(dex_op.contractAddress);
+    console.log("DEX init finished");
     //console.log(dex.contract.methods);
     tokens = await setupTrioTokens(Tezos);
   }, 300000);
@@ -1150,23 +1155,35 @@ describe("Dex", () => {
     });
     describe("4.1. Referral reward", () => {
       it("Should get referral rewards", async () => {
-        const expectedRewardNormalized =
-          new BigNumber(10)
-            .pow(4)
-            .multipliedBy(batchTimes)
-            .plus(new BigNumber(10).pow(2))
-            .multipliedBy(2) // swap in 2 ways
-            .multipliedBy(5).dividedBy(100000) // 0.005% of swap
+        const expectedRewardNormalized = new BigNumber(10)
+          .pow(4)
+          .multipliedBy(batchTimes)
+          .plus(new BigNumber(10).pow(2))
+          .multipliedBy(2) // swap in 2 ways
+          .multipliedBy(5)
+          .dividedBy(100000); // 0.005% of swap
         await dex.updateStorage({ pools: [pool_id.toString()] });
         const ref_address = accounts[referral].pkh;
-        const ref_stor = (await dex.contract.storage().then((storage: any) => {
+        const ref_stor = await dex.contract.storage().then((storage: any) => {
           return storage.storage.referral_rewards;
-        }));
+        });
+        const initUSDtz = await tokens.USDtz.contract.views
+          .balance_of(ref_address)
+          .read();
+        const initkUSD = await tokens.kUSD.contract.views
+          .getBalance(ref_address)
+          .read();
+        const inituUSD = await tokens.uUSD.contract.views
+          .balance_of([{ owner: ref_address, token_id: "0" }])
+          .read();
+
         const USDtzRewards = await ref_stor.get({
           0: ref_address,
           1: { fa12: tokens.USDtz.contract.address },
         });
-        expect(USDtzRewards.dividedBy(decimals.USDtz).toNumber()).toBeCloseTo(expectedRewardNormalized.toNumber());
+        expect(USDtzRewards.dividedBy(decimals.USDtz).toNumber()).toBeCloseTo(
+          expectedRewardNormalized.toNumber()
+        );
         console.log(USDtzRewards.toFormat());
         const kUSDRewards = await ref_stor.get({
           0: ref_address,
@@ -1182,7 +1199,7 @@ describe("Dex", () => {
             fa2: {
               token_address: tokens.uUSD.contract.address,
               token_id: new BigNumber(defaultTokenId),
-            }
+            },
           },
         });
         console.log(uUSDRewards.toFormat());
@@ -1194,6 +1211,61 @@ describe("Dex", () => {
           kUSD: kUSDRewards,
           uUSD: uUSDRewards,
         };
+        const op = await dex.contract.methods
+          .claim([
+            { referral: { fa12: tokens.USDtz.contract.address } },
+            { referral: { fa12: tokens.kUSD.contract.address } },
+            { referral: { fa2: tokens.uUSD.contract.address } },
+          ])
+          .send();
+        await confirmOperation(Tezos, op.hash);
+        await dex.updateStorage({ pools: [pool_id.toString()] });
+        const upd_ref_stor = await dex.contract
+          .storage()
+          .then((storage: any) => {
+            return storage.storage.referral_rewards;
+          });
+        const updUSDtzRewards = await upd_ref_stor.get({
+          0: ref_address,
+          1: { fa12: tokens.USDtz.contract.address },
+        });
+        expect(updUSDtzRewards.toNumber()).toEqual(0);
+        console.log(updUSDtzRewards.toFormat());
+        const updkUSDRewards = await upd_ref_stor.get({
+          0: ref_address,
+          1: { fa12: tokens.kUSD.contract.address },
+        });
+        console.log(updkUSDRewards.toFormat());
+        expect(kUSDRewards.toNumber()).toEqual(0);
+        const upduUSDRewards = await upd_ref_stor.get({
+          0: ref_address,
+          1: {
+            fa2: {
+              token_address: tokens.uUSD.contract.address,
+              token_id: new BigNumber(defaultTokenId),
+            },
+          },
+        });
+        console.log(upduUSDRewards.toFormat());
+        expect(upduUSDRewards.toNumber()).toEqual(0);
+        const updUSDtz = await tokens.USDtz.contract.views
+          .balance_of(ref_address)
+          .read();
+        const updkUSD = await tokens.kUSD.contract.views
+          .getBalance(ref_address)
+          .read();
+        const upduUSD = await tokens.uUSD.contract.views
+          .balance_of([{ owner: ref_address, token_id: "0" }])
+          .read();
+        expect(updUSDtz.minus(initUSDtz).toNumber()).toEqual(
+          init_rewards.USDtz.toNumber()
+        );
+        expect(updkUSD.minus(initkUSD).toNumber()).toEqual(
+          init_rewards.kUSD.toNumber()
+        );
+        expect(upduUSD.minus(inituUSD).toNumber()).toEqual(
+          init_rewards.uUSD.toNumber()
+        );
       });
     });
     describe("4.2. QT stakers reward", () => {

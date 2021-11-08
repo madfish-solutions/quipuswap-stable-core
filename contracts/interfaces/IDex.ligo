@@ -76,8 +76,7 @@ type fees_storage_type  is [@layout:comb] record [
 
 type staker_info_type   is [@layout:comb] record [
   balance                 : nat;
-  reward                  : map(token_pool_index, nat); (* amount of rewards to be minted for user *)
-  former                  : map(token_pool_index, nat); (* previous amount of rewards minted for user *)
+  earnings                : map(token_pool_index, acc_reward_type);
 ]
 
 type staker_acc_type    is [@layout:comb] record [
@@ -242,7 +241,7 @@ type reserves_type      is [@layout:comb] record [
 
 type total_supply_type  is [@layout:comb] record [
   pool_id                 : pool_id_type; (* pair identifier *)
-   receiver                : contract(nat); (* response receiver *)
+  receiver                : contract(nat); (* response receiver *)
 ]
 
 type min_received_type  is [@layout:comb] record [
@@ -309,6 +308,12 @@ type get_fee_type       is [@layout:comb] record [
   receiver                : contract(fees_storage_type);
 ]
 
+type claim_actions      is
+| Developer               of token_type
+| Referral                of token_type
+| Staking                 of (pool_id_type * token_pool_index)
+| LProvider               of (pool_id_type * token_type)
+
 type action_type        is
 (* Base actions *)
 | AddPair                 of initialize_params  (* sets initial liquidity *)
@@ -319,7 +324,7 @@ type action_type        is
 // | Invest_one              of invest_one_coin_type
 // | Divest_one              of divest_one_coin_type
 (* Admin actions *)
-// | Claim_admin_rewards     of claim_adm_rewards_type
+| Claim                   of list(claim_actions)
 | RampA                   of ramp_a_params
 | StopRampA               of nat
 | SetProxy                of set_proxy_params
@@ -341,11 +346,11 @@ type operator_type      is list (update_operator_param)
 type upd_meta_params    is token_metadata_info
 
 type token_action_type  is
-| ITransfer              of transfer_type (* transfer asset from one account to another *)
-| IBalanceOf             of bal_fa2_type (* returns the balance of the account *)
-| IUpdateOperators       of operator_type (* updates the token operators *)
-| IUpdateMetadata        of upd_meta_params
-| ITotalSupply           of total_supply_type
+| ITransfer               of transfer_type (* transfer asset from one account to another *)
+| IBalanceOf              of bal_fa2_type (* returns the balance of the account *)
+| IUpdateOperators        of operator_type (* updates the token operators *)
+| IUpdateMetadata         of upd_meta_params
+| ITotalSupply            of total_supply_type
 
 type set_token_func_type is [@layout:comb] record [
   func                    : bytes; (* code of the function *)
@@ -368,9 +373,9 @@ type full_action_type   is
 | SetDexFunction          of set_dex_func_type (* sets the dex specific function. Is used before the whole system is launched *)
 | SetTokenFunction        of set_token_func_type (* sets the FA function, is used before the whole system is launched *)
 | AddRemManagers          of add_rem_man_params (* adds a manager to manage LP token metadata *)
-| SetDevAddress         of address
-| SetRewardRate         of nat
-| SetAdmin               of address
+| SetDevAddress           of address
+| SetRewardRate           of nat
+| SetAdmin                of address
 
 type full_storage_type  is [@layout:comb] record [
   storage                 : storage_type; (* real dex storage_type *)

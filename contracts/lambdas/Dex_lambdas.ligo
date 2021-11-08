@@ -7,7 +7,7 @@ function initialize_exchange(
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
     | AddPair(params) -> {
-      is_admin(s);
+      is_admin(s.admin);
       (* Params check *)
       const inp_len = Map.size(params.input_tokens);
       const max_index = nat_or_error(params.n_tokens - 1n, "tokens_less_1n");
@@ -154,8 +154,8 @@ function swap(
           then failwith(ERRORS.zero_in)
         else skip;
 
-        var pair : pair_type := get_pair(params.pair_id, s);
-        const tokens        : tokens_type = get_tokens(params.pair_id, s);
+        var pair : pair_type := get_pair(params.pair_id, s.pools);
+        const tokens        : tokens_type = get_tokens(params.pair_id, s.tokens);
         const tokens_count = Map.size(tokens);
 
         if i >= tokens_count or j >= tokens_count
@@ -209,8 +209,8 @@ function swap(
           | None -> to_dev
         end;
         pair.staker_accumulator.accumulator[j] := case pair.staker_accumulator.accumulator[j] of
-          | Some(rew) -> rew + to_stakers
-          | None -> to_stakers
+          | Some(rew) -> rew + to_stakers * CONSTANTS.stkr_acc_precision / pair.staker_accumulator.total_staked
+          | None -> to_stakers * CONSTANTS.stkr_acc_precision / pair.staker_accumulator.total_staked
         end;
 
         if dy < min_y
@@ -265,7 +265,7 @@ function invest_liquidity(
         const result = add_liq(record[
           referral= Some(referral);
           pair_id = params.pair_id;
-          pair    = get_pair(params.pair_id, s);
+          pair    = get_pair(params.pair_id, s.pools);
           inputs  = params.in_amounts;
           min_mint_amount = params.shares;
         ], s);
@@ -285,15 +285,15 @@ function divest_liquidity(
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
-      Divest(params) -> {
+    | Divest(params) -> {
 
         if s.pools_count <= params.pair_id
           then failwith(ERRORS.pair_not_listed)
         else skip;
 
-        var   pair          : pair_type := get_pair(params.pair_id, s);
-        const tokens        : tokens_type = get_tokens(params.pair_id, s);
-        const share         : nat = get_account((Tezos.sender, params.pair_id), s);
+        var   pair          : pair_type := get_pair(params.pair_id, s.pools);
+        const tokens        : tokens_type = get_tokens(params.pair_id, s.tokens);
+        const share         : nat = get_account_balance((Tezos.sender, params.pair_id), s.ledger);
         const total_supply  : nat = pair.total_supply;
         if params.shares = 0n
          then failwith(ERRORS.zero_in)
@@ -374,8 +374,8 @@ function ramp_A(
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
     | RampA(params) -> {
-        is_admin(s);
-        var pair : pair_type := get_pair(params.pair_id, s);
+        is_admin(s.admin);
+        var pair : pair_type := get_pair(params.pair_id, s.pools);
         const current = Tezos.now;
         assert(current >= pair.initial_A_time + CONSTANTS.min_ramp_time);
         assert(params.future_time >= current + CONSTANTS.min_ramp_time); //  # dev: insufficient time
@@ -407,8 +407,8 @@ function stop_ramp_A(
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
     | StopRampA(pair_id) -> {
-      is_admin(s);
-      var pair : pair_type := get_pair(pair_id, s);
+      is_admin(s.admin);
+      var pair : pair_type := get_pair(pair_id, s.pools);
       const current = Tezos.now;
       const current_A: nat = _A(pair);
       pair.initial_A := current_A;
@@ -430,8 +430,8 @@ function set_proxy(
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
     | SetProxy(params) -> {
-      is_admin(s);
-      var pair : pair_type := get_pair(params.pair_id, s);
+      is_admin(s.admin);
+      var pair : pair_type := get_pair(params.pair_id, s.pools);
       // TODO: all the rewards must be claimed from the contract before in the same call
       pair.proxy_contract := params.proxy;
       s.pools[params.pair_id] := pair;
@@ -449,8 +449,8 @@ function update_proxy_limits(
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
     | UpdateProxyLimits(params) -> {
-      is_admin(s);
-      var pair : pair_type := get_pair(params.pair_id, s);
+      is_admin(s.admin);
+      var pair : pair_type := get_pair(params.pair_id, s.pools);
       pair.proxy_limits := params.limits;
       s.pools[params.pair_id] := pair;
       (* TODO: claim rewards and old staked values *)
@@ -468,8 +468,8 @@ function set_fees(
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
     | SetFees(params) -> {
-      is_admin(s);
-      var pair := get_pair(params.pool_id, s);
+      is_admin(s.admin);
+      var pair := get_pair(params.pool_id, s.pools);
       pair.fee := params.fee;
       s.pools[params.pool_id] := pair;
       }
@@ -477,22 +477,111 @@ function set_fees(
     end
   } with (operations, s)
 
-// function claim_admin_rewards(
-//   const p               : action_type;
-//   var s                 : storage_type)
-//                         : return_type is
-//   block {
-//     var operations: list(operation) := CONSTANTS.no_operations;
-//     case p of
-//     | ClaimAdminRewards(params) -> {
-//       is_admin(s);
-//       var pair : pair_type := get_pair(params.pair_id, s);
-//       // TODO: transfer admin rewards to dev address
-//       s.pairs[pair_id] := pair;
-//       }
-//     | _ -> skip
-//     end
-//   } with (operations, s)
+function claim_variant(
+  const acc: return_type;
+  const claim_action: claim_actions
+  ): return_type is
+  block {
+    var operations: list(operation) := acc.0;
+    var s: storage_type := acc.1;
+    case claim_action of
+        | Developer(dev_params) -> {
+            is_admin_or_dev(s.admin, s.dev_address);
+            const dev_balance = case s.dev_rewards[dev_params] of
+            | Some(bal) -> bal
+            | None -> 0n
+            end;
+            if dev_balance > 0n
+              then {
+                operations := typed_transfer(
+                  Tezos.self_address,
+                  s.dev_address,
+                  dev_balance,
+                  dev_params
+                ) # operations;
+                s.dev_rewards[dev_params] := 0n;
+              }
+            else failwith("Balance is 0")
+          }
+        | Referral(ref_params) -> {
+            const ref_balance = case s.referral_rewards[(Tezos.sender, ref_params)] of
+            | Some(bal) -> bal
+            | None -> 0n
+            end;
+            if ref_balance > 0n
+              then {
+                operations := typed_transfer(
+                  Tezos.self_address,
+                  Tezos.sender,
+                  ref_balance,
+                  ref_params
+                ) # operations;
+                s.referral_rewards[(Tezos.sender, ref_params)] := 0n;
+            }
+            else failwith("Balance is 0");
+          }
+        | Staking(staker_params) -> {
+            const staker_key = (Tezos.sender, staker_params.0);
+            var staker_acc := get_staker_acc(staker_key, s.stakers_balance);
+            var staker_rew_data: acc_reward_type := case staker_acc.earnings[staker_params.1] of
+            | Some(data) -> data
+            | None -> record [
+              reward  = 0n;
+              former  = 0n;
+            ]
+            end;
+            const staker_rew_balance = staker_rew_data.reward;
+            if staker_rew_balance > 0n
+              then {
+                operations := typed_transfer(
+                  Tezos.self_address,
+                  Tezos.sender,
+                  staker_rew_balance,
+                  get_token_by_id(staker_params.1, s.tokens[staker_params.0])
+                ) # operations;
+                staker_rew_data.reward := 0n;
+                staker_rew_data.former := 0n;
+              }
+            else failwith("Balance is 0");
+            staker_acc.earnings[staker_params.1] := staker_rew_data;
+            s.stakers_balance[staker_key] := staker_acc;
+          }
+        | LProvider(interest_params) -> {
+            const acc_key = (Tezos.sender, interest_params.0);
+            var acc_data := get_account_data(acc_key, s.account_data);
+            var acc_intrst_data: acc_reward_type := case acc_data.earned_interest[interest_params.1] of
+              | Some(data) -> data
+              | None -> record [
+                reward  = 0n;
+                former  = 0n;
+              ]
+              end;
+            const acc_intrst_balance = acc_intrst_data.reward;
+            if acc_intrst_balance > 0n
+              then {
+                operations := typed_transfer(
+                  Tezos.self_address,
+                  Tezos.sender,
+                  acc_intrst_balance,
+                  interest_params.1
+                ) # operations;
+                acc_intrst_data.reward := 0n;
+                acc_intrst_data.former := 0n;
+              }
+            else failwith("Balance is 0");
+            acc_data.earned_interest[interest_params.1] := acc_intrst_data;
+            s.account_data[acc_key] := acc_data;
+          }
+      end;
+  } with (operations, s)
 
+function claim_middle(
+  const p               : action_type;
+  var s                 : storage_type)
+                        : return_type is
+  case p of
+  | Claim(claim_action) -> List.fold(claim_variant, claim_action, (CONSTANTS.no_operations, s))
+  | _ -> (CONSTANTS.no_operations, s)
+  end
 
 
