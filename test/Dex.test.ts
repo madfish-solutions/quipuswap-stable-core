@@ -1257,11 +1257,22 @@ describe("Dex", () => {
           kUSD: kUSDRewards,
           uUSD: uUSDRewards,
         };
-        const params: { referral: FA12TokenType | FA2TokenType }[] = [
-          { referral: { fa12: tokens.USDtz.contract.address } },
-          { referral: { fa12: tokens.kUSD.contract.address } },
+        const params = [
           {
-            referral: {
+            option: "referral",
+            param: {
+              fa12: tokens.USDtz.contract.address,
+            },
+          },
+          {
+            option: "referral",
+            param: {
+              fa12: tokens.kUSD.contract.address,
+            },
+          },
+          {
+            option: "referral",
+            param: {
               fa2: {
                 token_address: tokens.uUSD.contract.address,
                 token_id: new BigNumber(defaultTokenId),
