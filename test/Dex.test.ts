@@ -1261,21 +1261,23 @@ describe("Dex", () => {
           {
             option: "referral",
             param: {
-              fa12: tokens.USDtz.contract.address,
+              0: { fa12: tokens.USDtz.contract.address },
             },
           },
           {
             option: "referral",
             param: {
-              fa12: tokens.kUSD.contract.address,
+              0: { fa12: tokens.kUSD.contract.address },
             },
           },
           {
             option: "referral",
             param: {
-              fa2: {
-                token_address: tokens.uUSD.contract.address,
-                token_id: new BigNumber(defaultTokenId),
+              0: {
+                fa2: {
+                  token_address: tokens.uUSD.contract.address,
+                  token_id: new BigNumber(defaultTokenId),
+                },
               },
             },
           },
