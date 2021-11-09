@@ -1280,7 +1280,9 @@ describe("Dex", () => {
             },
           },
         ];
-        const op = await dex.contract.methods.claim(params).send();
+        let op: any = dex.contract.methods.claim(params);
+        console.log(op);
+        op = await op.send();
         await confirmOperation(Tezos, op.hash);
         await dex.updateStorage({ pools: [pool_id.toString()] });
         const upd_ref_stor = await dex.contract
