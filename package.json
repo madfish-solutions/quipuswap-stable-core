@@ -7,14 +7,17 @@
   "description": "Token2Token DEX for equal-price tokens based on StableSwap algos on top of Tezos.",
   "author": "Illia Likhoshva <likhoshva@madfish.solutions> (https://www.madfish.solutions/)",
   "dependencies": {
+    "ts-node": "^10.2.1",
+    "typescript": "^4.4.3",
+
     "@taquito/signer": "^9.1.1",
     "@taquito/taquito": "^9.1.1",
+    "create-tezos-smart-contract": "^1.1.11",
+    
     "@types/jest": "^27.0.2",
     "jest": "^27.0.6",
-    "create-tezos-smart-contract": "^1.1.11",
-    "ts-jest": "^27.0.5",
-    "ts-node": "^10.2.1",
-    "typescript": "^4.4.3"
+    "ts-jest": "^27.0.5"
+    
   },
   "engines": {
     "node": ">=14",
