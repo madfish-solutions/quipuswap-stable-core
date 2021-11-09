@@ -1298,7 +1298,7 @@ describe("Dex", () => {
         printFormattedOutput(upduUSDRewards.toFormat());
         expect(upduUSDRewards.toNumber()).toEqual(0);
         const updUSDtz = await tokens.USDtz.contract.views
-          .balance_of(ref_address)
+          .getBalance(ref_address)
           .read(lambdaContractAddress);
         const updkUSD = await tokens.kUSD.contract.views
           .getBalance(ref_address)
