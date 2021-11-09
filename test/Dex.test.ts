@@ -1216,11 +1216,8 @@ describe("Dex", () => {
         const initUSDtz = await tokens.USDtz.contract.views
           .getBalance(ref_address)
           .read(lambdaContractAddress);
-        console.log(tokens.USDtz.contract.views);
-        console.log(tokens.kUSD.contract.views);
-        console.log(tokens.uUSD.contract.views);
         const initkUSD = await tokens.kUSD.contract.views
-          .balance_of(ref_address)
+          .getBalance(ref_address)
           .read(lambdaContractAddress);
         const inituUSD = await tokens.uUSD.contract.views
           .balance_of([{ owner: ref_address, token_id: "0" }])
