@@ -28,6 +28,7 @@ import { intervalToDuration, formatDuration } from "date-fns";
 
 import dex_lambdas_comp from "../build/lambdas/Dex_lambdas.json";
 import token_lambdas_comp from "../build/lambdas/Token_lambdas.json";
+import { importKey } from "@taquito/signer";
 
 const fs = require("fs");
 const accounts = config.sandbox.accounts;
@@ -198,7 +199,15 @@ describe("Dex", () => {
     return { pool_id, amounts };
   }
 
+  const FAUCET_KEY = config.networks.testnet.faucet;
   beforeAll(async () => {
+    // await importKey(
+    //   global.Tezos,
+    //   FAUCET_KEY.email,
+    //   FAUCET_KEY.password,
+    //   FAUCET_KEY.mnemonic.join(" "),
+    //   FAUCET_KEY.secret
+    // ).catch((e) => console.error(e));
     let config = await prepareProviderOptions("alice");
     Tezos.setProvider(config);
     const op = await Tezos.contract.originate({
@@ -1261,24 +1270,27 @@ describe("Dex", () => {
           {
             option: "referral",
             param: {
-              0: { fa12: tokens.USDtz.contract.address },
+              token: { fa12: tokens.USDtz.contract.address },
+              amount: USDtzRewards,
             },
           },
           {
             option: "referral",
             param: {
-              0: { fa12: tokens.kUSD.contract.address },
+              token: { fa12: tokens.kUSD.contract.address },
+              amount: kUSDRewards,
             },
           },
           {
             option: "referral",
             param: {
-              0: {
+              token: {
                 fa2: {
                   token_address: tokens.uUSD.contract.address,
                   token_id: new BigNumber(defaultTokenId),
                 },
               },
+              amount: uUSDRewards,
             },
           },
         ];

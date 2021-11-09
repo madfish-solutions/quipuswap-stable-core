@@ -308,11 +308,28 @@ type get_fee_type       is [@layout:comb] record [
   receiver                : contract(fees_storage_type);
 ]
 
+type claim_by_token_params is [@layout:comb] record [
+  token: token_type;
+  amount: nat;
+]
+
+type claim_by_pool_token_id_params is [@layout:comb] record [
+  pool_id: pool_id_type;
+  token_index: token_pool_index;
+  amount: nat;
+]
+
+type claim_by_pool_token_params is [@layout:comb] record [
+  pool_id: pool_id_type;
+  token: token_type;
+  amount: nat;
+]
+
 type claim_actions      is
-| Developer               of token_type
-| Referral                of token_type
-| Staking                 of (pool_id_type * token_pool_index)
-| LProvider               of (pool_id_type * token_type)
+| Developer               of claim_by_token_params
+| Referral                of claim_by_token_params
+| Staking                 of claim_by_pool_token_id_params
+| LProvider               of claim_by_pool_token_params
 
 type action_type        is
 (* Base actions *)

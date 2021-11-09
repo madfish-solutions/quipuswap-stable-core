@@ -487,9 +487,9 @@ function claim_variant(
     var operations: list(operation) := acc.0;
     var s: storage_type := acc.1;
     case claim_action of
-        | Developer(dev_params) -> {
+        | Developer(params) -> {
             is_admin_or_dev(s.admin, s.dev_address);
-            const dev_balance = case s.dev_rewards[dev_params] of
+            const dev_balance = case s.dev_rewards[params.token] of
             | Some(bal) -> bal
             | None -> 0n
             end;
@@ -498,15 +498,15 @@ function claim_variant(
                 operations := typed_transfer(
                   Tezos.self_address,
                   s.dev_address,
-                  dev_balance,
-                  dev_params
+                  params.amount,
+                  params.token
                 ) # operations;
-                s.dev_rewards[dev_params] := 0n;
+                s.dev_rewards[params.token] := nat_or_error(dev_balance-params.amount, "Amount greater than balance");
               }
             else failwith("Balance is 0")
           }
-        | Referral(ref_params) -> {
-            const ref_balance = case s.referral_rewards[(Tezos.sender, ref_params)] of
+        | Referral(params) -> {
+            const ref_balance = case s.referral_rewards[(Tezos.sender, params.token)] of
             | Some(bal) -> bal
             | None -> 0n
             end;
@@ -515,17 +515,17 @@ function claim_variant(
                 operations := typed_transfer(
                   Tezos.self_address,
                   Tezos.sender,
-                  ref_balance,
-                  ref_params
+                  params.amount,
+                  params.token
                 ) # operations;
-                s.referral_rewards[(Tezos.sender, ref_params)] := 0n;
+                s.referral_rewards[(Tezos.sender, params.token)] := nat_or_error(ref_balance-params.amount, "Amount greater than balance");
             }
             else failwith("Balance is 0");
           }
-        | Staking(staker_params) -> {
-            const staker_key = (Tezos.sender, staker_params.0);
+        | Staking(params) -> {
+            const staker_key = (Tezos.sender, params.pool_id);
             var staker_acc := get_staker_acc(staker_key, s.stakers_balance);
-            var staker_rew_data: acc_reward_type := case staker_acc.earnings[staker_params.1] of
+            var staker_rew_data: acc_reward_type := case staker_acc.earnings[params.token_index] of
             | Some(data) -> data
             | None -> record [
               reward  = 0n;
@@ -538,20 +538,20 @@ function claim_variant(
                 operations := typed_transfer(
                   Tezos.self_address,
                   Tezos.sender,
-                  staker_rew_balance,
-                  get_token_by_id(staker_params.1, s.tokens[staker_params.0])
+                  params.amount,
+                  get_token_by_id(params.token_index, s.tokens[params.pool_id])
                 ) # operations;
-                staker_rew_data.reward := 0n;
+                staker_rew_data.reward := nat_or_error(staker_rew_balance - params.amount, "Amount greater than balance");
                 staker_rew_data.former := 0n;
               }
             else failwith("Balance is 0");
-            staker_acc.earnings[staker_params.1] := staker_rew_data;
+            staker_acc.earnings[params.token_index] := staker_rew_data;
             s.stakers_balance[staker_key] := staker_acc;
           }
-        | LProvider(interest_params) -> {
-            const acc_key = (Tezos.sender, interest_params.0);
+        | LProvider(params) -> {
+            const acc_key = (Tezos.sender, params.pool_id);
             var acc_data := get_account_data(acc_key, s.account_data);
-            var acc_intrst_data: acc_reward_type := case acc_data.earned_interest[interest_params.1] of
+            var acc_intrst_data: acc_reward_type := case acc_data.earned_interest[params.token] of
               | Some(data) -> data
               | None -> record [
                 reward  = 0n;
@@ -564,14 +564,14 @@ function claim_variant(
                 operations := typed_transfer(
                   Tezos.self_address,
                   Tezos.sender,
-                  acc_intrst_balance,
-                  interest_params.1
+                  params.amount,
+                  params.token
                 ) # operations;
                 acc_intrst_data.reward := 0n;
                 acc_intrst_data.former := 0n;
               }
             else failwith("Balance is 0");
-            acc_data.earned_interest[interest_params.1] := acc_intrst_data;
+            acc_data.earned_interest[params.token] := acc_intrst_data;
             s.account_data[acc_key] := acc_data;
           }
       end;
@@ -582,7 +582,7 @@ function claim_middle(
   var s                 : storage_type)
                         : return_type is
   case p of
-  | Claim(claim_action) -> List.fold(claim_variant, claim_action, (CONSTANTS.no_operations, s))
+  | Claim(params) -> List.fold(claim_variant, params, (CONSTANTS.no_operations, s))
   | _ -> (CONSTANTS.no_operations, s)
   end
 
