@@ -1269,7 +1269,7 @@ describe("Dex", () => {
             },
           },
         ];
-        const op = await dex.contract.methods.claim().send();
+        const op = await dex.contract.methods.claim(params).send();
         await confirmOperation(Tezos, op.hash);
         await dex.updateStorage({ pools: [pool_id.toString()] });
         const upd_ref_stor = await dex.contract
