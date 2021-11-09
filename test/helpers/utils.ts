@@ -117,3 +117,20 @@ export function destructObj(obj: any) {
 
     return arr;
   }
+
+
+export async function setupLambdasToStorage(
+  lambdas_comp: { prim: string; args: { [key: string]: string | number }[] }[]
+) {
+  let lambda_func_storage = new MichelsonMap<number, string>();
+  for (const lambda of lambdas_comp) {
+    const key: number = lambda.args[1].int as number;
+    const bytes: string = lambda.args[0].bytes as string;
+    lambda_func_storage.set(key, bytes);
+  }
+  for (const [key, value] of lambda_func_storage.entries()) {
+    console.log(key, value);
+  }
+  return lambda_func_storage;
+}
+

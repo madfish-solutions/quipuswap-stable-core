@@ -253,6 +253,9 @@ function get_y(
           if iter = i
             then _x := x
           else _x := entry.1;
+          if _x = 0n
+            then failwith("_x = 0n")
+          else skip;
           acc.s_ := acc.s_ + _x;
           acc.c := acc.c * d / (_x * tokens_count);
         }

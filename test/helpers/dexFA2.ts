@@ -35,7 +35,7 @@ export class Dex extends TokenFA2 {
   static async init(tezos: TezosToolkit, dexAddress: string): Promise<Dex> {
     const dex = new Dex(tezos, await tezos.contract.at(dexAddress));
     // await dex.setFunctionBatchCompilled("Token", token_lambdas_comp);
-    await dex.setFunctionCompilled("Dex", dex_lambdas_comp);
+    await dex.setFunctionBatchCompilled("Dex", dex_lambdas_comp);
     return dex;
   }
 
@@ -319,7 +319,7 @@ export class Dex extends TokenFA2 {
   async setDexFunctionBatch(
     funcs_map: LambdaFunctionType[] = dexLambdas
   ): Promise<void> {
-    let batch = await this.Tezos.contract.batch();
+    let batch = this.Tezos.contract.batch();
     let ligo = getLigo(true);
     for (const lambdaFunction of funcs_map) {
       console.log(`${lambdaFunction.index}\t${lambdaFunction.name}`);
@@ -343,9 +343,10 @@ export class Dex extends TokenFA2 {
     type: "Dex" | "Token",
     comp_funcs_map
   ): Promise<void> {
-    let batch = await this.Tezos.contract.batch();
+    let batch = this.Tezos.contract.batch();
+    let idx = 0;
     for (const lambdaFunction of comp_funcs_map) {
-      batch = await batch.withTransfer({
+      batch = batch.withTransfer({
         to: this.contract.address,
         amount: 0,
         parameter: {
@@ -353,20 +354,25 @@ export class Dex extends TokenFA2 {
           value: lambdaFunction,
         },
       });
+      idx = idx + 1;
+      console.log(idx, type, lambdaFunction.args[1].int);
+      if (idx % 5 == 0 || idx == comp_funcs_map.length) {
+        const batchOp = await batch.send();
+        console.log(`${idx}/${comp_funcs_map.length}`, batchOp.hash);
+        await confirmOperation(this.Tezos, batchOp.hash);
+        console.log(`Confirmed`);
+        if (idx < comp_funcs_map.length) batch = this.Tezos.contract.batch();
+      }
     }
-    const batchOp = await batch.send();
-    await confirmOperation(this.Tezos, batchOp.hash);
-    console.log(batchOp.hash);
   }
 
   async setFunctionCompilled(
     type: "Dex" | "Token",
     comp_funcs_map
   ): Promise<void> {
-    let batch = await this.Tezos.contract.batch();
     let idx = 0;
     for (const lambdaFunction of comp_funcs_map) {
-      batch = await batch.withTransfer({
+      const op = await this.Tezos.contract.transfer({
         to: this.contract.address,
         amount: 0,
         parameter: {
@@ -374,14 +380,10 @@ export class Dex extends TokenFA2 {
           value: lambdaFunction,
         },
       });
-      console.log(++idx, type, lambdaFunction.args[1].int);
-      if (idx % 5 == 0 || idx == comp_funcs_map.length) {
-        const batchOp = await batch.send();
-        await confirmOperation(this.Tezos, batchOp.hash);
-        console.log(this.contract.methods);
-        if (idx < comp_funcs_map.length)
-          batch = this.Tezos.contract.batch();
-      }
+      idx = idx + 1;
+      console.log(idx, type, lambdaFunction.args[1].int);
+      await confirmOperation(this.Tezos, op.hash);
+      console.log(op.hash);
     }
   }
 
@@ -405,7 +407,7 @@ export class Dex extends TokenFA2 {
   async setTokenFunctionBatch(
     funcs_map: LambdaFunctionType[] = tokenLambdas
   ): Promise<void> {
-    let batch = await this.Tezos.contract.batch();
+    let batch = this.Tezos.contract.batch();
     let ligo = getLigo(true);
     for (const lambdaFunction of funcs_map) {
       console.log(`${lambdaFunction.index}\t${lambdaFunction.name}`);

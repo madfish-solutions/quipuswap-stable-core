@@ -21,8 +21,10 @@ import {
   prepareProviderOptions,
   AccountsLiteral,
   Tezos,
+  setupLambdasToStorage,
 } from "./helpers/utils";
 import storage from "./storage/Dex";
+import { intervalToDuration, formatDuration, } from "date-fns"
 
 import dex_lambdas_comp from "../build/lambdas/Dex_lambdas.json";
 import token_lambdas_comp from "../build/lambdas/Token_lambdas.json";
@@ -42,11 +44,25 @@ const kUSD_contract = fs
   .toString();
 
 describe("Dex", () => {
+  const start: Date = new Date();
+
+  function printFormattedOutput(...args: any[]) {
+    const date_now = new Date();
+    const date_diff = formatDuration(
+      intervalToDuration({
+        start: start,
+        end: date_now,
+      })
+    );
+    return console.log(date_diff, ...args);
+  }
+
   type TokensMap = {
     kUSD: TokenFA12;
     USDtz: TokenFA12;
     uUSD: TokenFA2;
   };
+
   const decimals = {
     kUSD: new BigNumber(10).pow(18),
     USDtz: new BigNumber(10).pow(6),
@@ -74,13 +90,14 @@ describe("Dex", () => {
   // do a proper unit test in a stateless testing process
 
   async function setupTrioTokens(): Promise<TokensMap> {
+    printFormattedOutput("Setting up tokens")
     let result: any = {};
     const kUSD = await Tezos.contract.originate({
       code: kUSD_contract,
       storage: kUSDstorage,
     });
     await confirmOperation(Tezos, kUSD.hash);
-    console.log("kUSD")
+    printFormattedOutput("kUSD");
     result.kUSD = await TokenFA12.init(Tezos, kUSD.contractAddress);
     await new Promise((r) => setTimeout(r, 2000));
     const USDtz = await Tezos.contract.originate({
@@ -88,7 +105,7 @@ describe("Dex", () => {
       storage: USDtzstorage,
     });
     await confirmOperation(Tezos, USDtz.hash);
-    console.log("USDtz");
+    printFormattedOutput("USDtz");
     result.USDtz = await TokenFA12.init(Tezos, USDtz.contractAddress);
     await new Promise((r) => setTimeout(r, 2000));
     const uUSD = await Tezos.contract.originate({
@@ -96,41 +113,41 @@ describe("Dex", () => {
       storage: uUSDstorage,
     });
     await confirmOperation(Tezos, uUSD.hash);
-    console.log("uUSD");
+    printFormattedOutput("uUSD");
     result.uUSD = await TokenFA2.init(Tezos, uUSD.contractAddress);
     await new Promise((r) => setTimeout(r, 2000));
     let config = await prepareProviderOptions("alice");
     Tezos.setProvider(config);
     await result.kUSD.approve(dex.contract.address, new BigNumber(10).pow(45));
-    console.log("alice kUSD approve");
+    printFormattedOutput("alice kUSD approve");
     await new Promise((r) => setTimeout(r, 1000));
     await result.uUSD.approve(dex.contract.address, new BigNumber(10).pow(45));
-    console.log("alice uUSD approve");
+    printFormattedOutput("alice uUSD approve");
     await new Promise((r) => setTimeout(r, 1000));
     await result.USDtz.approve(dex.contract.address, new BigNumber(10).pow(45));
-    console.log("alice USDtz approve");
+    printFormattedOutput("alice USDtz approve");
     await new Promise((r) => setTimeout(r, 1000));
     config = await prepareProviderOptions("bob");
     Tezos.setProvider(config);
     await result.kUSD.approve(dex.contract.address, new BigNumber(10).pow(45));
-    console.log("bob kUSD approve");
+    printFormattedOutput("bob kUSD approve");
     await new Promise((r) => setTimeout(r, 1000));
     await result.uUSD.approve(dex.contract.address, new BigNumber(10).pow(45));
-    console.log("bob uUSD approve");
+    printFormattedOutput("bob uUSD approve");
     await new Promise((r) => setTimeout(r, 1000));
     await result.USDtz.approve(dex.contract.address, new BigNumber(10).pow(45));
-    console.log("bob USDtz approve");
+    printFormattedOutput("bob USDtz approve");
     await new Promise((r) => setTimeout(r, 1000));
     config = await prepareProviderOptions("eve");
     Tezos.setProvider(config);
     await result.kUSD.approve(dex.contract.address, new BigNumber(10).pow(45));
-    console.log("eve kUSD approve");
+    printFormattedOutput("eve kUSD approve");
     await new Promise((r) => setTimeout(r, 1000));
     await result.uUSD.approve(dex.contract.address, new BigNumber(10).pow(45));
-    console.log("eve uUSD approve");
+    printFormattedOutput("eve uUSD approve");
     await new Promise((r) => setTimeout(r, 1000));
     await result.USDtz.approve(dex.contract.address, new BigNumber(10).pow(45));
-    console.log("eve USDtz approve");
+    printFormattedOutput("eve USDtz approve");
     return result as TokensMap;
   }
 
@@ -163,35 +180,22 @@ describe("Dex", () => {
           input_amount = USDtzAmount;
           // if (!input_amount.isEqualTo(zero_amount))
           //   await tokens.USDtz.approve(dex.contract.address, input_amount);
-          // console.log('USDtz', input_amount.toFormat());
+          // printFormattedOutput('USDtz', input_amount.toFormat());
         } else if (contract_address == tokens.kUSD.contract.address) {
           // await tokens.kUSD.approve(dex.contract.address, zero_amount);
           input_amount = kUSDAmount;
           // if (!input_amount.isEqualTo(zero_amount))
           //   await tokens.kUSD.approve(dex.contract.address, input_amount);
-          // console.log("kUSD", input_amount.toFormat());
+          // printFormattedOutput("kUSD", input_amount.toFormat());
         } else if (contract_address == tokens.uUSD.contract.address) {
           input_amount = uUSDAmount;
           // await tokens.uUSD.approve(dex.contract.address, input_amount);
-          // console.log("uUSD", input_amount.toFormat());
+          // printFormattedOutput("uUSD", input_amount.toFormat());
         }
         amounts.set(k, input_amount);
       }
     }
     return { pool_id, amounts };
-  }
-
-  async function setupLambdasToStorage(lambdas_comp) {
-    let lambda_func_storage = new MichelsonMap<number, string>();
-    for (const lambda of lambdas_comp) {
-      const key = lambda.args[1].int;
-      const bytes = lambda.args[0].bytes;
-      lambda_func_storage.set(key, bytes);
-    }
-    for (const [key, value] of lambda_func_storage.entries()) {
-      console.log(key, value);
-    }
-    return lambda_func_storage;
   }
 
   beforeAll(async () => {
@@ -202,7 +206,7 @@ describe("Dex", () => {
       storage: VIEW_LAMBDA.storage,
     });
     await confirmOperation(Tezos, op.hash);
-    console.log('Lambda view set');
+    printFormattedOutput("Lambda view set");
     lambdaContractAddress = op.contractAddress;
     lambdaContract = await Tezos.contract.at(lambdaContractAddress);
     storage.storage.admin = aliceAddress;
@@ -214,11 +218,11 @@ describe("Dex", () => {
       code: JSON.parse(dex_contract.michelson),
       storage: storage,
     });
-    console.log("DEX op hash", dex_op.hash);
+    printFormattedOutput("DEX op hash", dex_op.hash);
     await confirmOperation(Tezos, dex_op.hash);
-    console.log("DEX", dex_op.contractAddress)
+    printFormattedOutput("DEX", dex_op.contractAddress);
     dex = await Dex.init(Tezos, dex_op.contractAddress);
-    console.log("DEX init finished");
+    printFormattedOutput("DEX init finished");
     await new Promise((r) => setTimeout(r, 2000));
     tokens = await setupTrioTokens();
     return true;
@@ -647,7 +651,7 @@ describe("Dex", () => {
         in_amounts: Map<string, BigNumber>
       ) {
         let config = await prepareProviderOptions(sender);
-        await Tezos.setProvider(config);
+        Tezos.setProvider(config);
         await dex.updateStorage({
           pools: [pool_id.toString()],
           ledger: [[accounts[sender].pkh, pool_id.toNumber()]],
@@ -680,7 +684,7 @@ describe("Dex", () => {
 
       beforeAll(async () => {
         let config = await prepareProviderOptions(sender);
-        await Tezos.setProvider(config);
+        Tezos.setProvider(config);
         const stp = await setupTokenAmounts(
           dex,
           USDtzAmount,
@@ -823,11 +827,11 @@ describe("Dex", () => {
         `Should swap [${normalized.toString()} %s, ~ ${normalized.toString()} %s]`,
         async (t_in, t_to) => {
           let config = await prepareProviderOptions(sender);
-          await Tezos.setProvider(config);
+          Tezos.setProvider(config);
           const i = map_tokens_idx[t_in];
           const j = map_tokens_idx[t_to];
           await dex.updateStorage({ pools: [pool_id.toString()] });
-          // console.log(dex.storage.storage.pools[pool_id.toString()]);
+          // printFormattedOutput(dex.storage.storage.pools[pool_id.toString()]);
           const init_reserves = dex.storage.storage.pools[pool_id.toString()]
             .reserves as any as Map<string, BigNumber>;
           const rates = {};
@@ -859,7 +863,7 @@ describe("Dex", () => {
           let min_out = amounts.get(j);
           min_out = min_out.minus(min_out.multipliedBy(1).div(100));
 
-          console.log(
+          printFormattedOutput(
             `Swapping ${t_in} with amount ${in_amount
               .dividedBy(rates[i])
               .div(new BigNumber(10).pow(18))
@@ -886,7 +890,7 @@ describe("Dex", () => {
           const output = init_reserves
             .get(j.toString())
             .minus(upd_reserves.get(j.toString()));
-          console.log(
+          printFormattedOutput(
             `Swapped to ${output
               .dividedBy(rates[j])
               .div(new BigNumber(10).pow(18))
@@ -919,8 +923,8 @@ describe("Dex", () => {
             init_out instanceof BigNumber ? init_out : init_out[0].balance;
           upd_in = upd_in instanceof BigNumber ? upd_in : upd_in[0].balance;
           upd_out = upd_out instanceof BigNumber ? upd_out : upd_out[0].balance;
-          console.log(init_in.toFormat(), upd_in.toFormat());
-          console.log(init_out.toFormat(), upd_out.toFormat());
+          printFormattedOutput(init_in.toFormat(), upd_in.toFormat());
+          printFormattedOutput(init_out.toFormat(), upd_out.toFormat());
 
           expect(
             init_in.minus(upd_in).dividedBy(decimals[t_in]).toNumber()
@@ -957,7 +961,7 @@ describe("Dex", () => {
         min_amounts: Map<string, BigNumber>
       ) {
         let config = await prepareProviderOptions(sender);
-        await Tezos.setProvider(config);
+        Tezos.setProvider(config);
         await dex.updateStorage({
           pools: [pool_id.toString()],
           ledger: [[accounts[sender].pkh, pool_id.toNumber()]],
@@ -971,17 +975,17 @@ describe("Dex", () => {
         res.forEach(
           (value, key) => (raw_res[key] = value.toFormat(0).toString())
         );
-        console.log(raw_res);
+        printFormattedOutput(raw_res);
         const v_res = dex.storage.storage.pools[pool_id.toNumber()]
           .virtual_reserves as any as MichelsonMap<string, BigNumber>;
         let virt_res = {};
         v_res.forEach(
           (value, key) => (virt_res[key] = value.toFormat(0).toString())
         );
-        console.log(virt_res);
-        console.log(initLPBalance.toFormat());
+        printFormattedOutput(virt_res);
+        printFormattedOutput(initLPBalance.toFormat());
         const init_ledger = dex.storage.storage.ledger[accounts[sender].pkh];
-        console.log(init_ledger.toFormat());
+        printFormattedOutput(init_ledger.toFormat());
         await dex.divestLiquidity(pool_id, min_amounts, shares);
         await dex.updateStorage({
           pools: [pool_id.toString()],
@@ -990,6 +994,7 @@ describe("Dex", () => {
         const updatedLPBalance = new BigNumber(
           dex.storage.storage.pools[pool_id.toNumber()].total_supply
         );
+        printFormattedOutput(updatedLPBalance.toFormat());
         expect(updatedLPBalance.toNumber()).toBeLessThan(
           initLPBalance.toNumber()
         );
@@ -1155,7 +1160,7 @@ describe("Dex", () => {
       }
       map_tokens_idx = mapping;
       for (let i = 0; i < times; i++) {
-        let batch = await Tezos.contract.batch();
+        let batch = Tezos.contract.batch();
         for (const [t_in, t_out] of swap_routes) {
           const i = map_tokens_idx[t_in];
           const j = map_tokens_idx[t_out];
@@ -1175,7 +1180,7 @@ describe("Dex", () => {
         }
         const op = await batch.send();
         await confirmOperation(Tezos, op.hash);
-        console.log(`${i + 1} BatchSwap ${op.hash}`);
+        printFormattedOutput(`${i + 1} BatchSwap ${op.hash}`);
         await dex.updateStorage({ pools: [pool_id.toString()] });
         const res = dex.storage.storage.pools[pool_id.toNumber()]
           .reserves as any as MichelsonMap<string, BigNumber>;
@@ -1183,7 +1188,7 @@ describe("Dex", () => {
         res.forEach(
           (value, key) => (raw_res[key] = value.toFormat(0).toString())
         );
-        console.log(raw_res);
+        printFormattedOutput(raw_res);
       }
     }
 
@@ -1209,14 +1214,17 @@ describe("Dex", () => {
           return storage.storage.referral_rewards;
         });
         const initUSDtz = await tokens.USDtz.contract.views
-          .balance_of(ref_address)
-          .read();
-        const initkUSD = await tokens.kUSD.contract.views
           .getBalance(ref_address)
-          .read();
+          .read(lambdaContractAddress);
+        console.log(tokens.USDtz.contract.views);
+        console.log(tokens.kUSD.contract.views);
+        console.log(tokens.uUSD.contract.views);
+        const initkUSD = await tokens.kUSD.contract.views
+          .balance_of(ref_address)
+          .read(lambdaContractAddress);
         const inituUSD = await tokens.uUSD.contract.views
           .balance_of([{ owner: ref_address, token_id: "0" }])
-          .read();
+          .read(lambdaContractAddress);
 
         const USDtzRewards = await ref_stor.get({
           0: ref_address,
@@ -1225,12 +1233,12 @@ describe("Dex", () => {
         expect(USDtzRewards.dividedBy(decimals.USDtz).toNumber()).toBeCloseTo(
           expectedRewardNormalized.toNumber()
         );
-        console.log(USDtzRewards.toFormat());
+        printFormattedOutput(USDtzRewards.toFormat());
         const kUSDRewards = await ref_stor.get({
           0: ref_address,
           1: { fa12: tokens.kUSD.contract.address },
         });
-        console.log(kUSDRewards.toFormat());
+        printFormattedOutput(kUSDRewards.toFormat());
         expect(kUSDRewards.dividedBy(decimals.kUSD).toNumber()).toBeCloseTo(
           expectedRewardNormalized.toNumber()
         );
@@ -1243,7 +1251,7 @@ describe("Dex", () => {
             },
           },
         });
-        console.log(uUSDRewards.toFormat());
+        printFormattedOutput(uUSDRewards.toFormat());
         expect(uUSDRewards.dividedBy(decimals.uUSD).toNumber()).toBeCloseTo(
           expectedRewardNormalized.toNumber()
         );
@@ -1271,12 +1279,12 @@ describe("Dex", () => {
           1: { fa12: tokens.USDtz.contract.address },
         });
         expect(updUSDtzRewards.toNumber()).toEqual(0);
-        console.log(updUSDtzRewards.toFormat());
+        printFormattedOutput(updUSDtzRewards.toFormat());
         const updkUSDRewards = await upd_ref_stor.get({
           0: ref_address,
           1: { fa12: tokens.kUSD.contract.address },
         });
-        console.log(updkUSDRewards.toFormat());
+        printFormattedOutput(updkUSDRewards.toFormat());
         expect(kUSDRewards.toNumber()).toEqual(0);
         const upduUSDRewards = await upd_ref_stor.get({
           0: ref_address,
@@ -1287,17 +1295,17 @@ describe("Dex", () => {
             },
           },
         });
-        console.log(upduUSDRewards.toFormat());
+        printFormattedOutput(upduUSDRewards.toFormat());
         expect(upduUSDRewards.toNumber()).toEqual(0);
         const updUSDtz = await tokens.USDtz.contract.views
           .balance_of(ref_address)
-          .read();
+          .read(lambdaContractAddress);
         const updkUSD = await tokens.kUSD.contract.views
           .getBalance(ref_address)
-          .read();
+          .read(lambdaContractAddress);
         const upduUSD = await tokens.uUSD.contract.views
           .balance_of([{ owner: ref_address, token_id: "0" }])
-          .read();
+          .read(lambdaContractAddress);
         expect(updUSDtz.minus(initUSDtz).toNumber()).toEqual(
           init_rewards.USDtz.toNumber()
         );
@@ -1400,7 +1408,7 @@ describe("Dex", () => {
         const exp_dy = new BigNumber(10).pow(6 + 3);
         const i = map_tokens_idx.uUSD;
         const j = map_tokens_idx.USDtz;
-        console.log(pool_id, new BigNumber(i), new BigNumber(j), dx);
+        printFormattedOutput(pool_id, new BigNumber(i), new BigNumber(j), dx);
         const params = {
           pool_id: pool_id,
           i: i,
@@ -1413,10 +1421,10 @@ describe("Dex", () => {
           new BigNumber(j),
           dx
         );
-        console.log(getdy);
+        printFormattedOutput(getdy);
         const dy = await getdy.read();
-        console.log(dy.toString());
-        console.log(exp_dy.toString(), dy.toString());
+        printFormattedOutput(dy.toString());
+        printFormattedOutput(exp_dy.toString(), dy.toString());
         // expect(dy.toNumber()).toBeCloseTo(exp_dy.toNumber());
       });
       it.todo("Should return price");

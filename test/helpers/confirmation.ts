@@ -71,7 +71,7 @@ export async function confirmOperation(
 }
 
 export async function findOperation(block: BlockResponse, opHash: string) {
-  for (let i = 3; i >= 0; i--) {
+  for (let i = block.operations.length-1; i >= 0; i--) {
     for (const op of block.operations[i]) {
       if (op.hash === opHash) {
         return op;

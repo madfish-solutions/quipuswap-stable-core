@@ -29,7 +29,7 @@ export class TokenFA2 implements Token {
 
   async updateProvider(accountName: string): Promise<void> {
     let config = await prepareProviderOptions(accountName);
-    await this.Tezos.setProvider(config);
+    this.Tezos.setProvider(config);
   }
 
   async updateStorage(

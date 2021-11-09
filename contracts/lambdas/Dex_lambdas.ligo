@@ -155,7 +155,7 @@ function swap(
         else skip;
 
         var pair : pair_type := get_pair(params.pair_id, s.pools);
-        const tokens        : tokens_type = get_tokens(params.pair_id, s.tokens);
+        const tokens : tokens_type = get_tokens(params.pair_id, s.tokens);
         const tokens_count = Map.size(tokens);
 
         if i >= tokens_count or j >= tokens_count
@@ -208,10 +208,12 @@ function swap(
           | Some(rew) -> rew + to_dev
           | None -> to_dev
         end;
-        pair.staker_accumulator.accumulator[j] := case pair.staker_accumulator.accumulator[j] of
+        if to_stakers > 0n
+         then pair.staker_accumulator.accumulator[j] := case pair.staker_accumulator.accumulator[j] of
           | Some(rew) -> rew + to_stakers * CONSTANTS.stkr_acc_precision / pair.staker_accumulator.total_staked
           | None -> to_stakers * CONSTANTS.stkr_acc_precision / pair.staker_accumulator.total_staked
-        end;
+          end;
+        else skip;
 
         if dy < min_y
           then failwith(ERRORS.high_min_out)
