@@ -24,7 +24,7 @@ import {
   setupLambdasToStorage,
 } from "./helpers/utils";
 import storage from "./storage/Dex";
-import { intervalToDuration, formatDuration, } from "date-fns"
+import { intervalToDuration, formatDuration } from "date-fns";
 
 import dex_lambdas_comp from "../build/lambdas/Dex_lambdas.json";
 import token_lambdas_comp from "../build/lambdas/Token_lambdas.json";
@@ -90,7 +90,7 @@ describe("Dex", () => {
   // do a proper unit test in a stateless testing process
 
   async function setupTrioTokens(): Promise<TokensMap> {
-    printFormattedOutput("Setting up tokens")
+    printFormattedOutput("Setting up tokens");
     let result: any = {};
     const kUSD = await Tezos.contract.originate({
       code: kUSD_contract,
@@ -1257,13 +1257,19 @@ describe("Dex", () => {
           kUSD: kUSDRewards,
           uUSD: uUSDRewards,
         };
-        const op = await dex.contract.methods
-          .claim([
-            { referral: { fa12: tokens.USDtz.contract.address } },
-            { referral: { fa12: tokens.kUSD.contract.address } },
-            { referral: { fa2: tokens.uUSD.contract.address } },
-          ])
-          .send();
+        const params: { referral: FA12TokenType | FA2TokenType }[] = [
+          { referral: { fa12: tokens.USDtz.contract.address } },
+          { referral: { fa12: tokens.kUSD.contract.address } },
+          {
+            referral: {
+              fa2: {
+                token_address: tokens.uUSD.contract.address,
+                token_id: new BigNumber(defaultTokenId),
+              },
+            },
+          },
+        ];
+        const op = await dex.contract.methods.claim().send();
         await confirmOperation(Tezos, op.hash);
         await dex.updateStorage({ pools: [pool_id.toString()] });
         const upd_ref_stor = await dex.contract
