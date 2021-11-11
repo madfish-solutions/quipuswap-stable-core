@@ -17,8 +17,8 @@ function call_dex(
     | Invest(_)               -> 2n
     | Divest(_)               -> 3n
     (* Custom actions *)
-    // | Invest_one(_)           -> 4n
-    // | Divest_one(_)           -> 5n
+    | DivestImbalanced(_)     -> 4n
+    | DivestOneCoin(_)        -> 5n
     // | Claim(_)                -> 6n
     | ClaimDeveloper(_)       -> 6n
     | ClaimReferral(_)        -> 7n

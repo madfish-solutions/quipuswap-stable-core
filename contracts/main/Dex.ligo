@@ -42,4 +42,3 @@ function main(
   | SetRewardRate(params)     -> set_reward_rate(params, s)
   | SetAdmin(addr)            -> set_admin(addr, s)
   end
- 

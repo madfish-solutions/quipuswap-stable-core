@@ -1,5 +1,5 @@
 
-(* 12n reserves per pool *)
+(* 15n reserves per pool *)
 [@inline]
 function get_reserves(
   const p               : action_type;
@@ -16,7 +16,7 @@ function get_reserves(
     end;
   } with (operations, s)
 
-(* 13n virtual reserves per pool *)
+(* 16n virtual reserves per pool *)
 [@inline]
 function get_virt_reserves(
   const p               : action_type;
@@ -105,7 +105,7 @@ function calc_withdraw_one_coin(
     )
   ], s)
 
-(* 18n Calculate the current output dy given input dx *)
+(* 19n Calculate the current output dy given input dx *)
 [@inline]
 function get_dy(
   const p               : action_type;
@@ -161,7 +161,7 @@ function get_A(
     end;
   } with (operations, s)
 
-(* 14n Fees *)
+(* 17n Fees *)
 [@inline]
 function get_fees(
   const p               : action_type;

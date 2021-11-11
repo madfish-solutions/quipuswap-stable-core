@@ -12,6 +12,7 @@ const zero_b_in                 : string = "Dex/no-token-b-in";
 const pair_listed               : string = "Dex/pair-exist";
 const wrong_route               : string = "Dex/wrong-route";
 const zero_in                   : string = "Dex/zero-amount-in";
+const zero_burn_amount          : string = "Dex/zero-burn-amount";
 const insufficient_lp           : string = "Dex/insufficient-shares";
 const dust_out                  : string = "Dex/dust-output";
 const high_min_out              : string = "Dex/high-min-out";

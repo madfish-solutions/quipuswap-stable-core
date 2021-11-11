@@ -234,6 +234,19 @@ type divest_type        is [@layout:comb] record [
   shares                  : nat; (* amount of shares to be burnt *)
 ]
 
+type divest_imbalanced_type is [@layout:comb] record [
+  pair_id                 : nat; (* pair identifier *)
+  amounts_out             : map(token_pool_index, nat); (* amounts of tokens, where `index of value` == `index of token` to be received to accept the divestment *)
+  max_shares              : nat; (* amount of shares to be burnt *)
+]
+
+type divest_one_coin_type is [@layout:comb] record [
+  pair_id                 : nat; (* pair identifier *)
+  shares                  : nat; (* amount of shares to be burnt *)
+  token_index             : token_pool_index;
+  min_amount_out          : nat;
+]
+
 type reserves_type      is [@layout:comb] record [
   pair_id                 : nat; (* pair identifier *)
   receiver                : contract(map(nat, nat)); (* response receiver *)
@@ -338,8 +351,8 @@ type action_type        is
 | Invest                  of invest_type        (* mints min shares after investing tokens *)
 | Divest                  of divest_type        (* burns shares and sends tokens to the owner *)
 (* Custom actions *)
-// | Invest_one              of invest_one_coin_type
-// | Divest_one              of divest_one_coin_type
+| DivestImbalanced        of divest_imbalanced_type
+| DivestOneCoin           of divest_one_coin_type
 (* Admin actions *)
 | ClaimDeveloper          of claim_by_token_params
 | ClaimReferral           of claim_by_token_params
