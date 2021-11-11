@@ -751,7 +751,7 @@ describe("Dex", () => {
           min_shares,
           amounts
         );
-      }, 20000);
+      }, 30000);
 
       it.todo("Should invest liq imbalanced");
     });
@@ -1210,6 +1210,8 @@ describe("Dex", () => {
     });
     describe("4.1. Referral reward", () => {
       it("Should get referral rewards", async () => {
+        let config = await prepareProviderOptions(referral);
+        Tezos.setProvider(config);
         const expectedRewardNormalized = new BigNumber(10)
           .pow(4)
           .multipliedBy(batchTimes)
@@ -1266,56 +1268,57 @@ describe("Dex", () => {
           kUSD: kUSDRewards,
           uUSD: uUSDRewards,
         };
-        const params = [
-          {
-            option: "referral",
-            param: {
-              token: { fa12: tokens.USDtz.contract.address },
-              amount: USDtzRewards,
-            },
-          },
-          {
-            option: "referral",
-            param: {
-              token: { fa12: tokens.kUSD.contract.address },
-              amount: kUSDRewards,
-            },
-          },
-          {
-            option: "referral",
-            param: {
-              token: {
-                fa2: {
-                  token_address: tokens.uUSD.contract.address,
-                  token_id: new BigNumber(defaultTokenId),
-                },
-              },
-              amount: uUSDRewards,
-            },
-          },
-        ];
-        let op: any = dex.contract.methods.claim(params);
+        let op: any = dex.contract.methods.claimReferral(
+          "fa12",
+          tokens.USDtz.contract.address,
+          USDtzRewards
+        );
         console.log(op);
         op = await op.send();
         await confirmOperation(Tezos, op.hash);
+        printFormattedOutput("Claimed referral USDtz");
         await dex.updateStorage({ pools: [pool_id.toString()] });
-        const upd_ref_stor = await dex.contract
-          .storage()
-          .then((storage: any) => {
-            return storage.storage.referral_rewards;
-          });
+        let upd_ref_stor = await dex.contract.storage().then((storage: any) => {
+          return storage.storage.referral_rewards;
+        });
         const updUSDtzRewards = await upd_ref_stor.get({
           0: ref_address,
           1: { fa12: tokens.USDtz.contract.address },
         });
         expect(updUSDtzRewards.toNumber()).toEqual(0);
         printFormattedOutput(updUSDtzRewards.toFormat());
+        op = dex.contract.methods.claimReferral(
+          "fa12",
+          tokens.kUSD.contract.address,
+          kUSDRewards
+        );
+        console.log(op);
+        op = await op.send();
+        await confirmOperation(Tezos, op.hash);
+        printFormattedOutput("Claimed referral kUSD");
+        await dex.updateStorage({ pools: [pool_id.toString()] });
+        upd_ref_stor = await dex.contract.storage().then((storage: any) => {
+          return storage.storage.referral_rewards;
+        });
         const updkUSDRewards = await upd_ref_stor.get({
           0: ref_address,
           1: { fa12: tokens.kUSD.contract.address },
         });
         printFormattedOutput(updkUSDRewards.toFormat());
-        expect(kUSDRewards.toNumber()).toEqual(0);
+        expect(updkUSDRewards.toNumber()).toEqual(0);
+        op = dex.contract.methods.claimReferral(
+          "fa2",
+          tokens.uUSD.contract.address,
+          new BigNumber(defaultTokenId),
+          uUSDRewards
+        );
+        console.log(op);
+        op = await op.send();
+        await confirmOperation(Tezos, op.hash);
+        printFormattedOutput("Claimed referral uUSD");
+        upd_ref_stor = await dex.contract.storage().then((storage: any) => {
+          return storage.storage.referral_rewards;
+        });
         const upduUSDRewards = await upd_ref_stor.get({
           0: ref_address,
           1: {
@@ -1342,9 +1345,9 @@ describe("Dex", () => {
         expect(updkUSD.minus(initkUSD).toNumber()).toEqual(
           init_rewards.kUSD.toNumber()
         );
-        expect(upduUSD.minus(inituUSD).toNumber()).toEqual(
-          init_rewards.uUSD.toNumber()
-        );
+        expect(
+          upduUSD[0].balance.minus(inituUSD[0].balance).toNumber()
+        ).toEqual(init_rewards.uUSD.toNumber());
       });
     });
     describe("4.2. QT stakers reward", () => {
@@ -1352,7 +1355,140 @@ describe("Dex", () => {
     });
 
     describe("4.3. Developer reward", () => {
-      it.todo("Should get dev rewards");
+      it(
+        "Should get dev rewards",
+        async () => {
+          let config = await prepareProviderOptions('eve');
+          Tezos.setProvider(config);
+          const expectedRewardNormalized = new BigNumber(10)
+            .pow(4)
+            .multipliedBy(batchTimes)
+            .plus(new BigNumber(10).pow(2))
+            .multipliedBy(2) // swap in 2 ways
+            .multipliedBy(5)
+            .dividedBy(100000); // 0.005% of swap
+          await dex.updateStorage({ pools: [pool_id.toString()] });
+          const dev_stor = await dex.contract.storage().then((storage: any) => {
+            return storage.storage.dev_rewards;
+          });
+          const initUSDtz = await tokens.USDtz.contract.views
+            .getBalance(dev_address)
+            .read(lambdaContractAddress);
+          const initkUSD = await tokens.kUSD.contract.views
+            .getBalance(dev_address)
+            .read(lambdaContractAddress);
+          const inituUSD = await tokens.uUSD.contract.views
+            .balance_of([{ owner: dev_address, token_id: "0" }])
+            .read(lambdaContractAddress);
+
+          const USDtzRewards = await dev_stor.get({
+            fa12: tokens.USDtz.contract.address,
+          });
+          expect(USDtzRewards.dividedBy(decimals.USDtz).toNumber()).toBeCloseTo(
+            expectedRewardNormalized.toNumber()
+          );
+          printFormattedOutput(USDtzRewards.toFormat());
+          const kUSDRewards = await dev_stor.get({
+            fa12: tokens.kUSD.contract.address,
+          });
+          printFormattedOutput(kUSDRewards.toFormat());
+          expect(kUSDRewards.dividedBy(decimals.kUSD).toNumber()).toBeCloseTo(
+            expectedRewardNormalized.toNumber()
+          );
+          const uUSDRewards = await dev_stor.get({
+            fa2: {
+              token_address: tokens.uUSD.contract.address,
+              token_id: new BigNumber(defaultTokenId),
+            },
+          });
+          printFormattedOutput(uUSDRewards.toFormat());
+          expect(uUSDRewards.dividedBy(decimals.uUSD).toNumber()).toBeCloseTo(
+            expectedRewardNormalized.toNumber()
+          );
+          const init_rewards = {
+            USDtz: USDtzRewards,
+            kUSD: kUSDRewards,
+            uUSD: uUSDRewards,
+          };
+          let op: any = dex.contract.methods.claimDeveloper(
+            "fa12",
+            tokens.USDtz.contract.address,
+            USDtzRewards
+          );
+          console.log(op);
+          op = await op.send();
+          await confirmOperation(Tezos, op.hash);
+          printFormattedOutput("Claimed dev USDtz");
+          await dex.updateStorage({ pools: [pool_id.toString()] });
+          let upd_dev_stor = await dex.contract
+            .storage()
+            .then((storage: any) => {
+              return storage.storage.dev_rewards;
+            });
+          const updUSDtzRewards = await upd_dev_stor.get({
+            fa12: tokens.USDtz.contract.address,
+          });
+          expect(updUSDtzRewards.toNumber()).toEqual(0);
+          printFormattedOutput(updUSDtzRewards.toFormat());
+          op = dex.contract.methods.claimDeveloper(
+            "fa12",
+            tokens.kUSD.contract.address,
+            kUSDRewards
+          );
+          console.log(op);
+          op = await op.send();
+          await confirmOperation(Tezos, op.hash);
+          printFormattedOutput("Claimed dev kUSD");
+          await dex.updateStorage({ pools: [pool_id.toString()] });
+          upd_dev_stor = await dex.contract.storage().then((storage: any) => {
+            return storage.storage.dev_rewards;
+          });
+          const updkUSDRewards = await upd_dev_stor.get({
+            fa12: tokens.kUSD.contract.address,
+          });
+          printFormattedOutput(updkUSDRewards.toFormat());
+          expect(updkUSDRewards.toNumber()).toEqual(0);
+          op = dex.contract.methods.claimDeveloper(
+            "fa2",
+            tokens.uUSD.contract.address,
+            new BigNumber(defaultTokenId),
+            uUSDRewards
+          );
+          console.log(op);
+          op = await op.send();
+          await confirmOperation(Tezos, op.hash);
+          printFormattedOutput("Claimed dev uUSD");
+          upd_dev_stor = await dex.contract.storage().then((storage: any) => {
+            return storage.storage.dev_rewards;
+          });
+          const upduUSDRewards = await upd_dev_stor.get({
+            fa2: {
+              token_address: tokens.uUSD.contract.address,
+              token_id: new BigNumber(defaultTokenId),
+            },
+          });
+          printFormattedOutput(upduUSDRewards.toFormat());
+          expect(upduUSDRewards.toNumber()).toEqual(0);
+          const updUSDtz = await tokens.USDtz.contract.views
+            .getBalance(dev_address)
+            .read(lambdaContractAddress);
+          const updkUSD = await tokens.kUSD.contract.views
+            .getBalance(dev_address)
+            .read(lambdaContractAddress);
+          const upduUSD = await tokens.uUSD.contract.views
+            .balance_of([{ owner: dev_address, token_id: "0" }])
+            .read(lambdaContractAddress);
+          expect(updUSDtz.minus(initUSDtz).toNumber()).toEqual(
+            init_rewards.USDtz.toNumber()
+          );
+          expect(updkUSD.minus(initkUSD).toNumber()).toEqual(
+            init_rewards.kUSD.toNumber()
+          );
+          expect(upduUSD[0].balance.minus(inituUSD[0].balance).toNumber()).toEqual(
+            init_rewards.uUSD.toNumber()
+          );
+        }
+      );
     });
   });
 

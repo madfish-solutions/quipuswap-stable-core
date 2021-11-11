@@ -19,17 +19,21 @@ function call_dex(
     (* Custom actions *)
     // | Invest_one(_)           -> 4n
     // | Divest_one(_)           -> 5n
-    | Claim(_)                -> 6n
+    // | Claim(_)                -> 6n
+    | ClaimDeveloper(_)       -> 6n
+    | ClaimReferral(_)        -> 7n
+    | ClaimStaking(_)         -> 8n
+    | ClaimLProvider (_)      -> 9n
     (* Admin actions *)
-    | RampA(_)                -> 7n
-    | StopRampA(_)            -> 8n
-    | SetProxy(_)             -> 9n
-    | UpdateProxyLimits(_)    -> 10n
-    | SetFees(_)              -> 11n
+    | RampA(_)                -> 10n
+    | StopRampA(_)            -> 11n
+    | SetProxy(_)             -> 12n
+    | UpdateProxyLimits(_)    -> 13n
+    | SetFees(_)              -> 14n
     (* VIEWS *)
-    | Get_reserves(_)         -> 12n
-    | Get_virt_reserves(_)    -> 13n
-    | Get_fees(_)             -> 14n
+    | Get_reserves(_)         -> 15n
+    | Get_virt_reserves(_)    -> 16n
+    | Get_fees(_)             -> 17n
     // | Min_received(_)         -> 15n
     // | Tokens_per_shares(_)    -> 16n
     // | Calc_divest_one_coin(_) -> 18n

@@ -8,7 +8,7 @@ function is_admin(const admin: address): unit is
 (* Contract admin or dev check *)
 [@inline]
 function is_admin_or_dev(const admin: address; const dev: address): unit is
-  if Tezos.sender =/= admin or Tezos.sender =/= dev
+  if Tezos.sender =/= admin and Tezos.sender =/= dev
     then failwith(ERRORS.not_contract_admin)
   else Unit;
 

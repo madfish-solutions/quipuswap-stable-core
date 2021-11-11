@@ -479,111 +479,251 @@ function set_fees(
     end
   } with (operations, s)
 
-function claim_variant(
-  const acc: return_type;
-  const claim_action: claim_actions
-  ): return_type is
+// function claim_variant(
+//   const acc: return_type;
+//   const claim_action: claim_actions
+//   ): return_type is
+//   block {
+//     var operations: list(operation) := acc.0;
+//     var s: storage_type := acc.1;
+//     case claim_action of
+//         | Developer(params) -> {
+//             is_admin_or_dev(s.admin, s.dev_address);
+//             const dev_balance = case s.dev_rewards[params.token] of
+//             | Some(bal) -> bal
+//             | None -> 0n
+//             end;
+//             if dev_balance > 0n
+//               then {
+//                 operations := typed_transfer(
+//                   Tezos.self_address,
+//                   s.dev_address,
+//                   params.amount,
+//                   params.token
+//                 ) # operations;
+//                 s.dev_rewards[params.token] := nat_or_error(dev_balance-params.amount, "Amount greater than balance");
+//               }
+//             else failwith("Balance is 0")
+//           }
+//         | Referral(params) -> {
+//             const ref_balance = case s.referral_rewards[(Tezos.sender, params.token)] of
+//             | Some(bal) -> bal
+//             | None -> 0n
+//             end;
+//             if ref_balance > 0n
+//               then {
+//                 operations := typed_transfer(
+//                   Tezos.self_address,
+//                   Tezos.sender,
+//                   params.amount,
+//                   params.token
+//                 ) # operations;
+//                 s.referral_rewards[(Tezos.sender, params.token)] := nat_or_error(ref_balance-params.amount, "Amount greater than balance");
+//             }
+//             else failwith("Balance is 0");
+//           }
+//         | Staking(params) -> {
+//             const staker_key = (Tezos.sender, params.pool_id);
+//             var staker_acc := get_staker_acc(staker_key, s.stakers_balance);
+//             var staker_rew_data: acc_reward_type := case staker_acc.earnings[params.token_index] of
+//             | Some(data) -> data
+//             | None -> record [
+//               reward  = 0n;
+//               former  = 0n;
+//             ]
+//             end;
+//             const staker_rew_balance = staker_rew_data.reward;
+//             if staker_rew_balance > 0n
+//               then {
+//                 operations := typed_transfer(
+//                   Tezos.self_address,
+//                   Tezos.sender,
+//                   params.amount,
+//                   get_token_by_id(params.token_index, s.tokens[params.pool_id])
+//                 ) # operations;
+//                 staker_rew_data.reward := nat_or_error(staker_rew_balance - params.amount, "Amount greater than balance");
+//                 staker_rew_data.former := 0n;
+//               }
+//             else failwith("Balance is 0");
+//             staker_acc.earnings[params.token_index] := staker_rew_data;
+//             s.stakers_balance[staker_key] := staker_acc;
+//           }
+//         | LProvider(params) -> {
+//             const acc_key = (Tezos.sender, params.pool_id);
+//             var acc_data := get_account_data(acc_key, s.account_data);
+//             var acc_intrst_data: acc_reward_type := case acc_data.earned_interest[params.token] of
+//               | Some(data) -> data
+//               | None -> record [
+//                 reward  = 0n;
+//                 former  = 0n;
+//               ]
+//               end;
+//             const acc_intrst_balance = acc_intrst_data.reward;
+//             if acc_intrst_balance > 0n
+//               then {
+//                 operations := typed_transfer(
+//                   Tezos.self_address,
+//                   Tezos.sender,
+//                   params.amount,
+//                   params.token
+//                 ) # operations;
+//                 acc_intrst_data.reward := 0n;
+//                 acc_intrst_data.former := 0n;
+//               }
+//             else failwith("Balance is 0");
+//             acc_data.earned_interest[params.token] := acc_intrst_data;
+//             s.account_data[acc_key] := acc_data;
+//           }
+//       end;
+//   } with (operations, s)
+
+// function claim_middle(
+//   const p : action_type;
+//   var s   : storage_type)
+//           : return_type is
+//   case p of
+//   | Claim(params) -> List.fold(
+//       claim_variant,
+//       params,
+//       (CONSTANTS.no_operations, s)
+//     )
+//   | _ -> (CONSTANTS.no_operations, s)
+//   end
+
+function claim_dev(
+  const p : action_type;
+  var s   : storage_type
+  )       : return_type is
   block {
-    var operations: list(operation) := acc.0;
-    var s: storage_type := acc.1;
-    case claim_action of
-        | Developer(params) -> {
-            is_admin_or_dev(s.admin, s.dev_address);
-            const dev_balance = case s.dev_rewards[params.token] of
-            | Some(bal) -> bal
-            | None -> 0n
-            end;
-            if dev_balance > 0n
-              then {
-                operations := typed_transfer(
-                  Tezos.self_address,
-                  s.dev_address,
-                  params.amount,
-                  params.token
-                ) # operations;
-                s.dev_rewards[params.token] := nat_or_error(dev_balance-params.amount, "Amount greater than balance");
-              }
-            else failwith("Balance is 0")
+    var operations: list(operation) := CONSTANTS.no_operations;
+    const receiver = s.dev_address;
+    case p of
+      | ClaimDeveloper(params) -> {
+        is_admin_or_dev(s.admin, s.dev_address);
+        const bal = case s.dev_rewards[params.token] of
+        | Some(bals) -> bals
+        | None -> 0n
+        end;
+        s.dev_rewards[params.token] := nat_or_error(bal-params.amount, "Amount greater than balance");
+        if params.amount > 0n
+          then {
+            operations := typed_transfer(
+              Tezos.self_address,
+              receiver,
+              params.amount,
+              params.token
+            ) # operations;
           }
-        | Referral(params) -> {
-            const ref_balance = case s.referral_rewards[(Tezos.sender, params.token)] of
-            | Some(bal) -> bal
-            | None -> 0n
-            end;
-            if ref_balance > 0n
-              then {
-                operations := typed_transfer(
-                  Tezos.self_address,
-                  Tezos.sender,
-                  params.amount,
-                  params.token
-                ) # operations;
-                s.referral_rewards[(Tezos.sender, params.token)] := nat_or_error(ref_balance-params.amount, "Amount greater than balance");
-            }
-            else failwith("Balance is 0");
-          }
-        | Staking(params) -> {
-            const staker_key = (Tezos.sender, params.pool_id);
-            var staker_acc := get_staker_acc(staker_key, s.stakers_balance);
-            var staker_rew_data: acc_reward_type := case staker_acc.earnings[params.token_index] of
-            | Some(data) -> data
-            | None -> record [
-              reward  = 0n;
-              former  = 0n;
-            ]
-            end;
-            const staker_rew_balance = staker_rew_data.reward;
-            if staker_rew_balance > 0n
-              then {
-                operations := typed_transfer(
-                  Tezos.self_address,
-                  Tezos.sender,
-                  params.amount,
-                  get_token_by_id(params.token_index, s.tokens[params.pool_id])
-                ) # operations;
-                staker_rew_data.reward := nat_or_error(staker_rew_balance - params.amount, "Amount greater than balance");
-                staker_rew_data.former := 0n;
-              }
-            else failwith("Balance is 0");
-            staker_acc.earnings[params.token_index] := staker_rew_data;
-            s.stakers_balance[staker_key] := staker_acc;
-          }
-        | LProvider(params) -> {
-            const acc_key = (Tezos.sender, params.pool_id);
-            var acc_data := get_account_data(acc_key, s.account_data);
-            var acc_intrst_data: acc_reward_type := case acc_data.earned_interest[params.token] of
-              | Some(data) -> data
-              | None -> record [
-                reward  = 0n;
-                former  = 0n;
-              ]
-              end;
-            const acc_intrst_balance = acc_intrst_data.reward;
-            if acc_intrst_balance > 0n
-              then {
-                operations := typed_transfer(
-                  Tezos.self_address,
-                  Tezos.sender,
-                  params.amount,
-                  params.token
-                ) # operations;
-                acc_intrst_data.reward := 0n;
-                acc_intrst_data.former := 0n;
-              }
-            else failwith("Balance is 0");
-            acc_data.earned_interest[params.token] := acc_intrst_data;
-            s.account_data[acc_key] := acc_data;
-          }
+        else failwith("Amount is 0")
+      }
+      | _ -> skip
       end;
   } with (operations, s)
 
-function claim_middle(
-  const p               : action_type;
-  var s                 : storage_type)
-                        : return_type is
-  case p of
-  | Claim(params) -> List.fold(claim_variant, params, (CONSTANTS.no_operations, s))
-  | _ -> (CONSTANTS.no_operations, s)
-  end
+function claim_ref(
+  const p : action_type;
+  var s   : storage_type
+  )       : return_type is
+  block {
+    var operations: list(operation) := CONSTANTS.no_operations;
+    const receiver = Tezos.sender;
+    case p of
+      | ClaimReferral(params) -> {
+        const key = (receiver, params.token);
+        const bal = case s.referral_rewards[key] of
+          | Some(bals) -> bals
+          | None -> (failwith("ref not found"): nat)
+          end;
+        s.referral_rewards[key] := nat_or_error(bal-params.amount, "Amount greater than balance");
+        if params.amount > 0n
+          then {
+            operations := typed_transfer(
+              Tezos.self_address,
+              receiver,
+              params.amount,
+              params.token
+            ) # operations;
+          }
+        else failwith("Amount is 0")
+      }
+      | _ -> skip
+    end;
+  } with (operations, s)
 
+function claim_staker(
+  const p : action_type;
+  var s   : storage_type
+  )       : return_type is
+  block {
+    var operations: list(operation) := CONSTANTS.no_operations;
+    const receiver = Tezos.sender;
+    case p of
+      | ClaimStaking(params) -> {
+          const staker_key = (receiver, params.pool_id);
+          var staker_acc := get_staker_acc(staker_key, s.stakers_balance);
+          var staker_rew_data: acc_reward_type := case staker_acc.earnings[params.token_index] of
+          | Some(data) -> data
+          | None -> record [
+            reward  = 0n;
+            former  = 0n;
+          ]
+          end;
+          const bal = staker_rew_data.reward;
+          const new_balance = nat_or_error(bal - params.amount, "Amount greater than balance");
+          if params.amount > 0n
+            then {
+              operations := typed_transfer(
+                Tezos.self_address,
+                receiver,
+                params.amount,
+                get_token_by_id(params.token_index, s.tokens[params.pool_id])
+              ) # operations;
+              staker_rew_data.former := 0n;
+              staker_rew_data.reward := new_balance;
+            }
+          else failwith("Balance is 0");
+          staker_acc.earnings[params.token_index] := staker_rew_data;
+          s.stakers_balance[staker_key] := staker_acc;
+        }
+        | _ -> skip
+        end;
+  } with (operations, s)
 
+function claim_provider(
+  const p : action_type;
+  var s   : storage_type
+  )       : return_type is
+  block {
+    var operations: list(operation) := CONSTANTS.no_operations;
+    const receiver = Tezos.sender;
+    case p of
+      | ClaimLProvider(params) -> {
+        const acc_key = (receiver, params.pool_id);
+        var acc_data := get_account_data(acc_key, s.account_data);
+        var acc_intrst_data: acc_reward_type := case acc_data.earned_interest[params.token] of
+          | Some(data) -> data
+          | None -> record [
+            reward  = 0n;
+            former  = 0n;
+          ]
+          end;
+        const bal = acc_intrst_data.reward;
+        const new_balance = nat_or_error(bal - params.amount, "Amount greater than balance");
+        if params.amount > 0n
+          then {
+            operations := typed_transfer(
+              Tezos.self_address,
+              receiver,
+              params.amount,
+              params.token
+            ) # operations;
+            acc_intrst_data.former := 0n;
+            acc_intrst_data.reward := new_balance;
+          }
+        else failwith("Balance is 0");
+        acc_data.earned_interest[params.token] := acc_intrst_data;
+        s.account_data[acc_key] := acc_data;
+      }
+      | _ -> skip
+    end;
+  } with (operations, s)

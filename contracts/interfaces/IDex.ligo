@@ -341,7 +341,10 @@ type action_type        is
 // | Invest_one              of invest_one_coin_type
 // | Divest_one              of divest_one_coin_type
 (* Admin actions *)
-| Claim                   of list(claim_actions)
+| ClaimDeveloper          of claim_by_token_params
+| ClaimReferral           of claim_by_token_params
+| ClaimStaking            of claim_by_pool_token_id_params
+| ClaimLProvider          of claim_by_pool_token_params
 | RampA                   of ramp_a_params
 | StopRampA               of nat
 | SetProxy                of set_proxy_params

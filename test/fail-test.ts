@@ -8,9 +8,10 @@ export async function failCase(
   let config = await prepareProviderOptions(sender);
   Tezos.setProvider(config);
   expect.assertions(1);
-  return await expect(act).rejects.toMatchObject({
+  await expect(act).rejects.toMatchObject({
     message: errorMsg,
   });
+  return true;
 }
 
 export default failCase;

@@ -17,38 +17,50 @@
   },
   {
     "index": 6,
-    "name": "claim_middle"
+    "name": "claim_dev"
   },
   {
     "index": 7,
-    "name": "ramp_A"
+    "name": "claim_ref"
   },
   {
     "index": 8,
-    "name": "stop_ramp_A"
+    "name": "claim_staker"
   },
   {
     "index": 9,
-    "name": "set_proxy"
+    "name": "claim_provider"
   },
   {
     "index": 10,
-    "name": "update_proxy_limits"
+    "name": "ramp_A"
   },
   {
     "index": 11,
-    "name": "set_fees"
+    "name": "stop_ramp_A"
   },
   {
     "index": 12,
-    "name": "get_reserves"
+    "name": "set_proxy"
   },
   {
     "index": 13,
-    "name": "get_virt_reserves"
+    "name": "update_proxy_limits"
   },
   {
     "index": 14,
+    "name": "set_fees"
+  },
+  {
+    "index": 15,
+    "name": "get_reserves"
+  },
+  {
+    "index": 16,
+    "name": "get_virt_reserves"
+  },
+  {
+    "index": 17,
     "name": "get_fees"
   },
   {
