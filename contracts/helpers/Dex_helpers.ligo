@@ -44,22 +44,21 @@ function sum_wo_lp_fee(
   + fee.dev_fee;
 
 function perform_fee_slice(
-    const dy          : nat;
-    const pool        : pair_type
-  )                   : nat * nat * nat * nat is
+    const dy            : nat;
+    const fee           : fees_storage_type;
+    const total_staked  : nat
+  )                     : nat * nat * nat * nat is
   block {
     var new_dy := dy;
 
-    const to_ref = dy * pool.fee.ref_fee / CONSTANTS.fee_denominator;
-
-    const to_dev = dy * pool.fee.dev_fee / CONSTANTS.fee_denominator;
-
-    var to_prov := dy * pool.fee.lp_fee / CONSTANTS.fee_denominator;
+    const to_ref = dy * fee.ref_fee / CONSTANTS.fee_denominator;
+    const to_dev = dy * fee.dev_fee / CONSTANTS.fee_denominator;
+    var to_prov := dy * fee.lp_fee / CONSTANTS.fee_denominator;
 
     var to_stakers := 0n;
-    if (pool.staker_accumulator.total_staked =/= 0n)
-      then to_stakers := dy * pool.fee.stakers_fee / CONSTANTS.fee_denominator;
-    else to_prov := to_prov + dy * pool.fee.stakers_fee / CONSTANTS.fee_denominator;
+    if (total_staked =/= 0n)
+      then to_stakers := dy * fee.stakers_fee / CONSTANTS.fee_denominator;
+    else to_prov := to_prov + dy * fee.stakers_fee / CONSTANTS.fee_denominator;
 
     new_dy := nat_or_error(new_dy - to_prov - to_ref - to_dev - to_stakers, "Fee is too large");
   } with (new_dy, to_ref, to_dev, to_stakers)

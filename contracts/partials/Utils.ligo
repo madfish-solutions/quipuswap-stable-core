@@ -40,6 +40,16 @@ function get_tokens(
   end;
 
 (* Helper function to get pair info *)
+function get_token(
+  const token_id        : nat;
+  const tokens          : tokens_type)
+                        : token_type is
+  case tokens[token_id] of
+  | Some(instance) -> instance
+  | None -> (failwith(ERRORS.no_token): token_type)
+  end;
+
+(* Helper function to get pair info *)
 function get_input(
   const key         : token_pool_index;
   const inputs      : map(nat, nat))
@@ -47,6 +57,45 @@ function get_input(
   case inputs[key] of
   | Some(instance) -> instance
   | None -> 0n
+  end;
+
+(* Helper function to get pair info *)
+function get_token_info(
+  const key         : token_pool_index;
+  const tokens_info : map(token_pool_index, token_info_type))
+                    : token_info_type is
+  case tokens_info[key] of
+  | Some(instance) -> instance
+  | None ->  (failwith(ERRORS.no_token_info) : token_info_type)
+  end;
+
+(* Helper function to get pair info *)
+function get_dev_rewards(
+  const key         : token_type;
+  const dev_rewards : big_map(token_type, nat))
+                    : nat is
+  case dev_rewards[key] of
+  | Some(instance) -> instance
+  | None ->  0n
+  end;
+
+function get_ref_rewards(
+  const key         : (address * token_type);
+  const ref_rewards : big_map((address * token_type), nat))
+                    : nat is
+  case ref_rewards[key] of
+  | Some(instance) -> instance
+  | None ->  0n
+  end;
+
+(* Helper function to get pair info *)
+function get_address(
+  const referral        : option(address);
+  const default_ref     : address)
+                        : address is
+  case referral of
+  | Some(instance) -> instance
+  | None -> default_ref
   end;
 
 (* Helper function to get token pair *)

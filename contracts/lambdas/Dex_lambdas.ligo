@@ -103,64 +103,29 @@ function swap(
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
     | Swap(params) -> {
-        const i = params.idx_from;
         const dx = params.amount;
-        const j = params.idx_to;
-        const min_y = params.min_amount_out;
-        // const referral: address = case (params.referral: option(address)) of
-        //   | Some(ref) -> ref
-        //   | None -> get_default_refer(s)
-        //   end;
+        assert_with_error(dx =/= 0n, ERRORS.zero_in);
 
-        if dx = 0n
-          then failwith(ERRORS.zero_in)
-        else skip;
-
-        var pair : pair_type := get_pair(params.pair_id, s.pools);
         const tokens : tokens_type = get_tokens(params.pair_id, s.tokens);
         const tokens_count = Map.size(tokens);
+        const i = params.idx_from;
+        const j = params.idx_to;
+        assert_with_error(i < tokens_count or j < tokens_count, ERRORS.wrong_index);
 
-        if i >= tokens_count or j >= tokens_count
-          then failwith("Wrong index")
-        else skip;
-
-        const token_i = case tokens[i] of
-          | Some(token) -> token
-          | None -> (failwith("no such T index") : token_type)
-          end;
-        const token_j = case tokens[j] of
-          | Some(token) -> token
-          | None -> (failwith("no such T index") : token_type)
-          end;
-        var token_info_i := case pair.tokens_info[i] of
-          | Some(value) -> value
-          | None -> (failwith("no such R index") : token_info_type)
-          end;
-        var token_info_j := case pair.tokens_info[j] of
-          | Some(value) -> value
-          | None -> (failwith("no such R index") : token_info_type)
-          end;
-
+        var pair : pair_type := get_pair(params.pair_id, s.pools);
         var dy := preform_swap(i, j, dx, pair);
-        // TODO: perform fee separation
-        const after_fees = perform_fee_slice(dy, pair);
+        const after_fees = perform_fee_slice(dy, pair.fee, pair.staker_accumulator.total_staked);
         dy := after_fees.0;
-        const to_ref = after_fees.1;
-        const to_dev = after_fees.2;
+
         const to_stakers = after_fees.3;
 
-        const referral: address = case (params.referral: option(address)) of
-          | Some(ref) -> ref
-          | None -> get_default_refer(s)
-          end;
-        s.referral_rewards[(referral, token_j)] := case s.referral_rewards[(referral, token_j)] of
-          | Some(rew) -> rew + to_ref
-          | None -> to_ref
-        end;
-        s.dev_rewards[token_j] := case s.dev_rewards[token_j] of
-          | Some(rew) -> rew + to_dev
-          | None -> to_dev
-        end;
+        const referral: address = get_address(params.referral, s.default_referral);
+        const token_j = get_token(j, tokens);
+        s.referral_rewards[(referral, token_j)] :=
+          get_ref_rewards((referral, token_j), s.referral_rewards) +
+          after_fees.1;
+        s.dev_rewards[token_j] := get_dev_rewards(token_j, s.dev_rewards) + after_fees.2;
+
         if to_stakers > 0n
          then pair.staker_accumulator.accumulator[j] := case pair.staker_accumulator.accumulator[j] of
           | Some(rew) -> rew + to_stakers * CONSTANTS.stkr_acc_precision / pair.staker_accumulator.total_staked
@@ -168,14 +133,14 @@ function swap(
           end;
         else skip;
 
-        if dy < min_y
-          then failwith(ERRORS.high_min_out)
-        else skip;
+        assert_with_error(dy >= params.min_amount_out, ERRORS.high_min_out);
 
+        var token_info_i := get_token_info(i, pair.tokens_info);
         patch token_info_i with record [
           virtual_reserves = token_info_i.virtual_reserves + dx;
           reserves = token_info_i.reserves + dx;
         ];
+        var token_info_j := get_token_info(j, pair.tokens_info);
         patch token_info_j with record [
           virtual_reserves = nat_or_error(token_info_j.virtual_reserves - dy, "dy>reserves");
           reserves = nat_or_error(token_info_j.reserves - dy, "dy>reserves");
@@ -185,25 +150,19 @@ function swap(
         pair.tokens_info[j] := token_info_j;
         s.pools[params.pair_id] := pair;
 
-        const receiver = case params.receiver of
-          | Some(receiver) -> receiver
-          | None -> Tezos.sender
-          end;
-
         operations := typed_transfer(
           Tezos.self_address,
-          receiver,
+          get_address(params.receiver, Tezos.sender),
           dy,
           token_j
         ) # operations;
-
+        const token_i = get_token(i, tokens);
         operations := typed_transfer(
           Tezos.sender,
           Tezos.self_address,
           dx,
           token_i
         ) # operations;
-
     }
     | _ -> skip
     end

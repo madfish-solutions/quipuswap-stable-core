@@ -25,3 +25,6 @@ const wrong_tokens_count        : string = "Dex/wrong-tokens-count";
 const wrong_tokens_in           : string = "Dex/reserves-mismatch";
 const wrong_shares_out          : string = "Dex/wrong-shares-out";
 const a_limit                   : string = "Dex/a-too-high";
+const no_token_info             : string = "Dex/no-token-info";
+const no_token                  : string = "Dex/token-not-found";
+const wrong_index               : string = "Dex/wrong-index";
