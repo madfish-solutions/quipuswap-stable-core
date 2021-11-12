@@ -1,18 +1,15 @@
 (* Contract admin check *)
-[@inline]
 function is_admin(const admin: address): unit is
-  if Tezos.sender =/= admin
-    then failwith(ERRORS.not_contract_admin)
-  else Unit;
+  assert_with_error(
+    Tezos.sender = admin,
+    ERRORS.not_contract_admin);
 
 (* Contract admin or dev check *)
-[@inline]
 function is_admin_or_dev(const admin: address; const dev: address): unit is
-  if Tezos.sender =/= admin and Tezos.sender =/= dev
-    then failwith(ERRORS.not_contract_admin)
-  else Unit;
+  assert_with_error(
+    Tezos.sender = admin or Tezos.sender = dev,
+    ERRORS.not_contract_admin);
 
-[@inline]
 function get_staker_acc(
   const stkr_key: (address * pool_id_type);
   const stkr_bm : big_map((address * pool_id_type), staker_info_type)
@@ -118,17 +115,17 @@ function get_token_by_id(
 *)
 function get_D(const _xp: map(nat, nat); const _amp: nat; const total_supply: nat): nat is
   block {
-    const tokens_count = Map.size(_xp);
     function sum(const acc : nat; const i : nat * nat): nat is acc + i.1;
 
     var sum_c: nat := Map.fold(sum, _xp, 0n);
     var _d_prev: nat := 0n;
 
-    if sum_c = 0n and total_supply =/= 0n
-      then failwith(ERRORS.zero_in)
-    else skip;
+    assert_with_error(
+      sum_c =/= 0n or total_supply = 0n,
+      ERRORS.zero_in);
 
     var d: nat := sum_c;
+    const tokens_count = Map.size(_xp);
     const a_nn: nat = _amp * tokens_count;
 
     while abs(d - _d_prev) > 1n
@@ -136,14 +133,12 @@ function get_D(const _xp: map(nat, nat); const _amp: nat; const total_supply: na
         var _d_P := d;
         _d_prev := d;
         function count_D_P(const acc : nat * nat; const i : nat * nat): (nat * nat) is
-          block {
-            const ret = acc.0 * acc.1 / (i.1 * tokens_count);
-            } with (ret, acc.1);
+          (acc.0 * acc.1 / (i.1 * tokens_count), acc.1);
         const (d_P_n, d_n) = Map.fold(count_D_P, _xp, (_d_P, d));
         _d_P := d_P_n;
-        d := d_n;
-        d := (                                            a_nn * sum_c / CONSTANTS.a_precision + _d_P * tokens_count) * d / (
-              nat_or_error(a_nn - CONSTANTS.a_precision, "Precision_err") * d / CONSTANTS.a_precision + (tokens_count + 1n) * _d_P ); (* Equality with the precision of 1 *)
+        d := d_n; // ????
+        d := (a_nn * sum_c / CONSTANTS.a_precision + _d_P * tokens_count) * d / (
+          nat_or_error(a_nn - CONSTANTS.a_precision, "Precision_err") * d / CONSTANTS.a_precision + (tokens_count + 1n) * _d_P ); (* Equality with the precision of 1 *)
       };
   } with d
 
