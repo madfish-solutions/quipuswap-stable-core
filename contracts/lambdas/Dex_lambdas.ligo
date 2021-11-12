@@ -11,13 +11,11 @@ function initialize_exchange(
 
       (* Params check *)
       const n_tokens = Set.size(params.input_tokens);
-      if (
-        (n_tokens > CONSTANTS.max_tokens_count)
-        or (n_tokens < CONSTANTS.min_tokens_count)
-        or n_tokens =/= Set.size(params.tokens_info)
-      )
-        then failwith(ERRORS.wrong_tokens_count);
-      else skip;
+
+      assert_with_error(
+        n_tokens < CONSTANTS.max_tokens_count
+        and n_tokens >= CONSTANTS.min_tokens_count
+        and n_tokens = Set.size(params.tokens_info), ERRORS.wrong_tokens_count);
 
       function get_tokens_from_param(
         var result    : tmp_tokens_type;
@@ -32,10 +30,7 @@ function initialize_exchange(
       const result: tmp_tokens_type = Set.fold(
         get_tokens_from_param,
         params.input_tokens,
-        record [
-          tokens = (map[] : tokens_type);
-          index  = 0n;
-        ]);
+        default_tmp_tokens);
 
       const tokens : tokens_type = result.tokens;
       const token_bytes : bytes = Bytes.pack(tokens);
@@ -45,9 +40,7 @@ function initialize_exchange(
         s.pools);
       s.tokens[token_id] := tokens;
 
-      if pair_i.total_supply =/= 0n
-      then failwith(ERRORS.pair_listed)
-      else skip;
+      assert_with_error(pair_i.total_supply = 0n, ERRORS.pair_listed);
 
       if s.pools_count = token_id
       then {
@@ -56,9 +49,9 @@ function initialize_exchange(
       }
       else skip;
 
-      if CONSTANTS.max_a < params.a_constant
-      then failwith(ERRORS.a_limit)
-      else skip;
+      assert_with_error(
+        CONSTANTS.max_a >= params.a_constant,
+        ERRORS.a_limit);
 
       patch pair_i with record [
         initial_A = params.a_constant;
@@ -73,17 +66,16 @@ function initialize_exchange(
         var token_info    : token_info_type)
                           : nat is
         block {
-          if token_info.reserves =/= token_info.virtual_reserves
-          then failwith(ERRORS.wrong_tokens_in)
-          else skip;
+          assert_with_error(
+            token_info.reserves = token_info.virtual_reserves,
+            ERRORS.wrong_tokens_in);
         } with token_info.reserves;
-      const inputs : map(nat, nat)= Map.map(get_inputs, params.tokens_info);
 
       const res = add_liq(record [
-        referral= (None: option(address));
+        referral = (None: option(address));
         pair_id = token_id;
         pair    = pair_i;
-        inputs  = inputs;
+        inputs  = Map.map(get_inputs, params.tokens_info);
         min_mint_amount = 1n;
       ], s);
 
@@ -156,12 +148,11 @@ function swap(
           dy,
           token_j
         ) # operations;
-        const token_i = get_token(i, tokens);
         operations := typed_transfer(
           Tezos.sender,
           Tezos.self_address,
           dx,
-          token_i
+          get_token(i, tokens)
         ) # operations;
     }
     | _ -> skip
@@ -178,12 +169,8 @@ function invest_liquidity(
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
     | Invest(params) -> {
-        const referral: address = case (params.referral: option(address)) of
-          | Some(ref) -> ref
-          | None -> get_default_refer(s)
-          end;
         const result = add_liq(record[
-          referral= Some(referral);
+          referral= params.referral;
           pair_id = params.pair_id;
           pair    = get_pair(params.pair_id, s.pools);
           inputs  = params.in_amounts;
@@ -206,19 +193,11 @@ function divest_liquidity(
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
     | Divest(params) -> {
-
-        if s.pools_count <= params.pair_id
-          then failwith(ERRORS.pair_not_listed)
-        else skip;
+        assert_with_error(s.pools_count > params.pair_id, ERRORS.pair_not_listed);
+        assert_with_error(params.shares =/= 0n, ERRORS.zero_in);
 
         var   pair          : pair_type := get_pair(params.pair_id, s.pools);
-        const tokens        : tokens_type = get_tokens(params.pair_id, s.tokens);
-        const share         : nat = get_account_balance((Tezos.sender, params.pair_id), s.ledger);
         const total_supply  : nat = pair.total_supply;
-        if params.shares = 0n
-         then failwith(ERRORS.zero_in)
-        else skip;
-        const new_shares = nat_or_error(share - params.shares, ERRORS.insufficient_lp);
 
         function divest_reserves(
           var acc: (
@@ -231,18 +210,11 @@ function divest_liquidity(
             list(operation)
           ) is
           block {
-            var token_info := case acc.0[entry.0] of
-            | Some(value) -> value
-            | None -> (failwith("no such R index") : token_info_type)
-            end;
+            var token_info := get_token_info(entry.0, acc.0);
 
             const min_amount_out = case params.min_amounts_out[entry.0] of
               | Some(min) -> min
               | None -> 1n
-              end;
-            const token = case tokens[entry.0] of
-              | Some(token) -> token
-              | None -> (failwith("wrong token index"): token_type)
               end;
 
             const value = token_info.virtual_reserves * params.shares / total_supply;
@@ -250,27 +222,28 @@ function divest_liquidity(
             token_info.reserves := nat_or_error(token_info.reserves - value, "value>virt_reserves");
             acc.0[entry.0] := token_info;
 
-            if value < min_amount_out
-              then failwith(ERRORS.high_min_out);
-            else if value = 0n
-              then failwith(ERRORS.dust_out)
-            else if value > token_info.reserves
-              then skip; //TODO: add request to proxy;
-            else skip;
+            assert_with_error(value >= min_amount_out, ERRORS.high_min_out);
+            assert_with_error(value =/= 0n, ERRORS.dust_out);
 
-            acc.1 := typed_transfer(
-              Tezos.sender,
-              Tezos.self_address,
-              value,
-              token
-            ) # acc.1;
+            if value > token_info.reserves
+              then skip //TODO: add request to proxy;
+            else {
+              acc.1 := typed_transfer(
+                Tezos.sender,
+                Tezos.self_address,
+                value,
+                entry.1
+              ) # acc.1;
+            }
           } with acc;
+
+        const tokens : tokens_type = get_tokens(params.pair_id, s.tokens);
         const res = Map.fold(divest_reserves, tokens, (pair.tokens_info, operations));
         pair.tokens_info := res.0;
         pair.total_supply := nat_or_error(pair.total_supply - params.shares, "total_supply<shares");
-        s.ledger[(Tezos.sender, params.pair_id)] := new_shares;
+        const share : nat = get_account_balance((Tezos.sender, params.pair_id), s.ledger);
+        s.ledger[(Tezos.sender, params.pair_id)] := nat_or_error(share - params.shares, ERRORS.insufficient_lp);
         s.pools[params.pair_id] := pair;
-
         operations := res.1;
       }
     | _                 -> skip

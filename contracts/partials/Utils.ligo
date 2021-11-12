@@ -252,3 +252,8 @@ function div_ceil(
       else result.0
   | None -> (failwith(ERRORS.no_liquidity): nat)
   end;
+
+const default_tmp_tokens : tmp_tokens_type = record [
+    tokens = (map[] : tokens_type);
+    index  = 0n;
+  ];

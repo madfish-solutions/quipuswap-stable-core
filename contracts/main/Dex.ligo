@@ -9,7 +9,7 @@
 #include "../lambdas/Dex_lambdas.ligo"
 #include "../partials/Dex_methods.ligo"
 #include "../views/Dex_views.ligo"
-
+ 
 (* Dex - Contract for exchanges between FA12 and FA2 tokens *)
 function main(
   const p               : full_action_type;
