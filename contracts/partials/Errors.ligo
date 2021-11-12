@@ -22,3 +22,4 @@ const low_max_b_in              : string = "Dex/low-max-token-b-in";
 const not_admin                 : string = "Dex/not-admin";
 const not_contract_admin        : string = "Dex/not-contract-admin";
 const wrong_tokens_count        : string = "Dex/wrong-tokens-count";
+const wrong_tokens_in           : string = "Dex/reserves-mismatch";

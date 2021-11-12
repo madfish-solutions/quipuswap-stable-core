@@ -39,6 +39,16 @@ function get_tokens(
   | None -> (failwith(ERRORS.pair_not_listed): tokens_type)
   end;
 
+(* Helper function to get pair info *)
+function get_input(
+  const key         : token_pool_index;
+  const inputs      : map(nat, nat))
+                    : nat is
+  case inputs[key] of
+  | Some(instance) -> instance
+  | None -> 0n
+  end;
+
 (* Helper function to get token pair *)
 function get_pair_info(
   const key             : tokens_type;
@@ -59,10 +69,11 @@ function get_pair_info(
           future_A              = 0n;
           initial_A_time        = (0: timestamp);
           future_A_time         = (0: timestamp);
-          token_rates           = (map []: map(token_pool_index, nat));
-          precision_multipliers = (map []: map(token_pool_index, nat));
-          reserves              = (map []: map(token_pool_index, nat));
-          virtual_reserves      = (map []: map(token_pool_index, nat));
+          // token_rates           = (map []: map(token_pool_index, nat));
+          tokens_info           = (map []: map(token_pool_index, token_info_type));
+          // reserves              = (map []: map(token_pool_index, nat));
+          // virtual_reserves      = (map []: map(token_pool_index, nat));
+          // proxy_limits          = (map []: map(token_pool_index, nat));
           fee                   = record[
             dev_fee               = 0n;
             lp_fee                = 0n;
@@ -74,7 +85,6 @@ function get_pair_info(
             total_staked          = 0n;
           ];
           proxy_contract        = (None: option (address));
-          proxy_limits          = (map []: map(token_pool_index, nat));
           proxy_reward_acc      = (map []: map(token_type, nat));
           total_supply          = 0n;
         ]: pair_type)

@@ -6,7 +6,8 @@ const dex_func_count    : nat = 21n;
 const token_func_count  : nat = 5n;
 
 (* StableSwap constants *)
-const max_tokens_index  : nat = 3n; (* Max available tokens in pair *)
+const max_tokens_count  : nat = 4n; (* Max available tokens in pair *)
+const min_tokens_count  : nat = 2n; (* Max available tokens in pair *)
 
 const precision         : nat = 1_000_000_000_000_000_000n; (* 10e18 The precision to convert to *)
 

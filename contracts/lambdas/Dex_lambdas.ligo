@@ -8,56 +8,46 @@ function initialize_exchange(
     case p of
     | AddPair(params) -> {
       is_admin(s.admin);
+
       (* Params check *)
-      const inp_len = Map.size(params.input_tokens);
-      const max_index = nat_or_error(params.n_tokens - 1n, "tokens_less_1n");
+      const n_tokens = Set.size(params.input_tokens);
       if (
-        (max_index > CONSTANTS.max_tokens_index)
-        or (params.n_tokens < 2n)
-        or (inp_len =/= params.n_tokens)
+        (n_tokens > CONSTANTS.max_tokens_count)
+        or (n_tokens < CONSTANTS.min_tokens_count)
+        or n_tokens =/= Set.size(params.tokens_info)
       )
         then failwith(ERRORS.wrong_tokens_count);
       else skip;
 
       function get_tokens_from_param(
-        const _key   : nat;
-        const value : input_token): token_type is
-        value.asset;
+        var result   : record [
+          tokens  : tokens_type;
+          index   : nat;
+        ];
+        const value  : token_type
+        ): record [
+            tokens  : tokens_type;
+            index   : nat;
+          ] is block {
+          result.tokens[result.index] := value;
+          result.index := result.index + 1n;
+        }
+        with result;
 
-      const tokens: tokens_type = Map.map(get_tokens_from_param, params.input_tokens);
+      const result: record [
+          tokens  : tokens_type;
+          index   : nat;
+        ] = Set.fold(get_tokens_from_param, params.input_tokens, record [
+          tokens = ( map[] : tokens_type);
+          index  = 0n;
+        ]);
+      const tokens : tokens_type = result.tokens;
 
-      (* Params ordering check *)
+      var (pair_i, token_id) := get_pair_info(tokens, s);
 
-      function get_asset(const key: nat): token_type is
-        case tokens[key] of
-          Some(input) -> input
-        | None -> (failwith("Unable to locate token"): token_type)
-        end;
-
-      const fst_token = get_asset(0n);
-      const snd_token = get_asset(1n);
-
-      if snd_token >= fst_token
-        then failwith(ERRORS.wrong_pair_order);
-      else
-        if max_index > 2n
-          then {
-            const trd_token = get_asset(2n);
-            if trd_token >= snd_token
-              then failwith(ERRORS.wrong_pair_order);
-            else
-              if max_index > 3n
-                then {
-                  const fth_token = get_asset(3n);
-                  if fth_token >= trd_token
-                    then failwith(ERRORS.wrong_pair_order);
-                  else skip;
-                }
-              else skip;
-          }
-        else skip;
-
-      const (pair_i, token_id) = get_pair_info(tokens, s);
+      if pair_i.total_supply =/= 0n
+      then failwith(ERRORS.pair_listed)
+      else skip;
 
       if s.pools_count = token_id
       then {
@@ -68,59 +58,31 @@ function initialize_exchange(
 
       s.tokens[token_id] := tokens;
 
-      function map_rates_outs_zeros(
-        const acc   : (
-          map(token_pool_index, nat) *
-          map(token_pool_index, nat) *
-          map(token_pool_index, nat) *
-          map(token_pool_index, nat)
-        );
-        const entry : (token_pool_index * input_token)
-      )             : (
-          map(token_pool_index, nat) *
-          map(token_pool_index, nat) *
-          map(token_pool_index, nat) *
-          map(token_pool_index, nat)
-        ) is (
-          Map.add(entry.0, entry.1.rate,                      acc.0),
-          Map.add(entry.0, entry.1.precision_multiplier,      acc.1),
-          Map.add(entry.0, entry.1.in_amount,                 acc.2),
-          Map.add(entry.0, 0n,                                acc.3)
-        );
-
-      const (token_rates, precision_multipliers, inputs, zeros) = Map.fold(
-        map_rates_outs_zeros,
-        params.input_tokens,
-        (
-          (map[]: map(token_pool_index, nat)),
-          (map[]: map(token_pool_index, nat)),
-          (map[]: map(token_pool_index, nat)),
-          (map[]: map(token_pool_index, nat))
-        )
-      );
-
-      if pair_i.total_supply =/= 0n
-      then failwith(ERRORS.pair_listed)
-      else skip;
-
-      var new_pair: pair_type := pair_i;
       if CONSTANTS.max_a < params.a_constant
       then failwith("A const limit")
       else skip;
-      new_pair.initial_A := params.a_constant;
-      new_pair.future_A := params.a_constant;
-      new_pair.initial_A_time := Tezos.now;
-      new_pair.future_A_time := Tezos.now;
-      new_pair.token_rates := token_rates;
-      new_pair.precision_multipliers := precision_multipliers;
-      new_pair.reserves := zeros;
-      new_pair.virtual_reserves := zeros;
-      new_pair.proxy_limits := zeros;
+
+      patch pair_i with record [
+        initial_A = params.a_constant;
+        future_A = params.a_constant;
+        initial_A_time = Tezos.now;
+        future_A_time = Tezos.now;
+        tokens_info = params.tokens_info;
+      ];
+
+    function get_inputs (const _key : token_pool_index; var token_info : token_info_type) : nat is
+      block {
+        if token_info.reserves =/= token_info.virtual_reserves
+        then failwith(ERRORS.wrong_tokens_in)
+        else skip;
+      } with token_info.reserves;
+      const inputs : map(nat, nat)= Map.map(get_inputs, params.tokens_info);
+
 
       const res = add_liq(record [
         referral= (None: option(address));
         pair_id = token_id;
-        pair    = new_pair;
+        pair    = pair_i;
         inputs  = inputs;
         min_mint_amount = 1n;
       ], s);
@@ -170,23 +132,14 @@ function swap(
           | Some(token) -> token
           | None -> (failwith("no such T index") : token_type)
           end;
-        const old_reserves_i = case pair.reserves[i] of
+        var token_info_i := case pair.tokens_info[i] of
           | Some(value) -> value
-          | None -> (failwith("no such R index") : nat)
+          | None -> (failwith("no such R index") : token_info_type)
           end;
-        const old_virt_reserves_i = case pair.virtual_reserves[i] of
+        var token_info_j := case pair.tokens_info[j] of
           | Some(value) -> value
-          | None -> (failwith("no such R index") : nat)
+          | None -> (failwith("no such R index") : token_info_type)
           end;
-        const old_reserves_j = case pair.reserves[j] of
-          | Some(value) -> value
-          | None -> (failwith("no such R index") : nat)
-          end;
-        const old_virt_reserves_j = case pair.virtual_reserves[j] of
-          | Some(value) -> value
-          | None -> (failwith("no such R index") : nat)
-          end;
-
 
         var dy := preform_swap(i, j, dx, pair);
         // TODO: perform fee separation
@@ -219,11 +172,17 @@ function swap(
           then failwith(ERRORS.high_min_out)
         else skip;
 
-        pair.virtual_reserves[i] := old_virt_reserves_i + dx;
-        pair.reserves[i] := old_reserves_i + dx;
-        pair.virtual_reserves[j] := nat_or_error(old_virt_reserves_j - dy, "dy>reserves");
-        pair.reserves[j] := nat_or_error(old_reserves_j - dy, "dy>reserves");
+        patch token_info_i with record [
+          virtual_reserves = token_info_i.virtual_reserves + dx;
+          reserves = token_info_i.reserves + dx;
+        ];
+        patch token_info_j with record [
+          virtual_reserves = nat_or_error(token_info_j.virtual_reserves - dy, "dy>reserves");
+          reserves = nat_or_error(token_info_j.reserves - dy, "dy>reserves");
+        ];
 
+        pair.tokens_info[i] := token_info_i;
+        pair.tokens_info[j] := token_info_j;
         s.pools[params.pair_id] := pair;
 
         const receiver = case params.receiver of
@@ -301,24 +260,23 @@ function divest_liquidity(
          then failwith(ERRORS.zero_in)
         else skip;
         const new_shares = nat_or_error(share - params.shares, ERRORS.insufficient_lp);
-        const init_virt_reserves = pair.virtual_reserves;
-        const init_reserves = pair.reserves;
 
         function divest_reserves(
           var acc: (
-            map(token_pool_index, nat) *
+            map(token_pool_index, token_info_type) *
             list(operation)
           );
           const entry: (token_pool_index * token_type)
         ) : (
-            map(token_pool_index, nat) *
+            map(token_pool_index, token_info_type) *
             list(operation)
           ) is
           block {
-            const old_balance = case init_virt_reserves[entry.0] of
-              | Some(reserve) -> reserve
-              | None -> 0n
-              end;
+            var token_info := case acc.0[entry.0] of
+            | Some(value) -> value
+            | None -> (failwith("no such R index") : token_info_type)
+            end;
+
             const min_amount_out = case params.min_amounts_out[entry.0] of
               | Some(min) -> min
               | None -> 1n
@@ -328,33 +286,28 @@ function divest_liquidity(
               | None -> (failwith("wrong token index"): token_type)
               end;
 
-            const value = old_balance * params.shares / total_supply;
-            const init_res = case init_reserves[entry.0] of
-              | Some(res) -> res
-              | None -> (failwith("wrong res index"): nat)
-              end;
-
-            const new_res = nat_or_error(old_balance - value, "value>virt_reserves");
+            const value = token_info.virtual_reserves * params.shares / total_supply;
+            token_info.virtual_reserves := nat_or_error(token_info.virtual_reserves - value, "value>virt_reserves");
+            token_info.reserves := nat_or_error(token_info.reserves - value, "value>virt_reserves");
+            acc.0[entry.0] := token_info;
 
             if value < min_amount_out
               then failwith(ERRORS.high_min_out);
             else if value = 0n
               then failwith(ERRORS.dust_out)
-            else if value > init_res
+            else if value > token_info.reserves
               then skip; //TODO: add request to proxy;
             else skip;
 
-            acc.0[entry.0] := new_res;
             acc.1 := typed_transfer(
               Tezos.sender,
               Tezos.self_address,
               value,
               token
             ) # acc.1;
-
           } with acc;
-        const res = Map.fold(divest_reserves, tokens, (init_reserves, operations));
-        pair := set_reserves_from_diff(init_reserves, res.0, pair);
+        const res = Map.fold(divest_reserves, tokens, (pair.tokens_info, operations));
+        pair.tokens_info := res.0;
         pair.total_supply := nat_or_error(pair.total_supply - params.shares, "total_supply<shares");
         s.ledger[(Tezos.sender, params.pair_id)] := new_shares;
         s.pools[params.pair_id] := pair;
@@ -378,11 +331,15 @@ function ramp_A(
     | RampA(params) -> {
         is_admin(s.admin);
         var pair : pair_type := get_pair(params.pair_id, s.pools);
-        const current = Tezos.now;
-        assert(current >= pair.initial_A_time + CONSTANTS.min_ramp_time);
-        assert(params.future_time >= current + CONSTANTS.min_ramp_time); //  # dev: insufficient time
+        assert(Tezos.now >= pair.initial_A_time + CONSTANTS.min_ramp_time);
+        assert(params.future_time >= Tezos.now + CONSTANTS.min_ramp_time); //  # dev: insufficient time
 
-        const initial_A: nat = _A(pair);
+        const initial_A: nat = _A(
+          pair.initial_A_time,
+          pair.initial_A,
+          pair.future_A_time,
+          pair.future_A
+        );
         const future_A_p: nat = params.future_A * CONSTANTS.a_precision;
 
         assert((params.future_A > 0n) and (params.future_A < CONSTANTS.max_a));
@@ -392,7 +349,7 @@ function ramp_A(
 
         pair.initial_A := initial_A;
         pair.future_A := future_A_p;
-        pair.initial_A_time := current;
+        pair.initial_A_time := Tezos.now;
         pair.future_A_time := params.future_time;
         s.pools[params.pair_id] := pair;
       }
@@ -411,12 +368,16 @@ function stop_ramp_A(
     | StopRampA(pair_id) -> {
       is_admin(s.admin);
       var pair : pair_type := get_pair(pair_id, s.pools);
-      const current = Tezos.now;
-      const current_A: nat = _A(pair);
+      const current_A: nat = _A(
+        pair.initial_A_time,
+        pair.initial_A,
+        pair.future_A_time,
+        pair.future_A
+      );
       pair.initial_A := current_A;
       pair.future_A := current_A;
-      pair.initial_A_time := current;
-      pair.future_A_time := current;
+      pair.initial_A_time := Tezos.now;
+      pair.future_A_time := Tezos.now;
       s.pools[pair_id] := pair;
       }
     | _ -> skip
@@ -453,7 +414,14 @@ function update_proxy_limits(
     | UpdateProxyLimits(params) -> {
       is_admin(s.admin);
       var pair : pair_type := get_pair(params.pair_id, s.pools);
-      pair.proxy_limits := params.limits;
+      var token_info := case pair.tokens_info[params.token_index] of
+      | Some(value) -> value
+      | None -> (failwith("no such R index") : token_info_type)
+      end;
+
+      token_info.proxy_limit := params.limit;
+      pair.tokens_info[params.token_index] := token_info;
+
       s.pools[params.pair_id] := pair;
       (* TODO: claim rewards and old staked values *)
       }

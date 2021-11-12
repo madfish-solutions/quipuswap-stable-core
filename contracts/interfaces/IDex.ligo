@@ -97,6 +97,14 @@ type permit_parameter   is [@layout:comb] record [
 
 type permits_type       is big_map(bytes, permit_parameter)
 
+type token_info_type    is  [@layout:comb] record [
+  rate                    : nat; (* = 10eN where N is the number of decimal places to normalize to 10e18 *)
+  proxy_limit             : nat; (* = 10eN where N is the number of decimal places to normalize to 10e18 *)
+  precision_multiplier    : nat; (* = 10eN where N is the number of decimal places to normalize to 10e18 *)
+  reserves                : nat;
+  virtual_reserves        : nat;
+]
+
 type pair_type          is [@layout:comb] record [
   // exchange_admin          : address;
   initial_A               : nat; (* Constant that describes A constant *)
@@ -105,7 +113,7 @@ type pair_type          is [@layout:comb] record [
   future_A_time           : timestamp;
   // tokens_count            : nat; (* from 2 to 4 tokens at one exchange pool *)
   // tokens                  : tokens_type; (* list of exchange tokens *)
-  token_rates             : map(token_pool_index, nat);
+  // token_rates             : map(token_pool_index, nat);
   (* each value = 10eN
       where N is the number of decimal places to normalize to 10e18.
       Example: {
@@ -114,7 +122,7 @@ type pair_type          is [@layout:comb] record [
         2n: 1_000_000_000_000_000_000_000_000_000_000n; // 3rd token has 6 decimal places.
       }
     *)
-  precision_multipliers   : map(token_pool_index, nat);
+  tokens_info             : map(token_pool_index, token_info_type);
    (* each value = 10eN
       where N is the number of decimal places to normalize to 10e18.
       Example: {
@@ -123,8 +131,8 @@ type pair_type          is [@layout:comb] record [
         2n: 1_000_000_000_000n; // 3rd token has 6 decimal places and rate are 10e30.
       }
     *)
-  reserves                : map(token_pool_index, nat); (* list of token reserves in the pool *)
-  virtual_reserves        : map(token_pool_index, nat);
+  // reserves                : map(token_pool_index, nat); (* list of token reserves in the pool *)
+  // virtual_reserves        : map(token_pool_index, nat);
 
   fee                     : fees_storage_type;
 
@@ -132,7 +140,7 @@ type pair_type          is [@layout:comb] record [
 
   // proxy_enabled           : bool;
   proxy_contract          : option(address);
-  proxy_limits            : map(token_pool_index, nat);
+  // proxy_limits            : map(token_pool_index, nat);
   proxy_reward_acc        : map(token_type, nat);
 
   (* LP data *)
@@ -212,8 +220,8 @@ type input_token        is [@layout:comb] record [
 
 type initialize_params  is [@layout:comb] record [
   a_constant              : nat;
-  n_tokens                : nat;
-  input_tokens            : map(nat, input_token); (* amount of tokens, where `index of value` == `index of token` to be invested *)
+  input_tokens            : set(token_type);
+  tokens_info             : map(token_pool_index, token_info_type);
 ]
 
 type add_rem_man_params is [@layout:comb] record [
@@ -236,7 +244,7 @@ type divest_type        is [@layout:comb] record [
 
 type reserves_type      is [@layout:comb] record [
   pair_id                 : nat; (* pair identifier *)
-  receiver                : contract(map(nat, nat)); (* response receiver *)
+  receiver                : contract(map(nat, token_info_type)); (* response receiver *)
 ]
 
 type total_supply_type  is [@layout:comb] record [
@@ -295,7 +303,8 @@ type get_a_type         is [@layout:comb] record [
 
 type upd_proxy_lim_params is [@layout:comb] record [
   pair_id                 : nat; (* pair identifier *)
-  limits                  : map(nat, nat);
+  token_index             : nat; (* pair identifier *)
+  limit                   : nat;
 ]
 
 type set_fee_type       is [@layout:comb] record [
