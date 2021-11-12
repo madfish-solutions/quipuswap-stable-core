@@ -29,19 +29,19 @@ function get_staker_acc(
   end;
 
 function sum_all_fee(
-  const s     : pair_type
+  const fee   : fees_storage_type
 )             : nat is
-  s.fee.lp_fee
-  + s.fee.stakers_fee
-  + s.fee.ref_fee
-  + s.fee.dev_fee;
+  fee.lp_fee
+  + fee.stakers_fee
+  + fee.ref_fee
+  + fee.dev_fee;
 
 function sum_wo_lp_fee(
-  const s     : pair_type
+  const fee   : fees_storage_type
 )             : nat is
-  s.fee.stakers_fee
-  + s.fee.ref_fee
-  + s.fee.dev_fee;
+  fee.stakers_fee
+  + fee.ref_fee
+  + fee.dev_fee;
 
 function perform_fee_slice(
     const dy          : nat;
@@ -468,11 +468,10 @@ function preform_swap(
                       inputs  : map(nat, nat);
                       min_mint_amount: nat;
                     ];
-    var   s       : storage_type
-  ): return_type is
+    var   s       : storage_type)
+                  : return_type is
   block {
     var pair : pair_type := params.pair;
-    // const tokens = get_tokens(params.pair_id, s);
     const amp = _A(
       pair.initial_A_time,
       pair.initial_A,
@@ -483,7 +482,10 @@ function preform_swap(
     // Initial invariant
     const d0 = _get_D_mem(pair.tokens_info, amp, pair.total_supply);
     var token_supply := pair.total_supply;
-    function add_inputs (const key : token_pool_index; var token_info : token_info_type) : token_info_type is
+    function add_inputs(
+      const key       : token_pool_index;
+      var token_info  : token_info_type)
+                      : token_info_type is
       block {
         const input = get_input(key, params.inputs);
         token_info.virtual_reserves := token_info.virtual_reserves + input;
@@ -499,16 +501,15 @@ function preform_swap(
     var mint_amount := 0n;
 
     if token_supply > 0n
-      then {
+    then {
         // Only account for fees if we are not the first to deposit
-        // const fee = sum_all_fee(pair) * tokens_count / (4 * (tokens_count - 1));
-        // const wo_lp_fee = sum_wo_lp_fee(pair) * tokens_count / (4 * (tokens_count - 1));
+        // const fee = sum_all_fee(pair.fee) * tokens_count / (4 * (tokens_count - 1));
+        // const wo_lp_fee = sum_wo_lp_fee(pair.fee) * tokens_count / (4 * (tokens_count - 1));
         // const referral: address = case (params.referral: option(address)) of
         //     Some(ref) -> ref
         //   | None -> get_default_refer(s)
         //   end;
         // s := upd.storage;
-        // pair := get_pair(params.pair_id, s);
         // const d2 = _get_D_mem(new_reserves, amp, pair);
         // pair := set_reserves_from_diff(init_reserves, new_reserves, pair);
         mint_amount := token_supply * nat_or_error(d1 - d0, "d1<d0") / d0;
@@ -516,22 +517,19 @@ function preform_swap(
     else {
         mint_amount := d1;  // Take the dust if there was any
     };
-    case is_nat(mint_amount - params.min_mint_amount) of
-    | None -> failwith("Slippage screwed you")
-    | _ -> skip
-    end;
-    function transfer_to_pool(const acc : return_type; const input : nat * nat) : return_type is
-      (
+    assert_with_error(mint_amount >= params.min_mint_amount, ERRORS.wrong_shares_out);
+
+    const tokens = s.tokens;
+    function transfer_to_pool(const operations : list(operation); const input : nat * nat) : list(operation) is
         typed_transfer(
           Tezos.sender,
           Tezos.self_address,
           input.1,
-          get_token_by_id(input.0, acc.1.tokens[params.pair_id])
-        ) # acc.0,
-        acc.1
-      );
+          get_token_by_id(input.0, tokens[params.pair_id])
+        ) # operations;
     pair.total_supply := pair.total_supply + mint_amount;
-    s.ledger[(Tezos.sender, params.pair_id)] := mint_amount;
+    const user_key = (Tezos.sender, params.pair_id);
+    s.ledger[user_key] := get_account_balance(user_key, s.ledger) + mint_amount;
     s.pools[params.pair_id] := pair;
-  } with Map.fold(transfer_to_pool, params.inputs, (CONSTANTS.no_operations, s))
+  } with (Map.fold(transfer_to_pool, params.inputs, CONSTANTS.no_operations), s)
 

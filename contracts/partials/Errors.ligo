@@ -23,3 +23,5 @@ const not_admin                 : string = "Dex/not-admin";
 const not_contract_admin        : string = "Dex/not-contract-admin";
 const wrong_tokens_count        : string = "Dex/wrong-tokens-count";
 const wrong_tokens_in           : string = "Dex/reserves-mismatch";
+const wrong_shares_out          : string = "Dex/wrong-shares-out";
+const a_limit                   : string = "Dex/a-too-high";

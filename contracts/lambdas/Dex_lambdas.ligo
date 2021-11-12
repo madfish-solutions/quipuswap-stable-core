@@ -20,30 +20,30 @@ function initialize_exchange(
       else skip;
 
       function get_tokens_from_param(
-        var result   : record [
-          tokens  : tokens_type;
-          index   : nat;
-        ];
-        const value  : token_type
-        ): record [
-            tokens  : tokens_type;
-            index   : nat;
-          ] is block {
+        var result    : tmp_tokens_type;
+        const value   : token_type)
+                      : tmp_tokens_type is
+        block {
           result.tokens[result.index] := value;
           result.index := result.index + 1n;
         }
         with result;
 
-      const result: record [
-          tokens  : tokens_type;
-          index   : nat;
-        ] = Set.fold(get_tokens_from_param, params.input_tokens, record [
-          tokens = ( map[] : tokens_type);
+      const result: tmp_tokens_type = Set.fold(
+        get_tokens_from_param,
+        params.input_tokens,
+        record [
+          tokens = (map[] : tokens_type);
           index  = 0n;
         ]);
-      const tokens : tokens_type = result.tokens;
 
-      var (pair_i, token_id) := get_pair_info(tokens, s);
+      const tokens : tokens_type = result.tokens;
+      const token_bytes : bytes = Bytes.pack(tokens);
+      var (pair_i, token_id) := get_pair_info(token_bytes,
+        s.pools_count,
+        s.pool_to_id,
+        s.pools);
+      s.tokens[token_id] := tokens;
 
       if pair_i.total_supply =/= 0n
       then failwith(ERRORS.pair_listed)
@@ -51,15 +51,13 @@ function initialize_exchange(
 
       if s.pools_count = token_id
       then {
-        s.pool_to_id[Bytes.pack(tokens)] := token_id;
+        s.pool_to_id[token_bytes] := token_id;
         s.pools_count := s.pools_count + 1n;
       }
       else skip;
 
-      s.tokens[token_id] := tokens;
-
       if CONSTANTS.max_a < params.a_constant
-      then failwith("A const limit")
+      then failwith(ERRORS.a_limit)
       else skip;
 
       patch pair_i with record [
@@ -70,14 +68,16 @@ function initialize_exchange(
         tokens_info = params.tokens_info;
       ];
 
-    function get_inputs (const _key : token_pool_index; var token_info : token_info_type) : nat is
-      block {
-        if token_info.reserves =/= token_info.virtual_reserves
-        then failwith(ERRORS.wrong_tokens_in)
-        else skip;
-      } with token_info.reserves;
+      function get_inputs(
+        const _key        : token_pool_index;
+        var token_info    : token_info_type)
+                          : nat is
+        block {
+          if token_info.reserves =/= token_info.virtual_reserves
+          then failwith(ERRORS.wrong_tokens_in)
+          else skip;
+        } with token_info.reserves;
       const inputs : map(nat, nat)= Map.map(get_inputs, params.tokens_info);
-
 
       const res = add_liq(record [
         referral= (None: option(address));

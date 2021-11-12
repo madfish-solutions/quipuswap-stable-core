@@ -51,29 +51,26 @@ function get_input(
 
 (* Helper function to get token pair *)
 function get_pair_info(
-  const key             : tokens_type;
-  const s               : storage_type)
+  const token_bytes     : bytes;
+  const pools_count     : nat;
+  const pool_to_id      : big_map(bytes, nat);
+  const pools           : big_map(pool_id_type, pair_type))
                         : (pair_type * nat) is
   block {
-    const token_bytes : bytes = Bytes.pack(key);
     const token_id : nat =
-      case s.pool_to_id[token_bytes] of
+      case pool_to_id[token_bytes] of
       | Some(instance) -> instance
-      | None -> s.pools_count
+      | None -> pools_count
       end;
     const pair : pair_type =
-      case s.pools[token_id] of
+      case pools[token_id] of
       | Some(instance) -> instance
       | None -> (record [
           initial_A             = 0n;
           future_A              = 0n;
-          initial_A_time        = (0: timestamp);
-          future_A_time         = (0: timestamp);
-          // token_rates           = (map []: map(token_pool_index, nat));
+          initial_A_time        = Tezos.now;
+          future_A_time         = Tezos.now;
           tokens_info           = (map []: map(token_pool_index, token_info_type));
-          // reserves              = (map []: map(token_pool_index, nat));
-          // virtual_reserves      = (map []: map(token_pool_index, nat));
-          // proxy_limits          = (map []: map(token_pool_index, nat));
           fee                   = record[
             dev_fee               = 0n;
             lp_fee                = 0n;

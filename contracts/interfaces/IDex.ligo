@@ -67,6 +67,11 @@ type token_type         is
 
 type tokens_type        is map(nat, token_type); (* NOTE: maximum 4 tokens from 0 to 3 *)
 
+type tmp_tokens_type     is record [
+    tokens  : tokens_type;
+    index   : nat;
+  ];
+
 type fees_storage_type  is [@layout:comb] record [
   lp_fee                  : nat;
   stakers_fee             : nat;
