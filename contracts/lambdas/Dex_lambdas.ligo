@@ -15,7 +15,7 @@ function initialize_exchange(
       assert_with_error(
         n_tokens < CONSTANTS.max_tokens_count
         and n_tokens >= CONSTANTS.min_tokens_count
-        and n_tokens = Set.size(params.tokens_info), ERRORS.wrong_tokens_count);
+        and n_tokens = Map.size(params.tokens_info), ERRORS.wrong_tokens_count);
 
       function get_tokens_from_param(
         var result    : tmp_tokens_type;
