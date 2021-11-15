@@ -16,7 +16,7 @@ Project based on [lava](https://github.com/uconomy/lava) toolset for fast genera
 |──────── helpers/ # helper methods for contacts
 |──────── lambdas/ # lambda methods of contacts
 |──────── views/ # view methods of contacts
-|──────── intrefaces/ # type annotations of contacts
+|──────── interfaces/ # type annotations of contacts
 ├──  test/ # test cases
 ├──────── storage/ # initial storage for contract originations
 ├──────── helpers/ # helpers for test cases
