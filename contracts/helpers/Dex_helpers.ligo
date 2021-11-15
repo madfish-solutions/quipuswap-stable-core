@@ -10,21 +10,6 @@ function is_admin_or_dev(const admin: address; const dev: address): unit is
     Tezos.sender = admin or Tezos.sender = dev,
     ERRORS.not_contract_admin);
 
-function get_staker_acc(
-  const stkr_key: (address * pool_id_type);
-  const stkr_bm : big_map((address * pool_id_type), staker_info_type)
-  )             : staker_info_type is
-  case (stkr_bm[stkr_key]: option(staker_info_type)) of
-  | Some(acc) -> acc
-  | None -> (
-      record [
-        balance   = 0n;
-        earnings  = (map []: map(token_pool_index, acc_reward_type));
-      ]
-      : staker_info_type
-    )
-  end;
-
 function sum_all_fee(
   const fee   : fees_storage_type
 )             : nat is
@@ -87,22 +72,6 @@ function _A(
     else result := a1;
   } with result
 
-(* Gets token count by size of reserves map *)
-[@inline]
-function get_token_by_id(
-    const token_id  : token_pool_index;
-    const map_entry : option(tokens_type)
-  )                 : token_type is
-  block {
-    const tokens = case map_entry of
-    | Some(tokens) -> tokens
-    | None -> (failwith(ERRORS.pair_not_listed): tokens_type)
-    end;
-    const token = case tokens[token_id] of
-    | Some(token) -> token
-    | None -> (failwith("wrong_id"): token_type)
-    end;
-   } with token;
 
 (*
   D invariant calculation in non-overflowing integer operations iteratively
@@ -423,8 +392,6 @@ function _get_y_D(
   //       end;
   //     s.pools[pair_id] := pair;
   //   } with (new_balance, s)
-
-function get_default_refer(const s: storage_type): address is s.default_referral
 
 function preform_swap(
   const i: token_pool_index;

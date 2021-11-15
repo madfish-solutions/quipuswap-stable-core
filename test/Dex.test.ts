@@ -1439,14 +1439,14 @@ describe("Dex", () => {
         });
         printFormattedOutput(updkUSDRewards.toFormat());
         expect(updkUSDRewards.toNumber()).toEqual(0);
-        op = dex.contract.methods.claimDeveloper(
-          "fa2",
-          tokens.uUSD.contract.address,
-          new BigNumber(defaultTokenId),
-          uUSDRewards
-        );
-        console.log(op);
-        op = await op.send();
+        op = await dex.contract.methods
+          .claimDeveloper(
+            "fa2",
+            tokens.uUSD.contract.address,
+            new BigNumber(defaultTokenId),
+            uUSDRewards
+          )
+          .send();
         await confirmOperation(Tezos, op.hash);
         printFormattedOutput("Claimed dev uUSD");
         upd_dev_stor = await dex.contract.storage().then((storage: any) => {
