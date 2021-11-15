@@ -7,13 +7,15 @@ const token_func_count  : nat = 5n;
 
 (* StableSwap constants *)
 const max_tokens_count  : nat = 4n; (* Max available tokens in pair *)
-const min_tokens_count  : nat = 2n; (* Max available tokens in pair *)
+const min_tokens_count  : nat = 2n; (* Min available tokens in pair *)
 
 const precision         : nat = 1_000_000_000_000_000_000n; (* 10e18 The precision to convert to *)
 
 const a_precision       : nat = 100n;
 
 const rate_precision    : nat = 100_00000n;
+
+const proxy_limit       : nat = 100_000_000n; (* 100% of liquidity *)
 
 (* Fee constants *)
 

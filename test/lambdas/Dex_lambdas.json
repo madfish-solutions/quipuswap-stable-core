@@ -53,11 +53,7 @@
   },
   {
     "index": 15,
-    "name": "get_reserves"
-  },
-  {
-    "index": 16,
-    "name": "get_virt_reserves"
+    "name": "get_tokens_info"
   },
   {
     "index": 17,

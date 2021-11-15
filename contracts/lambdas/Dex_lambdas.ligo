@@ -53,12 +53,21 @@ function initialize_exchange(
         CONSTANTS.max_a >= params.a_constant,
         ERRORS.a_limit);
 
+      function map_res_to_zero(
+        const _key  : token_pool_index;
+        const value : token_info_type)
+                    : token_info_type is
+        value with record [
+          reserves = 0n;
+          virtual_reserves = 0n;
+        ];
+
       patch pair_i with record [
         initial_A = params.a_constant;
         future_A = params.a_constant;
         initial_A_time = Tezos.now;
         future_A_time = Tezos.now;
-        tokens_info = params.tokens_info;
+        tokens_info = Map.map(map_res_to_zero, params.tokens_info);
       ];
 
       function get_inputs(
@@ -219,8 +228,6 @@ function divest_liquidity(
 
             const value = token_info.virtual_reserves * params.shares / total_supply;
             token_info.virtual_reserves := nat_or_error(token_info.virtual_reserves - value, "value>virt_reserves");
-            token_info.reserves := nat_or_error(token_info.reserves - value, "value>virt_reserves");
-            acc.0[entry.0] := token_info;
 
             assert_with_error(value >= min_amount_out, ERRORS.high_min_out);
             assert_with_error(value =/= 0n, ERRORS.dust_out);
@@ -234,7 +241,9 @@ function divest_liquidity(
                 value,
                 entry.1
               ) # acc.1;
-            }
+              token_info.reserves := nat_or_error(token_info.reserves - value, "value>virt_reserves");
+            };
+            acc.0[entry.0] := token_info;
           } with acc;
 
         const tokens : tokens_type = get_tokens(params.pair_id, s.tokens);
@@ -378,117 +387,6 @@ function set_fees(
     | _ -> skip
     end
   } with (operations, s)
-
-// function claim_variant(
-//   const acc: return_type;
-//   const claim_action: claim_actions
-//   ): return_type is
-//   block {
-//     var operations: list(operation) := acc.0;
-//     var s: storage_type := acc.1;
-//     case claim_action of
-//         | Developer(params) -> {
-//             is_admin_or_dev(s.admin, s.dev_address);
-//             const dev_balance = case s.dev_rewards[params.token] of
-//             | Some(bal) -> bal
-//             | None -> 0n
-//             end;
-//             if dev_balance > 0n
-//               then {
-//                 operations := typed_transfer(
-//                   Tezos.self_address,
-//                   s.dev_address,
-//                   params.amount,
-//                   params.token
-//                 ) # operations;
-//                 s.dev_rewards[params.token] := nat_or_error(dev_balance-params.amount, "Amount greater than balance");
-//               }
-//             else failwith("Balance is 0")
-//           }
-//         | Referral(params) -> {
-//             const ref_balance = case s.referral_rewards[(Tezos.sender, params.token)] of
-//             | Some(bal) -> bal
-//             | None -> 0n
-//             end;
-//             if ref_balance > 0n
-//               then {
-//                 operations := typed_transfer(
-//                   Tezos.self_address,
-//                   Tezos.sender,
-//                   params.amount,
-//                   params.token
-//                 ) # operations;
-//                 s.referral_rewards[(Tezos.sender, params.token)] := nat_or_error(ref_balance-params.amount, "Amount greater than balance");
-//             }
-//             else failwith("Balance is 0");
-//           }
-//         | Staking(params) -> {
-//             const staker_key = (Tezos.sender, params.pool_id);
-//             var staker_acc := get_staker_acc(staker_key, s.stakers_balance);
-//             var staker_rew_data: acc_reward_type := case staker_acc.earnings[params.token_index] of
-//             | Some(data) -> data
-//             | None -> record [
-//               reward  = 0n;
-//               former  = 0n;
-//             ]
-//             end;
-//             const staker_rew_balance = staker_rew_data.reward;
-//             if staker_rew_balance > 0n
-//               then {
-//                 operations := typed_transfer(
-//                   Tezos.self_address,
-//                   Tezos.sender,
-//                   params.amount,
-//                   get_token_by_id(params.token_index, s.tokens[params.pool_id])
-//                 ) # operations;
-//                 staker_rew_data.reward := nat_or_error(staker_rew_balance - params.amount, "Amount greater than balance");
-//                 staker_rew_data.former := 0n;
-//               }
-//             else failwith("Balance is 0");
-//             staker_acc.earnings[params.token_index] := staker_rew_data;
-//             s.stakers_balance[staker_key] := staker_acc;
-//           }
-//         | LProvider(params) -> {
-//             const acc_key = (Tezos.sender, params.pool_id);
-//             var acc_data := get_account_data(acc_key, s.account_data);
-//             var acc_intrst_data: acc_reward_type := case acc_data.earned_interest[params.token] of
-//               | Some(data) -> data
-//               | None -> record [
-//                 reward  = 0n;
-//                 former  = 0n;
-//               ]
-//               end;
-//             const acc_intrst_balance = acc_intrst_data.reward;
-//             if acc_intrst_balance > 0n
-//               then {
-//                 operations := typed_transfer(
-//                   Tezos.self_address,
-//                   Tezos.sender,
-//                   params.amount,
-//                   params.token
-//                 ) # operations;
-//                 acc_intrst_data.reward := 0n;
-//                 acc_intrst_data.former := 0n;
-//               }
-//             else failwith("Balance is 0");
-//             acc_data.earned_interest[params.token] := acc_intrst_data;
-//             s.account_data[acc_key] := acc_data;
-//           }
-//       end;
-//   } with (operations, s)
-
-// function claim_middle(
-//   const p : action_type;
-//   var s   : storage_type)
-//           : return_type is
-//   case p of
-//   | Claim(params) -> List.fold(
-//       claim_variant,
-//       params,
-//       (CONSTANTS.no_operations, s)
-//     )
-//   | _ -> (CONSTANTS.no_operations, s)
-//   end
 
 function claim_dev(
   const p : action_type;

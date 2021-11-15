@@ -103,15 +103,29 @@ type permit_parameter   is [@layout:comb] record [
 type permits_type       is big_map(bytes, permit_parameter)
 
 type token_info_type    is  [@layout:comb] record [
-  rate                    : nat; (* = 10eN where N is the number of decimal places to normalize to 10e18 *)
-  proxy_limit             : nat; (* = 10eN where N is the number of decimal places to normalize to 10e18 *)
-  precision_multiplier    : nat; (* = 10eN where N is the number of decimal places to normalize to 10e18 *)
+  rate                    : nat;
+  (*  value = 10eN
+      where N is the number of decimal places to normalize to 10e18.
+      Example:  1_000_000_000_000_000_000n;                 // Token has 18 decimal places.
+                1_000_000_000_000_000_000_000_000n;         // Token has 12 decimal places.
+                1_000_000_000_000_000_000_000_000_000_000n; // Token has 6 decimal places.
+  *)
+  proxy_limit             : nat;
+  (* percent * 100_000 -
+      percent of liquidity could be staked by the proxy to earn additional interest
+  *)
+  precision_multiplier    : nat;
+  (* each value = 10eN
+      where N is the number of decimal places to normalize to 10e18 from `rate`.
+      Example:  1n;                 // Token has 18 decimal places and rate are 10e18.
+                1_000_000n;         // Token has 12 decimal places and rate are 10e24.
+                1_000_000_000_000n; // Token has 6 decimal places and rate are 10e30.
+    *)
   reserves                : nat;
   virtual_reserves        : nat;
 ]
 
 type pair_type          is [@layout:comb] record [
-  // exchange_admin          : address;
   initial_A               : nat; (* Constant that describes A constant *)
   initial_A_time          : timestamp;
   future_A                : nat;
@@ -119,23 +133,7 @@ type pair_type          is [@layout:comb] record [
   // tokens_count            : nat; (* from 2 to 4 tokens at one exchange pool *)
   // tokens                  : tokens_type; (* list of exchange tokens *)
   // token_rates             : map(token_pool_index, nat);
-  (* each value = 10eN
-      where N is the number of decimal places to normalize to 10e18.
-      Example: {
-        0n: 1_000_000_000_000_000_000n;                 // 1st token has 18 decimal places.
-        1n: 1_000_000_000_000_000_000_000_000n;         // 2nd token has 12 decimal places.
-        2n: 1_000_000_000_000_000_000_000_000_000_000n; // 3rd token has 6 decimal places.
-      }
-    *)
   tokens_info             : map(token_pool_index, token_info_type);
-   (* each value = 10eN
-      where N is the number of decimal places to normalize to 10e18.
-      Example: {
-        0n: 1n;                 // 1st token has 18 decimal places and rate are 10e18.
-        1n: 1_000_000n;         // 2nd token has 12 decimal places and rate are 10e24.
-        2n: 1_000_000_000_000n; // 3rd token has 6 decimal places and rate are 10e30.
-      }
-    *)
   // reserves                : map(token_pool_index, nat); (* list of token reserves in the pool *)
   // virtual_reserves        : map(token_pool_index, nat);
 
@@ -143,7 +141,6 @@ type pair_type          is [@layout:comb] record [
 
   staker_accumulator      : staker_acc_type;
 
-  // proxy_enabled           : bool;
   proxy_contract          : option(address);
   // proxy_limits            : map(token_pool_index, nat);
   proxy_reward_acc        : map(token_type, nat);
@@ -365,15 +362,14 @@ type action_type        is
 | UpdateProxyLimits       of upd_proxy_lim_params
 | SetFees                 of set_fee_type
 (* VIEWS *)
-| Get_reserves            of reserves_type      (* returns the underlying token reserves *)
-| Get_virt_reserves       of reserves_type      (* returns the virtual underlying token reserves *)
-| Get_fees                of get_fee_type
+| GetTokensInfo            of reserves_type      (* returns the token info *)
+| GetFees                of get_fee_type
 // | Min_received            of min_received_type  (* returns minReceived tokens after swapping *)
 // | Tokens_per_shares       of tps_type           (* returns map of tokens amounts to recieve 1 LP *)
 // | Price_cummulative       of price_cumm_type    (* returns price cumulative and timestamp per block *)
 // | Calc_divest_one_coin    of calc_divest_one_coin
-| Get_dy                  of get_dy_params        (* returns the current output dy given input dx *)
-| Get_a                   of get_a_type
+| GetDy                  of get_dy_params        (* returns the current output dy given input dx *)
+| GetA                   of get_a_type
 
 type transfer_type      is list (transfer_fa2_param)
 type operator_type      is list (update_operator_param)

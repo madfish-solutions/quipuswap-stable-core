@@ -31,14 +31,13 @@ function call_dex(
     | UpdateProxyLimits(_)    -> 13n
     | SetFees(_)              -> 14n
     (* VIEWS *)
-    | Get_reserves(_)         -> 15n
-    | Get_virt_reserves(_)    -> 16n
-    | Get_fees(_)             -> 17n
+    | GetTokensInfo(_)         -> 15n
+    | GetFees(_)              -> 17n
     // | Min_received(_)         -> 15n
     // | Tokens_per_shares(_)    -> 16n
     // | Calc_divest_one_coin(_) -> 18n
-    | Get_dy(_)               -> 19n
-    | Get_a(_)                -> 20n
+    | GetDy(_)               -> 19n
+    | GetA(_)                -> 20n
 
     end;
 

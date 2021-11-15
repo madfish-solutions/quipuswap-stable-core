@@ -1,3 +1,4 @@
+#include "../interfaces/IDex.ligo"
 #import "../partials/Constants.ligo" "CONSTANTS"
 #import "../partials/Errors.ligo" "ERRORS"
 #include "../interfaces/IDex.ligo"
