@@ -498,7 +498,34 @@ function divest_one_coin(
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
-    | DivestOneCoin(_params) -> skip
+    | DivestOneCoin(params) -> {
+      var pool := get_pair(params.pair_id, s.pools);
+      const sender_key = (Tezos.sender, params.pair_id);
+      const init_reserves = pool.virtual_reserves;
+      assert_with_error(params.token_index>=0n and params.token_index < Map.size(init_reserves), "Wrong index");
+      const (dy, dy_fee, total_supply) = _calc_withdraw_one_coin(params.shares, params.token_index, pool);
+      assert_with_error(dy >= params.min_amount_out, "Not enough coins removed");
+      var new_reserves := init_reserves;
+      new_reserves[params.token_index] := case new_reserves[params.token_index] of
+        Some(bal) -> nat_or_error(bal - (dy + dy_fee), "Not enough reserves")
+      | None -> (failwith("Empty reserve"): nat)
+      end;
+      const new_acc_bal = get_account_balance(sender_key, s.ledger) - params.shares;
+      s.ledger[sender_key] := nat_or_error(new_acc_bal, "Not enough balance");
+      s.pools[params.pair_id] := set_reserves_from_diff(
+        init_reserves,
+        new_reserves,
+        pool with record [
+          total_supply = total_supply;
+        ]
+      );
+      operations := typed_transfer(
+              Tezos.self_address,
+              Tezos.sender,
+              dy,
+              get_token_by_id(params.token_index, s.tokens[params.pair_id])
+            ) # operations;
+    }
     | _ -> skip
     end;
   } with (operations, s)

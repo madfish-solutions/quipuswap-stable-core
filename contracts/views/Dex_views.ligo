@@ -91,11 +91,11 @@ function calc_withdraw_one_coin(
   const s               : full_storage_type)
                         : full_return_type is
   block {
+    const pair : pair_type = get_pair(params.pair_id, s.storage.pools);
     const result : (nat * nat * nat) = _calc_withdraw_one_coin(
       params.token_amount,
       params.i,
-      params.pair_id,
-      s.storage
+      pair
     );
   } with (list [
     Tezos.transaction(

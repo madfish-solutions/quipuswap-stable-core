@@ -339,25 +339,23 @@ function _get_y_D(
 
 
 function _calc_withdraw_one_coin(
-    const _token_amount: nat;
+    const token_amount: nat;
     const i: nat;
-    const pair_id: nat;
-    const s: storage_type
+    const pair: pair_type
   ): (nat * nat * nat) is
   block {
     (*  First, need to calculate
      *  Get current D
      *  Solve Eqn against y_i for D - _token_amount
      *)
-    const pair          : pair_type = get_pair(pair_id, s.pools);
     const tokens_count = Map.size(pair.reserves);
-    const amp           : nat = _A(pair);
+    const amp           : nat           = _A(pair);
     const xp            : map(nat, nat) = _xp(pair);
-    const d0            : nat = get_D(xp, amp, pair);
-    const total_supply  : nat = pair.total_supply;
-    const d1            : nat = nat_or_error(d0 - (_token_amount * d0 / total_supply), "d1_less_0n");
-    const new_y         : nat = _get_y_D(amp, i, xp, d1, pair);
-    var   base_fee      : nat := sum_all_fee(pair) * tokens_count / (
+    const d0            : nat           = get_D(xp, amp, pair);
+    var   total_supply  : nat           := pair.total_supply;
+    const d1            : nat           = nat_or_error(d0 - (token_amount * d0 / total_supply), "d1_less_0n");
+    const new_y         : nat           = _get_y_D(amp, i, xp, d1, pair);
+    var   base_fee      : nat           := sum_all_fee(pair) * tokens_count / (
         4n * nat_or_error(tokens_count - 1n, "tokens_less_1n")
       ); (* TODO:changethis to correct fee calc *)
     var xp_reduced      : map(nat, nat) := map[];
@@ -403,6 +401,7 @@ function _calc_withdraw_one_coin(
       end;
     dy := nat_or_error(dy - 1, "dy_less_0n") / precisions_i;  //# Withdraw less to account for rounding errors
     const dy_0: nat = nat_or_error(xp_i - new_y, "new_y_gt_xp_i") / precisions_i;  //# w/o s.fee
+    total_supply := nat_or_error(pair.total_supply - token_amount, "Not enough supply");
   } with (dy, nat_or_error(dy_0 - dy, "fee_less_0n"), total_supply)
 
   // function apply_invest_fee(

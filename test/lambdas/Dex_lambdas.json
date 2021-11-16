@@ -16,6 +16,14 @@
     "name": "divest_liquidity"
   },
   {
+    "index": 4,
+    "name": "divest_imbalanced"
+  },
+  {
+    "index": 5,
+    "name": "divest_one_coin"
+  },
+  {
     "index": 6,
     "name": "claim_dev"
   },
