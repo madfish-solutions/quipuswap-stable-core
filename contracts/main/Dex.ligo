@@ -1,6 +1,7 @@
 #import "../partials/Constants.ligo" "CONSTANTS"
 #import "../partials/Errors.ligo" "ERRORS"
 #include "../interfaces/IDex.ligo"
+#include "../partials/Getters.ligo"
 #include "../partials/Utils.ligo"
 #include "../helpers/FA2_helpers.ligo"
 #include "../lambdas/FA2_lambdas.ligo"

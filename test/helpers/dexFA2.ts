@@ -9,8 +9,11 @@ import { BigNumber } from "bignumber.js";
 import { defaultTokenId, TokenFA2 } from "./tokenFA2";
 import {
   DexStorage,
+  FA12TokenType,
+  FA2TokenType,
   FeeType,
-  LambdaFunctionType
+  LambdaFunctionType,
+  TokenInfo
 } from "./types";
 import { getLigo } from "./utils";
 import { execSync } from "child_process";
@@ -28,7 +31,10 @@ export class Dex extends TokenFA2 {
 
   readonly Tezos: TezosToolkit;
 
-  constructor(tezos: TezosToolkit, contract: ContractAbstraction<ContractProvider>) {
+  constructor(
+    tezos: TezosToolkit,
+    contract: ContractAbstraction<ContractProvider>
+  ) {
     super(tezos, contract);
   }
 
@@ -113,60 +119,71 @@ export class Dex extends TokenFA2 {
 
   async initializeExchange(
     a_const: BigNumber = new BigNumber("100000"),
-    tokens_count: BigNumber = new BigNumber("3"),
-    inputs: {
+    token_info: {
       asset: TokenFA12 | TokenFA2;
       in_amount: BigNumber;
       rate: BigNumber;
+      precision_multiplier: BigNumber;
+      proxy_limit: BigNumber;
     }[],
     approve: boolean = true
   ): Promise<TransactionOperation> {
-    if (approve) {
-      for (const input of inputs) {
-        await input.asset.approve(this.contract.address, input.in_amount);
-      }
-    }
-    let input_tokens = new MichelsonMap<
+    let tokens_info = new MichelsonMap<
       number,
-      {
-        asset: unknown;
+      TokenInfo
+      >();
+    let input_tokens: Array<FA2TokenType | FA12TokenType> = [];
+    for (let i = 0; i < token_info.length; i++) {
+      const info = token_info[i];
+      if (approve) {
+        await info.asset.approve(this.contract.address, info.in_amount);
+      }
+      let mapped_item = (input: {
+        asset: TokenFA12 | TokenFA2;
         in_amount: BigNumber;
         rate: BigNumber;
         precision_multiplier: BigNumber;
-      }
-    >();
-    const input_params = inputs.map((item, i) => {
-      let mapped_item = (input) => {
+        proxy_limit: BigNumber;
+      }) => {
+        let result: {
+          rate: BigNumber;
+          proxy_limit: BigNumber;
+          precision_multiplier: BigNumber;
+          reserves: BigNumber;
+          virtual_reserves: BigNumber;
+        };
         if (input.asset instanceof TokenFA2) {
-          return {
-            asset: {
-              fa2: {
-                token_address: input.asset.contract.address,
-                token_id: defaultTokenId,
-              },
+          input_tokens.push({
+            fa2: {
+              token_address: input.asset.contract.address,
+              token_id: new BigNumber(defaultTokenId),
             },
-            in_amount: input.in_amount,
+          });
+          result = {
             rate: input.rate,
+            proxy_limit: input.proxy_limit,
             precision_multiplier: input.precision_multiplier,
+            reserves: input.in_amount,
+            virtual_reserves: input.in_amount,
           };
-        } else
-          return {
-            asset: {
-              fa12: input.asset.contract.address,
-            },
-            in_amount: input.in_amount,
+        } else {
+          input_tokens.push({
+            fa12: input.asset.contract.address,
+          });
+          result = {
             rate: input.rate,
+            proxy_limit: input.proxy_limit,
             precision_multiplier: input.precision_multiplier,
+            reserves: input.in_amount,
+            virtual_reserves: input.in_amount,
           };
+        }
+        return result;
       };
-      input_tokens.set(i, mapped_item(item));
-
-      return {
-        [i]: mapped_item(item),
-      };
-    }, {});
+      tokens_info.set(i, mapped_item(info));
+    }
     const operation = await this.contract.methods
-      .addPair(a_const, tokens_count, input_tokens)
+      .addPair(a_const, input_tokens, tokens_info)
       .send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;

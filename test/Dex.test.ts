@@ -16,7 +16,12 @@ import { defaultTokenId, TokenFA2 } from "./helpers/tokenFA2";
 import kUSDstorage from "./helpers/tokens/kUSD_storage";
 import uUSDstorage from "./helpers/tokens/uUSD_storage";
 import USDtzstorage from "./helpers/tokens/USDtz_storage";
-import { FA12TokenType, FA2TokenType, FeeType } from "./helpers/types";
+import {
+  FA12TokenType,
+  FA2TokenType,
+  FeeType,
+  TokenInfo,
+} from "./helpers/types";
 import {
   prepareProviderOptions,
   AccountsLiteral,
@@ -360,11 +365,12 @@ describe("Dex", () => {
       async function addNewPair(
         sender: AccountsLiteral,
         a_const: BigNumber = new BigNumber("1000000"),
-        tokens_count: BigNumber = new BigNumber("3"),
         inputs: {
           asset: TokenFA12 | TokenFA2;
           in_amount: BigNumber;
           rate: BigNumber;
+          precision_multiplier: BigNumber;
+          proxy_limit: BigNumber;
         }[],
         approve: boolean = false
       ) {
@@ -375,7 +381,7 @@ describe("Dex", () => {
           dex.storage.storage.admin
         );
         const initPairCount = new BigNumber(dex.storage.storage.pools_count);
-        await dex.initializeExchange(a_const, tokens_count, inputs, approve);
+        await dex.initializeExchange(a_const, inputs, approve);
         await dex.updateStorage({});
         await dex.updateStorage({
           pools: [(dex.storage.storage.pools_count.toNumber() - 1).toString()],
@@ -403,18 +409,21 @@ describe("Dex", () => {
             in_amount: decimals.kUSD.multipliedBy(input),
             rate: new BigNumber(10).pow(18),
             precision_multiplier: new BigNumber(1),
+            proxy_limit: new BigNumber(1000000),
           },
           {
             asset: tokens.USDtz,
             in_amount: decimals.USDtz.multipliedBy(input),
             rate: new BigNumber(10).pow(18 + 12),
             precision_multiplier: new BigNumber(10).pow(12),
+            proxy_limit: new BigNumber(1000000),
           },
           {
             asset: tokens.uUSD,
             in_amount: decimals.uUSD.multipliedBy(input),
             rate: new BigNumber(10).pow(18 + 6),
             precision_multiplier: new BigNumber(10).pow(6),
+            proxy_limit: new BigNumber(1000000),
           },
         ];
         inputs = inputs.sort(
@@ -423,16 +432,16 @@ describe("Dex", () => {
             b: { asset: { contract: { address: number } } }
           ) => {
             if (a.asset instanceof TokenFA2 && b.asset instanceof TokenFA12)
-              return -1;
+              return 1;
             else if (
               b.asset instanceof TokenFA2 &&
               a.asset instanceof TokenFA12
             )
-              return 1;
-            else if (a.asset.contract.address < b.asset.contract.address)
-              return 1;
-            else if (a.asset.contract.address > b.asset.contract.address)
               return -1;
+            else if (a.asset.contract.address < b.asset.contract.address)
+              return -1;
+            else if (a.asset.contract.address > b.asset.contract.address)
+              return 1;
             else 0;
           }
         );
@@ -443,21 +452,14 @@ describe("Dex", () => {
         async () =>
           await failCase(
             "alice",
-            async () =>
-              await dex.initializeExchange(
-                a_const,
-                tokens_count,
-                inputs,
-                false
-              ),
+            async () => await dex.initializeExchange(a_const, inputs, false),
             "Dex/not-contract-admin"
           ),
         10000
       );
       it(
         "Should add new pool",
-        async () =>
-          await addNewPair("eve", a_const, tokens_count, inputs, false),
+        async () => await addNewPair("eve", a_const, inputs, false),
         20000
       );
     });
@@ -602,7 +604,7 @@ describe("Dex", () => {
             tokens: [pool_id.toString()],
           });
           const tokens_map = dex.storage.storage.pools[pool_id.toNumber()]
-            .virtual_reserves as any as MichelsonMap<string, BigNumber>;
+            .tokens_info as any as MichelsonMap<string, TokenInfo>;
           tokens_map.forEach((v, k) => {
             limits.set(
               k,
@@ -616,7 +618,7 @@ describe("Dex", () => {
             "bob",
             async () =>
               await dex.contract.methods
-                .updateProxyLimits(pool_id, limits)
+                .updateProxyLimits(pool_id, "0", limits.get("0"))
                 .send(),
             "Dex/not-contract-admin"
           );
@@ -624,18 +626,22 @@ describe("Dex", () => {
         it("Should set proxy limits", async () => {
           let config = await prepareProviderOptions("eve");
           Tezos.setProvider(config);
-          const op = await dex.contract.methods
-            .updateProxyLimits(pool_id, limits)
-            .send();
+          const batch = Tezos.contract.batch();
+          limits.forEach((v, k) =>
+            batch.withContractCall(
+              dex.contract.methods.updateProxyLimits(pool_id, k, v)
+            )
+          );
+          const op = await batch.send();
           await confirmOperation(Tezos, op.hash);
           await dex.updateStorage({
             pools: [pool_id.toString()],
             tokens: [pool_id.toString()],
           });
           const upd_limits = dex.storage.storage.pools[pool_id.toNumber()]
-            .proxy_limits as any as MichelsonMap<string, BigNumber>;
+            .tokens_info as any as MichelsonMap<string, TokenInfo>;
           limits.forEach((v, k) => {
-            expect(upd_limits.get(k)).toEqual(v);
+            expect(upd_limits.get(k).proxy_limit).toEqual(v);
           });
         }, 20000);
       });
@@ -842,13 +848,13 @@ describe("Dex", () => {
           await dex.updateStorage({ pools: [pool_id.toString()] });
           // printFormattedOutput(dex.storage.storage.pools[pool_id.toString()]);
           const init_reserves = dex.storage.storage.pools[pool_id.toString()]
-            .reserves as any as Map<string, BigNumber>;
+            .tokens_info as any as Map<string, TokenInfo>;
           const rates = {};
           (
             dex.storage.storage.pools[pool_id.toString()]
-              .token_rates as any as Map<string, BigNumber>
+              .tokens_info as any as Map<string, TokenInfo>
           ).forEach((v, k) => {
-            rates[k] = new BigNumber(10).pow(18).dividedBy(v);
+            rates[k] = new BigNumber(10).pow(18).dividedBy(v.rate);
           });
           const tok_in = tokens[t_in];
           const tok_out = tokens[t_to];
@@ -892,13 +898,13 @@ describe("Dex", () => {
           );
           await dex.updateStorage({ pools: [pool_id.toString()] });
           const upd_reserves = dex.storage.storage.pools[pool_id.toString()]
-            .reserves as any as Map<string, BigNumber>;
-          expect(upd_reserves.get(i.toString())).toEqual(
-            init_reserves.get(i.toString()).plus(amounts.get(i))
+            .tokens_info as any as Map<string, TokenInfo>;
+          expect(upd_reserves.get(i.toString()).reserves).toEqual(
+            init_reserves.get(i.toString()).reserves.plus(amounts.get(i))
           );
           const output = init_reserves
             .get(j.toString())
-            .minus(upd_reserves.get(j.toString()));
+            .reserves.minus(upd_reserves.get(j.toString()).reserves);
           printFormattedOutput(
             `Swapped to ${output
               .dividedBy(rates[j])
@@ -979,17 +985,18 @@ describe("Dex", () => {
           dex.storage.storage.pools[pool_id.toNumber()].total_supply
         );
         const res = dex.storage.storage.pools[pool_id.toNumber()]
-          .reserves as any as MichelsonMap<string, BigNumber>;
+          .tokens_info as any as MichelsonMap<string, TokenInfo>;
         let raw_res = {};
         res.forEach(
-          (value, key) => (raw_res[key] = value.toFormat(0).toString())
+          (value, key) => (raw_res[key] = value.reserves.toFormat(0).toString())
         );
         printFormattedOutput(raw_res);
         const v_res = dex.storage.storage.pools[pool_id.toNumber()]
-          .virtual_reserves as any as MichelsonMap<string, BigNumber>;
+          .tokens_info as any as MichelsonMap<string, TokenInfo>;
         let virt_res = {};
         v_res.forEach(
-          (value, key) => (virt_res[key] = value.toFormat(0).toString())
+          (value, key) =>
+            (virt_res[key] = value.virtual_reserves.toFormat(0).toString())
         );
         printFormattedOutput(virt_res);
         printFormattedOutput(initLPBalance.toFormat());
@@ -1192,10 +1199,10 @@ describe("Dex", () => {
         printFormattedOutput(`${i + 1} BatchSwap ${op.hash}`);
         await dex.updateStorage({ pools: [pool_id.toString()] });
         const res = dex.storage.storage.pools[pool_id.toNumber()]
-          .reserves as any as MichelsonMap<string, BigNumber>;
+          .tokens_info as any as MichelsonMap<string, TokenInfo>;
         let raw_res = {};
         res.forEach(
-          (value, key) => (raw_res[key] = value.toFormat(0).toString())
+          (value, key) => (raw_res[key] = value.reserves.toFormat(0).toString())
         );
         printFormattedOutput(raw_res);
       }
@@ -1268,13 +1275,9 @@ describe("Dex", () => {
           kUSD: kUSDRewards,
           uUSD: uUSDRewards,
         };
-        let op: any = dex.contract.methods.claimReferral(
-          "fa12",
-          tokens.USDtz.contract.address,
-          USDtzRewards
-        );
-        console.log(op);
-        op = await op.send();
+        let op = await dex.contract.methods
+          .claimReferral("fa12", tokens.USDtz.contract.address, USDtzRewards)
+          .send();
         await confirmOperation(Tezos, op.hash);
         printFormattedOutput("Claimed referral USDtz");
         await dex.updateStorage({ pools: [pool_id.toString()] });
@@ -1287,13 +1290,9 @@ describe("Dex", () => {
         });
         expect(updUSDtzRewards.toNumber()).toEqual(0);
         printFormattedOutput(updUSDtzRewards.toFormat());
-        op = dex.contract.methods.claimReferral(
-          "fa12",
-          tokens.kUSD.contract.address,
-          kUSDRewards
-        );
-        console.log(op);
-        op = await op.send();
+        op = await dex.contract.methods
+          .claimReferral("fa12", tokens.kUSD.contract.address, kUSDRewards)
+          .send();
         await confirmOperation(Tezos, op.hash);
         printFormattedOutput("Claimed referral kUSD");
         await dex.updateStorage({ pools: [pool_id.toString()] });
@@ -1306,14 +1305,14 @@ describe("Dex", () => {
         });
         printFormattedOutput(updkUSDRewards.toFormat());
         expect(updkUSDRewards.toNumber()).toEqual(0);
-        op = dex.contract.methods.claimReferral(
-          "fa2",
-          tokens.uUSD.contract.address,
-          new BigNumber(defaultTokenId),
-          uUSDRewards
-        );
-        console.log(op);
-        op = await op.send();
+        op = await dex.contract.methods
+          .claimReferral(
+            "fa2",
+            tokens.uUSD.contract.address,
+            new BigNumber(defaultTokenId),
+            uUSDRewards
+          )
+          .send();
         await confirmOperation(Tezos, op.hash);
         printFormattedOutput("Claimed referral uUSD");
         upd_ref_stor = await dex.contract.storage().then((storage: any) => {
@@ -1355,140 +1354,131 @@ describe("Dex", () => {
     });
 
     describe("4.3. Developer reward", () => {
-      it(
-        "Should get dev rewards",
-        async () => {
-          let config = await prepareProviderOptions('eve');
-          Tezos.setProvider(config);
-          const expectedRewardNormalized = new BigNumber(10)
-            .pow(4)
-            .multipliedBy(batchTimes)
-            .plus(new BigNumber(10).pow(2))
-            .multipliedBy(2) // swap in 2 ways
-            .multipliedBy(5)
-            .dividedBy(100000); // 0.005% of swap
-          await dex.updateStorage({ pools: [pool_id.toString()] });
-          const dev_stor = await dex.contract.storage().then((storage: any) => {
-            return storage.storage.dev_rewards;
-          });
-          const initUSDtz = await tokens.USDtz.contract.views
-            .getBalance(dev_address)
-            .read(lambdaContractAddress);
-          const initkUSD = await tokens.kUSD.contract.views
-            .getBalance(dev_address)
-            .read(lambdaContractAddress);
-          const inituUSD = await tokens.uUSD.contract.views
-            .balance_of([{ owner: dev_address, token_id: "0" }])
-            .read(lambdaContractAddress);
+      it("Should get dev rewards", async () => {
+        let config = await prepareProviderOptions("eve");
+        Tezos.setProvider(config);
+        const expectedRewardNormalized = new BigNumber(10)
+          .pow(4)
+          .multipliedBy(batchTimes)
+          .plus(new BigNumber(10).pow(2))
+          .multipliedBy(2) // swap in 2 ways
+          .multipliedBy(5)
+          .dividedBy(100000); // 0.005% of swap
+        await dex.updateStorage({ pools: [pool_id.toString()] });
+        const dev_stor = await dex.contract.storage().then((storage: any) => {
+          return storage.storage.dev_rewards;
+        });
+        const initUSDtz = await tokens.USDtz.contract.views
+          .getBalance(dev_address)
+          .read(lambdaContractAddress);
+        const initkUSD = await tokens.kUSD.contract.views
+          .getBalance(dev_address)
+          .read(lambdaContractAddress);
+        const inituUSD = await tokens.uUSD.contract.views
+          .balance_of([{ owner: dev_address, token_id: "0" }])
+          .read(lambdaContractAddress);
 
-          const USDtzRewards = await dev_stor.get({
-            fa12: tokens.USDtz.contract.address,
-          });
-          expect(USDtzRewards.dividedBy(decimals.USDtz).toNumber()).toBeCloseTo(
-            expectedRewardNormalized.toNumber()
-          );
-          printFormattedOutput(USDtzRewards.toFormat());
-          const kUSDRewards = await dev_stor.get({
-            fa12: tokens.kUSD.contract.address,
-          });
-          printFormattedOutput(kUSDRewards.toFormat());
-          expect(kUSDRewards.dividedBy(decimals.kUSD).toNumber()).toBeCloseTo(
-            expectedRewardNormalized.toNumber()
-          );
-          const uUSDRewards = await dev_stor.get({
-            fa2: {
-              token_address: tokens.uUSD.contract.address,
-              token_id: new BigNumber(defaultTokenId),
-            },
-          });
-          printFormattedOutput(uUSDRewards.toFormat());
-          expect(uUSDRewards.dividedBy(decimals.uUSD).toNumber()).toBeCloseTo(
-            expectedRewardNormalized.toNumber()
-          );
-          const init_rewards = {
-            USDtz: USDtzRewards,
-            kUSD: kUSDRewards,
-            uUSD: uUSDRewards,
-          };
-          let op: any = dex.contract.methods.claimDeveloper(
-            "fa12",
-            tokens.USDtz.contract.address,
-            USDtzRewards
-          );
-          console.log(op);
-          op = await op.send();
-          await confirmOperation(Tezos, op.hash);
-          printFormattedOutput("Claimed dev USDtz");
-          await dex.updateStorage({ pools: [pool_id.toString()] });
-          let upd_dev_stor = await dex.contract
-            .storage()
-            .then((storage: any) => {
-              return storage.storage.dev_rewards;
-            });
-          const updUSDtzRewards = await upd_dev_stor.get({
-            fa12: tokens.USDtz.contract.address,
-          });
-          expect(updUSDtzRewards.toNumber()).toEqual(0);
-          printFormattedOutput(updUSDtzRewards.toFormat());
-          op = dex.contract.methods.claimDeveloper(
-            "fa12",
-            tokens.kUSD.contract.address,
-            kUSDRewards
-          );
-          console.log(op);
-          op = await op.send();
-          await confirmOperation(Tezos, op.hash);
-          printFormattedOutput("Claimed dev kUSD");
-          await dex.updateStorage({ pools: [pool_id.toString()] });
-          upd_dev_stor = await dex.contract.storage().then((storage: any) => {
-            return storage.storage.dev_rewards;
-          });
-          const updkUSDRewards = await upd_dev_stor.get({
-            fa12: tokens.kUSD.contract.address,
-          });
-          printFormattedOutput(updkUSDRewards.toFormat());
-          expect(updkUSDRewards.toNumber()).toEqual(0);
-          op = dex.contract.methods.claimDeveloper(
+        const USDtzRewards = await dev_stor.get({
+          fa12: tokens.USDtz.contract.address,
+        });
+        expect(USDtzRewards.dividedBy(decimals.USDtz).toNumber()).toBeCloseTo(
+          expectedRewardNormalized.toNumber()
+        );
+        printFormattedOutput(USDtzRewards.toFormat());
+        const kUSDRewards = await dev_stor.get({
+          fa12: tokens.kUSD.contract.address,
+        });
+        printFormattedOutput(kUSDRewards.toFormat());
+        expect(kUSDRewards.dividedBy(decimals.kUSD).toNumber()).toBeCloseTo(
+          expectedRewardNormalized.toNumber()
+        );
+        const uUSDRewards = await dev_stor.get({
+          fa2: {
+            token_address: tokens.uUSD.contract.address,
+            token_id: new BigNumber(defaultTokenId),
+          },
+        });
+        printFormattedOutput(uUSDRewards.toFormat());
+        expect(uUSDRewards.dividedBy(decimals.uUSD).toNumber()).toBeCloseTo(
+          expectedRewardNormalized.toNumber()
+        );
+        const init_rewards = {
+          USDtz: USDtzRewards,
+          kUSD: kUSDRewards,
+          uUSD: uUSDRewards,
+        };
+        let op = await dex.contract.methods.claimDeveloper(
+          "fa12",
+          tokens.USDtz.contract.address,
+          USDtzRewards
+        ).send();
+        await confirmOperation(Tezos, op.hash);
+        printFormattedOutput("Claimed dev USDtz");
+        await dex.updateStorage({ pools: [pool_id.toString()] });
+        let upd_dev_stor = await dex.contract.storage().then((storage: any) => {
+          return storage.storage.dev_rewards;
+        });
+        const updUSDtzRewards = await upd_dev_stor.get({
+          fa12: tokens.USDtz.contract.address,
+        });
+        expect(updUSDtzRewards.toNumber()).toEqual(0);
+        printFormattedOutput(updUSDtzRewards.toFormat());
+        op = await dex.contract.methods.claimDeveloper(
+          "fa12",
+          tokens.kUSD.contract.address,
+          kUSDRewards
+        ).send();
+        await confirmOperation(Tezos, op.hash);
+        printFormattedOutput("Claimed dev kUSD");
+        await dex.updateStorage({ pools: [pool_id.toString()] });
+        upd_dev_stor = await dex.contract.storage().then((storage: any) => {
+          return storage.storage.dev_rewards;
+        });
+        const updkUSDRewards = await upd_dev_stor.get({
+          fa12: tokens.kUSD.contract.address,
+        });
+        printFormattedOutput(updkUSDRewards.toFormat());
+        expect(updkUSDRewards.toNumber()).toEqual(0);
+        op = await dex.contract.methods
+          .claimDeveloper(
             "fa2",
             tokens.uUSD.contract.address,
             new BigNumber(defaultTokenId),
             uUSDRewards
-          );
-          console.log(op);
-          op = await op.send();
-          await confirmOperation(Tezos, op.hash);
-          printFormattedOutput("Claimed dev uUSD");
-          upd_dev_stor = await dex.contract.storage().then((storage: any) => {
-            return storage.storage.dev_rewards;
-          });
-          const upduUSDRewards = await upd_dev_stor.get({
-            fa2: {
-              token_address: tokens.uUSD.contract.address,
-              token_id: new BigNumber(defaultTokenId),
-            },
-          });
-          printFormattedOutput(upduUSDRewards.toFormat());
-          expect(upduUSDRewards.toNumber()).toEqual(0);
-          const updUSDtz = await tokens.USDtz.contract.views
-            .getBalance(dev_address)
-            .read(lambdaContractAddress);
-          const updkUSD = await tokens.kUSD.contract.views
-            .getBalance(dev_address)
-            .read(lambdaContractAddress);
-          const upduUSD = await tokens.uUSD.contract.views
-            .balance_of([{ owner: dev_address, token_id: "0" }])
-            .read(lambdaContractAddress);
-          expect(updUSDtz.minus(initUSDtz).toNumber()).toEqual(
-            init_rewards.USDtz.toNumber()
-          );
-          expect(updkUSD.minus(initkUSD).toNumber()).toEqual(
-            init_rewards.kUSD.toNumber()
-          );
-          expect(upduUSD[0].balance.minus(inituUSD[0].balance).toNumber()).toEqual(
-            init_rewards.uUSD.toNumber()
-          );
-        }
-      );
+          )
+          .send();
+        await confirmOperation(Tezos, op.hash);
+        printFormattedOutput("Claimed dev uUSD");
+        upd_dev_stor = await dex.contract.storage().then((storage: any) => {
+          return storage.storage.dev_rewards;
+        });
+        const upduUSDRewards = await upd_dev_stor.get({
+          fa2: {
+            token_address: tokens.uUSD.contract.address,
+            token_id: new BigNumber(defaultTokenId),
+          },
+        });
+        printFormattedOutput(upduUSDRewards.toFormat());
+        expect(upduUSDRewards.toNumber()).toEqual(0);
+        const updUSDtz = await tokens.USDtz.contract.views
+          .getBalance(dev_address)
+          .read(lambdaContractAddress);
+        const updkUSD = await tokens.kUSD.contract.views
+          .getBalance(dev_address)
+          .read(lambdaContractAddress);
+        const upduUSD = await tokens.uUSD.contract.views
+          .balance_of([{ owner: dev_address, token_id: "0" }])
+          .read(lambdaContractAddress);
+        expect(updUSDtz.minus(initUSDtz).toNumber()).toEqual(
+          init_rewards.USDtz.toNumber()
+        );
+        expect(updkUSD.minus(initkUSD).toNumber()).toEqual(
+          init_rewards.kUSD.toNumber()
+        );
+        expect(
+          upduUSD[0].balance.minus(inituUSD[0].balance).toNumber()
+        ).toEqual(init_rewards.uUSD.toNumber());
+      });
     });
   });
 
@@ -1536,7 +1526,7 @@ describe("Dex", () => {
         await dex.updateStorage({ pools: [pool_id.toString()] });
         const exp_A = dex.storage.storage.pools[pool_id.toString()].initial_A;
         const a = await dex.contract.views
-          .get_a(pool_id)
+          .getA(pool_id)
           .read(lambdaContractAddress);
         expect(a.toNumber()).toEqual(exp_A.dividedBy(100).toNumber());
       });
@@ -1545,27 +1535,34 @@ describe("Dex", () => {
         const exp_fees: FeeType =
           dex.storage.storage.pools[pool_id.toString()].fee;
         const fees = (await dex.contract.views
-          .get_fees(pool_id)
+          .getFees(pool_id)
           .read(lambdaContractAddress)) as FeeType;
         expect(fees).toMatchObject(exp_fees);
       });
-      it("Should return reserves", async () => {
+      it("Should return token info", async () => {
         await dex.updateStorage({ pools: [pool_id.toString()] });
-        const exp_reserves =
-          dex.storage.storage.pools[pool_id.toString()].reserves;
+        const exp_reserves = dex.storage.storage.pools[pool_id.toString()]
+          .tokens_info as any as Map<string, TokenInfo>;
         const reserves = await dex.contract.views
-          .get_reserves(pool_id)
+          .getTokensInfo(pool_id)
           .read(lambdaContractAddress);
-        expect(reserves).toMatchObject(exp_reserves);
-      });
-      it("Should return virtual reserves", async () => {
-        await dex.updateStorage({ pools: [pool_id.toString()] });
-        const exp_v_reserves =
-          dex.storage.storage.pools[pool_id.toString()].virtual_reserves;
-        const v_reserves = await dex.contract.views
-          .get_reserves(pool_id)
-          .read(lambdaContractAddress);
-        expect(v_reserves).toMatchObject(exp_v_reserves);
+        reserves.forEach((v: TokenInfo, k: string) => {
+          expect(v.reserves.toNumber()).toEqual(
+            exp_reserves.get(k).reserves.toNumber()
+          );
+          expect(v.virtual_reserves.toNumber()).toEqual(
+            exp_reserves.get(k).virtual_reserves.toNumber()
+          );
+          expect(v.proxy_limit.toNumber()).toEqual(
+            exp_reserves.get(k).proxy_limit.toNumber()
+          );
+          expect(v.rate.toNumber()).toEqual(
+            exp_reserves.get(k).rate.toNumber()
+          );
+          expect(v.precision_multiplier.toNumber()).toEqual(
+            exp_reserves.get(k).precision_multiplier.toNumber()
+          );
+        });
       });
       it.todo("Should return min received");
       it.skip("Should return dy", async () => {
@@ -1581,7 +1578,7 @@ describe("Dex", () => {
           j: j,
           dx: dx,
         };
-        const getdy = dex.contract.views.get_dy(
+        const getdy = dex.contract.views.getDy(
           pool_id,
           new BigNumber(i),
           new BigNumber(j),

@@ -28,22 +28,23 @@ export declare type TokenType =
   };
 
 export declare type TokenInfo = {
-  token_a_address: string;
-  token_b_address: string;
-  token_a_id?: BigNumber;
-  token_b_id?: BigNumber;
-  token_a_type: { [key: string]: any };
-  token_b_type: { [key: string]: any };
-};
+  rate: BigNumber;
+  proxy_limit: BigNumber;
+  precision_multiplier: BigNumber;
+  reserves: BigNumber;
+  virtual_reserves: BigNumber;
+}
 
 export declare type PairInfo = {
   initial_A: BigNumber;
   initial_A_time: Date;
+  future_A: BigNumber;
+  future_A_time: Date;
+  tokens_info: { [key: string]: TokenInfo },
   token_rates: { [key: string]: BigNumber };
   reserves: { [key: string]: BigNumber };
   virtual_reserves: { [key: string]: BigNumber };
-  future_A: BigNumber;
-  future_A_time: Date;
+
   fee: FeeType;
   staker_accumulator: {
     accumulator: { [key: string]: BigNumber };
