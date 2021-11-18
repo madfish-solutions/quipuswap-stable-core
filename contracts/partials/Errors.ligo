@@ -29,3 +29,6 @@ const a_limit                   : string = "Dex/a-too-high";
 const no_token_info             : string = "Dex/no-token-info";
 const no_token                  : string = "Dex/token-not-found";
 const wrong_index               : string = "Dex/wrong-index";
+const low_virtual_reserves      : string = "Dex/low-virtual-reserves";
+const low_reserves              : string = "Dex/low-reserves";
+const low_total_supply          : string = "Dex/low-total-supply";

@@ -405,13 +405,7 @@ function preform_swap(
   } with dy * CONSTANTS.precision / rate_j
 
   function add_liq(
-    const params  : record [
-                      referral: option(address);
-                      pair_id :nat;
-                      pair    : pair_type;
-                      inputs  : map(nat, nat);
-                      min_mint_amount: nat;
-                    ];
+    const params  : add_liq_param_type;
     var   s       : storage_type)
                   : return_type is
   block {
@@ -431,7 +425,7 @@ function preform_swap(
       var token_info  : token_info_type)
                       : token_info_type is
       block {
-        const input = get_input(key, params.inputs);
+        const input = unwrap_or(params.inputs[key], 0n);
         token_info.virtual_reserves := token_info.virtual_reserves + input;
         token_info.reserves := token_info.reserves + input;
       } with token_info;
@@ -473,7 +467,7 @@ function preform_swap(
         ) # operations;
     pair.total_supply := pair.total_supply + mint_amount;
     const user_key = (Tezos.sender, params.pair_id);
-    s.ledger[user_key] := get_account_balance(user_key, s.ledger) + mint_amount;
+    s.ledger[user_key] := unwrap_or(s.ledger[user_key], 0n) + mint_amount;
     s.pools[params.pair_id] := pair;
   } with (Map.fold(transfer_to_pool, params.inputs, CONSTANTS.no_operations), s)
 

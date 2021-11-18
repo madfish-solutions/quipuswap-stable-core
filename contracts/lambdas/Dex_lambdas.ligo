@@ -107,44 +107,42 @@ function swap(
         const dx = params.amount;
         assert_with_error(dx =/= 0n, ERRORS.zero_in);
 
-        const tokens : tokens_type = get_tokens(params.pair_id, s.tokens);
+        const tokens : tokens_type = unwrap(s.tokens[params.pair_id], ERRORS.pair_not_listed);
         const tokens_count = Map.size(tokens);
         const i = params.idx_from;
         const j = params.idx_to;
         assert_with_error(i < tokens_count or j < tokens_count, ERRORS.wrong_index);
 
-        var pair : pair_type := get_pair(params.pair_id, s.pools);
+        var pair : pair_type := unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
         var dy := preform_swap(i, j, dx, pair);
         const after_fees = perform_fee_slice(dy, pair.fee, pair.staker_accumulator.total_staked);
         dy := after_fees.0;
 
         const to_stakers = after_fees.3;
 
-        const referral: address = get_address(params.referral, s.default_referral);
-        const token_j = get_token(j, tokens);
+        const referral: address = unwrap_or(params.referral, s.default_referral);
+        const token_j = unwrap(tokens[j], ERRORS.no_token);
         s.referral_rewards[(referral, token_j)] :=
-          get_ref_rewards((referral, token_j), s.referral_rewards) +
+          unwrap_or(s.referral_rewards[(referral, token_j)], 0n) +
           after_fees.1;
-        s.dev_rewards[token_j] := get_dev_rewards(token_j, s.dev_rewards) + after_fees.2;
+        s.dev_rewards[token_j] := unwrap_or(s.dev_rewards[token_j], 0n) + after_fees.2;
 
         if to_stakers > 0n
-         then pair.staker_accumulator.accumulator[j] := case pair.staker_accumulator.accumulator[j] of
-          | Some(rew) -> rew + to_stakers * CONSTANTS.stkr_acc_precision / pair.staker_accumulator.total_staked
-          | None -> to_stakers * CONSTANTS.stkr_acc_precision / pair.staker_accumulator.total_staked
-          end;
+         then pair.staker_accumulator.accumulator[j] := unwrap_or(pair.staker_accumulator.accumulator[j], 0n)
+          + to_stakers * CONSTANTS.stkr_acc_precision / pair.staker_accumulator.total_staked;
         else skip;
 
         assert_with_error(dy >= params.min_amount_out, ERRORS.high_min_out);
 
-        var token_info_i := get_token_info(i, pair.tokens_info);
+        var token_info_i := unwrap(pair.tokens_info[i], ERRORS.no_token_info);
         patch token_info_i with record [
           virtual_reserves = token_info_i.virtual_reserves + dx;
           reserves = token_info_i.reserves + dx;
         ];
-        var token_info_j := get_token_info(j, pair.tokens_info);
+        var token_info_j := unwrap(pair.tokens_info[j], ERRORS.no_token_info);
         patch token_info_j with record [
-          virtual_reserves = nat_or_error(token_info_j.virtual_reserves - dy, "dy>reserves");
-          reserves = nat_or_error(token_info_j.reserves - dy, "dy>reserves");
+          virtual_reserves = nat_or_error(token_info_j.virtual_reserves - dy, ERRORS.low_virtual_reserves);
+          reserves = nat_or_error(token_info_j.reserves - dy, ERRORS.low_reserves);
         ];
 
         pair.tokens_info[i] := token_info_i;
@@ -153,7 +151,7 @@ function swap(
 
         operations := typed_transfer(
           Tezos.self_address,
-          get_address(params.receiver, Tezos.sender),
+          unwrap_or(params.receiver, Tezos.sender),
           dy,
           token_j
         ) # operations;
@@ -161,7 +159,7 @@ function swap(
           Tezos.sender,
           Tezos.self_address,
           dx,
-          get_token(i, tokens)
+          unwrap(tokens[i], ERRORS.no_token)
         ) # operations;
     }
     | _ -> skip
@@ -181,7 +179,7 @@ function invest_liquidity(
         const result = add_liq(record[
           referral= params.referral;
           pair_id = params.pair_id;
-          pair    = get_pair(params.pair_id, s.pools);
+          pair    = unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
           inputs  = params.in_amounts;
           min_mint_amount = params.shares;
         ], s);
@@ -205,7 +203,7 @@ function divest_liquidity(
         assert_with_error(s.pools_count > params.pair_id, ERRORS.pair_not_listed);
         assert_with_error(params.shares =/= 0n, ERRORS.zero_in);
 
-        var   pair          : pair_type := get_pair(params.pair_id, s.pools);
+        var   pair          : pair_type := unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
         const total_supply  : nat = pair.total_supply;
 
         function divest_reserves(
@@ -219,15 +217,11 @@ function divest_liquidity(
             list(operation)
           ) is
           block {
-            var token_info := get_token_info(entry.0, acc.0);
+            var token_info := unwrap(acc.0[entry.0], ERRORS.no_token_info);
 
-            const min_amount_out = case params.min_amounts_out[entry.0] of
-              | Some(min) -> min
-              | None -> 1n
-              end;
-
+            const min_amount_out = unwrap_or(params.min_amounts_out[entry.0], 1n);
             const value = token_info.virtual_reserves * params.shares / total_supply;
-            token_info.virtual_reserves := nat_or_error(token_info.virtual_reserves - value, "value>virt_reserves");
+            token_info.virtual_reserves := nat_or_error(token_info.virtual_reserves - value, ERRORS.low_virtual_reserves);
 
             assert_with_error(value >= min_amount_out, ERRORS.high_min_out);
             assert_with_error(value =/= 0n, ERRORS.dust_out);
@@ -241,16 +235,16 @@ function divest_liquidity(
                 value,
                 entry.1
               ) # acc.1;
-              token_info.reserves := nat_or_error(token_info.reserves - value, "value>virt_reserves");
+              token_info.reserves := nat_or_error(token_info.reserves - value, ERRORS.low_reserves);
             };
             acc.0[entry.0] := token_info;
           } with acc;
 
-        const tokens : tokens_type = get_tokens(params.pair_id, s.tokens);
+        const tokens : tokens_type = unwrap(s.tokens[params.pair_id], ERRORS.pair_not_listed);
         const res = Map.fold(divest_reserves, tokens, (pair.tokens_info, operations));
         pair.tokens_info := res.0;
-        pair.total_supply := nat_or_error(pair.total_supply - params.shares, "total_supply<shares");
-        const share : nat = get_account_balance((Tezos.sender, params.pair_id), s.ledger);
+        pair.total_supply := nat_or_error(pair.total_supply - params.shares, ERRORS.low_total_supply);
+        const share : nat = unwrap_or(s.ledger[(Tezos.sender, params.pair_id)], 0n);
         s.ledger[(Tezos.sender, params.pair_id)] := nat_or_error(share - params.shares, ERRORS.insufficient_lp);
         s.pools[params.pair_id] := pair;
         operations := res.1;
@@ -271,13 +265,11 @@ function divest_imbalanced(
     case p of
     | DivestImbalanced(params) -> {
         const receiver = Tezos.sender;
-        const share         : nat = get_account_balance((Tezos.sender, params.pair_id), s.ledger);
-        if params.max_shares = 0n
-          then failwith(ERRORS.zero_in)
-        else skip;
-        var pair := get_pair(params.pair_id, s.pools);
+        const share         : nat = unwrap_or(s.ledger[(Tezos.sender, params.pair_id)], 0n);
+        assert_with_error(params.max_shares =/= 0n, ERRORS.zero_in);
+        var pair := unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
         const fees = pair.fee;
-        const tokens = get_tokens(params.pair_id, s.tokens);
+        const tokens = unwrap(s.tokens[params.pair_id], ERRORS.pair_not_listed);
         const amp : nat =  _A(
           pair.initial_A_time,
           pair.initial_A,
@@ -292,14 +284,12 @@ function divest_imbalanced(
         var token_supply := pair.total_supply;
         function min_inputs (const key : token_pool_index; var value : token_info_type) : token_info_type is
           block{
-            value.virtual_reserves := case params.amounts_out[key] of
-                Some(res) -> nat_or_error(value.virtual_reserves - res, "Not enough reserves")
-              | None -> value.virtual_reserves
-              end;
-            value.reserves := case params.amounts_out[key] of
-                Some(res) -> nat_or_error(value.reserves - res, "Not enough reserves")
-              | None -> value.reserves
-              end;
+            value.virtual_reserves :=
+              nat_or_error(value.virtual_reserves - unwrap_or(params.amounts_out[key], 0n),
+                ERRORS.low_virtual_reserves);
+            value.reserves :=
+              nat_or_error(value.reserves - unwrap_or(params.amounts_out[key], 0n),
+                ERRORS.low_reserves);
           } with value;
         var new_infos := Map.map(min_inputs, pair.tokens_info);
 
@@ -321,10 +311,7 @@ function divest_imbalanced(
           ] is
         block {
           const new_bal = entry.1.virtual_reserves;
-          const old_bal = case init_reserves[entry.0] of
-            | Some(res) -> res
-            | None -> (failwith("Not such init reserve"): nat)
-            end;
+          const old_bal = unwrap(init_reserves[entry.0], ERRORS.low_reserves);
           const ideal_bal = d1 * old_bal / d0;
           const diff = abs(ideal_bal - new_bal); // |ideal_bal - new_bal|
           const to_dev = diff * divide_fee_for_balance(fees.dev_fee, tokens_count) / CONSTANTS.fee_denominator;
@@ -334,15 +321,10 @@ function divest_imbalanced(
             then to_stkr := diff * divide_fee_for_balance(fees.stakers_fee, tokens_count) / CONSTANTS.fee_denominator
           else to_lp := to_lp + diff * divide_fee_for_balance(fees.stakers_fee, tokens_count) / CONSTANTS.fee_denominator;
           const token = get_token_by_id(entry.0, Some(tokens));
-          acc.dev[token] := case acc.dev[token] of
-              Some(dev) -> dev + to_dev
-            | None -> to_dev
-          end;
+          acc.dev[token] := unwrap_or(acc.dev[token], 0n) + to_dev;
           if to_stkr > 0n
-          then acc.stkr.accumulator[entry.0] := case acc.stkr.accumulator[entry.0] of
-            | Some(rew) -> rew + to_stkr * CONSTANTS.stkr_acc_precision / acc.stkr.total_staked
-            | None -> to_stkr * CONSTANTS.stkr_acc_precision / acc.stkr.total_staked
-            end;
+          then acc.stkr.accumulator[entry.0] := unwrap_or(acc.stkr.accumulator[entry.0], 0n)
+            + to_stkr * CONSTANTS.stkr_acc_precision / acc.stkr.total_staked;
           else skip;
           acc.new_reserves[entry.0] := nat_or_error(new_bal - to_stkr - to_dev, "Not enough balance");
           acc.new_balances[entry.0] := nat_or_error(new_bal - to_stkr - to_lp - to_dev, "Not enough balance");
@@ -356,10 +338,7 @@ function divest_imbalanced(
         pair.staker_accumulator := result.stkr;
         function dev_iterated (var acc: big_map(token_type, nat); const i : token_type * nat) : big_map(token_type, nat) is
         block{
-          acc[i.0] := case acc[i.0] of
-          | Some(dev) -> i.1 + dev
-          | None -> i.1
-          end;
+          acc[i.0] := unwrap_or(acc[i.0], 0n) + i.1;
         } with acc;
         s.dev_rewards := Map.fold(dev_iterated, result.dev, s.dev_rewards);
         function map_balances (const key : token_pool_index; var value : token_info_type) : token_info_type is
@@ -390,7 +369,7 @@ function divest_imbalanced(
           const entry : token_pool_index * nat
           )           : list(operation) is
           block {
-            var tok_info := get_token_info(entry.0, tok_info);
+            var tok_info := unwrap(tok_info[entry.0], ERRORS.no_token_info);
             if tok_info.reserves >= entry.1
             then {
               acc := typed_transfer(
@@ -421,7 +400,7 @@ function divest_one_coin(
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
     | DivestOneCoin(params) -> {
-      var pool := get_pair(params.pair_id, s.pools);
+      var pool := unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
       const sender_key = (Tezos.sender, params.pair_id);
       const token = get_token_by_id(params.token_index, s.tokens[params.pair_id]);
       assert_with_error(params.token_index>=0n and params.token_index < Map.size(pool.tokens_info), "Wrong index");
@@ -441,26 +420,27 @@ function divest_one_coin(
 
       assert_with_error(result.dy >= params.min_amount_out, "Not enough coins removed");
 
-      var info := get_token_info(params.token_index, pool.tokens_info);
+      var info := unwrap(pool.tokens_info[params.token_index], ERRORS.no_token_info);
 
       info.virtual_reserves := nat_or_error(info.virtual_reserves - (result.dy + dev_fee + stkr_fee), "Not enough reserves");
       info.reserves := nat_or_error(info.reserves - (result.dy + dev_fee + stkr_fee), "Not enough reserves");
 
       pool.tokens_info[params.token_index] := info;
 
-      const new_acc_bal = get_account_balance(sender_key, s.ledger) - params.shares;
-      pool.staker_accumulator.accumulator[params.token_index] := get_staker_accamulator(params.token_index,  pool.staker_accumulator.accumulator) + stkr_fee * CONSTANTS.stkr_acc_precision / pool.staker_accumulator.total_staked;
+      const new_acc_bal = unwrap_or(s.ledger[sender_key], 0n) - params.shares;
+      pool.staker_accumulator.accumulator[params.token_index] := unwrap_or(pool.staker_accumulator.accumulator[params.token_index], 0n)
+        + stkr_fee * CONSTANTS.stkr_acc_precision / pool.staker_accumulator.total_staked;
       s.ledger[sender_key] := nat_or_error(new_acc_bal, "Not enough balance");
-      s.dev_rewards[token] := get_dev_rewards(token, s.dev_rewards) + dev_fee;
+      s.dev_rewards[token] := unwrap_or(s.dev_rewards[token], 0n) + dev_fee;
       s.pools[params.pair_id] := pool with record [
           total_supply  = result.ts;
         ];
       operations := typed_transfer(
-              Tezos.self_address,
-              Tezos.sender,
-              result.dy,
-              get_token_by_id(params.token_index, s.tokens[params.pair_id])
-            ) # operations;
+          Tezos.self_address,
+          Tezos.sender,
+          result.dy,
+          get_token_by_id(params.token_index, s.tokens[params.pair_id])
+        ) # operations;
     }
     | _ -> skip
     end;
@@ -478,7 +458,7 @@ function ramp_A(
     case p of
     | RampA(params) -> {
         is_admin(s.admin);
-        var pair : pair_type := get_pair(params.pair_id, s.pools);
+        var pair : pair_type := unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
         assert(Tezos.now >= pair.initial_A_time + CONSTANTS.min_ramp_time);
         assert(params.future_time >= Tezos.now + CONSTANTS.min_ramp_time); //  # dev: insufficient time
 
@@ -515,7 +495,7 @@ function stop_ramp_A(
     case p of
     | StopRampA(pair_id) -> {
       is_admin(s.admin);
-      var pair : pair_type := get_pair(pair_id, s.pools);
+      var pair : pair_type := unwrap(s.pools[pair_id], ERRORS.pair_not_listed);
       const current_A: nat = _A(
         pair.initial_A_time,
         pair.initial_A,
@@ -542,7 +522,7 @@ function set_proxy(
     case p of
     | SetProxy(params) -> {
       is_admin(s.admin);
-      var pair : pair_type := get_pair(params.pair_id, s.pools);
+      var pair : pair_type := unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
       // TODO: all the rewards must be claimed from the contract before in the same call
       pair.proxy_contract := params.proxy;
       s.pools[params.pair_id] := pair;
@@ -561,11 +541,8 @@ function update_proxy_limits(
     case p of
     | UpdateProxyLimits(params) -> {
       is_admin(s.admin);
-      var pair : pair_type := get_pair(params.pair_id, s.pools);
-      var token_info := case pair.tokens_info[params.token_index] of
-      | Some(value) -> value
-      | None -> (failwith("no such R index") : token_info_type)
-      end;
+      var pair : pair_type := unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
+      var token_info := unwrap(pair.tokens_info[params.token_index], "no such R index");
 
       token_info.proxy_limit := params.limit;
       pair.tokens_info[params.token_index] := token_info;
@@ -587,7 +564,7 @@ function set_fees(
     case p of
     | SetFees(params) -> {
       is_admin(s.admin);
-      var pair := get_pair(params.pool_id, s.pools);
+      var pair := unwrap(s.pools[params.pool_id], ERRORS.pair_not_listed);
       pair.fee := params.fee;
       s.pools[params.pool_id] := pair;
       }
@@ -608,10 +585,7 @@ function claim_dev(
     case p of
       | ClaimDeveloper(params) -> {
         is_admin_or_dev(s.admin, s.dev_address);
-        const bal = case s.dev_rewards[params.token] of
-        | Some(bals) -> bals
-        | None -> 0n
-        end;
+        const bal = unwrap_or(s.dev_rewards[params.token], 0n);
         s.dev_rewards[params.token] := nat_or_error(bal-params.amount, "Amount greater than balance");
         if params.amount > 0n
           then {
@@ -639,10 +613,7 @@ function claim_ref(
     case p of
       | ClaimReferral(params) -> {
         const key = (receiver, params.token);
-        const bal = case s.referral_rewards[key] of
-          | Some(bals) -> bals
-          | None -> (failwith("ref not found"): nat)
-          end;
+        const bal = unwrap(s.referral_rewards[key], "ref not found");
         s.referral_rewards[key] := nat_or_error(bal-params.amount, "Amount greater than balance");
         if params.amount > 0n
           then {
@@ -670,14 +641,14 @@ function claim_staker(
     case p of
       | ClaimStaking(params) -> {
           const staker_key = (receiver, params.pool_id);
-          var staker_acc := get_staker_account(staker_key, s.stakers_balance);
-          var staker_rew_data: acc_reward_type := case staker_acc.earnings[params.token_index] of
-          | Some(data) -> data
-          | None -> record [
+          var staker_acc := unwrap_or(s.stakers_balance[staker_key], record[
+            balance = 0n;
+            earnings = (map[] : map(nat , acc_reward_type))
+          ]);
+          var staker_rew_data: acc_reward_type := unwrap_or(staker_acc.earnings[params.token_index], record [
             reward  = 0n;
             former  = 0n;
-          ]
-          end;
+          ]);
           const bal = staker_rew_data.reward;
           const new_balance = nat_or_error(bal - params.amount, "Amount greater than balance");
           if params.amount > 0n
@@ -711,13 +682,11 @@ function claim_provider(
       | ClaimLProvider(params) -> {
         const acc_key = (receiver, params.pool_id);
         var acc_data := get_account_data(acc_key, s.account_data);
-        var acc_intrst_data: acc_reward_type := case acc_data.earned_interest[params.token] of
-          | Some(data) -> data
-          | None -> record [
+        var acc_intrst_data: acc_reward_type := unwrap_or(acc_data.earned_interest[params.token],
+          record [
             reward  = 0n;
             former  = 0n;
-          ]
-          end;
+          ]);
         const bal = acc_intrst_data.reward;
         const new_balance = nat_or_error(bal - params.amount, "Amount greater than balance");
         if params.amount > 0n

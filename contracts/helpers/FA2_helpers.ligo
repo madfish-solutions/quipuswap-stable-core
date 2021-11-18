@@ -21,7 +21,7 @@ function is_owner(const owner: address): unit is
 
 [@inline]
 function get_account_data(
-  const key: address * token_id;
+  const key: address * token_id_type;
   const acc_bm: big_map((address * pool_id_type), account_data_type)
   ): account_data_type is
   case acc_bm[key] of
@@ -47,7 +47,7 @@ function iterate_transfer(
         const user_key : (address * nat) =
           (user_trx_params.from_,
           transfer.token_id);
-        var sender_balance : nat := get_account_balance(user_key, s.storage.ledger);
+        var sender_balance : nat := unwrap_or(s.storage.ledger[user_key], 0n);
         var sender_allowance: set(address) := case s.storage.account_data[user_key] of
             Some(data) -> data.allowances
           | None -> (set[]: set(address))
@@ -57,7 +57,7 @@ function iterate_transfer(
         s.storage.ledger[user_key] := sender_balance;
 
         var dest_account : nat :=
-          get_account_balance((transfer.to_, transfer.token_id), s.storage.ledger);
+          unwrap_or(s.storage.ledger[(transfer.to_, transfer.token_id)], 0n);
 
         dest_account := dest_account + transfer.amount;
         s.storage.ledger[(transfer.to_, transfer.token_id)] := dest_account;
