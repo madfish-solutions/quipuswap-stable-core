@@ -36,4 +36,4 @@ const max_a_change      : nat = 10n;
 (* Timings *)
 
 (* 1 day *)
-const min_ramp_time    : int = 86400;
+const min_ramp_time     : int = 86400;

@@ -27,7 +27,7 @@ function get_balance_of(
         block {
           const entry = record [
             request   = request;
-            balance   = get_account_balance((request.owner, request.token_id), s.storage.ledger);
+            balance   = unwrap_or(s.storage.ledger[(request.owner, request.token_id)], 0n);
           ]
         } with entry # l;
       const accumulator = List.fold(

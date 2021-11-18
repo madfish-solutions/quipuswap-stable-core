@@ -1,10 +1,10 @@
 type pool_id_type       is nat
-type token_id           is nat
+type token_id_type      is nat
 type token_pool_index   is nat
 
 type transfer_fa2_destination is [@layout:comb] record [
     to_       : address;
-    token_id  : token_id;
+    token_id  : token_id_type;
     amount    : nat;
   ]
 type transfer_fa2_param is [@layout:comb] record [
@@ -14,7 +14,7 @@ type transfer_fa2_param is [@layout:comb] record [
 type bal_fa12_type      is address * contract(nat)
 type balance_of_fa2_request is [@layout:comb] record [
     owner       : address;
-    token_id    : token_id;
+    token_id    : token_id_type;
   ]
 type balance_of_fa2_response is [@layout:comb] record [
     request     : balance_of_fa2_request;
@@ -27,7 +27,7 @@ type bal_fa2_type       is [@layout:comb] record [
 type operator_fa2_param is [@layout:comb] record [
     owner                 : address;
     operator              : address;
-    token_id              : token_id;
+    token_id              : token_id_type;
   ]
 
 
@@ -430,7 +430,7 @@ type full_storage_type  is [@layout:comb] record [
   storage                 : storage_type; (* real dex storage_type *)
   (* Token Metadata *)
   metadata                : big_map(string, bytes); (* metadata storage_type according to TZIP-016 *)
-  token_metadata          : big_map(token_id, token_metadata_info);
+  token_metadata          : big_map(token_id_type, token_metadata_info);
   (* Contract lambdas storage *)
   dex_lambdas             : big_map(nat, bytes); (* map with exchange-related functions code *)
   token_lambdas           : big_map(nat, bytes); (* map with token-related functions code *)
@@ -442,6 +442,13 @@ type full_return_type   is list (operation) * full_storage_type
 type dex_func_type      is (action_type * storage_type) -> return_type
 type token_func_type    is (token_action_type * full_storage_type) -> full_return_type
 
+type add_liq_param_type is record [
+    referral: option(address);
+    pair_id :nat;
+    pair    : pair_type;
+    inputs  : map(token_pool_index, nat);
+    min_mint_amount: nat;
+  ]
 // const fee_rate            : nat = 333n;
 // const fee_denom           : nat = 1000n;
 // const fee_num             : nat = 997n;

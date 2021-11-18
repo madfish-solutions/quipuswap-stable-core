@@ -9,7 +9,7 @@ function get_tokens_info(
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
       GetTokensInfo(params) -> {
-      const pair : pair_type = get_pair(params.pair_id, s.pools);
+      const pair : pair_type = unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
       operations := Tezos.transaction(pair.tokens_info, 0tez, params.receiver) # operations;
       }
     | _ -> skip
@@ -73,7 +73,7 @@ function calc_withdraw_one_coin(
   const s               : full_storage_type)
                         : full_return_type is
   block {
-    const pair : pair_type = get_pair(params.pair_id, s.storage.pools);
+    const pair : pair_type = unwrap(s.storage.pools[params.pair_id], ERRORS.pair_not_listed);
     const amp : nat =  _A(
       pair.initial_A_time,
       pair.initial_A,
@@ -104,27 +104,15 @@ function get_dy(
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
       GetDy(params) -> {
-        const pair : pair_type = get_pair(params.pair_id, s.pools);
+        const pair : pair_type = unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
         const xp: map(nat, nat) = _xp(pair);
-        const xp_i = case xp[params.i] of
-          | Some(value) -> value
-          | None -> (failwith("no such index") : nat)
-          end;
-        const xp_j = case xp[params.j] of
-          | Some(value) -> value
-          | None -> (failwith("no such index") : nat)
-          end;
-        const rate_i = case pair.tokens_info[params.i] of
-          | Some(value) -> value.rate
-          | None -> (failwith("no such index") : nat)
-          end;
-        const rate_j = case pair.tokens_info[params.j] of
-          | Some(value) -> value.rate
-          | None -> (failwith("no such index") : nat)
-          end;
-        const x: nat = xp_i + (params.dx * rate_i / CONSTANTS.precision);
+        const xp_i = unwrap(xp[params.i], ERRORS.wrong_index);
+        const xp_j = unwrap(xp[params.j], ERRORS.wrong_index);
+        const token_info_i = unwrap(pair.tokens_info[params.i], ERRORS.wrong_index);
+        const token_info_j = unwrap(pair.tokens_info[params.j], ERRORS.wrong_index);
+        const x: nat = xp_i + (params.dx * token_info_i.rate / CONSTANTS.precision);
         const y: nat = get_y(params.i, params.j, x, xp, pair);
-        const dy: nat = nat_or_error(xp_j - y - 1, "y>xp_j") * CONSTANTS.precision / rate_j;
+        const dy: nat = nat_or_error(xp_j - y - 1, "y>xp_j") * CONSTANTS.precision / token_info_j.rate;
         const fee: nat = sum_all_fee(pair.fee) * dy / CONSTANTS.fee_denominator;
         operations := Tezos.transaction((nat_or_error(dy - fee, "fee>dy")), 0tez, params.receiver) # operations;
       }
@@ -142,7 +130,7 @@ function get_A(
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
       GetA(params) -> {
-      const pair : pair_type = get_pair(params.pair_id, s.pools);
+      const pair : pair_type = unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
       operations := Tezos.transaction(_A(
         pair.initial_A_time,
         pair.initial_A,
@@ -164,7 +152,7 @@ function get_fees(
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
       GetFees(params) -> {
-      const pair : pair_type = get_pair(params.pool_id, s.pools);
+      const pair : pair_type = unwrap(s.pools[params.pool_id], ERRORS.pair_not_listed);
       operations := Tezos.transaction(pair.fee, 0tez, params.receiver) # operations;
      }
     | _ -> skip
