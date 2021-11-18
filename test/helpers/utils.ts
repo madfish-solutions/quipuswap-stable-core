@@ -5,10 +5,14 @@ import { sandbox, ligoVersion } from "../../config.json";
 const accounts = sandbox.accounts;
 import { confirmOperation } from "./confirmation";
 import { MichelsonMap, TezosToolkit } from "@taquito/taquito";
+import formatDuration from "date-fns/formatDuration";
+import { intervalToDuration } from "date-fns";
+import { IndexMap, TokensMap } from "../Dex/types";
+import { FA12TokenType, FA2TokenType } from "./types";
 export const tezPrecision = 1e6;
 
 function stringLiteralArray<T extends string>(a: T[]) {
-    return a;
+  return a;
 }
 
 const senders: string[] = stringLiteralArray(Object.keys(accounts));
@@ -18,7 +22,7 @@ let rpcNode: string = `http://${sandbox.host}:${sandbox.port}`;
 export let Tezos = new TezosToolkit(rpcNode);
 
 export async function initTezos() {
-  const config = await prepareProviderOptions('alice');
+  const config = await prepareProviderOptions("alice");
   Tezos.setProvider(config);
   return Tezos;
 }
@@ -45,7 +49,7 @@ export function getLigo(isDockerizedLigo: boolean): string {
 }
 
 export async function prepareProviderOptions(
-  name: string = "alice"
+  name: AccountsLiteral = "alice"
 ): Promise<{ signer: InMemorySigner; config: object }> {
   const secretKey = accounts[name].sk.trim();
   return {
@@ -94,30 +98,29 @@ export async function bakeBlocks(count: number) {
 }
 
 export function destructObj(obj: any) {
-    let arr = [];
+  let arr = [];
 
-    Object.keys(obj).map(function (k) {
-      if (k === "fa12" || k === "fa2") {
-        arr.push(k);
-      }
+  Object.keys(obj).map(function (k) {
+    if (k === "fa12" || k === "fa2") {
+      arr.push(k);
+    }
 
-      if (obj[k] instanceof MichelsonMap || Array.isArray(obj[k])) {
-        arr.push(obj[k]);
-      } else if (
-        typeof obj[k] === "object" &&
-        (!(obj[k] instanceof Date) ||
-          !(obj[k] instanceof null) ||
-          !(obj[k] instanceof undefined))
-      ) {
-        arr = arr.concat(destructObj(obj[k]));
-      } else {
-        arr.push(obj[k]);
-      }
-    });
+    if (obj[k] instanceof MichelsonMap || Array.isArray(obj[k])) {
+      arr.push(obj[k]);
+    } else if (
+      typeof obj[k] === "object" &&
+      (!(obj[k] instanceof Date) ||
+        !(obj[k] instanceof null) ||
+        !(obj[k] instanceof undefined))
+    ) {
+      arr = arr.concat(destructObj(obj[k]));
+    } else {
+      arr.push(obj[k]);
+    }
+  });
 
-    return arr;
-  }
-
+  return arr;
+}
 
 export async function setupLambdasToStorage(
   lambdas_comp: { prim: string; args: { [key: string]: string | number }[] }[]
@@ -134,3 +137,40 @@ export async function setupLambdasToStorage(
   return lambda_func_storage;
 }
 
+export function printFormattedOutput(start: Date, ...args: any[]) {
+  const date_now = new Date();
+  const date_diff = formatDuration(
+    intervalToDuration({
+      start: start,
+      end: date_now,
+    }),
+    {
+      format: ["y", "mo", "w", "d", "h", "m", "s"],
+    }
+  );
+  return console.debug(date_diff, ...args);
+}
+
+export function mapTokensToIdx(
+  tokens_map: Map<string, FA2TokenType | FA12TokenType>,
+  tokens: TokensMap
+): IndexMap {
+  let mapping = {} as any;
+  for (let [k, v] of tokens_map.entries()) {
+    let token: FA2TokenType | FA12TokenType = v as FA2TokenType;
+    let contract_address: string;
+    if (token.fa2) {
+      contract_address = token.fa2.token_address;
+    } else {
+      token = v as FA12TokenType;
+      contract_address = token.fa12;
+    }
+    if (contract_address) {
+      for (const token in tokens) {
+        if (contract_address == tokens[token].contract.address)
+          mapping[token] = k;
+      }
+    }
+  }
+  return mapping;
+}
