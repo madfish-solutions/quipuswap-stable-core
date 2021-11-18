@@ -1,0 +1,7 @@
+{
+  "plugins": ["jest", "jest-formatting"],
+  "extends": [
+    "plugin:jest/all",
+    "plugin:jest-formatting/recommended"
+  ]
+}
