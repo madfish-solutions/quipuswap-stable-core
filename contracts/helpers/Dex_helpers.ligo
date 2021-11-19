@@ -82,37 +82,33 @@ function _A(
 
     D[j+1] = (A * n**n * sum(x_i) - D[j]**(n+1) / (n**n prod(x_i))) / (A * n**n - 1)
 *)
-function get_D(const _xp: map(nat, nat); const _amp: nat; const total_supply: nat): nat is
+function get_D(const xp: map(nat, nat); const amp: nat): nat is
   block {
     function sum(const acc : nat; const i : nat * nat): nat is acc + i.1;
 
-    var sum_c: nat := Map.fold(sum, _xp, 0n);
-    var _d_prev: nat := 0n;
+    var sum_c: nat := Map.fold(sum, xp, 0n);
+    const tokens_count = Map.size(xp);
+    const a_nn: nat = amp * tokens_count;
+    var tmp : tmp_get_d_type := record [
+      d = sum_c;
+      prev_d = 0n;
+    ];
 
-    assert_with_error(
-      sum_c =/= 0n or total_supply = 0n,
-      ERRORS.zero_in);
-
-    var d: nat := sum_c;
-    const tokens_count = Map.size(_xp);
-    const a_nn: nat = _amp * tokens_count;
-
-    while abs(d - _d_prev) > 1n
+    while abs(tmp.d - tmp.prev_d) > 1n
       block {
-        var _d_P := d;
-        _d_prev := d;
-        function count_D_P(const acc : nat * nat; const i : nat * nat): (nat * nat) is
-          (acc.0 * acc.1 / (i.1 * tokens_count), acc.1);
-        const (d_P_n, d_n) = Map.fold(count_D_P, _xp, (_d_P, d));
-        _d_P := d_P_n;
-        d := d_n; // ????
-        d := (a_nn * sum_c / CONSTANTS.a_precision + _d_P * tokens_count) * d / (
-          nat_or_error(a_nn - CONSTANTS.a_precision, "Precision_err") * d / CONSTANTS.a_precision + (tokens_count + 1n) * _d_P ); (* Equality with the precision of 1 *)
-      };
-  } with d
+        const d_const = tmp.d;
+        function count_D_P(const acc : nat; const i : nat * nat): nat is
+          acc * d_const / (i.1 * tokens_count);
+        const d_P = Map.fold(count_D_P, xp, tmp.d);
 
-function _get_D_mem(const tokens_info : map(token_pool_index, token_info_type); const _amp: nat; const total_supply: nat): nat is
-  get_D(_xp_mem(tokens_info), _amp, total_supply);
+        tmp.prev_d := tmp.d;
+        tmp.d := (a_nn * sum_c / CONSTANTS.a_precision + d_P * tokens_count) * tmp.d / (
+          nat_or_error(a_nn - CONSTANTS.a_precision, ERRORS.wrong_precision) * tmp.d / CONSTANTS.a_precision + (tokens_count + 1n) * d_P); (* Equality with the precision of 1 *)
+      };
+  } with tmp.d
+
+function _get_D_mem(const tokens_info : map(token_pool_index, token_info_type); const _amp: nat): nat is
+  get_D(_xp_mem(tokens_info), _amp);
 
 (*
   Calculate x[j] if one makes x[i] = x
@@ -168,7 +164,7 @@ function get_y(
       s.future_A
     );
     const a_nn  : nat = amp * tokens_count;
-    const d     : nat = get_D(xp, amp, s.total_supply);
+    const d     : nat = get_D(xp, amp);
 
     function prepare_params(
       var acc: record[
@@ -289,7 +285,7 @@ function _calc_withdraw_one_coin(
      *)
     const tokens_count = Map.size(pair.tokens_info);
     const xp            : map(nat, nat) = _xp(pair);
-    const d0            : nat           = get_D(xp, amp, pair.total_supply);
+    const d0            : nat           = get_D(xp, amp);
     var   total_supply  : nat           := pair.total_supply;
     const d1            : nat           = nat_or_error(d0 - (token_amount * d0 / total_supply), "d1_less_0n");
     const new_y         : nat           = _get_y_D(amp, i, xp, d1, pair);
@@ -418,7 +414,7 @@ function preform_swap(
     );
 
     // Initial invariant
-    const d0 = _get_D_mem(pair.tokens_info, amp, pair.total_supply);
+    const d0 = _get_D_mem(pair.tokens_info, amp);
     var token_supply := pair.total_supply;
     function add_inputs(
       const key       : token_pool_index;
@@ -431,7 +427,7 @@ function preform_swap(
       } with token_info;
     pair.tokens_info := Map.map(add_inputs, pair.tokens_info);
 
-    const d1 = _get_D_mem(pair.tokens_info, amp, pair.total_supply);
+    const d1 = _get_D_mem(pair.tokens_info, amp);
 
     if(d1 <= d0)
     then failwith(ERRORS.zero_in);

@@ -196,6 +196,10 @@ type swap_type          is [@layout:comb] record [
   referral                : option(address);
 ]
 
+type tmp_get_d_type     is [@layout:comb] record [
+  d                       : nat;
+  prev_d                  : nat;
+]
 // type swap_slice_type    is record [
 //   pair_id                 : nat; (* pair identifier *)
 //   operation               : swap_type; (* exchange operation *)
