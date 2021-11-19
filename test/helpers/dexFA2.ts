@@ -128,10 +128,7 @@ export class Dex extends TokenFA2 {
     }[],
     approve: boolean = true
   ): Promise<TransactionOperation> {
-    let tokens_info = new MichelsonMap<
-      number,
-      TokenInfo
-      >();
+    let tokens_info = new MichelsonMap<number, TokenInfo>();
     let input_tokens: Array<FA2TokenType | FA12TokenType> = [];
     for (let i = 0; i < token_info.length; i++) {
       const info = token_info[i];
@@ -474,7 +471,6 @@ export class Dex extends TokenFA2 {
     pool_id: BigNumber,
     fees: FeeType
   ): Promise<TransactionOperation> {
-    await this.updateStorage({});
     const operation = await this.contract.methods
       .setFees(
         pool_id,
@@ -485,6 +481,13 @@ export class Dex extends TokenFA2 {
       )
       .send();
 
+    await confirmOperation(this.Tezos, operation.hash);
+    return operation;
+  }
+  async setDefaultReferral(ref: string): Promise<TransactionOperation> {
+    const operation = await this.contract.methods
+      .setDefaultReferral(ref)
+      .send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
   }

@@ -359,12 +359,6 @@ type claim_by_pool_token_params is [@layout:comb] record [
   amount: nat;
 ]
 
-type claim_actions      is
-| Developer               of claim_by_token_params
-| Referral                of claim_by_token_params
-| Staking                 of claim_by_pool_token_id_params
-| LProvider               of claim_by_pool_token_params
-
 type action_type        is
 (* Base actions *)
 | AddPair                 of initialize_params  (* sets initial liquidity *)
@@ -384,6 +378,7 @@ type action_type        is
 | SetProxy                of set_proxy_params
 | UpdateProxyLimits       of upd_proxy_lim_params
 | SetFees                 of set_fee_type
+| SetDefaultReferral      of address
 (* VIEWS *)
 | GetTokensInfo            of reserves_type      (* returns the token info *)
 | GetFees                of get_fee_type

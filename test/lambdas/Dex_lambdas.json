@@ -61,6 +61,10 @@
   },
   {
     "index": 15,
+    "name": "set_default_referral"
+  },
+  {
+    "index": 16,
     "name": "get_tokens_info"
   },
   {

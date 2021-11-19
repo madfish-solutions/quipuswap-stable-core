@@ -230,8 +230,8 @@ function divest_liquidity(
               then skip //TODO: add request to proxy;
             else {
               acc.1 := typed_transfer(
-                Tezos.sender,
                 Tezos.self_address,
+                Tezos.sender,
                 value,
                 entry.1
               ) # acc.1;
@@ -296,7 +296,7 @@ function divest_imbalanced(
         const d1 = _get_D_mem(new_infos, amp);
 
         function balance_this_divest(
-          var acc     : record[
+          var acc     : record [
             new_reserves : map(token_pool_index, nat);
             new_balances : map(token_pool_index, nat);
             stkr         : staker_acc_type;
@@ -567,6 +567,22 @@ function set_fees(
       var pair := unwrap(s.pools[params.pool_id], ERRORS.pair_not_listed);
       pair.fee := params.fee;
       s.pools[params.pool_id] := pair;
+      }
+    | _ -> skip
+    end
+  } with (operations, s)
+
+(* 16n set default referral *)
+function set_default_referral(
+  const p               : action_type;
+  var s                 : storage_type)
+                        : return_type is
+  block {
+    var operations: list(operation) := CONSTANTS.no_operations;
+    case p of
+    | SetDefaultReferral(params) -> {
+      is_admin(s.admin);
+      s.default_referral := params;
       }
     | _ -> skip
     end

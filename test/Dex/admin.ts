@@ -66,3 +66,23 @@ export async function setDevAddrSuccessCase(
   const updatedDev = dex.storage.storage.dev_address;
   expect(dev).toEqual(updatedDev);
 }
+
+export async function setDefaultRefSuccessCase(
+  dex: Dex,
+  sender: AccountsLiteral,
+  ref: string,
+  Tezos: TezosToolkit
+) {
+  let config = await prepareProviderOptions(sender);
+  Tezos.setProvider(config);
+
+  await dex.updateStorage({});
+  const initRef = dex.storage.storage.default_referral;
+  expect(ref).not.toEqual(initRef);
+
+  await dex.setDefaultReferral(ref);
+
+  await dex.updateStorage({});
+  const updatedDev = dex.storage.storage.default_referral;
+  expect(ref).toEqual(updatedDev);
+}

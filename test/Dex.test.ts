@@ -104,8 +104,18 @@ describe("Dex", () => {
       );
     });
     describe("1.4. Test default referral", () => {
-      it.todo("Should fail if not admin try change default referral");
-      it.todo("Should change default referral");
+      it(
+        "Should fail if not admin try change default referral",
+        async () =>
+          await failCase(
+            "bob",
+            async () => dex.setDefaultReferral(aliceAddress),
+            "Dex/not-contract-admin"
+          ),
+        10000
+      );
+      it("Should change default referral", async () =>
+        await adm.setDefaultRefSuccessCase(dex, "eve", aliceAddress, Tezos));
     });
     describe("1.5. Test DeFi reward rates", () => {
       it.todo("Should fail if not admin try set DeFi reward rates");
@@ -331,7 +341,6 @@ describe("Dex", () => {
         );
       }, 10000);
       it("Should invest liq balanced", async () => {
-
         await invest.investLiquiditySuccessCase(
           dex,
           sender,

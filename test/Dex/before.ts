@@ -27,7 +27,7 @@ export async function setupDexEnvironment(Tezos: TezosToolkit): Promise<{
   printFormattedOutput(global.startTime, "opLambda view set");
   const lambdaContractAddress = op.contractAddress;
   storage.storage.admin = accounts.alice.pkh;
-  storage.storage.default_referral = accounts.alice.pkh;
+  storage.storage.default_referral = accounts.bob.pkh;
   storage.storage.dev_address = accounts.eve.pkh;
   // storage.dex_lambdas = await setupLambdasToStorage(dex_lambdas_comp);
   storage.token_lambdas = await setupLambdasToStorage(token_lambdas_comp);

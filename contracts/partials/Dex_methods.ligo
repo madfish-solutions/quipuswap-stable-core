@@ -30,8 +30,9 @@ function call_dex(
     | SetProxy(_)             -> 12n
     | UpdateProxyLimits(_)    -> 13n
     | SetFees(_)              -> 14n
+    | SetDefaultReferral(_)   -> 15n
     (* VIEWS *)
-    | GetTokensInfo(_)         -> 15n
+    | GetTokensInfo(_)         -> 16n
     | GetFees(_)              -> 17n
     // | Min_received(_)         -> 15n
     // | Tokens_per_shares(_)    -> 16n
