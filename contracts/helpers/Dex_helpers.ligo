@@ -60,17 +60,12 @@ function _A(
   const t1 : timestamp;
   const a1 : nat)
                       : nat is
-  block {
-    var result: nat := 0n;
-    if Tezos.now < t1
-      then {
-        result := (
-          abs(a0 + (a1 - a0)) *
-          nat_or_error(Tezos.now - t0, "Time error")
-          ) / nat_or_error(t1 - t0, "Time error");
-      }
-    else result := a1;
-  } with result
+  if Tezos.now < t1
+    then
+      if a1 > a0
+        then a0 + abs(a1 - a0) * nat_or_error(Tezos.now - t0, "Time error") / nat_or_error(t1 - t0, "Time error")
+      else a0 - abs(a0 - a1) * nat_or_error(Tezos.now - t0, "Time error") / nat_or_error(t1 - t0, "Time error");
+  else a1
 
 
 (*
