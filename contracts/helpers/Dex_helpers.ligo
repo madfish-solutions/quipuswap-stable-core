@@ -103,7 +103,7 @@ function get_D(const xp: map(nat, nat); const amp: nat): nat is
 
         tmp.prev_d := tmp.d;
         tmp.d := (a_nn * sum_c / CONSTANTS.a_precision + d_P * tokens_count) * tmp.d / (
-          nat_or_error(a_nn - CONSTANTS.a_precision, "Precision_err") * tmp.d / CONSTANTS.a_precision + (tokens_count + 1n) * d_P); (* Equality with the precision of 1 *)
+          nat_or_error(a_nn - CONSTANTS.a_precision, ERRORS.wrong_precision) * tmp.d / CONSTANTS.a_precision + (tokens_count + 1n) * d_P); (* Equality with the precision of 1 *)
       };
   } with tmp.d
 
