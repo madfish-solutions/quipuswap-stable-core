@@ -94,7 +94,7 @@ function get_D(const xp: map(nat, nat); const amp: nat): nat is
       prev_d = 0n;
     ];
 
-    while abs(tmp.d - tmp.prev_d) >= 1n
+    while abs(tmp.d - tmp.prev_d) > 1n
       block {
         const d_const = tmp.d;
         function count_D_P(const acc : nat; const i : nat * nat): nat is
