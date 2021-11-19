@@ -280,7 +280,7 @@ function divest_imbalanced(
         const init_reserves = Map.map(map_res, pair.tokens_info);
         const tokens_count = Map.size(pair.tokens_info);
         // Initial invariant
-        const d0 = _get_D_mem(pair.tokens_info, amp, pair.total_supply);
+        const d0 = _get_D_mem(pair.tokens_info, amp);
         var token_supply := pair.total_supply;
         function min_inputs (const key : token_pool_index; var value : token_info_type) : token_info_type is
           block{
@@ -293,7 +293,7 @@ function divest_imbalanced(
           } with value;
         var new_infos := Map.map(min_inputs, pair.tokens_info);
 
-        const d1 = _get_D_mem(new_infos, amp, pair.total_supply);
+        const d1 = _get_D_mem(new_infos, amp);
 
         function balance_this_divest(
           var acc     : record[
@@ -353,7 +353,7 @@ function divest_imbalanced(
               end;
           } with value;
         new_infos := Map.map(map_balances, pair.tokens_info);
-        const d2 = _get_D_mem(new_infos, amp, pair.total_supply);
+        const d2 = _get_D_mem(new_infos, amp);
         var burn_amount := nat_or_error(d0-d2, "d2>d0") * token_supply / d0;
         if burn_amount = 0n
           then failwith(ERRORS.zero_burn_amount)
