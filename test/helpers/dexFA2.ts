@@ -370,7 +370,7 @@ export class Dex extends TokenFA2 {
       });
       idx = idx + 1;
       console.log(idx, type, lambdaFunction.args[1].int);
-      if (idx % 5 == 0 || idx == comp_funcs_map.length) {
+      if (idx % 4 == 0 || idx == comp_funcs_map.length) {
         const batchOp = await batch.send();
         console.log(`${idx}/${comp_funcs_map.length}`, batchOp.hash);
         await confirmOperation(this.Tezos, batchOp.hash);
