@@ -518,3 +518,41 @@ function preform_swap(
     s.pools[params.pair_id] := pair;
   } with (Map.fold(transfer_to_pool, params.inputs, CONSTANTS.no_operations), s)
 
+function harvest_staker_rewards(
+  var info          : staker_info_type;
+  var operations    : list(operation);
+  const accumulator : staker_acc_type;
+  const tokens      : tokens_type
+  )                 : staker_info_type * list(operation) is
+  block {
+    const staker_balance = info.balance;
+    function fold_rewards(
+      const acc: record [
+        op: list(operation);
+        earnings: map(token_pool_index, acc_reward_type);
+      ];
+      const entry: token_pool_index * acc_reward_type
+      ): record [
+        op: list(operation);
+        earnings: map(token_pool_index, acc_reward_type);
+      ] is
+      block {
+        const i = entry.0;
+        const reward = entry.1;
+        const pool_acc = unwrap_or(accumulator.accumulator[i], 0n);
+        const new_former = staker_balance * pool_acc;
+        const reward_amt = reward.reward + abs(new_former - reward.former);
+        acc.earnings[i] := record[
+          former = new_former;
+          reward = 0n;
+        ];
+        acc.op := typed_transfer(
+          Tezos.self_address,
+          Tezos.sender,
+          reward_amt,
+          get_token_by_id(i, tokens)
+        ) # acc.op;
+    } with acc;
+    const harvest = Map.fold(fold_rewards, info, record[op=operations; earnings=info.earnings])
+  } with (info with record[earnings=harvest.earnings;], harvest.op)
+
