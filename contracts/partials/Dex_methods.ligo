@@ -19,26 +19,24 @@ function call_dex(
     (* Custom actions *)
     | DivestImbalanced(_)     -> 4n
     | DivestOneCoin(_)        -> 5n
-    // | Claim(_)                -> 6n
     | ClaimDeveloper(_)       -> 6n
     | ClaimReferral(_)        -> 7n
-    | ClaimStaking(_)         -> 8n
-    | ClaimLProvider (_)      -> 9n
+    | ClaimLProvider (_)      -> 8n
     (* Admin actions *)
-    | RampA(_)                -> 10n
-    | StopRampA(_)            -> 11n
-    | SetProxy(_)             -> 12n
-    | UpdateProxyLimits(_)    -> 13n
-    | SetFees(_)              -> 14n
-    | SetDefaultReferral(_)   -> 15n
+    | RampA(_)                -> 9n
+    | StopRampA(_)            -> 10n
+    | SetProxy(_)             -> 11n
+    | UpdateProxyLimits(_)    -> 12n
+    | SetFees(_)              -> 13n
+    | SetDefaultReferral(_)   -> 14n
+    (* QUIPU stakers *)
+    | Stake(_)                -> 15n
+    | Unstake(_)              -> 16n
     (* VIEWS *)
-    | GetTokensInfo(_)         -> 16n
-    | GetFees(_)              -> 17n
-    // | Min_received(_)         -> 15n
-    // | Tokens_per_shares(_)    -> 16n
-    // | Calc_divest_one_coin(_) -> 18n
-    | GetDy(_)               -> 19n
-    | GetA(_)                -> 20n
+    | GetTokensInfo(_)        -> 17n
+    | GetFees(_)              -> 18n
+    | GetDy(_)                -> 19n
+    | GetA(_)                 -> 20n
 
     end;
 

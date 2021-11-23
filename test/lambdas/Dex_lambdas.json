@@ -33,42 +33,46 @@
   },
   {
     "index": 8,
-    "name": "claim_staker"
-  },
-  {
-    "index": 9,
     "name": "claim_provider"
   },
   {
-    "index": 10,
+    "index": 9,
     "name": "ramp_A"
   },
   {
-    "index": 11,
+    "index": 10,
     "name": "stop_ramp_A"
   },
   {
-    "index": 12,
+    "index": 11,
     "name": "set_proxy"
   },
   {
-    "index": 13,
+    "index": 12,
     "name": "update_proxy_limits"
   },
   {
-    "index": 14,
+    "index": 13,
     "name": "set_fees"
   },
   {
-    "index": 15,
+    "index": 14,
     "name": "set_default_referral"
   },
   {
+    "index": 15,
+    "name": "stake_staker"
+  },
+  {
     "index": 16,
-    "name": "get_tokens_info"
+    "name": "unstake_staker"
   },
   {
     "index": 17,
+    "name": "get_tokens_info"
+  },
+  {
+    "index": 18,
     "name": "get_fees"
   },
   {

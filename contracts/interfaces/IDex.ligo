@@ -163,7 +163,7 @@ type storage_type       is [@layout:comb] record [
   dev_address             : address;
   managers                : set(address);
 
-  reward_rate             : nat;
+  reward_rate             : nat; (* DEFI reward rate *)
   // entered                 : bool; (* reentrancy protection *)
 
   (* Pools data *)
@@ -179,6 +179,7 @@ type storage_type       is [@layout:comb] record [
   (* Rewards and accumulators *)
   dev_rewards             : big_map(token_type, nat);
   referral_rewards        : big_map((address * token_type), nat);
+  quipu_token             : Fa2;
   stakers_balance         : big_map((address * pool_id_type), staker_info_type); (**)
 
   (* Permits *)
@@ -223,12 +224,12 @@ type tmp_get_d_type     is [@layout:comb] record [
 //   receiver                : address; (* address of the receiver *)
 // ]
 
-type input_token        is [@layout:comb] record [
-  asset                   : token_type; (* exchange pair info *)
-  in_amount               : nat; (* amount of tokens, where `index of value` == `index of token` to be invested *)
-  rate                    : nat; (* = 10eN where N is the number of decimal places to normalize to 10e18 *)
-  precision_multiplier    : nat; (* = 10eN where N is the number of decimal places to normalize to 10e18 *)
-]
+// type input_token        is [@layout:comb] record [
+//   asset                   : token_type; (* exchange pair info *)
+//   in_amount               : nat; (* amount of tokens, where `index of value` == `index of token` to be invested *)
+//   rate                    : nat; (* = 10eN where N is the number of decimal places to normalize to 10e18 *)
+//   precision_multiplier    : nat; (* = 10eN where N is the number of decimal places to normalize to 10e18 *)
+// ]
 
 type initialize_params  is [@layout:comb] record [
   a_constant              : nat;
@@ -348,9 +349,8 @@ type claim_by_token_params is [@layout:comb] record [
   amount: nat;
 ]
 
-type claim_by_pool_token_id_params is [@layout:comb] record [
+type un_stake_params is [@layout:comb] record [
   pool_id: pool_id_type;
-  token_index: token_pool_index;
   amount: nat;
 ]
 
@@ -372,7 +372,6 @@ type action_type        is
 (* Admin actions *)
 | ClaimDeveloper          of claim_by_token_params
 | ClaimReferral           of claim_by_token_params
-| ClaimStaking            of claim_by_pool_token_id_params
 | ClaimLProvider          of claim_by_pool_token_params
 | RampA                   of ramp_a_params
 | StopRampA               of nat
@@ -380,9 +379,11 @@ type action_type        is
 | UpdateProxyLimits       of upd_proxy_lim_params
 | SetFees                 of set_fee_type
 | SetDefaultReferral      of address
+| Stake                   of un_stake_params
+| Unstake                 of un_stake_params
 (* VIEWS *)
-| GetTokensInfo            of reserves_type      (* returns the token info *)
-| GetFees                of get_fee_type
+| GetTokensInfo           of reserves_type      (* returns the token info *)
+| GetFees                 of get_fee_type
 // | Min_received            of min_received_type  (* returns minReceived tokens after swapping *)
 // | Tokens_per_shares       of tps_type           (* returns map of tokens amounts to recieve 1 LP *)
 // | Price_cummulative       of price_cumm_type    (* returns price cumulative and timestamp per block *)
