@@ -179,7 +179,7 @@ type storage_type       is [@layout:comb] record [
   (* Rewards and accumulators *)
   dev_rewards             : big_map(token_type, nat);
   referral_rewards        : big_map((address * token_type), nat);
-  quipu_token             : Fa2;
+  quipu_token             : fa2_token_type;
   stakers_balance         : big_map((address * pool_id_type), staker_info_type); (**)
 
   (* Permits *)

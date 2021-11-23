@@ -522,12 +522,12 @@ function harvest_staker_rewards(
   var info          : staker_info_type;
   var operations    : list(operation);
   const accumulator : staker_acc_type;
-  const tokens      : tokens_type
+  const tokens      : option(tokens_type)
   )                 : staker_info_type * list(operation) is
   block {
     const staker_balance = info.balance;
     function fold_rewards(
-      const acc: record [
+      var acc: record [
         op: list(operation);
         earnings: map(token_pool_index, acc_reward_type);
       ];
@@ -553,6 +553,6 @@ function harvest_staker_rewards(
           get_token_by_id(i, tokens)
         ) # acc.op;
     } with acc;
-    const harvest = Map.fold(fold_rewards, info, record[op=operations; earnings=info.earnings])
+    const harvest = Map.fold(fold_rewards, info.earnings, record[op=operations; earnings=info.earnings])
   } with (info with record[earnings=harvest.earnings;], harvest.op)
 
