@@ -445,14 +445,14 @@ function preform_swap(
           const diff = abs(ideal_balance - token_info.virtual_reserves);
           const to_dev = diff * divide_fee_for_balance(fees.dev_fee, tokens_count) / CONSTANTS.fee_denominator;
           const to_ref = diff * divide_fee_for_balance(fees.ref_fee, tokens_count) / CONSTANTS.fee_denominator;
-          const to_lp = diff * divide_fee_for_balance(fees.lp_fee, tokens_count) / CONSTANTS.fee_denominator;
+          var to_lp := diff * divide_fee_for_balance(fees.lp_fee, tokens_count) / CONSTANTS.fee_denominator;
           var to_stakers := 0n;
           if acc.staker_accumulator.total_staked =/= 0n
             then {
               to_stakers := diff * divide_fee_for_balance(fees.stakers_fee, tokens_count) / CONSTANTS.fee_denominator;
               acc.staker_accumulator.accumulator[i] := unwrap_or(acc.staker_accumulator.accumulator[i], 0n) + to_stakers * CONSTANTS.stkr_acc_precision / acc.staker_accumulator.total_staked;
             }
-          else skip;
+          else to_lp := to_lp + diff * divide_fee_for_balance(fees.stakers_fee, tokens_count) / CONSTANTS.fee_denominator;
           const token = get_token_by_id(i, tokens[params.pair_id]);
           acc.dev_rewards[token] := unwrap_or(acc.dev_rewards[token], 0n) + to_dev;
           acc.referral_rewards[(referral, token)] := unwrap_or(acc.referral_rewards[(referral, token)], 0n) + to_ref;
