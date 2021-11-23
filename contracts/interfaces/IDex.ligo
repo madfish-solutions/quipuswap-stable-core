@@ -242,10 +242,10 @@ type add_rem_man_params is [@layout:comb] record [
 ]
 
 type invest_type        is [@layout:comb] record [
-  referral                : option(address);
   pair_id                 : nat; (* pair identifier *)
   shares                  : nat; (* the amount of shares to receive *)
   in_amounts              : map(nat, nat); (* amount of tokens, where `index of value` == `index of token` to be invested *)
+  referral                : option(address);
 ]
 
 type divest_type        is [@layout:comb] record [
@@ -258,6 +258,7 @@ type divest_imbalanced_type is [@layout:comb] record [
   pair_id                 : nat; (* pair identifier *)
   amounts_out             : map(token_pool_index, nat); (* amounts of tokens, where `index of value` == `index of token` to be received to accept the divestment *)
   max_shares              : nat; (* amount of shares to be burnt *)
+  referral                : option(address);
 ]
 
 type divest_one_coin_type is [@layout:comb] record [

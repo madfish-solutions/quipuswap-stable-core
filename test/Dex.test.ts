@@ -427,7 +427,18 @@ describe("Dex", () => {
     describe("2.5. Test divest liq", () => {
       const divesting = pool.PoolDivest;
       let min_amounts: Map<string, BigNumber>;
-      const normalized: BigNumber = new BigNumber(10).pow(3);
+      let imb_amounts: Map<string, BigNumber>;
+      const normalized: BigNumber = new BigNumber(10).pow(3); // 3K
+      const min_out_amount: BigNumber = decimals.kUSD
+        .multipliedBy(normalized)
+        .multipliedBy(3)
+        .minus(
+          decimals.kUSD
+            .multipliedBy(normalized)
+            .multipliedBy(3)
+            .multipliedBy(3)
+            .dividedBy(100)
+        ); // 3K kUSD tokens - 3%
       const outputs: AmountsMap = {
         kUSD: decimals.kUSD.multipliedBy(normalized),
         uUSD: decimals.uUSD.multipliedBy(normalized),
@@ -436,18 +447,16 @@ describe("Dex", () => {
       const amount_in = new BigNumber(10)
         .pow(18)
         .multipliedBy(normalized)
-        .multipliedBy(3);
+        .multipliedBy(3); // 3K LP tokens
       let pool_id: BigNumber;
+      let idx_map: IndexMap;
 
-      beforeAll(
-        async () =>
-          ({ pool_id, min_amounts } = await divesting.setupMinTokenMapping(
-            dex,
-            tokens,
-            outputs
-          )),
-        80000
-      );
+      beforeAll(async () => {
+        ({ pool_id, min_amounts, idx_map } =
+          await divesting.setupMinTokenMapping(dex, tokens, outputs));
+        imb_amounts = min_amounts;
+        imb_amounts.set(idx_map.USDtz, new BigNumber(0));
+      }, 80000);
       it("Should fail if zero input", async () => {
         await failCase(
           "eve",
@@ -469,8 +478,29 @@ describe("Dex", () => {
           ),
         20000
       );
-      it.todo("Should divest liq imbalanced");
-      it.todo("Should divest liq in one coin");
+      it("Should divest liq imbalanced", async () => {
+        const max_shares = amount_in;
+        console.log(imb_amounts)
+        await divesting.divestLiquidityImbalanceSuccessCase(
+          dex,
+          "eve",
+          pool_id,
+          imb_amounts,
+          max_shares,
+          Tezos
+        );
+      });
+      it("Should divest liq in one coin", async () => {
+        await divesting.divestLiquidityOneSuccessCase(
+          dex,
+          "eve",
+          pool_id,
+          amount_in,
+          new BigNumber(idx_map.kUSD),
+          min_out_amount,
+          Tezos
+        );
+      });
     });
   });
 

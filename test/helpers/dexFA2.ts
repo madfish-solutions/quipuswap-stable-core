@@ -13,7 +13,7 @@ import {
   FA2TokenType,
   FeeType,
   LambdaFunctionType,
-  TokenInfo
+  TokenInfo,
 } from "./types";
 import { getLigo } from "./utils";
 import { execSync } from "child_process";
@@ -260,7 +260,7 @@ export class Dex extends TokenFA2 {
       in_amounts.set(key, value);
     });
     const operation = await this.contract.methods
-      .invest(refferal, poolId, minShares, in_amounts)
+      .invest(poolId, minShares, in_amounts, refferal)
       .send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
@@ -273,6 +273,35 @@ export class Dex extends TokenFA2 {
   ): Promise<TransactionOperation> {
     const operation = await this.contract.methods
       .divest(pairId, MichelsonMap.fromLiteral(mintokenAmounts), sharesBurned)
+      .send();
+    await confirmOperation(this.Tezos, operation.hash);
+    return operation;
+  }
+
+  async divestImbalanced(
+    pairId: BigNumber,
+    tokenAmounts: Map<string, BigNumber>,
+    maxSharesBurned: BigNumber
+  ): Promise<TransactionOperation> {
+    const operation = await this.contract.methods
+      .divestImbalanced(
+        pairId,
+        MichelsonMap.fromLiteral(tokenAmounts),
+        maxSharesBurned
+      )
+      .send();
+    await confirmOperation(this.Tezos, operation.hash);
+    return operation;
+  }
+
+  async divestOneCoin(
+    pairId: BigNumber,
+    sharesBurned: BigNumber,
+    tokenIdx: BigNumber,
+    mintokenAmount: BigNumber
+  ): Promise<TransactionOperation> {
+    const operation = await this.contract.methods
+      .divestOneCoin(pairId, sharesBurned, tokenIdx, mintokenAmount)
       .send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
