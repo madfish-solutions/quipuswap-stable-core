@@ -453,11 +453,10 @@ type add_liq_param_type is record [
 // const fee_denom           : nat = 1000n;
 // const fee_num             : nat = 997n;
 type bal_inp_acc_type   is record [
+  dev_rewards             : big_map(token_type, nat);
+  referral_rewards        : big_map((address * token_type), nat);
+  staker_accumulator      : staker_acc_type;
   tokens_info             : map(token_pool_index, token_info_type);
-  fees                    : map(token_pool_index, record[
-    dev                     : nat;
-    ref                     : nat;
-    stkr                    : nat;
-  ])
+  tokens_info_without_lp  : map(token_pool_index, token_info_type);
 ]
 

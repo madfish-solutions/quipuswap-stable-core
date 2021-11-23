@@ -407,12 +407,10 @@ function preform_swap(
       pair.future_A_time,
       pair.future_A
     );
-    const fees = pair.fee;
-    const stkr_acc = pair.staker_accumulator;
     // Initial invariant
     const init_tokens_info = pair.tokens_info;
-    const tokens_count = Map.size(pair.tokens_info);
-    const d0 = _get_D_mem(pair.tokens_info, amp);
+    const tokens_count = Map.size(init_tokens_info);
+    const d0 = _get_D_mem(init_tokens_info, amp);
     const token_supply = pair.total_supply;
     function add_inputs(
       const key       : token_pool_index;
@@ -420,14 +418,12 @@ function preform_swap(
                       : token_info_type is
       block {
         const input = unwrap_or(params.inputs[key], 0n);
-        if token_supply=0n
-          then assert_with_error(input > 0n, ERRORS.zero_in)
-        else skip;
+        assert_with_error(token_supply =/= 0n or input > 0n, ERRORS.zero_in);
         token_info.virtual_reserves := token_info.virtual_reserves + input;
         token_info.reserves := token_info.reserves + input;
       } with token_info;
-    var new_tokens_info := Map.map(add_inputs, pair.tokens_info);
 
+    var new_tokens_info := Map.map(add_inputs, init_tokens_info);
     const d1 = _get_D_mem(new_tokens_info, amp);
 
     assert_with_error(d1 > d0, ERRORS.zero_in);
@@ -436,6 +432,9 @@ function preform_swap(
 
     if token_supply > 0n
     then {
+      const fees = pair.fee;
+      const referral: address = unwrap_or(params.referral, s.default_referral);
+      const tokens = s.tokens;
       // Only account for fees if we are not the first to deposit
       function balance_inputs(var acc: bal_inp_acc_type; const entry: token_pool_index * token_info_type): bal_inp_acc_type is
         block {
@@ -446,71 +445,39 @@ function preform_swap(
           const diff = abs(ideal_balance - token_info.virtual_reserves);
           const to_dev = diff * divide_fee_for_balance(fees.dev_fee, tokens_count) / CONSTANTS.fee_denominator;
           const to_ref = diff * divide_fee_for_balance(fees.ref_fee, tokens_count) / CONSTANTS.fee_denominator;
+          const to_lp = diff * divide_fee_for_balance(fees.lp_fee, tokens_count) / CONSTANTS.fee_denominator;
           var to_stakers := 0n;
-          if stkr_acc.total_staked =/= 0n
-            then to_stakers := diff * divide_fee_for_balance(fees.stakers_fee, tokens_count) / CONSTANTS.fee_denominator
+          if acc.staker_accumulator.total_staked =/= 0n
+            then {
+              to_stakers := diff * divide_fee_for_balance(fees.stakers_fee, tokens_count) / CONSTANTS.fee_denominator;
+              acc.staker_accumulator.accumulator[i] := unwrap_or(acc.staker_accumulator.accumulator[i], 0n) + to_stakers * CONSTANTS.stkr_acc_precision / acc.staker_accumulator.total_staked;
+            }
           else skip;
+          const token = get_token_by_id(i, tokens[params.pair_id]);
+          acc.dev_rewards[token] := unwrap_or(acc.dev_rewards[token], 0n) + to_dev;
+          acc.referral_rewards[(referral, token)] := unwrap_or(acc.referral_rewards[(referral, token)], 0n) + to_ref;
+
           token_info.reserves := nat_or_error(token_info.reserves - to_dev - to_ref - to_stakers, ERRORS.low_virtual_reserves);
           token_info.virtual_reserves := nat_or_error(token_info.virtual_reserves - to_dev - to_ref - to_stakers, ERRORS.low_virtual_reserves);
           acc.tokens_info[i] := token_info;
-          acc.fees[i] := record[
-            dev = to_dev;
-            ref = to_ref;
-            stkr = to_stakers;
-          ]
+          token_info.reserves := nat_or_error(token_info.reserves - to_lp, ERRORS.low_virtual_reserves);
+          token_info.virtual_reserves := nat_or_error(token_info.virtual_reserves - to_lp, ERRORS.low_virtual_reserves);
+          acc.tokens_info_without_lp[i] := token_info;
       } with acc;
 
       const balanced = Map.fold(balance_inputs, new_tokens_info, record[
+        dev_rewards = s.dev_rewards;
+        referral_rewards = s.referral_rewards;
+        staker_accumulator = pair.staker_accumulator;
         tokens_info = new_tokens_info;
-        fees = (map[]: map(token_pool_index, record[
-            dev :nat;
-            ref :nat;
-            stkr:nat;
-          ]))
+        tokens_info_without_lp = new_tokens_info;
       ]);
-
-      const referral: address = unwrap_or(params.referral, s.default_referral);
-      const tokens = s.tokens;
-
-      function set_stkr_rew(var acc: staker_acc_type; var entry: token_pool_index * record[
-            dev :nat;
-            ref :nat;
-            stkr:nat;
-          ]): staker_acc_type is
-        block {
-          acc.accumulator[entry.0] := unwrap_or(acc.accumulator[entry.0], 0n) + entry.1.stkr * CONSTANTS.stkr_acc_precision / acc.total_staked;
-      } with acc;
-      function set_dev_rew(
-        var acc: big_map(token_type, nat);
-        const entry: token_pool_index * record[
-            dev   :nat;
-            ref   :nat;
-            stkr  :nat;
-          ]): big_map(token_type, nat) is block {
-            const token = get_token_by_id(entry.0, tokens[params.pair_id]);
-            acc[token] := unwrap_or(acc[token], 0n) + entry.1.dev;
-            // acc.1[(referral, token)] := unwrap_or(acc.1[(referral, token)], 0n) + entry.1.ref;
-      } with acc;
-      function set_ref_rew(
-        var acc: big_map((address * token_type), nat);
-        const entry: token_pool_index * record[
-            dev   :nat;
-            ref   :nat;
-            stkr  :nat;
-          ]): big_map((address * token_type), nat) is block {
-            const token = get_token_by_id(entry.0, tokens[params.pair_id]);
-            // acc.0[token] := unwrap_or(acc.0[token], 0n) + entry.1.dev;
-            acc[(referral, token)] := unwrap_or(acc[(referral, token)], 0n) + entry.1.ref;
-      } with acc;
-      // const dev_ref = Map.fold(set_dev_ref_rew, balanced.fees, (s.dev_rewards * s.referral_rewards));
-      if pair.staker_accumulator.total_staked > 0n
-        then pair.staker_accumulator := Map.fold(set_stkr_rew, balanced.fees, pair.staker_accumulator)
-      else skip;
+      s.dev_rewards := balanced.dev_rewards;
+      s.referral_rewards := balanced.referral_rewards;
+      pair.staker_accumulator := balanced.staker_accumulator;
       pair.tokens_info := balanced.tokens_info;
-      const d2 = _get_D_mem(pair.tokens_info, amp);
+      const d2 = _get_D_mem(balanced.tokens_info_without_lp, amp);
       mint_amount := token_supply * nat_or_error(d2 - d0, "d2<d0") / d0;
-      s.dev_rewards := Map.fold(set_dev_rew, balanced.fees, s.dev_rewards);
-      s.referral_rewards := Map.fold(set_ref_rew, balanced.fees, s.referral_rewards);
     }
     else {
       pair.tokens_info := new_tokens_info;
