@@ -504,12 +504,14 @@ function preform_swap(
 
     const tokens = s.tokens;
     function transfer_to_pool(const operations : list(operation); const input : nat * nat) : list(operation) is
-        typed_transfer(
+      if input.1 > 0n
+        then typed_transfer(
           Tezos.sender,
           Tezos.self_address,
           input.1,
           get_token_by_id(input.0, tokens[params.pair_id])
-        ) # operations;
+        ) # operations
+      else operations;
     pair.total_supply := pair.total_supply + mint_amount;
     const user_key = (Tezos.sender, params.pair_id);
     s.ledger[user_key] := unwrap_or(s.ledger[user_key], 0n) + mint_amount;
