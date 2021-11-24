@@ -280,7 +280,7 @@ function divest_imbalanced(
         // Initial invariant
         const init_tokens_info = pair.tokens_info;
         const tokens_count = Map.size(init_tokens_info);
-        const d0 = _get_D_mem(pair.tokens_info, amp);
+        const d0 = _get_D_mem(init_tokens_info, amp);
         var token_supply := pair.total_supply;
         function min_inputs (var acc : tmp_imbalance_type; var value : (token_pool_index * token_info_type)) : tmp_imbalance_type is
           block{
@@ -307,8 +307,8 @@ function divest_imbalanced(
                 get_token_by_id(value.0, Some(tokens))
               ) # acc.operations;
           } with acc;
-        const result = Map.fold(min_inputs, pair.tokens_info, record [
-          tokens_info = pair.tokens_info;
+        const result = Map.fold(min_inputs, init_tokens_info, record [
+          tokens_info = init_tokens_info;
           operations = operations;
         ]);
         var new_tokens_info := result.tokens_info;
