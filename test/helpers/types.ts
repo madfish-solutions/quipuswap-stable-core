@@ -78,7 +78,7 @@ export declare type DexStorage = {
     account_data: {
       [key: string]: {
         allowances: { [key: string]: Array<string> };
-        earned_interest: { [key: string]: ProviderReward; };
+        earned_interest: { [key: string]: ProviderReward };
       };
     };
     dev_rewards: { [key: string]: BigNumber };

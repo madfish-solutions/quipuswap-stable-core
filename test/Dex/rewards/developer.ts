@@ -42,7 +42,7 @@ export async function getDeveloperRewardsSuccessCase(
     fa12: tokens.USDtz.contract.address,
   });
   expect(USDtzRewards.dividedBy(decimals.USDtz).toNumber()).toBeCloseTo(
-    expectedRewardNormalized.plus(26.5).toNumber(), // approx. from invests / divests and swaps before
+    expectedRewardNormalized.plus(26.6).toNumber(), // approx. from invests / divests and swaps before
     1
   );
   printFormattedOutput(global.startTime, USDtzRewards.toFormat());
@@ -52,7 +52,7 @@ export async function getDeveloperRewardsSuccessCase(
   printFormattedOutput(global.startTime, kUSDRewards.toFormat());
   expect(kUSDRewards.dividedBy(decimals.kUSD).toNumber()).toBeCloseTo(
     expectedRewardNormalized
-      .plus(13.43) // approx. from invests / divests and swaps before
+      .plus(13.35) // approx. from invests / divests and swaps before
       .toNumber(),
     1
   );
@@ -64,7 +64,9 @@ export async function getDeveloperRewardsSuccessCase(
   });
   printFormattedOutput(global.startTime, uUSDRewards.toFormat());
   expect(uUSDRewards.dividedBy(decimals.uUSD).toNumber()).toBeCloseTo(
-    expectedRewardNormalized.plus(13.43).toNumber(), // approx. from invests / divests and swaps before
+    expectedRewardNormalized
+      .plus(13.35) // approx. from invests / divests and swaps before
+      .toNumber(),
     1
   );
   const init_rewards = {
