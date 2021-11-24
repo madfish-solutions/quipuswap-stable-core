@@ -200,6 +200,12 @@ type tmp_get_d_type     is [@layout:comb] record [
   d                       : nat;
   prev_d                  : nat;
 ]
+
+type tmp_imbalance_type     is record [
+  tokens_info             : map(token_pool_index, token_info_type);
+  operations              : list(operation);
+];
+
 // type swap_slice_type    is record [
 //   pair_id                 : nat; (* pair identifier *)
 //   operation               : swap_type; (* exchange operation *)
@@ -242,10 +248,10 @@ type add_rem_man_params is [@layout:comb] record [
 ]
 
 type invest_type        is [@layout:comb] record [
-  referral                : option(address);
   pair_id                 : nat; (* pair identifier *)
   shares                  : nat; (* the amount of shares to receive *)
   in_amounts              : map(nat, nat); (* amount of tokens, where `index of value` == `index of token` to be invested *)
+  referral                : option(address);
 ]
 
 type divest_type        is [@layout:comb] record [
@@ -258,6 +264,7 @@ type divest_imbalanced_type is [@layout:comb] record [
   pair_id                 : nat; (* pair identifier *)
   amounts_out             : map(token_pool_index, nat); (* amounts of tokens, where `index of value` == `index of token` to be received to accept the divestment *)
   max_shares              : nat; (* amount of shares to be burnt *)
+  referral                : option(address);
 ]
 
 type divest_one_coin_type is [@layout:comb] record [
@@ -265,6 +272,7 @@ type divest_one_coin_type is [@layout:comb] record [
   shares                  : nat; (* amount of shares to be burnt *)
   token_index             : token_pool_index;
   min_amount_out          : nat;
+  referral                : option(address);
 ]
 
 type reserves_type      is [@layout:comb] record [
@@ -452,11 +460,10 @@ type add_liq_param_type is record [
 // const fee_denom           : nat = 1000n;
 // const fee_num             : nat = 997n;
 type bal_inp_acc_type   is record [
+  dev_rewards             : big_map(token_type, nat);
+  referral_rewards        : big_map((address * token_type), nat);
+  staker_accumulator      : staker_acc_type;
   tokens_info             : map(token_pool_index, token_info_type);
-  fees                    : map(token_pool_index, record[
-    dev                     : nat;
-    ref                     : nat;
-    stkr                    : nat;
-  ])
+  tokens_info_without_lp  : map(token_pool_index, token_info_type);
 ]
 

@@ -13,7 +13,7 @@ import {
   FA2TokenType,
   FeeType,
   LambdaFunctionType,
-  TokenInfo
+  TokenInfo,
 } from "./types";
 import { getLigo } from "./utils";
 import { execSync } from "child_process";
@@ -40,8 +40,8 @@ export class Dex extends TokenFA2 {
 
   static async init(tezos: TezosToolkit, dexAddress: string): Promise<Dex> {
     const dex = new Dex(tezos, await tezos.contract.at(dexAddress));
-    // await dex.setFunctionBatchCompilled("Token", token_lambdas_comp);
-    await dex.setFunctionBatchCompilled("Dex", dex_lambdas_comp);
+    // await dex.setFunctionBatchCompilled("Token", 2, token_lambdas_comp);
+    await dex.setFunctionBatchCompilled("Dex", 4, dex_lambdas_comp);
     return dex;
   }
 
@@ -260,7 +260,7 @@ export class Dex extends TokenFA2 {
       in_amounts.set(key, value);
     });
     const operation = await this.contract.methods
-      .invest(refferal, poolId, minShares, in_amounts)
+      .invest(poolId, minShares, in_amounts, refferal)
       .send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
@@ -271,8 +271,45 @@ export class Dex extends TokenFA2 {
     mintokenAmounts: Map<string, BigNumber>,
     sharesBurned: BigNumber
   ): Promise<TransactionOperation> {
+    const amts = new MichelsonMap<string, BigNumber>();
+    mintokenAmounts.forEach((value, key) => {
+      amts.set(key, value);
+      console.log(key, value);
+    });
     const operation = await this.contract.methods
-      .divest(pairId, MichelsonMap.fromLiteral(mintokenAmounts), sharesBurned)
+      .divest(pairId, amts, sharesBurned)
+      .send();
+    await confirmOperation(this.Tezos, operation.hash);
+    return operation;
+  }
+
+  async divestImbalanced(
+    pairId: BigNumber,
+    tokenAmounts: Map<string, BigNumber>,
+    maxSharesBurned: BigNumber,
+    referral: string = null
+  ): Promise<TransactionOperation> {
+    const amts = new MichelsonMap<string, BigNumber>();
+    tokenAmounts.forEach((value, key) => {
+      amts.set(key, value);
+      console.log(key, value);
+    });
+
+    const operation = await this.contract.methods
+      .divestImbalanced(pairId, amts, maxSharesBurned, referral)
+      .send();
+    await confirmOperation(this.Tezos, operation.hash);
+    return operation;
+  }
+
+  async divestOneCoin(
+    pairId: BigNumber,
+    sharesBurned: BigNumber,
+    tokenIdx: BigNumber,
+    mintokenAmount: BigNumber,
+  ): Promise<TransactionOperation> {
+    const operation = await this.contract.methods
+      .divestOneCoin(pairId, sharesBurned, tokenIdx, mintokenAmount)
       .send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
@@ -355,6 +392,7 @@ export class Dex extends TokenFA2 {
   }
   async setFunctionBatchCompilled(
     type: "Dex" | "Token",
+    batchBy: number,
     comp_funcs_map
   ): Promise<void> {
     let batch = this.Tezos.contract.batch();
@@ -370,7 +408,7 @@ export class Dex extends TokenFA2 {
       });
       idx = idx + 1;
       console.log(idx, type, lambdaFunction.args[1].int);
-      if (idx % 4 == 0 || idx == comp_funcs_map.length) {
+      if (idx % batchBy == 0 || idx == comp_funcs_map.length) {
         const batchOp = await batch.send();
         console.log(`${idx}/${comp_funcs_map.length}`, batchOp.hash);
         await confirmOperation(this.Tezos, batchOp.hash);

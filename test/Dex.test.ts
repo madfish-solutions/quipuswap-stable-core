@@ -352,7 +352,42 @@ describe("Dex", () => {
         );
       }, 30000);
 
-      it.todo("Should invest liq imbalanced");
+      it("Should invest liq imbalanced", async () => {
+        await dex.updateStorage({
+          tokens: [pool_id.toString()],
+          pools: [pool_id.toString()],
+        });
+        const tokens_map = dex.storage.storage.tokens[
+          pool_id.toNumber()
+        ] as any as Map<string, FA2TokenType | FA12TokenType>;
+        const idx_map = mapTokensToIdx(tokens_map, tokens);
+        const USDtz_amt = amounts.get(idx_map.USDtz);
+        let in_amt = amounts.set(idx_map.USDtz, new BigNumber(0));
+        min_shares = min_shares.multipliedBy(2).dividedToIntegerBy(3);
+        await invest.investLiquiditySuccessCase(
+          dex,
+          sender,
+          pool_id,
+          referral,
+          min_shares,
+          in_amt,
+          Tezos
+        );
+        let USDtz_in = new Map<string, BigNumber>().set(
+          idx_map.USDtz,
+          USDtz_amt
+        );
+        min_shares = min_shares.dividedToIntegerBy(2);
+        await invest.investLiquiditySuccessCase(
+          dex,
+          sender,
+          pool_id,
+          referral,
+          min_shares,
+          USDtz_in,
+          Tezos
+        );
+      });
     });
 
     describe("2.4. Test swap", () => {
@@ -364,7 +399,7 @@ describe("Dex", () => {
         uUSD: decimals.uUSD.multipliedBy(normalized),
         USDtz: decimals.USDtz.multipliedBy(normalized),
       };
-      const referral = aliceAddress;
+      const referral = eveAddress;
 
       let pool_id: BigNumber;
       let amounts: Map<string, BigNumber>;
@@ -427,7 +462,18 @@ describe("Dex", () => {
     describe("2.5. Test divest liq", () => {
       const divesting = pool.PoolDivest;
       let min_amounts: Map<string, BigNumber>;
-      const normalized: BigNumber = new BigNumber(10).pow(3);
+      let imb_amounts: Map<string, BigNumber>;
+      const normalized: BigNumber = new BigNumber(10).pow(3); // 3K
+      const min_out_amount: BigNumber = decimals.kUSD
+        .multipliedBy(normalized)
+        .multipliedBy(3)
+        .minus(
+          decimals.kUSD
+            .multipliedBy(normalized)
+            .multipliedBy(3)
+            .multipliedBy(3)
+            .dividedBy(100)
+        ); // 3K kUSD tokens - 3% (slippage)
       const outputs: AmountsMap = {
         kUSD: decimals.kUSD.multipliedBy(normalized),
         uUSD: decimals.uUSD.multipliedBy(normalized),
@@ -436,18 +482,18 @@ describe("Dex", () => {
       const amount_in = new BigNumber(10)
         .pow(18)
         .multipliedBy(normalized)
-        .multipliedBy(3);
+        .multipliedBy(3); // 3K LP tokens
       let pool_id: BigNumber;
+      let idx_map: IndexMap;
 
-      beforeAll(
-        async () =>
-          ({ pool_id, min_amounts } = await divesting.setupMinTokenMapping(
-            dex,
-            tokens,
-            outputs
-          )),
-        80000
-      );
+      beforeAll(async () => {
+        ({ pool_id, min_amounts, idx_map } =
+          await divesting.setupMinTokenMapping(dex, tokens, outputs));
+        imb_amounts = new Map<string, BigNumber>();
+        imb_amounts.set(idx_map.USDtz, new BigNumber(0));
+        imb_amounts.set(idx_map.kUSD, outputs.kUSD);
+        imb_amounts.set(idx_map.uUSD, outputs.uUSD);
+      }, 80000);
       it("Should fail if zero input", async () => {
         await failCase(
           "eve",
@@ -469,8 +515,28 @@ describe("Dex", () => {
           ),
         20000
       );
-      it.todo("Should divest liq imbalanced");
-      it.todo("Should divest liq in one coin");
+      it("Should divest liq imbalanced", async () => {
+        console.log(imb_amounts);
+        await divesting.divestLiquidityImbalanceSuccessCase(
+          dex,
+          "eve",
+          pool_id,
+          imb_amounts,
+          amount_in,
+          Tezos
+        );
+      });
+      it("Should divest liq in one coin", async () => {
+        await divesting.divestLiquidityOneSuccessCase(
+          dex,
+          "eve",
+          pool_id,
+          amount_in,
+          new BigNumber(idx_map.kUSD),
+          min_out_amount,
+          Tezos
+        );
+      });
     });
   });
 

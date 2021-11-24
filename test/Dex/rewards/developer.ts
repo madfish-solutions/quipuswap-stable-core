@@ -21,7 +21,6 @@ export async function getDeveloperRewardsSuccessCase(
   const expectedRewardNormalized = new BigNumber(10)
     .pow(4)
     .multipliedBy(batchTimes)
-    .plus(new BigNumber(10).pow(2))
     .multipliedBy(2) // swap in 2 ways
     .multipliedBy(5)
     .dividedBy(100000); // 0.005% of swap
@@ -43,7 +42,8 @@ export async function getDeveloperRewardsSuccessCase(
     fa12: tokens.USDtz.contract.address,
   });
   expect(USDtzRewards.dividedBy(decimals.USDtz).toNumber()).toBeCloseTo(
-    expectedRewardNormalized.toNumber()
+    expectedRewardNormalized.plus(26.6).toNumber(), // approx. from invests / divests and swaps before
+    1
   );
   printFormattedOutput(global.startTime, USDtzRewards.toFormat());
   const kUSDRewards = await dev_stor.get({
@@ -51,7 +51,10 @@ export async function getDeveloperRewardsSuccessCase(
   });
   printFormattedOutput(global.startTime, kUSDRewards.toFormat());
   expect(kUSDRewards.dividedBy(decimals.kUSD).toNumber()).toBeCloseTo(
-    expectedRewardNormalized.toNumber()
+    expectedRewardNormalized
+      .plus(13.35) // approx. from invests / divests and swaps before
+      .toNumber(),
+    1
   );
   const uUSDRewards = await dev_stor.get({
     fa2: {
@@ -61,7 +64,10 @@ export async function getDeveloperRewardsSuccessCase(
   });
   printFormattedOutput(global.startTime, uUSDRewards.toFormat());
   expect(uUSDRewards.dividedBy(decimals.uUSD).toNumber()).toBeCloseTo(
-    expectedRewardNormalized.toNumber()
+    expectedRewardNormalized
+      .plus(13.35) // approx. from invests / divests and swaps before
+      .toNumber(),
+    1
   );
   const init_rewards = {
     USDtz: USDtzRewards,

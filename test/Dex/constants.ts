@@ -21,4 +21,5 @@ export const accounts = config.sandbox.accounts;
 
 export const zero_amount = new BigNumber("0");
 
-export const a_const = new BigNumber("2000");
+export const a_const = new BigNumber("2000") //A const *
+  .multipliedBy(new BigNumber(3).pow(3 - 1));// n^(n-1)
