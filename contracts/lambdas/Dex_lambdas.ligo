@@ -300,12 +300,14 @@ function divest_imbalanced(
                 ERRORS.low_reserves
               );
             acc.tokens_info[value.0] := value.1;
-            acc.operations := typed_transfer(
+            if amount_out > 0n
+              then acc.operations := typed_transfer(
                 Tezos.self_address,
                 receiver,
                 amount_out,
                 get_token_by_id(value.0, Some(tokens))
               ) # acc.operations;
+            else skip;
           } with acc;
         const result = Map.fold(min_inputs, init_tokens_info, record [
           tokens_info = init_tokens_info;
@@ -399,36 +401,42 @@ function divest_one_coin(
       const result = _calc_withdraw_one_coin(amp, params.shares, params.token_index, pool);
 
       const dev_fee = result.dy_fee * pool.fee.dev_fee / sum_all_fee(pool.fee);
+      const ref_fee = result.dy_fee * pool.fee.ref_fee / sum_all_fee(pool.fee);
       var stkr_fee := 0n;
       if pool.staker_accumulator.total_staked >= 0n
         then stkr_fee := result.dy_fee * pool.fee.stakers_fee / sum_all_fee(pool.fee)
       else skip;
 
-      assert_with_error(result.dy >= params.min_amount_out, "Not enough coins removed");
+      assert_with_error(result.dy >= params.min_amount_out, ERRORS.high_min_out);
 
       var info := unwrap(pool.tokens_info[params.token_index], ERRORS.no_token_info);
 
-      info.virtual_reserves := nat_or_error(info.virtual_reserves - (result.dy + dev_fee + stkr_fee), "Not enough reserves");
-      info.reserves := nat_or_error(info.reserves - (result.dy + dev_fee + stkr_fee), "Not enough reserves");
+      info.virtual_reserves := nat_or_error(info.virtual_reserves - (result.dy + dev_fee + stkr_fee), ERRORS.low_virtual_reserves);
+      info.reserves := nat_or_error(info.reserves - (result.dy + dev_fee + stkr_fee), ERRORS.low_reserves);
 
       pool.tokens_info[params.token_index] := info;
-
-      const new_acc_bal = unwrap_or(s.ledger[sender_key], 0n) - params.shares;
+      const acc_bal = unwrap_or(s.ledger[sender_key], 0n);
+      check_balance(acc_bal, params.shares);
+      const new_acc_bal = acc_bal - params.shares;
       if pool.staker_accumulator.total_staked > 0n
       then pool.staker_accumulator.accumulator[params.token_index] := unwrap_or(pool.staker_accumulator.accumulator[params.token_index], 0n)
         + stkr_fee * CONSTANTS.stkr_acc_precision / pool.staker_accumulator.total_staked;
       else skip;
-      s.ledger[sender_key] := nat_or_error(new_acc_bal, "Not enough balance");
+      s.ledger[sender_key] := unwrap_or(is_nat(new_acc_bal), 0n); // already checked for nat at check_balance
       s.dev_rewards[token] := unwrap_or(s.dev_rewards[token], 0n) + dev_fee;
+      const referral: address = unwrap_or(params.referral, s.default_referral);
+      s.referral_rewards[(referral, token)] := unwrap_or(s.referral_rewards[(referral, token)], 0n) + ref_fee;
       s.pools[params.pair_id] := pool with record [
           total_supply  = result.ts;
         ];
-      operations := typed_transfer(
+      if result.dy > 0n
+        then operations := typed_transfer(
           Tezos.self_address,
           Tezos.sender,
           result.dy,
           get_token_by_id(params.token_index, s.tokens[params.pair_id])
         ) # operations;
+      else skip;
     }
     | _ -> skip
     end;

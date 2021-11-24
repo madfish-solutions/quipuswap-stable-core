@@ -40,7 +40,7 @@ export class Dex extends TokenFA2 {
 
   static async init(tezos: TezosToolkit, dexAddress: string): Promise<Dex> {
     const dex = new Dex(tezos, await tezos.contract.at(dexAddress));
-    // await dex.setFunctionBatchCompilled("Token", token_lambdas_comp);
+    // await dex.setFunctionBatchCompilled("Token", 2, token_lambdas_comp);
     await dex.setFunctionBatchCompilled("Dex", 4, dex_lambdas_comp);
     return dex;
   }

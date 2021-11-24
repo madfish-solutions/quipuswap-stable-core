@@ -272,6 +272,7 @@ type divest_one_coin_type is [@layout:comb] record [
   shares                  : nat; (* amount of shares to be burnt *)
   token_index             : token_pool_index;
   min_amount_out          : nat;
+  referral                : option(address);
 ]
 
 type reserves_type      is [@layout:comb] record [
