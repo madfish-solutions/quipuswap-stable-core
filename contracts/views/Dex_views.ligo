@@ -68,19 +68,19 @@ function get_tokens_info(
 
 (* Calculate the amount received when withdrawing a single coin *)
 [@inline]
-function calc_withdraw_one_coin(
+function calc_withdraw_one_coin_view(
   const params          : calc_w_one_c_params;
   const s               : full_storage_type)
                         : full_return_type is
   block {
     const pair : pair_type = unwrap(s.storage.pools[params.pair_id], ERRORS.pair_not_listed);
-    const amp : nat =  _A(
+    const amp : nat =  get_A(
       pair.initial_A_time,
       pair.initial_A,
       pair.future_A_time,
       pair.future_A
     );
-    const result = _calc_withdraw_one_coin(
+    const result = calc_withdraw_one_coin(
       amp,
       params.token_amount,
       params.i,
@@ -105,7 +105,7 @@ function get_dy(
     case p of
       GetDy(params) -> {
         const pair : pair_type = unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
-        const xp: map(nat, nat) = _xp(pair);
+        const xp: map(nat, nat) = xp(pair);
         const xp_i = unwrap(xp[params.i], ERRORS.wrong_index);
         const xp_j = unwrap(xp[params.j], ERRORS.wrong_index);
         const token_info_i = unwrap(pair.tokens_info[params.i], ERRORS.wrong_index);
@@ -122,7 +122,7 @@ function get_dy(
 
 (* 20n Get A constant *)
 [@inline]
-function get_A(
+function get_A_view(
   const p               : action_type;
   var s                 : storage_type)
                         : return_type is
@@ -131,7 +131,7 @@ function get_A(
     case p of
       GetA(params) -> {
       const pair : pair_type = unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
-      operations := Tezos.transaction(_A(
+      operations := Tezos.transaction(get_A(
         pair.initial_A_time,
         pair.initial_A,
         pair.future_A_time,

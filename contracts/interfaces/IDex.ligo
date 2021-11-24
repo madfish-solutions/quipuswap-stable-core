@@ -200,6 +200,12 @@ type tmp_get_d_type     is [@layout:comb] record [
   d                       : nat;
   prev_d                  : nat;
 ]
+
+type tmp_imbalance_type     is record [
+  tokens_info             : map(token_pool_index, token_info_type);
+  operations              : list(operation);
+];
+
 // type swap_slice_type    is record [
 //   pair_id                 : nat; (* pair identifier *)
 //   operation               : swap_type; (* exchange operation *)
@@ -266,6 +272,7 @@ type divest_one_coin_type is [@layout:comb] record [
   shares                  : nat; (* amount of shares to be burnt *)
   token_index             : token_pool_index;
   min_amount_out          : nat;
+  referral                : option(address);
 ]
 
 type reserves_type      is [@layout:comb] record [

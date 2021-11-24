@@ -1,6 +1,11 @@
 import BigNumber from "bignumber.js";
 import { MichelsonMap, TezosToolkit } from "@taquito/taquito";
-import { AccountsLiteral, mapTokensToIdx, prepareProviderOptions, printFormattedOutput } from "../../helpers/utils";
+import {
+  AccountsLiteral,
+  mapTokensToIdx,
+  prepareProviderOptions,
+  printFormattedOutput,
+} from "../../helpers/utils";
 import { Dex } from "../../helpers/dexFA2";
 import { accounts } from "../constants";
 import { FA12TokenType, FA2TokenType, TokenInfo } from "../../helpers/types";
@@ -73,10 +78,9 @@ export async function divestLiquiditySuccessCase(
     dex.storage.storage.pools[pool_id.toNumber()].total_supply
   );
   printFormattedOutput(global.startTime, updatedLPBalance.toFormat());
+  const upd_ledger = dex.storage.storage.ledger[accounts[sender].pkh];
   expect(updatedLPBalance.toNumber()).toBeLessThan(initLPBalance.toNumber());
-  expect(
-    dex.storage.storage.ledger[accounts[sender].pkh].plus(shares).toNumber()
-  ).toBe(init_ledger.toNumber()); //TODO: change to be calculated from inputs
+  expect(upd_ledger.plus(shares).toNumber()).toBe(init_ledger.toNumber()); //TODO: change to be calculated from inputs
   expect(updatedLPBalance.toNumber()).toBe(
     initLPBalance.minus(shares).toNumber()
   );
@@ -126,9 +130,10 @@ export async function divestLiquidityImbalanceSuccessCase(
     dex.storage.storage.pools[pool_id.toNumber()].total_supply
   );
   printFormattedOutput(global.startTime, updatedLPBalance.toFormat());
+  const upd_ledger = dex.storage.storage.ledger[accounts[sender].pkh];
   expect(updatedLPBalance.toNumber()).toBeLessThan(initLPBalance.toNumber());
-  expect(init_ledger.minus(max_shares).toNumber()).toBeGreaterThanOrEqual(
-    dex.storage.storage.ledger[accounts[sender].pkh].toNumber()
+  expect(upd_ledger.toNumber()).toBeGreaterThanOrEqual(
+    init_ledger.minus(max_shares).toNumber()
   ); //TODO: change to be calculated from inputs
   expect(updatedLPBalance.toNumber()).toBeGreaterThanOrEqual(
     initLPBalance.minus(max_shares).toNumber()
@@ -180,10 +185,9 @@ export async function divestLiquidityOneSuccessCase(
     dex.storage.storage.pools[pool_id.toNumber()].total_supply
   );
   printFormattedOutput(global.startTime, updatedLPBalance.toFormat());
+  const upd_ledger = dex.storage.storage.ledger[accounts[sender].pkh];
   expect(updatedLPBalance.toNumber()).toBeLessThan(initLPBalance.toNumber());
-  expect(
-    dex.storage.storage.ledger[accounts[sender].pkh].plus(shares).toNumber()
-  ).toBe(init_ledger.toNumber()); //TODO: change to be calculated from inputs
+  expect(upd_ledger.plus(shares).toNumber()).toBe(init_ledger.toNumber()); //TODO: change to be calculated from inputs
   expect(updatedLPBalance.toNumber()).toBe(
     initLPBalance.minus(shares).toNumber()
   );
