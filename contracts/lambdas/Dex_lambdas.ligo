@@ -278,31 +278,41 @@ function divest_imbalanced(
           pair.future_A
         );
         // Initial invariant
-         const init_tokens_info = pair.tokens_info;
+        const init_tokens_info = pair.tokens_info;
         const tokens_count = Map.size(init_tokens_info);
-        const d0 = _get_D_mem(pair.tokens_info, amp);
+        const d0 = _get_D_mem(init_tokens_info, amp);
         var token_supply := pair.total_supply;
-        function min_inputs (const key : token_pool_index; var value : token_info_type) : token_info_type is
+        function min_inputs (var acc : tmp_imbalance_type; var value : (token_pool_index * token_info_type)) : tmp_imbalance_type is
           block{
-            value.virtual_reserves := nat_or_error(
-              value.virtual_reserves -
-              unwrap_or(
-                params.amounts_out[key],
+            const amount_out : nat = unwrap_or(
+                params.amounts_out[value.0],
                 0n
-              ),
+              );
+            value.1.virtual_reserves := nat_or_error(
+              value.1.virtual_reserves -
+              amount_out,
               ERRORS.low_virtual_reserves
             );
-            value.reserves :=
+            value.1.reserves :=
               nat_or_error(
-                value.reserves -
-                unwrap_or(
-                  params.amounts_out[key],
-                  0n
-                ),
+                value.1.reserves -
+                amount_out,
                 ERRORS.low_reserves
               );
-          } with value;
-        var new_tokens_info := Map.map(min_inputs, pair.tokens_info);
+            acc.tokens_info[value.0] := value.1;
+            acc.operations := typed_transfer(
+                Tezos.self_address,
+                receiver,
+                amount_out,
+                get_token_by_id(value.0, Some(tokens))
+              ) # acc.operations;
+          } with acc;
+        const result = Map.fold(min_inputs, init_tokens_info, record [
+          tokens_info = init_tokens_info;
+          operations = operations;
+        ]);
+        var new_tokens_info := result.tokens_info;
+        operations := result.operations;
 
         const d1 = _get_D_mem(new_tokens_info, amp);
         const referral: address = unwrap_or(params.referral, s.default_referral);
@@ -347,24 +357,10 @@ function divest_imbalanced(
       ]);
       const d2 = _get_D_mem(balanced.tokens_info_without_lp, amp);
       var burn_amount := nat_or_error(d0 - d2, "d2>d0") * token_supply / d0;
-      if burn_amount = 0n
-        then failwith(ERRORS.zero_burn_amount)
-      else skip;
+      assert_with_error(burn_amount =/= 0n, ERRORS.zero_burn_amount);
       burn_amount := burn_amount + 1n; // In case of rounding errors - make it unfavorable for the "attacker"
       assert_with_error(burn_amount <= params.max_shares, ERRORS.low_max_shares_in);
       const new_shares = nat_or_error(share - burn_amount, ERRORS.insufficient_lp);
-      function add_ops(
-        var acc     : list(operation);
-        const entry : token_pool_index * nat
-        )           : list(operation) is
-        block {
-          acc := typed_transfer(
-              Tezos.self_address,
-              receiver,
-              entry.1,
-              get_token_by_id(entry.0, Some(tokens))
-            ) # acc;
-        } with acc;
       patch s with record [
         dev_rewards = balanced.dev_rewards;
         referral_rewards = balanced.referral_rewards;
@@ -375,8 +371,7 @@ function divest_imbalanced(
         total_supply = nat_or_error(pair.total_supply - burn_amount, "total_supply<burn_amount");
       ];
       s.pools[params.pair_id] := pair;
-      s.ledger[(receiver, params.pair_id)] := new_shares;
-      operations := Map.fold(add_ops, params.amounts_out, operations);
+      s.ledger[(Tezos.sender, params.pair_id)] := new_shares;
     }
     | _ -> skip
     end;
