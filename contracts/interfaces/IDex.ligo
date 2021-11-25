@@ -2,6 +2,8 @@ type pool_id_type       is nat
 type token_id_type      is nat
 type token_pool_index   is nat
 
+type add_rem_flag is Add | Remove
+
 type transfer_fa2_destination is [@layout:comb] record [
     to_       : address;
     token_id  : token_id_type;

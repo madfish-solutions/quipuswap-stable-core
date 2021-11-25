@@ -73,6 +73,7 @@ export class Dex extends TokenFA2 {
         referral_rewards: {},
         stakers_balance: {},
         permits: {},
+        quipu_token: storage.storage.quipu_token,
       },
       dex_lambdas: {},
       token_lambdas: {},

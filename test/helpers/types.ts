@@ -85,6 +85,7 @@ export declare type DexStorage = {
     referral_rewards: { [key: string]: BigNumber };
     stakers_balance: { [key: string]: StakerInfo };
     permits: { [key: string]: any };
+    quipu_token: FA2TokenType;
   };
   metadata: { [key: string]: any };
   token_metadata: { [key: string]: any };

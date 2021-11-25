@@ -20,6 +20,7 @@ const dex_storage = {
     referral_rewards: MichelsonMap.fromLiteral({}),
     stakers_balance: MichelsonMap.fromLiteral({}),
     permits: MichelsonMap.fromLiteral({}),
+    quipu_token: {},
   },
   metadata: MichelsonMap.fromLiteral({}),
   token_metadata: MichelsonMap.fromLiteral({}),

@@ -620,36 +620,35 @@ function stake_staker(
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
       | Stake(params) -> {
-          const staker_key = (Tezos.sender, params.pool_id);
-          var staker_acc := unwrap_or(s.stakers_balance[staker_key], record[
-            balance = 0n;
-            earnings = (map[] : map(nat , acc_reward_type))
-          ]);
           if params.amount > 0n
             then {
+              const staker_key = (Tezos.sender, params.pool_id);
+              var staker_acc := unwrap_or(s.stakers_balance[staker_key], record[
+                balance = 0n;
+                earnings = (map[] : map(nat , acc_reward_type))
+              ]);
               var pool := unwrap(s.pools[params.pool_id], ERRORS.pair_not_listed);
-              const harvest = harvest_staker_rewards(staker_acc, operations, pool.staker_accumulator, s.tokens[params.pool_id]);
-              staker_acc := harvest.0;
-              operations := harvest.1;
-              const new_balance = staker_acc.balance + params.amount;
-              const s_acc = pool.staker_accumulator;
-              function upd_former(const i: token_pool_index; const rew: acc_reward_type) : acc_reward_type is
-                rew with record [former = new_balance * unwrap_or(s_acc.accumulator[i], 0n)];
-              staker_acc := record[
-                balance = new_balance;
-                earnings = Map.map(upd_former, staker_acc.earnings);
-              ];
-              operations := typed_transfer(
-                Tezos.sender,
-                Tezos.self_address,
+              const (harvested_acc, upd_ops) = harvest_staker_rewards(
+                staker_acc,
+                operations,
+                pool.staker_accumulator,
+                s.tokens[params.pool_id]
+              );
+              const after_updates = update_former_and_transfer(
+                Add,
                 params.amount,
-                Fa2(s.quipu_token)
-              ) # operations;
-              pool.staker_accumulator.total_staked := pool.staker_accumulator.total_staked + params.amount;
-              s.pools[params.pool_id] := pool;
+                harvested_acc,
+                pool.staker_accumulator,
+                s.quipu_token,
+                upd_ops
+                );
+              s.pools[params.pool_id] := pool with record[
+                staker_accumulator = after_updates.staker_accumulator
+              ];
+              s.stakers_balance[staker_key] := after_updates.account;
+              operations := after_updates.ops;
             }
           else failwith(ERRORS.zero_in);
-          s.stakers_balance[staker_key] := staker_acc;
         }
         | _ -> skip
         end;
@@ -676,23 +675,19 @@ function unstake_staker(
           operations := harvest.1;
           if params.amount > 0n
             then {
-              const new_balance = nat_or_error(staker_acc.balance - params.amount, ERRORS.wrong_shares_out);
-              const s_acc = pool.staker_accumulator;
-              function upd_former(const i: token_pool_index; const rew: acc_reward_type) : acc_reward_type is
-                rew with record [former = new_balance * unwrap_or(s_acc.accumulator[i], 0n)];
-              staker_acc := record[
-                balance = new_balance;
-                earnings = Map.map(upd_former, staker_acc.earnings);
-              ];
-              operations := typed_transfer(
-                Tezos.self_address,
-                receiver,
+              const after_updates = update_former_and_transfer(
+                Remove,
                 params.amount,
-                Fa2(s.quipu_token)
-              ) # operations;
+                staker_acc,
+                pool.staker_accumulator,
+                s.quipu_token,
+                operations
+                );
+              staker_acc := after_updates.account;
+              pool.staker_accumulator := after_updates.staker_accumulator;
+              operations := after_updates.ops;
             }
           else skip;
-          pool.staker_accumulator.total_staked := nat_or_error(pool.staker_accumulator.total_staked - params.amount, ERRORS.wrong_shares_out);
           s.pools[params.pool_id] := pool;
           s.stakers_balance[staker_key] := staker_acc;
         }

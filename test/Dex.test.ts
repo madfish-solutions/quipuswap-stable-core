@@ -8,6 +8,7 @@ import { mapTokensToIdx, prepareProviderOptions, Tezos } from "./helpers/utils";
 import * as DexTests from "./Dex";
 import { AmountsMap, IndexMap } from "./Dex/types";
 import { FA12TokenType, FA2TokenType } from "./helpers/types";
+import { TokenFA2 } from "./helpers/tokenFA2";
 const { decimals, a_const, accounts, zero_amount, swap_routes } =
   DexTests.constants;
 
@@ -21,9 +22,11 @@ describe("Dex", () => {
   const new_admin = eveAddress;
   const new_dev = bobAddress;
   const manager = aliceAddress;
+  const staker = bobAddress;
 
   let tokens: DexTests.types.TokensMap;
   let dex: Dex;
+  let quipuToken: TokenFA2;
   let lambdaContractAddress: string;
 
   // Contract will be deployed before every single test, to make sure we
@@ -31,7 +34,7 @@ describe("Dex", () => {
 
   beforeAll(
     async () =>
-      ({ dex, tokens, lambdaContractAddress } =
+      ({ dex, tokens, quipuToken, lambdaContractAddress } =
         await DexTests.before.setupDexEnvironment(Tezos))
   );
 
@@ -275,7 +278,45 @@ describe("Dex", () => {
       });
     });
 
-    describe("2.3. Test invest liq", () => {
+    describe("2.3. Test stake QUIPU to pool", () => {
+      const stake = pool.stake;
+      const input = new BigNumber(10).pow(9);
+      let pool_id: BigNumber;
+      beforeAll(async () => {
+        const config = await prepareProviderOptions("bob");
+        Tezos.setProvider(config);
+        await quipuToken.approve(dex.contract.address, input);
+        await dex.updateStorage({});
+        pool_id = dex.storage.storage.pools_count.minus(new BigNumber(1));
+      }, 80000);
+      it(
+        "Should fail if zero stake amount",
+        async () =>
+          await failCase(
+            "bob",
+            async () =>
+              await dex.contract.methods
+                .stake(pool_id, new BigNumber(0))
+                .send(),
+            "Dex/zero-amount-in"
+          ),
+        10000
+      );
+      it(
+        `Should stake ${input.dividedBy(decimals.QUIPU)} QUIPU to pool`,
+        async () =>
+          await stake.stakeToPoolSuccessCase(
+            dex,
+            staker,
+            pool_id,
+            input,
+            Tezos
+          ),
+        20000
+      );
+    });
+
+    describe("2.4. Test invest liq", () => {
       const invest = pool.PoolInvest;
       const sender = "alice";
       let amounts: Map<string, BigNumber>;
@@ -390,7 +431,7 @@ describe("Dex", () => {
       });
     });
 
-    describe("2.4. Test swap", () => {
+    describe("2.5. Test swap", () => {
       const swap = pool.PoolSwap;
       const sender = "bob";
       const normalized = new BigNumber(10).pow(2);
@@ -459,7 +500,7 @@ describe("Dex", () => {
       );
     });
 
-    describe("2.5. Test divest liq", () => {
+    describe("2.6. Test divest liq", () => {
       const divesting = pool.PoolDivest;
       let min_amounts: Map<string, BigNumber>;
       let imb_amounts: Map<string, BigNumber>;
@@ -538,6 +579,31 @@ describe("Dex", () => {
         );
       });
     });
+    describe("2.7 Test unstake QUIPU token from pool", () => {
+      const stake = pool.stake;
+      const output = new BigNumber(10).pow(7);
+      let pool_id: BigNumber;
+      beforeAll(async () => {
+        const config = await prepareProviderOptions("bob");
+        Tezos.setProvider(config);
+        await dex.updateStorage({});
+        pool_id = dex.storage.storage.pools_count.minus(new BigNumber(1));
+      }, 80000);
+      it(
+        `Should unstake ${output.dividedBy(
+          decimals.QUIPU
+        )} QUIPU tokens from pool`,
+        async () =>
+          await stake.unstakeFromPoolSuccessCase(
+            dex,
+            staker,
+            pool_id,
+            output,
+            Tezos
+          ),
+        20000
+      );
+    });
   });
 
   describe("3. Testing Token endpoints", () => {
@@ -588,7 +654,6 @@ describe("Dex", () => {
     let pool_id: BigNumber;
     const batchTimes = 5;
     const referral = "eve";
-    const staker = "bob";
     let dev_address: string;
 
     beforeAll(async () => {
@@ -619,7 +684,16 @@ describe("Dex", () => {
         ));
     });
     describe("4.2. QT stakers reward", () => {
-      it.todo("Should get staking rewards");
+      it("Should harvest staking rewards", async () => {
+        let config = await prepareProviderOptions("bob");
+        Tezos.setProvider(config);
+        await rew.staker.harvestFromPoolSuccessCase(
+          dex,
+          staker,
+          pool_id,
+          Tezos
+        )
+      });
     });
 
     describe("4.3. Developer reward", () => {
