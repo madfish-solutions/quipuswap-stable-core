@@ -121,8 +121,29 @@ describe("Dex", () => {
         await adm.setDefaultRefSuccessCase(dex, "eve", aliceAddress, Tezos));
     });
     describe("1.5. Test DeFi reward rates", () => {
-      it.todo("Should fail if not admin try set DeFi reward rates");
-      it.todo("Should change DeFi reward rates");
+      const rate = new BigNumber(10_00000);
+      it(
+        "Should fail if not admin try set DeFi reward rates",
+        async () =>
+          await failCase(
+            "bob",
+            async () => dex.setAdminRate(rate),
+            "Dex/not-contract-admin"
+          ),
+        10000
+      );
+      it(
+        "Should fail if try set DeFi reward rates above 100%",
+        async () =>
+          await failCase(
+            "eve",
+            async () => dex.setAdminRate(new BigNumber(100_00001)),
+            "Dex/wrong-precision"
+          ),
+        10000
+      );
+      it("Should change DeFi reward rates", async () =>
+        await adm.setAdminRateSuccessCase(dex, "eve", rate, Tezos));
     });
   });
 
@@ -455,6 +476,27 @@ describe("Dex", () => {
           )),
         80000
       );
+      it("Should fail if expired", async () => {
+        const i = idx_map.uUSD;
+        const j = idx_map.kUSD;
+        const min_out = new BigNumber(0);
+        const exp = new Date(0);
+        await failCase(
+          "bob",
+          async () =>
+            await dex.swap(
+              pool_id,
+              new BigNumber(i),
+              new BigNumber(j),
+              decimals.uUSD.multipliedBy(normalized),
+              min_out,
+              exp,
+              bobAddress,
+              referral
+            ),
+          "Dex/time-expired"
+        );
+      }, 10000);
       it.each(swap_routes)(
         "Should fail if zero input [%s, %s]",
         async (t_in, t_to) => {
@@ -462,6 +504,7 @@ describe("Dex", () => {
           const i = idx_map[t_in];
           const j = idx_map[t_to];
           const min_out = new BigNumber(0);
+          const exp = new Date(Date.now() + 1000 * 60 * 60 * 24);
           await failCase(
             "bob",
             async () =>
@@ -471,8 +514,9 @@ describe("Dex", () => {
                 new BigNumber(j),
                 zero_amount,
                 min_out,
-                referral,
-                null
+                exp,
+                bobAddress,
+                referral
               ),
             "Dex/zero-amount-in"
           );
@@ -489,6 +533,7 @@ describe("Dex", () => {
             pool_id,
             t_in,
             t_to,
+            new Date(Date.now() + 1000 * 60 * 60 * 24),
             referral,
             idx_map,
             normalized,
@@ -557,7 +602,6 @@ describe("Dex", () => {
         20000
       );
       it("Should divest liq imbalanced", async () => {
-        console.log(imb_amounts);
         await divesting.divestLiquidityImbalanceSuccessCase(
           dex,
           "eve",
@@ -661,12 +705,14 @@ describe("Dex", () => {
       dev_address = dex.storage.storage.dev_address;
       const amount = new BigNumber(10).pow(4);
       pool_id = dex.storage.storage.pools_count.minus(new BigNumber(1));
+      const exp = new Date(Date.now() + 1000 * 60 * 60 * 24);
       await DexTests.pools.PoolSwap.batchSwap(
         dex,
         tokens,
         batchTimes,
         pool_id,
         amount,
+        exp,
         accounts[referral].pkh,
         Tezos
       );
@@ -692,7 +738,7 @@ describe("Dex", () => {
           staker,
           pool_id,
           Tezos
-        )
+        );
       });
     });
 

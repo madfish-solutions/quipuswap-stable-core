@@ -2,13 +2,21 @@
 function is_admin(const admin: address): unit is
   assert_with_error(
     Tezos.sender = admin,
-    ERRORS.not_contract_admin);
+    ERRORS.not_contract_admin
+  );
 
 (* Contract admin or dev check *)
 function is_admin_or_dev(const admin: address; const dev: address): unit is
   assert_with_error(
     Tezos.sender = admin or Tezos.sender = dev,
-    ERRORS.not_contract_admin);
+    ERRORS.not_contract_admin
+  );
+
+function check_time_expiration(const exp: timestamp): unit is
+  assert_with_error(
+    exp >= Tezos.now,
+    ERRORS.time_expired
+  );
 
 function sum_all_fee(
   const fee   : fees_storage_type

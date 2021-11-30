@@ -33,3 +33,4 @@ const low_virtual_reserves      : string = "Dex/low-virtual-reserves";
 const low_reserves              : string = "Dex/low-reserves";
 const low_total_supply          : string = "Dex/low-total-supply";
 const wrong_precision           : string = "Dex/wrong-precision";
+const time_expired              : string = "Dex/time-expired";

@@ -131,24 +131,7 @@ export async function setupLambdasToStorage(
     const bytes: string = lambda.args[0].bytes as string;
     lambda_func_storage.set(key, bytes);
   }
-  for (const [key, value] of lambda_func_storage.entries()) {
-    console.log(key, value);
-  }
   return lambda_func_storage;
-}
-
-export function printFormattedOutput(start: Date, ...args: any[]) {
-  const date_now = new Date();
-  const date_diff = formatDuration(
-    intervalToDuration({
-      start: start,
-      end: date_now,
-    }),
-    {
-      format: ["y", "mo", "w", "d", "h", "m", "s"],
-    }
-  );
-  return console.debug(date_diff, ...args);
 }
 
 export function mapTokensToIdx(

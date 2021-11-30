@@ -1,6 +1,6 @@
 import { TezosToolkit, VIEW_LAMBDA } from "@taquito/taquito";
 import { confirmOperation } from "../helpers/confirmation";
-import { prepareProviderOptions, printFormattedOutput, setupLambdasToStorage } from "../helpers/utils";
+import { prepareProviderOptions, setupLambdasToStorage } from "../helpers/utils";
 
 import dex_contract from "../../build/Dex.ligo.json";
 import dex_lambdas_comp from "../../build/lambdas/Dex_lambdas.json";
@@ -26,7 +26,6 @@ export async function setupDexEnvironment(Tezos: TezosToolkit): Promise<{
     storage: VIEW_LAMBDA.storage,
   });
   await confirmOperation(Tezos, op.hash);
-  printFormattedOutput(global.startTime, "opLambda view set");
   const quipuToken = await setupQuipuGovToken(Tezos);
   const lambdaContractAddress = op.contractAddress;
   storage.storage.admin = accounts.alice.pkh;
@@ -42,11 +41,9 @@ export async function setupDexEnvironment(Tezos: TezosToolkit): Promise<{
     code: JSON.parse(dex_contract.michelson),
     storage: storage,
   });
-  printFormattedOutput(global.startTime, "DEX op hash", dex_op.hash);
   await confirmOperation(Tezos, dex_op.hash);
-  printFormattedOutput(global.startTime, "DEX", dex_op.contractAddress);
+  console.debug("[ORIGINATION] DEX", dex_op.contractAddress);
   const dex = await Dex.init(Tezos, dex_op.contractAddress);
-  printFormattedOutput(global.startTime, "DEX init finished");
   await new Promise((r) => setTimeout(r, 2000));
   const tokens = await setupTrioTokens(dex, Tezos, true);
   

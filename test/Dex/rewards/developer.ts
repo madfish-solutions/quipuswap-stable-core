@@ -3,7 +3,7 @@ import { TezosToolkit } from "@taquito/taquito";
 import { confirmOperation } from "../../helpers/confirmation";
 import { Dex } from "../../helpers/dexFA2";
 import { defaultTokenId } from "../../helpers/token";
-import { prepareProviderOptions, printFormattedOutput } from "../../helpers/utils";
+import { prepareProviderOptions } from "../../helpers/utils";
 import { decimals } from "../constants";
 import { TokensMap } from "../types";
 
@@ -41,15 +41,15 @@ export async function getDeveloperRewardsSuccessCase(
   const USDtzRewards = await dev_stor.get({
     fa12: tokens.USDtz.contract.address,
   });
+  console.debug(USDtzRewards.dividedBy(decimals.USDtz).toFormat());
   expect(USDtzRewards.dividedBy(decimals.USDtz).toNumber()).toBeCloseTo(
     expectedRewardNormalized.plus(26.6).toNumber(), // approx. from invests / divests and swaps before
     1
   );
-  printFormattedOutput(global.startTime, USDtzRewards.toFormat());
   const kUSDRewards = await dev_stor.get({
     fa12: tokens.kUSD.contract.address,
   });
-  printFormattedOutput(global.startTime, kUSDRewards.toFormat());
+  console.debug(kUSDRewards.dividedBy(decimals.kUSD).toFormat());
   expect(kUSDRewards.dividedBy(decimals.kUSD).toNumber()).toBeCloseTo(
     expectedRewardNormalized
       .plus(13.35) // approx. from invests / divests and swaps before
@@ -62,7 +62,7 @@ export async function getDeveloperRewardsSuccessCase(
       token_id: new BigNumber(defaultTokenId),
     },
   });
-  printFormattedOutput(global.startTime, uUSDRewards.toFormat());
+  console.debug(uUSDRewards.dividedBy(decimals.uUSD).toFormat());
   expect(uUSDRewards.dividedBy(decimals.uUSD).toNumber()).toBeCloseTo(
     expectedRewardNormalized
       .plus(13.35) // approx. from invests / divests and swaps before
@@ -78,7 +78,7 @@ export async function getDeveloperRewardsSuccessCase(
     .claimDeveloper("fa12", tokens.USDtz.contract.address, USDtzRewards)
     .send();
   await confirmOperation(Tezos, op.hash);
-  printFormattedOutput(global.startTime, "Claimed dev USDtz");
+  console.debug("[CLAIM:DEVELOPER] USDtz");
   await dex.updateStorage({ pools: [pool_id.toString()] });
   let upd_dev_stor = await dex.contract.storage().then((storage: any) => {
     return storage.storage.dev_rewards;
@@ -87,12 +87,11 @@ export async function getDeveloperRewardsSuccessCase(
     fa12: tokens.USDtz.contract.address,
   });
   expect(updUSDtzRewards.toNumber()).toEqual(0);
-  printFormattedOutput(global.startTime, updUSDtzRewards.toFormat());
   op = await dex.contract.methods
     .claimDeveloper("fa12", tokens.kUSD.contract.address, kUSDRewards)
     .send();
   await confirmOperation(Tezos, op.hash);
-  printFormattedOutput(global.startTime, "Claimed dev kUSD");
+  console.debug("[CLAIM:DEVELOPER] kUSD");
   await dex.updateStorage({ pools: [pool_id.toString()] });
   upd_dev_stor = await dex.contract.storage().then((storage: any) => {
     return storage.storage.dev_rewards;
@@ -100,7 +99,6 @@ export async function getDeveloperRewardsSuccessCase(
   const updkUSDRewards = await upd_dev_stor.get({
     fa12: tokens.kUSD.contract.address,
   });
-  printFormattedOutput(global.startTime, updkUSDRewards.toFormat());
   expect(updkUSDRewards.toNumber()).toEqual(0);
   op = await dex.contract.methods
     .claimDeveloper(
@@ -111,7 +109,7 @@ export async function getDeveloperRewardsSuccessCase(
     )
     .send();
   await confirmOperation(Tezos, op.hash);
-  printFormattedOutput(global.startTime, "Claimed dev uUSD");
+  console.debug("[CLAIM:DEVELOPER] uUSD");
   upd_dev_stor = await dex.contract.storage().then((storage: any) => {
     return storage.storage.dev_rewards;
   });
@@ -121,7 +119,6 @@ export async function getDeveloperRewardsSuccessCase(
       token_id: new BigNumber(defaultTokenId),
     },
   });
-  printFormattedOutput(global.startTime, upduUSDRewards.toFormat());
   expect(upduUSDRewards.toNumber()).toEqual(0);
   const updUSDtz = await tokens.USDtz.contract.views
     .getBalance(developer)

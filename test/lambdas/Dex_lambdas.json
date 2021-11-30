@@ -61,26 +61,30 @@
   },
   {
     "index": 15,
-    "name": "stake_staker"
+    "name": "set_defi_rate"
   },
   {
     "index": 16,
-    "name": "unstake_staker"
+    "name": "stake_staker"
   },
   {
     "index": 17,
-    "name": "get_tokens_info"
+    "name": "unstake_staker"
   },
   {
     "index": 18,
-    "name": "get_fees"
+    "name": "get_tokens_info"
   },
   {
     "index": 19,
-    "name": "get_dy"
+    "name": "get_fees"
   },
   {
     "index": 20,
+    "name": "get_dy"
+  },
+  {
+    "index": 21,
     "name": "get_A_view"
   }
 ]

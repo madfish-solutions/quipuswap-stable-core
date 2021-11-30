@@ -29,14 +29,15 @@ function call_dex(
     | UpdateProxyLimits(_)    -> 12n
     | SetFees(_)              -> 13n
     | SetDefaultReferral(_)   -> 14n
+    | SetAdminRate(_)         -> 15n
     (* QUIPU stakers *)
-    | Stake(_)                -> 15n
-    | Unstake(_)              -> 16n
+    | Stake(_)                -> 16n
+    | Unstake(_)              -> 17n
     (* VIEWS *)
-    | GetTokensInfo(_)        -> 17n
-    | GetFees(_)              -> 18n
-    | GetDy(_)                -> 19n
-    | GetA(_)                 -> 20n
+    | GetTokensInfo(_)        -> 18n
+    | GetFees(_)              -> 19n
+    | GetDy(_)                -> 20n
+    | GetA(_)                 -> 21n
 
     end;
 

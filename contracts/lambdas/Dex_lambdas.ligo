@@ -104,63 +104,64 @@ function swap(
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
     | Swap(params) -> {
-        const dx = params.amount;
-        assert_with_error(dx =/= 0n, ERRORS.zero_in);
+      check_time_expiration(params.time_expiration);
+      const dx = params.amount;
+      assert_with_error(dx =/= 0n, ERRORS.zero_in);
 
-        const tokens : tokens_type = unwrap(s.tokens[params.pair_id], ERRORS.pair_not_listed);
-        const tokens_count = Map.size(tokens);
-        const i = params.idx_from;
-        const j = params.idx_to;
-        assert_with_error(i < tokens_count or j < tokens_count, ERRORS.wrong_index);
+      const tokens : tokens_type = unwrap(s.tokens[params.pair_id], ERRORS.pair_not_listed);
+      const tokens_count = Map.size(tokens);
+      const i = params.idx_from;
+      const j = params.idx_to;
+      assert_with_error(i < tokens_count or j < tokens_count, ERRORS.wrong_index);
 
-        var pair : pair_type := unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
-        var dy := preform_swap(i, j, dx, pair);
-        const after_fees = perform_fee_slice(dy, pair.fee, pair.staker_accumulator.total_staked);
-        dy := after_fees.0;
+      var pair : pair_type := unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
+      var dy := preform_swap(i, j, dx, pair);
+      const after_fees = perform_fee_slice(dy, pair.fee, pair.staker_accumulator.total_staked);
+      dy := after_fees.0;
 
-        const to_stakers = after_fees.3;
+      const to_stakers = after_fees.3;
 
-        const referral: address = unwrap_or(params.referral, s.default_referral);
-        const token_j = unwrap(tokens[j], ERRORS.no_token);
-        s.referral_rewards[(referral, token_j)] :=
-          unwrap_or(s.referral_rewards[(referral, token_j)], 0n) +
-          after_fees.1;
-        s.dev_rewards[token_j] := unwrap_or(s.dev_rewards[token_j], 0n) + after_fees.2;
+      const referral: address = unwrap_or(params.referral, s.default_referral);
+      const token_j = unwrap(tokens[j], ERRORS.no_token);
+      s.referral_rewards[(referral, token_j)] :=
+        unwrap_or(s.referral_rewards[(referral, token_j)], 0n) +
+        after_fees.1;
+      s.dev_rewards[token_j] := unwrap_or(s.dev_rewards[token_j], 0n) + after_fees.2;
 
-        if to_stakers > 0n
-         then pair.staker_accumulator.accumulator[j] := unwrap_or(pair.staker_accumulator.accumulator[j], 0n)
-          + to_stakers * CONSTANTS.stkr_acc_precision / pair.staker_accumulator.total_staked;
-        else skip;
+      if to_stakers > 0n
+        then pair.staker_accumulator.accumulator[j] := unwrap_or(pair.staker_accumulator.accumulator[j], 0n)
+        + to_stakers * CONSTANTS.stkr_acc_precision / pair.staker_accumulator.total_staked;
+      else skip;
 
-        assert_with_error(dy >= params.min_amount_out, ERRORS.high_min_out);
+      assert_with_error(dy >= params.min_amount_out, ERRORS.high_min_out);
 
-        var token_info_i := unwrap(pair.tokens_info[i], ERRORS.no_token_info);
-        patch token_info_i with record [
-          virtual_reserves = token_info_i.virtual_reserves + dx;
-          reserves = token_info_i.reserves + dx;
-        ];
-        var token_info_j := unwrap(pair.tokens_info[j], ERRORS.no_token_info);
-        patch token_info_j with record [
-          virtual_reserves = nat_or_error(token_info_j.virtual_reserves - dy, ERRORS.low_virtual_reserves);
-          reserves = nat_or_error(token_info_j.reserves - dy, ERRORS.low_reserves);
-        ];
+      var token_info_i := unwrap(pair.tokens_info[i], ERRORS.no_token_info);
+      patch token_info_i with record [
+        virtual_reserves = token_info_i.virtual_reserves + dx;
+        reserves = token_info_i.reserves + dx;
+      ];
+      var token_info_j := unwrap(pair.tokens_info[j], ERRORS.no_token_info);
+      patch token_info_j with record [
+        virtual_reserves = nat_or_error(token_info_j.virtual_reserves - dy, ERRORS.low_virtual_reserves);
+        reserves = nat_or_error(token_info_j.reserves - dy, ERRORS.low_reserves);
+      ];
 
-        pair.tokens_info[i] := token_info_i;
-        pair.tokens_info[j] := token_info_j;
-        s.pools[params.pair_id] := pair;
+      pair.tokens_info[i] := token_info_i;
+      pair.tokens_info[j] := token_info_j;
+      s.pools[params.pair_id] := pair;
 
-        operations := typed_transfer(
-          Tezos.self_address,
-          unwrap_or(params.receiver, Tezos.sender),
-          dy,
-          token_j
-        ) # operations;
-        operations := typed_transfer(
-          Tezos.sender,
-          Tezos.self_address,
-          dx,
-          unwrap(tokens[i], ERRORS.no_token)
-        ) # operations;
+      operations := typed_transfer(
+        Tezos.self_address,
+        unwrap_or(params.receiver, Tezos.sender),
+        dy,
+        token_j
+      ) # operations;
+      operations := typed_transfer(
+        Tezos.sender,
+        Tezos.self_address,
+        dx,
+        unwrap(tokens[i], ERRORS.no_token)
+      ) # operations;
     }
     | _ -> skip
     end
@@ -548,6 +549,23 @@ function set_default_referral(
       is_admin(s.admin);
       s.default_referral := params;
       }
+    | _ -> skip
+    end
+  } with (operations, s)
+
+(* 15n set defi rate *)
+function set_defi_rate(
+  const p               : action_type;
+  var s                 : storage_type)
+                        : return_type is
+  block {
+    var operations: list(operation) := CONSTANTS.no_operations;
+    case p of
+    | SetAdminRate(params) -> {
+      is_admin(s.admin);
+      assert_with_error(params <= CONSTANTS.rate_precision, ERRORS.wrong_precision);
+      s.reward_rate := params;
+    }
     | _ -> skip
     end
   } with (operations, s)

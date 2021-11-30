@@ -195,6 +195,7 @@ type swap_type          is [@layout:comb] record [
   idx_to                  : token_pool_index;
   amount                  : nat;
   min_amount_out          : nat;
+  time_expiration         : timestamp;
   receiver                : option(address);
   referral                : option(address);
 ]
@@ -348,6 +349,8 @@ type set_fee_type       is [@layout:comb] record [
   fee                     : fees_storage_type;
 ]
 
+type set_defi_rate_params is nat
+
 type get_fee_type       is [@layout:comb] record [
   pool_id                 : pool_id_type;
   receiver                : contract(fees_storage_type);
@@ -388,6 +391,7 @@ type action_type        is
 | UpdateProxyLimits       of upd_proxy_lim_params
 | SetFees                 of set_fee_type
 | SetDefaultReferral      of address
+| SetAdminRate            of set_defi_rate_params
 | Stake                   of un_stake_params
 | Unstake                 of un_stake_params
 (* VIEWS *)
