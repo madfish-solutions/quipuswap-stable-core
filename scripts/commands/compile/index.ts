@@ -69,7 +69,13 @@ export const compileLambdas = async (
       res.push(JSON.parse(michelson).args[0].args[0].args[0].args[0]);
       debug(JSON.parse(michelson).args[0].args[0].args[0].args[0]);
       em(
-        lambda.index + 1 + ". " + lambda.name + " successfully compiled."
+        lambda.index +
+          1 +
+          "." +
+          " ".repeat(4 - (lambda.index+1).toString().length) +
+          lambda.name +
+          " ".repeat(21 - lambda.name.length) +
+          " successfully compiled."
       );
     }
 

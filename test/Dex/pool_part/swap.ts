@@ -4,7 +4,11 @@ import { confirmOperation } from "../../helpers/confirmation";
 import { Dex } from "../../helpers/dexFA2";
 import { TokenFA12 } from "../../helpers/tokenFA12";
 import { FA12TokenType, FA2TokenType, TokenInfo } from "../../helpers/types";
-import { AccountsLiteral, mapTokensToIdx, prepareProviderOptions, printFormattedOutput } from "../../helpers/utils";
+import {
+  AccountsLiteral,
+  mapTokensToIdx,
+  prepareProviderOptions,
+} from "../../helpers/utils";
 import { accounts, decimals, swap_routes } from "../constants";
 import { setupTokenAmounts } from "../tokensSetups";
 import { AmountsMap, IndexMap, TokensMap } from "../types";
@@ -34,7 +38,6 @@ export async function setupTokenMapping(
   };
 }
 
-
 export async function swapSuccessCase(
   dex: Dex,
   tokens: TokensMap,
@@ -42,6 +45,7 @@ export async function swapSuccessCase(
   pool_id: BigNumber,
   t_in,
   t_to,
+  exp: Date,
   referral: string,
   idx_map: IndexMap,
   normalized_input: BigNumber,
@@ -86,15 +90,14 @@ export async function swapSuccessCase(
   let min_out = amounts.get(j);
   min_out = min_out.minus(min_out.multipliedBy(1).div(100));
 
-  printFormattedOutput(
-    global.startTime,
-    `Swapping ${t_in} with amount ${in_amount
+  console.debug(
+    `[SWAP] ${in_amount
       .dividedBy(rates[i])
       .div(new BigNumber(10).pow(18))
-      .toFormat()} to ${t_to} with min amount ${min_out
+      .toFormat()} ${t_in} -> min ${min_out
       .dividedBy(rates[j])
       .div(new BigNumber(10).pow(18))
-      .toFormat()}`
+      .toFormat()} ${t_to}`
   );
   await dex.swap(
     pool_id,
@@ -102,6 +105,7 @@ export async function swapSuccessCase(
     new BigNumber(j),
     in_amount,
     min_out,
+    exp,
     accounts[sender].pkh,
     referral
   );
@@ -114,9 +118,8 @@ export async function swapSuccessCase(
   const output = init_reserves
     .get(j.toString())
     .reserves.minus(upd_reserves.get(j.toString()).reserves);
-  printFormattedOutput(
-    global.startTime,
-    `Swapped to ${output
+  console.debug(
+    `[SWAP] Swapped to ${output
       .dividedBy(rates[j])
       .div(new BigNumber(10).pow(18))
       .toFormat(10)} ${t_to}.`
@@ -144,11 +147,23 @@ export async function swapSuccessCase(
   init_out = init_out instanceof BigNumber ? init_out : init_out[0].balance;
   upd_in = upd_in instanceof BigNumber ? upd_in : upd_in[0].balance;
   upd_out = upd_out instanceof BigNumber ? upd_out : upd_out[0].balance;
-  printFormattedOutput(global.startTime, init_in.toFormat(), upd_in.toFormat());
-  printFormattedOutput(
-    global.startTime,
-    init_out.toFormat(),
-    upd_out.toFormat()
+  console.debug(
+    `[SWAP] Reserves ${t_in}: ${init_in
+      .dividedBy(rates[i])
+      .div(new BigNumber(10).pow(18))
+      .toFormat(10)} -> ${upd_in
+      .dividedBy(rates[i])
+      .div(new BigNumber(10).pow(18))
+      .toFormat(10)}`
+  );
+  console.debug(
+    `[SWAP] Reserves ${t_to}: ${init_out
+      .dividedBy(rates[j])
+      .div(new BigNumber(10).pow(18))
+      .toFormat(10)} -> ${upd_out
+      .dividedBy(rates[j])
+      .div(new BigNumber(10).pow(18))
+      .toFormat(10)}`
   );
 
   expect(
@@ -170,6 +185,7 @@ export async function batchSwap(
   times: number,
   poolId: BigNumber,
   amount: BigNumber,
+  exp: Date,
   ref: string,
   Tezos: TezosToolkit
 ): Promise<void> {
@@ -177,18 +193,14 @@ export async function batchSwap(
   const inputs: AmountsMap = {
     kUSD: decimals.kUSD.multipliedBy(amount),
     uUSD: decimals.uUSD.multipliedBy(amount),
-    USDtz: decimals.USDtz.multipliedBy(amount)
+    USDtz: decimals.USDtz.multipliedBy(amount),
   };
   let map_tokens_idx: IndexMap;
-  const stp = await setupTokenAmounts(
-    dex,
-    tokens,
-    {
-      kUSD:inputs.kUSD.multipliedBy(2),
-      uUSD:inputs.uUSD.multipliedBy(2),
-      USDtz:inputs.USDtz.multipliedBy(2)
-    }
-  );
+  const stp = await setupTokenAmounts(dex, tokens, {
+    kUSD: inputs.kUSD.multipliedBy(2),
+    uUSD: inputs.uUSD.multipliedBy(2),
+    USDtz: inputs.USDtz.multipliedBy(2),
+  });
   amounts = new Map<string, BigNumber>();
   stp.amounts.forEach((v, k) => {
     amounts.set(k, v.dividedBy(2));
@@ -211,6 +223,7 @@ export async function batchSwap(
           j,
           amounts.get(i),
           min_out,
+          new BigNumber(exp.getTime()),
           null,
           ref
         )
@@ -218,14 +231,9 @@ export async function batchSwap(
     }
     const op = await batch.send();
     await confirmOperation(Tezos, op.hash);
-    printFormattedOutput(global.startTime, `${i + 1} BatchSwap ${op.hash}`);
-    await dex.updateStorage({ pools: [poolId.toString()] });
-    const res = dex.storage.storage.pools[poolId.toNumber()]
-      .tokens_info as any as MichelsonMap<string, TokenInfo>;
-    let raw_res = {};
-    res.forEach(
-      (value, key) => (raw_res[key] = value.reserves.toFormat(0).toString())
+    console.debug(
+      `[BATCH:SWAP] ${i + 1}/${times} ${op.hash}`
     );
-    printFormattedOutput(global.startTime, raw_res);
+    await dex.updateStorage({ pools: [poolId.toString()] });
   }
 }

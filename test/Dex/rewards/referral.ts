@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 import { TezosToolkit } from "@taquito/taquito";
-import { AccountsLiteral, prepareProviderOptions, printFormattedOutput } from "../../helpers/utils";
+import { AccountsLiteral, prepareProviderOptions } from "../../helpers/utils";
 import { Dex } from "../../helpers/dexFA2";
 import { accounts, decimals } from "../constants";
 import { TokensMap } from "../types";
@@ -46,12 +46,12 @@ export async function getReferralRewardsSuccessCase(
     expect(USDtzRewards.dividedBy(decimals.USDtz).toNumber()).toBeCloseTo(
       expectedRewardNormalized.toNumber(),1
     );
-    printFormattedOutput(global.startTime, USDtzRewards.toFormat());
+    console.debug(USDtzRewards.dividedBy(decimals.USDtz).toFormat());
     const kUSDRewards = await ref_stor.get({
       0: ref_address,
       1: { fa12: tokens.kUSD.contract.address },
     });
-    printFormattedOutput(global.startTime, kUSDRewards.toFormat());
+    console.debug(kUSDRewards.dividedBy(decimals.kUSD).toFormat());
     expect(kUSDRewards.dividedBy(decimals.kUSD).toNumber()).toBeCloseTo(
       expectedRewardNormalized.toNumber(),1
     );
@@ -64,7 +64,7 @@ export async function getReferralRewardsSuccessCase(
         },
       },
     });
-    printFormattedOutput(global.startTime,uUSDRewards.toFormat());
+    console.debug(uUSDRewards.dividedBy(decimals.uUSD).toFormat());
     expect(uUSDRewards.dividedBy(decimals.uUSD).toNumber()).toBeCloseTo(
       expectedRewardNormalized.toNumber(),1
     );
@@ -77,7 +77,7 @@ export async function getReferralRewardsSuccessCase(
       .claimReferral("fa12", tokens.USDtz.contract.address, USDtzRewards)
       .send();
     await confirmOperation(Tezos, op.hash);
-    printFormattedOutput(global.startTime, "Claimed referral USDtz");
+    console.debug("[CLAIM:REFERRAL] USDtz");
     await dex.updateStorage({ pools: [pool_id.toString()] });
     let upd_ref_stor = await dex.contract.storage().then((storage: any) => {
       return storage.storage.referral_rewards;
@@ -87,12 +87,11 @@ export async function getReferralRewardsSuccessCase(
       1: { fa12: tokens.USDtz.contract.address },
     });
     expect(updUSDtzRewards.toNumber()).toEqual(0);
-    printFormattedOutput(global.startTime, updUSDtzRewards.toFormat());
     op = await dex.contract.methods
       .claimReferral("fa12", tokens.kUSD.contract.address, kUSDRewards)
       .send();
     await confirmOperation(Tezos, op.hash);
-    printFormattedOutput(global.startTime, "Claimed referral kUSD");
+    console.debug("[CLAIM:REFERRAL] kUSD");
     await dex.updateStorage({ pools: [pool_id.toString()] });
     upd_ref_stor = await dex.contract.storage().then((storage: any) => {
       return storage.storage.referral_rewards;
@@ -101,7 +100,6 @@ export async function getReferralRewardsSuccessCase(
       0: ref_address,
       1: { fa12: tokens.kUSD.contract.address },
     });
-    printFormattedOutput(global.startTime, updkUSDRewards.toFormat());
     expect(updkUSDRewards.toNumber()).toEqual(0);
     op = await dex.contract.methods
       .claimReferral(
@@ -112,7 +110,7 @@ export async function getReferralRewardsSuccessCase(
       )
       .send();
     await confirmOperation(Tezos, op.hash);
-    printFormattedOutput(global.startTime, "Claimed referral uUSD");
+    console.debug("[CLAIM:REFERRAL] uUSD");
     upd_ref_stor = await dex.contract.storage().then((storage: any) => {
       return storage.storage.referral_rewards;
     });
@@ -125,7 +123,6 @@ export async function getReferralRewardsSuccessCase(
         },
       },
     });
-    printFormattedOutput(global.startTime, upduUSDRewards.toFormat());
     expect(upduUSDRewards.toNumber()).toEqual(0);
     const updUSDtz = await tokens.USDtz.contract.views
       .getBalance(ref_address)

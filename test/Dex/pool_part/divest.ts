@@ -4,7 +4,6 @@ import {
   AccountsLiteral,
   mapTokensToIdx,
   prepareProviderOptions,
-  printFormattedOutput,
 } from "../../helpers/utils";
 import { Dex } from "../../helpers/dexFA2";
 import { accounts } from "../constants";
@@ -57,7 +56,6 @@ export async function divestLiquiditySuccessCase(
   res.forEach(
     (value, key) => (raw_res[key] = value.reserves.toFormat(0).toString())
   );
-  printFormattedOutput(global.startTime, raw_res);
   const v_res = dex.storage.storage.pools[pool_id.toNumber()]
     .tokens_info as any as MichelsonMap<string, TokenInfo>;
   let virt_res = {};
@@ -65,10 +63,7 @@ export async function divestLiquiditySuccessCase(
     (value, key) =>
       (virt_res[key] = value.virtual_reserves.toFormat(0).toString())
   );
-  printFormattedOutput(global.startTime, virt_res);
-  printFormattedOutput(global.startTime, initLPBalance.toFormat());
   const init_ledger = dex.storage.storage.ledger[accounts[sender].pkh];
-  printFormattedOutput(global.startTime, init_ledger.toFormat());
   await dex.divestLiquidity(pool_id, min_amounts, shares);
   await dex.updateStorage({
     pools: [pool_id.toString()],
@@ -77,7 +72,6 @@ export async function divestLiquiditySuccessCase(
   const updatedLPBalance = new BigNumber(
     dex.storage.storage.pools[pool_id.toNumber()].total_supply
   );
-  printFormattedOutput(global.startTime, updatedLPBalance.toFormat());
   const upd_ledger = dex.storage.storage.ledger[accounts[sender].pkh];
   expect(updatedLPBalance.toNumber()).toBeLessThan(initLPBalance.toNumber());
   expect(upd_ledger.plus(shares).toNumber()).toBe(init_ledger.toNumber()); //TODO: change to be calculated from inputs
@@ -109,7 +103,6 @@ export async function divestLiquidityImbalanceSuccessCase(
   res.forEach(
     (value, key) => (raw_res[key] = value.reserves.toFormat(0).toString())
   );
-  printFormattedOutput(global.startTime, raw_res);
   const v_res = dex.storage.storage.pools[pool_id.toNumber()]
     .tokens_info as any as MichelsonMap<string, TokenInfo>;
   let virt_res = {};
@@ -117,10 +110,7 @@ export async function divestLiquidityImbalanceSuccessCase(
     (value, key) =>
       (virt_res[key] = value.virtual_reserves.toFormat(0).toString())
   );
-  printFormattedOutput(global.startTime, virt_res);
-  printFormattedOutput(global.startTime, initLPBalance.toFormat());
   const init_ledger = dex.storage.storage.ledger[accounts[sender].pkh];
-  printFormattedOutput(global.startTime, init_ledger.toFormat());
   await dex.divestImbalanced(pool_id, amounts, max_shares);
   await dex.updateStorage({
     pools: [pool_id.toString()],
@@ -129,7 +119,6 @@ export async function divestLiquidityImbalanceSuccessCase(
   const updatedLPBalance = new BigNumber(
     dex.storage.storage.pools[pool_id.toNumber()].total_supply
   );
-  printFormattedOutput(global.startTime, updatedLPBalance.toFormat());
   const upd_ledger = dex.storage.storage.ledger[accounts[sender].pkh];
   expect(updatedLPBalance.toNumber()).toBeLessThan(initLPBalance.toNumber());
   expect(upd_ledger.toNumber()).toBeGreaterThanOrEqual(
@@ -164,7 +153,6 @@ export async function divestLiquidityOneSuccessCase(
   res.forEach(
     (value, key) => (raw_res[key] = value.reserves.toFormat(0).toString())
   );
-  printFormattedOutput(global.startTime, raw_res);
   const v_res = dex.storage.storage.pools[pool_id.toNumber()]
     .tokens_info as any as MichelsonMap<string, TokenInfo>;
   let virt_res = {};
@@ -172,10 +160,7 @@ export async function divestLiquidityOneSuccessCase(
     (value, key) =>
       (virt_res[key] = value.virtual_reserves.toFormat(0).toString())
   );
-  printFormattedOutput(global.startTime, virt_res);
-  printFormattedOutput(global.startTime, initLPBalance.toFormat());
   const init_ledger = dex.storage.storage.ledger[accounts[sender].pkh];
-  printFormattedOutput(global.startTime, init_ledger.toFormat());
   await dex.divestOneCoin(pool_id, shares, token_idx, min_amount);
   await dex.updateStorage({
     pools: [pool_id.toString()],
@@ -184,7 +169,6 @@ export async function divestLiquidityOneSuccessCase(
   const updatedLPBalance = new BigNumber(
     dex.storage.storage.pools[pool_id.toNumber()].total_supply
   );
-  printFormattedOutput(global.startTime, updatedLPBalance.toFormat());
   const upd_ledger = dex.storage.storage.ledger[accounts[sender].pkh];
   expect(updatedLPBalance.toNumber()).toBeLessThan(initLPBalance.toNumber());
   expect(upd_ledger.plus(shares).toNumber()).toBe(init_ledger.toNumber()); //TODO: change to be calculated from inputs

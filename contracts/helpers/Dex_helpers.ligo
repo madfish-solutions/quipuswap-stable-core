@@ -2,13 +2,21 @@
 function is_admin(const admin: address): unit is
   assert_with_error(
     Tezos.sender = admin,
-    ERRORS.not_contract_admin);
+    ERRORS.not_contract_admin
+  );
 
 (* Contract admin or dev check *)
 function is_admin_or_dev(const admin: address; const dev: address): unit is
   assert_with_error(
     Tezos.sender = admin or Tezos.sender = dev,
-    ERRORS.not_contract_admin);
+    ERRORS.not_contract_admin
+  );
+
+function check_time_expiration(const exp: timestamp): unit is
+  assert_with_error(
+    exp >= Tezos.now,
+    ERRORS.time_expired
+  );
 
 function sum_all_fee(
   const fee   : fees_storage_type
@@ -517,4 +525,97 @@ function preform_swap(
     s.ledger[user_key] := unwrap_or(s.ledger[user_key], 0n) + mint_amount;
     s.pools[params.pair_id] := pair;
   } with (Map.fold(transfer_to_pool, params.inputs, CONSTANTS.no_operations), s)
+
+function harvest_staker_rewards(
+  var info          : staker_info_type;
+  var operations    : list(operation);
+  const accumulator : staker_acc_type;
+  const tokens      : option(tokens_type)
+  )                 : staker_info_type * list(operation) is
+  block {
+    const staker_balance = info.balance;
+    function fold_rewards(
+      var acc: record [
+        op: list(operation);
+        earnings: map(token_pool_index, acc_reward_type);
+      ];
+      const entry: token_pool_index * nat
+      ): record [
+        op: list(operation);
+        earnings: map(token_pool_index, acc_reward_type);
+      ] is
+      block {
+        const i = entry.0;
+        const pool_acc = entry.1;
+        const reward = unwrap_or(acc.earnings[i], record[
+          former = 0n;
+          reward = 0n;
+        ]);
+        const new_former = staker_balance * pool_acc;
+        const reward_amt = (reward.reward + abs(new_former - reward.former)) / CONSTANTS.stkr_acc_precision;
+        acc.op := typed_transfer(
+          Tezos.self_address,
+          Tezos.sender,
+          reward_amt,
+          get_token_by_id(i, tokens)
+        ) # acc.op;
+        acc.earnings[i] := record[
+          former = new_former;
+          reward = 0n;
+        ];
+    } with acc;
+    const harvest = Map.fold(fold_rewards, accumulator.accumulator, record[op=operations; earnings=info.earnings]);
+    operations := harvest.op;
+    patch info with record [ earnings=harvest.earnings; ];
+  } with (info, operations)
+
+function update_former_and_transfer(
+  const flag: add_rem_flag;
+  const shares: nat;
+  const staker_acc: staker_info_type;
+  const pool_s_accumulator: staker_acc_type;
+  const quipu_token : fa2_token_type;
+  const operations: list(operation)
+  ): record [
+    account: staker_info_type;
+    staker_accumulator: staker_acc_type;
+    ops: list(operation);
+  ] is
+  block {
+    const (
+      new_balance,
+      forwarder,
+      receiver,
+      total_staked
+    ) = case flag of
+          Add -> (
+            staker_acc.balance + shares,
+            Tezos.sender,
+            Tezos.self_address,
+            pool_s_accumulator.total_staked + shares
+            )
+        | Remove -> (
+            nat_or_error(staker_acc.balance - shares, ERRORS.wrong_shares_out),
+            Tezos.self_address,
+            Tezos.sender,
+            nat_or_error(pool_s_accumulator.total_staked - shares, ERRORS.wrong_shares_out)
+            )
+        end;
+      function upd_former(const i: token_pool_index; const rew: acc_reward_type) : acc_reward_type is
+        rew with record [former = new_balance * unwrap_or(pool_s_accumulator.accumulator[i], 0n)];
+} with record[
+  account = record[
+      balance = new_balance;
+      earnings = Map.map(upd_former, staker_acc.earnings);
+    ];
+  staker_accumulator = pool_s_accumulator with record[
+      total_staked = total_staked
+    ];
+  ops = typed_transfer(
+      forwarder,
+      receiver,
+      shares,
+      Fa2(quipu_token)
+    ) # operations;
+]
 

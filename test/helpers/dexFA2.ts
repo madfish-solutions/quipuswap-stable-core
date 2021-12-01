@@ -73,6 +73,7 @@ export class Dex extends TokenFA2 {
         referral_rewards: {},
         stakers_balance: {},
         permits: {},
+        quipu_token: storage.storage.quipu_token,
       },
       dex_lambdas: {},
       token_lambdas: {},
@@ -91,7 +92,7 @@ export class Dex extends TokenFA2 {
               ].get(current),
             };
           } catch (ex) {
-            console.log(ex);
+            console.error(ex);
             return {
               ...(await prev),
             };
@@ -239,11 +240,21 @@ export class Dex extends TokenFA2 {
     toIdx: BigNumber,
     amountIn: BigNumber,
     minAmountOut: BigNumber,
+    expiration: Date,
     receiver: string = null,
     referral: string = null
   ): Promise<TransactionOperation> {
     const operation = await this.contract.methods
-      .swap(poolId, inIdx, toIdx, amountIn, minAmountOut, receiver, referral)
+      .swap(
+        poolId,
+        inIdx,
+        toIdx,
+        amountIn,
+        minAmountOut,
+        new BigNumber(expiration.getTime()),
+        receiver,
+        referral
+      )
       .send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
@@ -274,7 +285,6 @@ export class Dex extends TokenFA2 {
     const amts = new MichelsonMap<string, BigNumber>();
     mintokenAmounts.forEach((value, key) => {
       amts.set(key, value);
-      console.log(key, value);
     });
     const operation = await this.contract.methods
       .divest(pairId, amts, sharesBurned)
@@ -292,7 +302,6 @@ export class Dex extends TokenFA2 {
     const amts = new MichelsonMap<string, BigNumber>();
     tokenAmounts.forEach((value, key) => {
       amts.set(key, value);
-      console.log(key, value);
     });
 
     const operation = await this.contract.methods
@@ -306,7 +315,7 @@ export class Dex extends TokenFA2 {
     pairId: BigNumber,
     sharesBurned: BigNumber,
     tokenIdx: BigNumber,
-    mintokenAmount: BigNumber,
+    mintokenAmount: BigNumber
   ): Promise<TransactionOperation> {
     const operation = await this.contract.methods
       .divestOneCoin(pairId, sharesBurned, tokenIdx, mintokenAmount)
@@ -373,7 +382,9 @@ export class Dex extends TokenFA2 {
     let batch = this.Tezos.contract.batch();
     let ligo = getLigo(true);
     for (const lambdaFunction of funcs_map) {
-      console.log(`${lambdaFunction.index}\t${lambdaFunction.name}`);
+      console.debug(
+        `[BATCH:DEX:SETFUNCTION] ${lambdaFunction.index}\t${lambdaFunction.name}`
+      );
       const stdout = execSync(
         `${ligo} compile expression pascaligo 'SetDexFunction(record [index =${lambdaFunction.index}n; func = Bytes.pack(${lambdaFunction.name})])' --michelson-format json --init-file $PWD/contracts/main/Dex.ligo`,
         { maxBuffer: 1024 * 500 }
@@ -407,12 +418,15 @@ export class Dex extends TokenFA2 {
         },
       });
       idx = idx + 1;
-      console.log(idx, type, lambdaFunction.args[1].int);
       if (idx % batchBy == 0 || idx == comp_funcs_map.length) {
         const batchOp = await batch.send();
-        console.log(`${idx}/${comp_funcs_map.length}`, batchOp.hash);
         await confirmOperation(this.Tezos, batchOp.hash);
-        console.log(`Confirmed`);
+        console.debug(
+          `[BATCH:${type.toUpperCase()}:SETFUNCTION] ${idx}/${
+            comp_funcs_map.length
+          }`,
+          batchOp.hash
+        );
         if (idx < comp_funcs_map.length) batch = this.Tezos.contract.batch();
       }
     }
@@ -433,9 +447,7 @@ export class Dex extends TokenFA2 {
         },
       });
       idx = idx + 1;
-      console.log(idx, type, lambdaFunction.args[1].int);
       await confirmOperation(this.Tezos, op.hash);
-      console.log(op.hash);
     }
   }
 
@@ -462,7 +474,9 @@ export class Dex extends TokenFA2 {
     let batch = this.Tezos.contract.batch();
     let ligo = getLigo(true);
     for (const lambdaFunction of funcs_map) {
-      console.log(`${lambdaFunction.index}\t${lambdaFunction.name}`);
+      console.debug(
+        `[BATCH:TOKEN:SETFUNCTION] ${lambdaFunction.index}\t${lambdaFunction.name}`
+      );
       const stdout = execSync(
         `${ligo} compile expression pascaligo 'SetTokenFunction(record [index =${lambdaFunction.index}n; func = Bytes.pack(${lambdaFunction.name})])' --michelson-format json --init-file $PWD/contracts/main/Dex.ligo`,
         { maxBuffer: 1024 * 500 }
@@ -525,6 +539,13 @@ export class Dex extends TokenFA2 {
   async setDefaultReferral(ref: string): Promise<TransactionOperation> {
     const operation = await this.contract.methods
       .setDefaultReferral(ref)
+      .send();
+    await confirmOperation(this.Tezos, operation.hash);
+    return operation;
+  }
+  async setAdminRate(rate: BigNumber): Promise<TransactionOperation> {
+    const operation = await this.contract.methods
+      .setAdminRate(rate)
       .send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;

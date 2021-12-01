@@ -1,7 +1,6 @@
 import BigNumber from "bignumber.js";
 import { Dex } from "../../helpers/dexFA2";
 import { FeeType, TokenInfo } from "../../helpers/types";
-import { printFormattedOutput } from "../../helpers/utils";
 import { IndexMap } from "../types";
 
 export async function getASuccessCase(
@@ -67,7 +66,7 @@ export async function getDySuccessCase(
   const exp_dy = new BigNumber(10).pow(6 + 3);
   const i = token_idxs.uUSD;
   const j = token_idxs.USDtz;
-  printFormattedOutput(global.startTime, pool_id, new BigNumber(i), new BigNumber(j), dx);
+  console.debug(pool_id, new BigNumber(i), new BigNumber(j), dx);
   const params = {
     pool_id: pool_id,
     i: i,
@@ -80,9 +79,9 @@ export async function getDySuccessCase(
     new BigNumber(j),
     dx
   );
-  printFormattedOutput(global.startTime, getdy);
+  console.debug(getdy);
   const dy = await getdy.read();
-  printFormattedOutput(global.startTime, dy.toString());
-  printFormattedOutput(global.startTime, exp_dy.toString(), dy.toString());
+  console.debug(dy.toString());
+  console.debug(exp_dy.toString(), dy.toString());
   // expect(dy.toNumber()).toBeCloseTo(exp_dy.toNumber());
 }

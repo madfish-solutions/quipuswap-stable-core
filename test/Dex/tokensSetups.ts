@@ -1,20 +1,18 @@
 const fs = require("fs");
 import BigNumber from "bignumber.js";
-import { prepareProviderOptions, printFormattedOutput } from "../helpers/utils";
+import { prepareProviderOptions } from "../helpers/utils";
 import { AmountsMap, TokensMap } from "./types";
 import { TezosToolkit } from "@taquito/taquito";
 import kUSDstorage from "../helpers/tokens/kUSD_storage";
 import uUSDstorage from "../helpers/tokens/uUSD_storage";
 import USDtzstorage from "../helpers/tokens/USDtz_storage";
+import QUIPUstorage from "../helpers/tokens/QUIPU_storage";
 import { confirmOperation } from "../helpers/confirmation";
 import { TokenFA12 } from "../helpers/tokenFA12";
 import { TokenFA2 } from "../helpers/tokenFA2";
 import { Dex } from "../helpers/dexFA2";
 import { accounts } from "./constants";
 import { FA12TokenType, FA2TokenType } from "../helpers/types";
-
-
-
 
 const uUSD_contract = fs
   .readFileSync("./test/helpers/tokens/uUSD.tz")
@@ -27,6 +25,9 @@ const kUSD_contract = fs
   .readFileSync("./test/helpers/tokens/kUSD.tz")
   .toString();
 
+const QUIPU_contract = fs
+  .readFileSync("./test/helpers/tokens/QUIPU.tz")
+  .toString();
 
 async function originateTokens(Tezos: TezosToolkit): Promise<TokensMap> {
   const kUSD = await Tezos.contract.originate({
@@ -34,19 +35,19 @@ async function originateTokens(Tezos: TezosToolkit): Promise<TokensMap> {
     storage: kUSDstorage,
   });
   await confirmOperation(Tezos, kUSD.hash);
-  printFormattedOutput(global.startTime, "kUSD");
+  console.debug("[ORIGINATION] kUSD");
   const USDtz = await Tezos.contract.originate({
     code: USDtz_contract,
     storage: USDtzstorage,
   });
   await confirmOperation(Tezos, USDtz.hash);
-  printFormattedOutput(global.startTime, "USDtz");
+  console.debug("[ORIGINATION] USDtz");
   const uUSD = await Tezos.contract.originate({
     code: uUSD_contract,
     storage: uUSDstorage,
   });
   await confirmOperation(Tezos, uUSD.hash);
-  printFormattedOutput(global.startTime, "uUSD")
+  console.debug("[ORIGINATION] uUSD");
   return {
     kUSD: await TokenFA12.init(Tezos, kUSD.contractAddress),
     uUSD: await TokenFA2.init(Tezos, uUSD.contractAddress),
@@ -54,24 +55,29 @@ async function originateTokens(Tezos: TezosToolkit): Promise<TokensMap> {
   };
 }
 
-async function approveAllTokens(dex: Dex, tokens: TokensMap, Tezos: TezosToolkit): Promise<boolean> {
+async function approveAllTokens(
+  dex: Dex,
+  tokens: TokensMap,
+  Tezos: TezosToolkit
+): Promise<boolean> {
   const approveAmount = new BigNumber(10).pow(45);
   for (const spender in accounts) {
     let config = await prepareProviderOptions(spender);
     Tezos.setProvider(config);
     for (const token in tokens) {
-      await tokens[token].approve(
-        dex.contract.address,
-        approveAmount
-      );
-      printFormattedOutput(global.startTime, spender, token, "approve");
+      await tokens[token].approve(dex.contract.address, approveAmount);
+      console.debug(spender, token, "approve");
     }
   }
   return true;
 }
 
-export async function setupTrioTokens(dex: Dex, Tezos: TezosToolkit, approveAll: boolean = false): Promise<TokensMap> {
-  printFormattedOutput(global.startTime, "Setting up tokens");
+export async function setupTrioTokens(
+  dex: Dex,
+  Tezos: TezosToolkit,
+  approveAll: boolean = false
+): Promise<TokensMap> {
+  console.debug("Setting up tokens");
   const tokens = await originateTokens(Tezos);
   if (approveAll) {
     await approveAllTokens(dex, tokens, Tezos);
@@ -109,4 +115,13 @@ export async function setupTokenAmounts(
     }
   }
   return { pool_id, amounts };
+}
+
+export async function setupQuipuGovToken(Tezos: TezosToolkit): Promise<TokenFA2> {
+  const quipu = await Tezos.contract.originate({
+    code: QUIPU_contract,
+    storage: QUIPUstorage,
+  });
+  await confirmOperation(Tezos, quipu.hash);
+  return await TokenFA2.init(Tezos, quipu.contractAddress);
 }

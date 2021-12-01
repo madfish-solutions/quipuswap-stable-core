@@ -5,6 +5,7 @@ export const decimals = {
   kUSD: new BigNumber(10).pow(18),
   USDtz: new BigNumber(10).pow(6),
   uUSD: new BigNumber(10).pow(12),
+  QUIPU: new BigNumber(10).pow(6),
 };
 
 export const swap_routes = [
