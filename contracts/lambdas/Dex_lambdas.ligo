@@ -1,8 +1,8 @@
 (* 0n Initialize exchange after the previous liquidity was drained *)
 function initialize_exchange(
-  const p               : action_type;
-  var s                 : storage_type)
-                        : return_type is
+  const p               : action_t;
+  var s                 : storage_t)
+                        : return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
@@ -18,21 +18,21 @@ function initialize_exchange(
         and n_tokens = Map.size(params.tokens_info), ERRORS.wrong_tokens_count);
 
       function get_tokens_from_param(
-        var result    : tmp_tokens_type;
-        const value   : token_type)
-                      : tmp_tokens_type is
+        var result    : tmp_tkns_map_t;
+        const value   : token_t)
+                      : tmp_tkns_map_t is
         block {
           result.tokens[result.index] := value;
           result.index := result.index + 1n;
         }
         with result;
 
-      const result: tmp_tokens_type = Set.fold(
+      const result: tmp_tkns_map_t = Set.fold(
         get_tokens_from_param,
         params.input_tokens,
         default_tmp_tokens);
 
-      const tokens : tokens_type = result.tokens;
+      const tokens : tkns_map_t = result.tokens;
       const token_bytes : bytes = Bytes.pack(tokens);
       var (pair_i, token_id) := get_pair_info(token_bytes,
         s.pools_count,
@@ -54,9 +54,9 @@ function initialize_exchange(
         ERRORS.a_limit);
 
       function map_res_to_zero(
-        const _key  : token_pool_index;
-        const value : token_info_type)
-                    : token_info_type is
+        const _key  : tkn_pool_idx_t;
+        const value : tkn_inf_t)
+                    : tkn_inf_t is
         value with record [
           reserves = 0n;
           virtual_reserves = 0n;
@@ -71,8 +71,8 @@ function initialize_exchange(
       ];
 
       function get_inputs(
-        const _key        : token_pool_index;
-        var token_info    : token_info_type)
+        const _key        : tkn_pool_idx_t;
+        var token_info    : tkn_inf_t)
                           : nat is
         block {
           assert_with_error(
@@ -97,9 +97,9 @@ function initialize_exchange(
 
 (* 1n Swap tokens *)
 function swap(
-  const p               : action_type;
-  var s                 : storage_type)
-                        : return_type is
+  const p               : action_t;
+  var s                 : storage_t)
+                        : return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
@@ -108,13 +108,13 @@ function swap(
       const dx = params.amount;
       assert_with_error(dx =/= 0n, ERRORS.zero_in);
 
-      const tokens : tokens_type = unwrap(s.tokens[params.pair_id], ERRORS.pair_not_listed);
+      const tokens : tkns_map_t = unwrap(s.tokens[params.pair_id], ERRORS.pair_not_listed);
       const tokens_count = Map.size(tokens);
       const i = params.idx_from;
       const j = params.idx_to;
       assert_with_error(i < tokens_count or j < tokens_count, ERRORS.wrong_index);
 
-      var pair : pair_type := unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
+      var pair : pair_t := unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
       var dy := preform_swap(i, j, dx, pair);
       const after_fees = perform_fee_slice(dy, pair.fee, pair.staker_accumulator.total_staked);
       dy := after_fees.0;
@@ -170,9 +170,9 @@ function swap(
 (* 2n Provide liquidity (balanced) to the pool,
 note: tokens should be approved before the operation *)
 function invest_liquidity(
-  const p               : action_type;
-  var s                 : storage_type)
-                        : return_type is
+  const p               : action_t;
+  var s                 : storage_t)
+                        : return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
@@ -194,9 +194,9 @@ function invest_liquidity(
 
 (* 3n Remove liquidity (balanced) from the pool by burning shares *)
 function divest_liquidity(
-  const p               : action_type;
-  var s                 : storage_type)
-                        : return_type is
+  const p               : action_t;
+  var s                 : storage_t)
+                        : return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
@@ -204,17 +204,17 @@ function divest_liquidity(
         assert_with_error(s.pools_count > params.pair_id, ERRORS.pair_not_listed);
         assert_with_error(params.shares =/= 0n, ERRORS.zero_in);
 
-        var   pair          : pair_type := unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
+        var   pair          : pair_t := unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
         const total_supply  : nat = pair.total_supply;
 
         function divest_reserves(
           var acc: (
-            map(token_pool_index, token_info_type) *
+            map(tkn_pool_idx_t, tkn_inf_t) *
             list(operation)
           );
-          const entry: (token_pool_index * token_type)
+          const entry: (tkn_pool_idx_t * token_t)
         ) : (
-            map(token_pool_index, token_info_type) *
+            map(tkn_pool_idx_t, tkn_inf_t) *
             list(operation)
           ) is
           block {
@@ -241,7 +241,7 @@ function divest_liquidity(
             acc.0[entry.0] := token_info;
           } with acc;
 
-        const tokens : tokens_type = unwrap(s.tokens[params.pair_id], ERRORS.pair_not_listed);
+        const tokens : tkns_map_t = unwrap(s.tokens[params.pair_id], ERRORS.pair_not_listed);
         const res = Map.fold(divest_reserves, tokens, (pair.tokens_info, operations));
         pair.tokens_info := res.0;
         pair.total_supply := nat_or_error(pair.total_supply - params.shares, ERRORS.low_total_supply);
@@ -258,9 +258,9 @@ function divest_liquidity(
 
 (* Divest imbalanced *)
 function divest_imbalanced(
-  const p               : action_type;
-  var s                 : storage_type)
-                        : return_type is
+  const p               : action_t;
+  var s                 : storage_t)
+                        : return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
@@ -280,7 +280,7 @@ function divest_imbalanced(
       const init_tokens_info = pair.tokens_info;
       const d0 = get_D_mem(init_tokens_info, amp);
       var token_supply := pair.total_supply;
-      function min_inputs (var acc : tmp_imbalance_type; var value : (token_pool_index * token_info_type)) : tmp_imbalance_type is
+      function min_inputs (var acc : info_ops_acc_t; var value : (tkn_pool_idx_t * tkn_inf_t)) : info_ops_acc_t is
         block{
           const amount_out : nat = unwrap_or(
               params.amounts_out[value.0],
@@ -353,9 +353,9 @@ function divest_imbalanced(
 
 (* Divest one coin *)
 function divest_one_coin(
-  const p               : action_type;
-  var s                 : storage_type)
-                        : return_type is
+  const p               : action_t;
+  var s                 : storage_t)
+                        : return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
@@ -415,15 +415,15 @@ function divest_one_coin(
 
 (* 10n ramping A constant *)
 function ramp_A(
-  const p               : action_type;
-  var s                 : storage_type)
-                        : return_type is
+  const p               : action_t;
+  var s                 : storage_t)
+                        : return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
     | RampA(params) -> {
         is_admin(s.admin);
-        var pair : pair_type := unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
+        var pair : pair_t := unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
         assert(Tezos.now >= pair.initial_A_time + CONSTANTS.min_ramp_time);
         assert(params.future_time >= Tezos.now + CONSTANTS.min_ramp_time); //  # dev: insufficient time
 
@@ -452,15 +452,15 @@ function ramp_A(
 
 (* 11n stop ramping A constant *)
 function stop_ramp_A(
-  const p               : action_type;
-  var s                 : storage_type)
-                        : return_type is
+  const p               : action_t;
+  var s                 : storage_t)
+                        : return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
     | StopRampA(pair_id) -> {
       is_admin(s.admin);
-      var pair : pair_type := unwrap(s.pools[pair_id], ERRORS.pair_not_listed);
+      var pair : pair_t := unwrap(s.pools[pair_id], ERRORS.pair_not_listed);
       const current_A: nat = get_A(
         pair.initial_A_time,
         pair.initial_A,
@@ -479,15 +479,15 @@ function stop_ramp_A(
 
 (* 12n set or remove proxy *)
 function set_proxy(
-  const p               : action_type;
-  var s                 : storage_type)
-                        : return_type is
+  const p               : action_t;
+  var s                 : storage_t)
+                        : return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
     | SetProxy(params) -> {
       is_admin(s.admin);
-      var pair : pair_type := unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
+      var pair : pair_t := unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
       // TODO: all the rewards must be claimed from the contract before in the same call
       pair.proxy_contract := params.proxy;
       s.pools[params.pair_id] := pair;
@@ -498,15 +498,15 @@ function set_proxy(
 
 (* 13n updates limits percent for proxy *)
 function update_proxy_limits(
-  const p               : action_type;
-  var s                 : storage_type)
-                        : return_type is
+  const p               : action_t;
+  var s                 : storage_t)
+                        : return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
     | UpdateProxyLimits(params) -> {
       is_admin(s.admin);
-      var pair : pair_type := unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
+      var pair : pair_t := unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
       var token_info := unwrap(pair.tokens_info[params.token_index], "no such R index");
 
       token_info.proxy_limit := params.limit;
@@ -521,9 +521,9 @@ function update_proxy_limits(
 
 (* 14n updates fees percents *)
 function set_fees(
-  const p               : action_type;
-  var s                 : storage_type
-  )                     : return_type is
+  const p               : action_t;
+  var s                 : storage_t
+  )                     : return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
@@ -539,9 +539,9 @@ function set_fees(
 
 (* 16n set default referral *)
 function set_default_referral(
-  const p               : action_type;
-  var s                 : storage_type)
-                        : return_type is
+  const p               : action_t;
+  var s                 : storage_t)
+                        : return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
@@ -555,9 +555,9 @@ function set_default_referral(
 
 (* 15n set defi rate *)
 function set_defi_rate(
-  const p               : action_type;
-  var s                 : storage_type)
-                        : return_type is
+  const p               : action_t;
+  var s                 : storage_t)
+                        : return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
@@ -574,9 +574,9 @@ function set_defi_rate(
 
 (* 6n Developer *)
 function claim_dev(
-  const p : action_type;
-  var s   : storage_type
-  )       : return_type is
+  const p : action_t;
+  var s   : storage_t
+  )       : return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     const receiver = s.dev_address;
@@ -602,9 +602,9 @@ function claim_dev(
 
 (* 7n Referral *)
 function claim_ref(
-  const p : action_type;
-  var s   : storage_type
-  )       : return_type is
+  const p : action_t;
+  var s   : storage_t
+  )       : return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     const receiver = Tezos.sender;
@@ -631,9 +631,9 @@ function claim_ref(
 (* QuipuToken Stakers *)
 (* 15n Stake *)
 function stake_staker(
-  const p : action_type;
-  var s   : storage_type
-  )       : return_type is
+  const p : action_t;
+  var s   : storage_t
+  )       : return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
@@ -643,7 +643,7 @@ function stake_staker(
               const staker_key = (Tezos.sender, params.pool_id);
               var staker_acc := unwrap_or(s.stakers_balance[staker_key], record[
                 balance = 0n;
-                earnings = (map[] : map(nat , acc_reward_type))
+                earnings = (map[] : map(nat , account_rwrd_t))
               ]);
               var pool := unwrap(s.pools[params.pool_id], ERRORS.pair_not_listed);
               const (harvested_acc, upd_ops) = harvest_staker_rewards(
@@ -674,9 +674,9 @@ function stake_staker(
 
 (* 16n Unstake/harvest *)
 function unstake_staker(
-  const p : action_type;
-  var s   : storage_type
-  )       : return_type is
+  const p : action_t;
+  var s   : storage_t
+  )       : return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     const receiver = Tezos.sender;
@@ -685,7 +685,7 @@ function unstake_staker(
           const staker_key = (receiver, params.pool_id);
           var staker_acc := unwrap_or(s.stakers_balance[staker_key], record[
             balance = 0n;
-            earnings = (map[] : map(nat , acc_reward_type))
+            earnings = (map[] : map(nat , account_rwrd_t))
           ]);
           var pool := unwrap(s.pools[params.pool_id], ERRORS.pair_not_listed);
           const harvest = harvest_staker_rewards(staker_acc, operations, pool.staker_accumulator, s.tokens[params.pool_id]);
@@ -715,9 +715,9 @@ function unstake_staker(
 
 (* 9n LP providers *)
 function claim_provider(
-  const p : action_type;
-  var s   : storage_type
-  )       : return_type is
+  const p : action_t;
+  var s   : storage_t
+  )       : return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     const receiver = Tezos.sender;
@@ -725,7 +725,7 @@ function claim_provider(
       | ClaimLProvider(params) -> {
         const acc_key = (receiver, params.pool_id);
         var acc_data := get_account_data(acc_key, s.account_data);
-        var acc_intrst_data: acc_reward_type := unwrap_or(acc_data.earned_interest[params.token],
+        var acc_intrst_data: account_rwrd_t := unwrap_or(acc_data.earned_interest[params.token],
           record [
             reward  = 0n;
             former  = 0n;

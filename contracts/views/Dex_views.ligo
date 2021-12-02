@@ -2,14 +2,14 @@
 (* 15n tokens per pool info *)
 [@inline]
 function get_tokens_info(
-  const p               : action_type;
-  var s                 : storage_type)
-                        : return_type is
+  const p               : action_t;
+  var s                 : storage_t)
+                        : return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
       GetTokensInfo(params) -> {
-      const pair : pair_type = unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
+      const pair : pair_t = unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
       operations := Tezos.transaction(pair.tokens_info, 0tez, params.receiver) # operations;
       }
     | _ -> skip
@@ -19,17 +19,17 @@ function get_tokens_info(
 // (* tokens per 1 pair's share *)
 // function get_tok_per_share(
 //   const _params          : nat;
-//   const s               : full_storage_type)
-//                         : full_return_type is
+//   const s               : full_storage_t)
+//                         : full_return_t is
 //   (CONSTANTS.no_operations, s)
 
 // (* min received in the swap *)
 // function get_min_received(
-//   const params          : min_received_type;
-//   const s               : full_storage_type)
-//                         : full_return_type is
+//   const params          : min_received_v_prm_t;
+//   const s               : full_storage_t)
+//                         : full_return_t is
 //   block {
-//     const pair : pair_type = get_pair(params.pair_id, s.storage.pools);
+//     const pair : pair_t = get_pair(params.pair_id, s.storage.pools);
 //     const xp: map(nat, nat) = _xp(pair);
 //     const y = get_y(params.i, params.j, params.x, xp, pair);
 //     const xp_j = case xp[params.j] of
@@ -50,11 +50,11 @@ function get_tokens_info(
 // (* max defi rate *)
 // [@inline]
 // function get_max_defi_rate(
-//   const params          : max_rate_params;
-//   const s               : full_storage_type)
-//                         : full_return_type is
+//   const params          : max_rate_v_prm_t;
+//   const s               : full_storage_t)
+//                         : full_return_t is
 //   block {
-//     const pair : pair_type = get_pair(params.pair_id, s.storage.pools);
+//     const pair : pair_t = get_pair(params.pair_id, s.storage.pools);
 //     function count_limits(const key:nat; const value:nat): nat is
 //       block {
 //         const bal : nat = case pair.virtual_reserves[key] of
@@ -69,11 +69,11 @@ function get_tokens_info(
 (* Calculate the amount received when withdrawing a single coin *)
 [@inline]
 function calc_withdraw_one_coin_view(
-  const params          : calc_w_one_c_params;
-  const s               : full_storage_type)
-                        : full_return_type is
+  const params          : calc_w_one_c_v_prm_t;
+  const s               : full_storage_t)
+                        : full_return_t is
   block {
-    const pair : pair_type = unwrap(s.storage.pools[params.pair_id], ERRORS.pair_not_listed);
+    const pair : pair_t = unwrap(s.storage.pools[params.pair_id], ERRORS.pair_not_listed);
     const amp : nat =  get_A(
       pair.initial_A_time,
       pair.initial_A,
@@ -97,14 +97,14 @@ function calc_withdraw_one_coin_view(
 (* 19n Calculate the current output dy given input dx *)
 [@inline]
 function get_dy(
-  const p               : action_type;
-  var s                 : storage_type)
-                        : return_type is
+  const p               : action_t;
+  var s                 : storage_t)
+                        : return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
       GetDy(params) -> {
-        const pair : pair_type = unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
+        const pair : pair_t = unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
         const xp: map(nat, nat) = xp(pair);
         const xp_i = unwrap(xp[params.i], ERRORS.wrong_index);
         const xp_j = unwrap(xp[params.j], ERRORS.wrong_index);
@@ -123,14 +123,14 @@ function get_dy(
 (* 20n Get A constant *)
 [@inline]
 function get_A_view(
-  const p               : action_type;
-  var s                 : storage_type)
-                        : return_type is
+  const p               : action_t;
+  var s                 : storage_t)
+                        : return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
       GetA(params) -> {
-      const pair : pair_type = unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
+      const pair : pair_t = unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
       operations := Tezos.transaction(get_A(
         pair.initial_A_time,
         pair.initial_A,
@@ -145,14 +145,14 @@ function get_A_view(
 (* 17n Fees *)
 [@inline]
 function get_fees(
-  const p               : action_type;
-  var s                 : storage_type)
-                        : return_type is
+  const p               : action_t;
+  var s                 : storage_t)
+                        : return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
       GetFees(params) -> {
-      const pair : pair_type = unwrap(s.pools[params.pool_id], ERRORS.pair_not_listed);
+      const pair : pair_t = unwrap(s.pools[params.pool_id], ERRORS.pair_not_listed);
       operations := Tezos.transaction(pair.fee, 0tez, params.receiver) # operations;
      }
     | _ -> skip

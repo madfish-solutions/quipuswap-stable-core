@@ -13,8 +13,8 @@ function nat_or_error(
 //   const from_pool       : nat;
 //   const to_pool         : nat;
 //   const supply          : nat;
-//   const direction       : swap_type)
-//                         : pair_type is
+//   const direction       : swap_prm_t)
+//                         : pair_t is
 //   case direction of
 //     B_to_a -> record [
 //       token_a_pool      = to_pool;
@@ -30,9 +30,9 @@ function nat_or_error(
 
 // (* Helper function to unwrap the pair for swap *)
 // function form_swap_data(
-//   const pair            : pair_type;
-//   const swap            : tokens_type;
-//   const direction       : swap_type)
+//   const pair            : pair_t;
+//   const swap            : tkns_map_t;
+//   const direction       : swap_prm_t)
 //                         : swap_data_type is
 //   block {
 //     const side_a : swap_side_type = record [
@@ -59,7 +59,7 @@ function typed_transfer(
   const owner           : address;
   const receiver        : address;
   const amount_         : nat;
-  const token           : token_type)
+  const token           : token_t)
                         : operation is
     case token of
       Fa12(token_address) -> Tezos.transaction(
@@ -104,7 +104,7 @@ function div_ceil(
   | None -> (failwith(ERRORS.no_liquidity): nat)
   end;
 
-const default_tmp_tokens : tmp_tokens_type = record [
-    tokens = (map[] : tokens_type);
+const default_tmp_tokens : tmp_tkns_map_t = record [
+    tokens = (map[] : tkns_map_t);
     index  = 0n;
   ];

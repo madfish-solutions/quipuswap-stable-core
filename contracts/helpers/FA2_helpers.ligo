@@ -21,28 +21,28 @@ function is_owner(const owner: address): unit is
 
 [@inline]
 function get_account_data(
-  const key: address * token_id_type;
-  const acc_bm: big_map((address * pool_id_type), account_data_type)
-  ): account_data_type is
+  const key: address * token_id_t;
+  const acc_bm: big_map((address * pool_id_t), account_data_t)
+  ): account_data_t is
   case acc_bm[key] of
     Some(data) -> data
   | None -> (record [
     allowances      = (set[]  : set(address));
-    earned_interest = (map[]  : map(token_type, acc_reward_type));
-  ]: account_data_type)
+    earned_interest = (map[]  : map(token_t, account_rwrd_t));
+  ]: account_data_t)
   end;
 
 (* Perform transfers from one owner *)
 [@inline]
 function iterate_transfer(
-  var s                 : full_storage_type;
-  const user_trx_params : transfer_fa2_param)
-                        : full_storage_type is
+  var s                 : full_storage_t;
+  const user_trx_params : trsfr_fa2_prm_t)
+                        : full_storage_t is
   block {
     function make_transfer(
-      var s             : full_storage_type;
-      const transfer    : transfer_fa2_destination)
-                        : full_storage_type is
+      var s             : full_storage_t;
+      const transfer    : trsfr_fa2_dst_t)
+                        : full_storage_t is
       block {
         const user_key : (address * nat) =
           (user_trx_params.from_,
@@ -67,22 +67,22 @@ function iterate_transfer(
 (* Perform single operator update *)
 [@inline]
 function iterate_update_operator(
-  var s                 : full_storage_type;
-  const params          : update_operator_param
-)                       : full_storage_type is
+  var s                 : full_storage_t;
+  const params          : upd_operator_prm_t
+)                       : full_storage_t is
   block {
     case params of
       Add_operator(param) -> {
       is_owner(param.owner);
       const owner_key = (param.owner, param.token_id);
-      var account_data: account_data_type := get_account_data(owner_key, s.storage.account_data);
+      var account_data: account_data_t := get_account_data(owner_key, s.storage.account_data);
       account_data.allowances := Set.add(param.operator, account_data.allowances);
       s.storage.account_data[owner_key] := account_data;
     }
     | Remove_operator(param) -> {
       is_owner(param.owner);
       const owner_key = (param.owner, param.token_id);
-      var account_data: account_data_type := get_account_data(owner_key, s.storage.account_data);
+      var account_data: account_data_t := get_account_data(owner_key, s.storage.account_data);
       account_data.allowances := Set.remove(param.operator, account_data.allowances);
       s.storage.account_data[owner_key] := account_data;
     }

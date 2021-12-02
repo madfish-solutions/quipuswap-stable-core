@@ -1,12 +1,12 @@
 (* 0n *)
 function transfer_ep(
     const p             : token_action_type;
-    var s               : full_storage_type
-  )                     : full_return_type is
+    var s               : full_storage_t
+  )                     : full_return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
-    | ITransfer(params) ->  s := List.fold(iterate_transfer, params, s)
+    | ITransfer(params) ->  s := List.fold(iterate_transfer, params, transfer_sender_check(params, action, s))
     | _                 -> skip
     end
   } with (operations, s)
@@ -14,16 +14,16 @@ function transfer_ep(
 (* 1n *)
 function get_balance_of(
     const p             : token_action_type;
-    const s             : full_storage_type
-  )                     : full_return_type is
+    const s             : full_storage_t
+  )                     : full_return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
     | IBalanceOf(params) -> {
       function bal_look_up(
-        const l           : list (balance_of_fa2_response);
-        const request   : balance_of_fa2_request
-        )               : list (balance_of_fa2_response) is
+        const l           : list (balance_of_fa2_res_t);
+        const request   : balance_of_fa2_req_t
+        )               : list (balance_of_fa2_res_t) is
         block {
           const entry = record [
             request   = request;
@@ -33,7 +33,7 @@ function get_balance_of(
       const accumulator = List.fold(
           bal_look_up,
           params.requests,
-          (nil: list(balance_of_fa2_response))
+          (nil: list(balance_of_fa2_res_t))
         );
       operations := Tezos.transaction(
           accumulator,
@@ -48,8 +48,8 @@ function get_balance_of(
 (* 2n *)
 function update_operators(
   const p               : token_action_type;
-  var   s               : full_storage_type
-  )                     : full_return_type is
+  var   s               : full_storage_t
+  )                     : full_return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of
@@ -61,8 +61,8 @@ function update_operators(
 (* 3n *)
 function update_token_metadata(
     const p             : token_action_type;
-    var   s             : full_storage_type
-  )                     : full_return_type is
+    var   s             : full_storage_t
+  )                     : full_return_t is
   block {
     var operations: list(operation) := CONSTANTS.no_operations;
     case p of

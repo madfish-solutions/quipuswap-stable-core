@@ -6,11 +6,11 @@ based on the argument type.
 *)
 [@inline]
 function call_dex(
-  const p               : action_type;
-  var s                 : full_storage_type)
-                        : full_return_type is
+  const p               : action_t;
+  var s                 : full_storage_t)
+                        : full_return_t is
   block {
-    const idx : nat = case (p: action_type) of
+    const idx : nat = case (p: action_t) of
     (* Base actions *)
     | AddPair(_)              -> 0n
     | Swap(_)                 -> 1n
@@ -46,9 +46,9 @@ function call_dex(
         | None -> (failwith(ERRORS.unknown_func) : bytes)
       end;
 
-    const res : return_type = case (Bytes.unpack(lambda_bytes) : option(dex_func_type)) of
+    const res : return_t = case (Bytes.unpack(lambda_bytes) : option(dex_func_t)) of
         | Some(f) -> f(p, s.storage)
-        | None -> (failwith("cant-unpack-use-lambda"): return_type)
+        | None -> (failwith("cant-unpack-use-lambda"): return_t)
       end;
 
     s.storage := res.1;
@@ -68,8 +68,8 @@ based on the provided index.
 [@inline]
 function call_token(
   const p               : token_action_type;
-  var s                 : full_storage_type)
-                        : full_return_type is
+  var s                 : full_storage_t)
+                        : full_return_t is
   block {
     const idx : nat = case p of
     | ITransfer(_)        -> 0n
@@ -84,16 +84,16 @@ function call_token(
         | None -> (failwith(ERRORS.unknown_func) : bytes)
       end;
 
-    const (operations, new_storage) : full_return_type = case (Bytes.unpack(lambda_bytes) : option(token_func_type)) of
+    const (operations, new_storage) : full_return_t = case (Bytes.unpack(lambda_bytes) : option(tkn_func_t)) of
         | Some(f) -> f(p, s)
-        | None -> (failwith("cant-unpack-use-lambda"): full_return_type)
+        | None -> (failwith("cant-unpack-use-lambda"): full_return_t)
       end;
   } with (operations, new_storage)
 
 // [@inline]
 // function close(
-//   var s                 : full_storage_type)
-//                         : full_storage_type is
+//   var s                 : full_storage_t)
+//                         : full_storage_t is
 //   block {
 //     if not s.storage.entered
 //     then failwith(ERRORS.not_entered)
@@ -107,8 +107,8 @@ function call_token(
 function set_dex_function(
   const idx             : nat;
   const f               : bytes;
-  var   s               : full_storage_type)
-                        : full_storage_type is
+  var   s               : full_storage_t)
+                        : full_storage_t is
   block {
     is_admin(s.storage.admin);
     case s.dex_lambdas[idx] of
@@ -121,8 +121,8 @@ function set_dex_function(
 function set_token_function(
   const idx             : nat;
   const f               : bytes;
-  var s                 : full_storage_type)
-                        : full_storage_type is
+  var s                 : full_storage_t)
+                        : full_storage_t is
   block {
     is_admin(s.storage.admin);
     case s.token_lambdas[idx] of
@@ -132,9 +132,9 @@ function set_token_function(
   } with s
 
 function add_rem_managers(
-  const params          : add_rem_man_params;
-  var s                 : full_storage_type)
-                        : full_return_type is
+  const params          : set_man_prm_t;
+  var s                 : full_storage_t)
+                        : full_return_t is
   block {
     is_admin(s.storage.admin);
     s.storage.managers := if params.add
@@ -144,8 +144,8 @@ function add_rem_managers(
 
 function set_dev_address(
   const new_addr        : address;
-  var s                 : full_storage_type)
-                        : full_return_type is
+  var s                 : full_storage_t)
+                        : full_return_t is
   block {
     is_admin(s.storage.admin);
     s.storage.dev_address := new_addr;
@@ -153,8 +153,8 @@ function set_dev_address(
 
 function set_reward_rate(
   const rate            : nat;
-  var s                 : full_storage_type)
-                        : full_return_type is
+  var s                 : full_storage_t)
+                        : full_return_t is
   block {
     is_admin(s.storage.admin);
     s.storage.reward_rate := rate;
@@ -162,8 +162,8 @@ function set_reward_rate(
 
 function set_admin(
   const new_admin       : address;
-  var s                 : full_storage_type)
-                        : full_return_type is
+  var s                 : full_storage_t)
+                        : full_return_t is
   block {
     is_admin(s.storage.admin);
     s.storage.admin := new_admin;
