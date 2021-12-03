@@ -20,6 +20,8 @@ import { execSync } from "child_process";
 import { confirmOperation } from "./confirmation";
 import { dexLambdas, tokenLambdas } from "../storage/Functions";
 import { TokenFA12 } from "./tokenFA12";
+import admin_lambdas_comp from "../../build/lambdas/Admin_lambdas.json";
+import permit_lambdas_comp from "../../build/lambdas/Permit_lambdas.json";
 import dex_lambdas_comp from "../../build/lambdas/Dex_lambdas.json";
 import token_lambdas_comp from "../../build/lambdas/Token_lambdas.json";
 
@@ -40,7 +42,9 @@ export class Dex extends TokenFA2 {
 
   static async init(tezos: TezosToolkit, dexAddress: string): Promise<Dex> {
     const dex = new Dex(tezos, await tezos.contract.at(dexAddress));
-    // await dex.setFunctionBatchCompilled("Token", 2, token_lambdas_comp);
+    await dex.setFunctionBatchCompilled("Admin", 5, admin_lambdas_comp);
+    await dex.setFunctionBatchCompilled("Permit", 2, permit_lambdas_comp);
+    await dex.setFunctionBatchCompilled("Token", 5, token_lambdas_comp);
     await dex.setFunctionBatchCompilled("Dex", 4, dex_lambdas_comp);
     return dex;
   }
@@ -77,6 +81,11 @@ export class Dex extends TokenFA2 {
       },
       dex_lambdas: {},
       token_lambdas: {},
+      permits: {},
+      permits_counter: new BigNumber("0"),
+      default_expiry: new BigNumber("2592000"),
+      permit_lambdas: {},
+      admin_lambdas: {},
       metadata: {},
       token_metadata: {},
     };
@@ -402,7 +411,7 @@ export class Dex extends TokenFA2 {
     await confirmOperation(this.Tezos, batchOp.hash);
   }
   async setFunctionBatchCompilled(
-    type: "Dex" | "Token",
+    type: "Dex" | "Token" | "Permit" | "Admin",
     batchBy: number,
     comp_funcs_map
   ): Promise<void> {
@@ -543,10 +552,8 @@ export class Dex extends TokenFA2 {
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
   }
-  async setAdminRate(rate: BigNumber): Promise<TransactionOperation> {
-    const operation = await this.contract.methods
-      .setAdminRate(rate)
-      .send();
+  async setRewardRate(rate: BigNumber): Promise<TransactionOperation> {
+    const operation = await this.contract.methods.setRewardRate(rate).send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
   }

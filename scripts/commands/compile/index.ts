@@ -1,9 +1,9 @@
-import { Command } from 'commander';
-import { getLigo } from '../../../test/helpers/utils';
+import { Command } from "commander";
+import { getLigo } from "../../../test/helpers/utils";
 
 import { em, debug, getCWD } from "create-tezos-smart-contract/dist/console";
 import { ContractsBundle } from "create-tezos-smart-contract/dist/modules/bundle";
-import {preferredLigoFlavor } from '../../../config.json'
+import { preferredLigoFlavor } from "../../../config.json";
 const fs = require("fs");
 import { execSync } from "child_process";
 export const addCompileLambdaCommand = (
@@ -13,10 +13,7 @@ export const addCompileLambdaCommand = (
   program
     .command("compile-lambda")
     .description("compile lambdas for the specified contract")
-    .requiredOption(
-      "-T, --type <type>",
-      "Type of contracts lambdas"
-    )
+    .requiredOption("-T, --type <type>", "Type of contracts lambdas")
     .requiredOption(
       "-J, --json <json>",
       "input file relative path (with lambdas indexes and names)"
@@ -24,19 +21,19 @@ export const addCompileLambdaCommand = (
     .requiredOption(
       "-C, --contract <contract>",
       "input file realtive path (with lambdas Ligo code)"
-    ).showHelpAfterError(true)
+    )
+    .showHelpAfterError(true)
     .action(async (argv) => {
       compileLambdas(argv.json, argv.contract, argv.type);
     })
     .hook("preAction", debugHook);
 };
 
-
 // Run LIGO compiler
 export const compileLambdas = async (
   json: string,
   contract: string,
-  type: string
+  type: "Dex" | "Token" | "Permit" | "Admin"
 ) => {
   em(`Compiling ${contract} contract lambdas of ${type} type...\n`);
   // Read configfile
@@ -54,8 +51,7 @@ export const compileLambdas = async (
   let ligo_command: string;
   if (old_cli) {
     ligo_command = "compile-expression";
-  }
-  else {
+  } else {
     ligo_command = "compile expression";
   }
   const init_file = `$PWD/${contract}`;
@@ -66,13 +62,13 @@ export const compileLambdas = async (
       const command = `${ligo} ${ligo_command} ${preferredLigoFlavor} ${params}`;
       const michelson = execSync(command, { maxBuffer: 1024 * 500 }).toString();
 
-      res.push(JSON.parse(michelson).args[0].args[0].args[0].args[0]);
-      debug(JSON.parse(michelson).args[0].args[0].args[0].args[0]);
+      res.push(JSON.parse(michelson).args[0].args[0].args[0]);
+      debug(JSON.parse(michelson).args[0].args[0].args[0]);
       em(
         lambda.index +
           1 +
           "." +
-          " ".repeat(4 - (lambda.index+1).toString().length) +
+          " ".repeat(4 - (lambda.index + 1).toString().length) +
           lambda.name +
           " ".repeat(21 - lambda.name.length) +
           " successfully compiled."

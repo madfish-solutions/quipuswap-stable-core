@@ -2,6 +2,7 @@ type pool_id_t       is nat
 type token_id_t      is nat
 type tkn_pool_idx_t  is nat
 type a_r_flag_t      is Add | Remove
+type func_entry_t    is FAdmin | FPermit | FDex | FToken
 
 type trsfr_fa2_dst_t is [@layout:comb] record [
     to_       : address;
@@ -301,8 +302,6 @@ type set_fee_prm_t       is [@layout:comb] record [
   fee                     : fees_storage_t;
 ]
 
-type set_defi_rate_prm_t is nat
-
 type get_fee_v_prm_t       is [@layout:comb] record [
   pool_id                 : pool_id_t;
   receiver                : contract(fees_storage_t);
@@ -343,7 +342,6 @@ type action_t        is
 | UpdateProxyLimits       of upd_proxy_lim_prm_t
 | SetFees                 of set_fee_prm_t
 | SetDefaultReferral      of address
-| SetAdminRate            of set_defi_rate_prm_t
 | Stake                   of un_stake_prm_t
 | Unstake                 of un_stake_prm_t
 (* VIEWS *)
@@ -358,41 +356,51 @@ type action_t        is
 
 type transfer_prm_t      is list (trsfr_fa2_prm_t)
 type operator_prm_t      is list (upd_operator_prm_t)
-type upd_meta_prm_t    is tkn_meta_info_t
+type upd_meta_prm_t      is tkn_meta_info_t
 
-type token_action_type  is
-| ITransfer               of transfer_prm_t (* transfer asset from one account to another *)
-| IBalanceOf              of bal_fa2_prm_t (* returns the balance of the account *)
-| IUpdateOperators        of operator_prm_t (* updates the token operators *)
-| IUpdateMetadata         of upd_meta_prm_t
-| ITotalSupply            of total_supply_v_prm_t
+type admin_action_t is
+| AddRemManagers          of set_man_prm_t (* adds a manager to manage LP token metadata *)
+| SetDevAddress           of address
+| SetRewardRate           of nat
+| SetAdmin                of address
 
-type set_tkn_func_t is [@layout:comb] record [
-  func                    : bytes; (* code of the function *)
-  index                   : nat; (* the key in functions map *)
-]
+type token_action_t  is
+| Transfer               of transfer_prm_t (* transfer asset from one account to another *)
+| Balance_of             of bal_fa2_prm_t (* returns the balance of the account *)
+| Update_operators       of operator_prm_t (* updates the token operators *)
+| Update_metadata        of upd_meta_prm_t
+| Total_supply           of total_supply_v_prm_t
 
-type set_dex_func_t  is [@layout:comb] record [
+type set_lambda_func_t  is [@layout:comb] record [
   func                    : bytes; (* code of the function *)
   index                   : nat; (* the key in functions map *)
 ]
 
 type full_action_t   is
+| Use_admin               of admin_action_t
 | Use_dex                 of action_t
-// | Use_token               of token_action_type
-| Transfer                of transfer_prm_t (* transfer asset from one account to another *)
-| Balance_of              of bal_fa2_prm_t (* returns the balance of the account *)
-| Update_operators        of operator_prm_t (* updates the token operators *)
-| Update_metadata         of upd_meta_prm_t
-| Total_supply            of total_supply_v_prm_t
-| SetDexFunction          of set_dex_func_t (* sets the dex specific function. Is used before the whole system is launched *)
-| SetTokenFunction        of set_tkn_func_t (* sets the FA function, is used before the whole system is launched *)
-| AddRemManagers          of set_man_prm_t (* adds a manager to manage LP token metadata *)
-| SetDevAddress           of address
-| SetRewardRate           of nat
-| SetAdmin                of address
-| Permit                  of permit_t
-| Set_expiry              of set_expiry_t
+| Use_permit              of permit_action_t
+| Use_token               of token_action_t
+// | Transfer                of transfer_prm_t (* transfer asset from one account to another *)
+// | Balance_of              of bal_fa2_prm_t (* returns the balance of the account *)
+// | Update_operators        of operator_prm_t (* updates the token operators *)
+// | Update_metadata         of upd_meta_prm_t
+// | Total_supply            of total_supply_v_prm_t
+| SetAdminFunction        of set_lambda_func_t
+| SetDexFunction          of set_lambda_func_t
+(*  sets the dex specific function,
+    is used before the whole system is launched
+ *)
+| SetTokenFunction        of set_lambda_func_t
+(*  sets the FA function, 
+    is used before the whole system is launched
+ *)
+| SetPermitFunction       of set_lambda_func_t
+(*  sets the permit (TZIP-17) function,
+    is used before the whole system is launched
+ *)
+// | Permit                  of permit_t
+// | Set_expiry              of set_expiry_t
 
 type full_storage_t  is [@layout:comb] record [
   storage                 : storage_t; (* real dex storage_t *)
@@ -400,8 +408,10 @@ type full_storage_t  is [@layout:comb] record [
   metadata                : big_map(string, bytes); (* metadata storage_t according to TZIP-016 *)
   token_metadata          : big_map(token_id_t, tkn_meta_info_t);
   (* Contract lambdas storage *)
+  admin_lambdas           : big_map(nat, bytes); (* map with admin-related functions code *)
   dex_lambdas             : big_map(nat, bytes); (* map with exchange-related functions code *)
   token_lambdas           : big_map(nat, bytes); (* map with token-related functions code *)
+  permit_lambdas          : big_map(nat, bytes); (* map with permit-related functions code *)
 
   (* Permits *)
   permits             : permits_t;
@@ -412,8 +422,10 @@ type full_storage_t  is [@layout:comb] record [
 type return_t           is list (operation) * storage_t
 type full_return_t      is list (operation) * full_storage_t
 
+type admin_func_t       is (admin_action_t * storage_t) -> storage_t
 type dex_func_t         is (action_t * storage_t) -> return_t
-type tkn_func_t         is (token_action_type * full_storage_t) -> full_return_t
+type permit_func_t      is (permit_action_t * full_storage_t * full_action_t) -> full_storage_t
+type tkn_func_t         is (token_action_t * full_storage_t * full_action_t) -> full_return_t
 
 type add_liq_prm_t is record [
     referral: option(address);

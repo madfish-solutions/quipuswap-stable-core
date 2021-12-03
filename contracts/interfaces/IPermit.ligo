@@ -39,10 +39,11 @@ type is_tx_operator_t   is [@laoyout:comb] record [
   approved                : bool;
 ]
 
+type permit_action_t    is
+| Permit                  of permit_t
+| Set_expiry              of set_expiry_t
 
 [@inline] const new_user_permits : user_permits_t = record [
   permits = (Map.empty : map(blake2b_hash_t, permit_info_t));
   expiry  = (None : option(seconds_t))
 ]
-
-[@inline] const permit_expiry_limit : nat = 2592000n; (* 30 days *)

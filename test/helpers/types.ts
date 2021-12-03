@@ -62,6 +62,8 @@ export declare type SwapSliceType = {
 };
 
 export declare type DexStorage = {
+  admin_lambdas: { [key: string]: any };
+  permit_lambdas: { [key: string]: any };
   dex_lambdas: { [key: string]: any };
   token_lambdas: { [key: string]: any };
   storage: {
@@ -89,6 +91,9 @@ export declare type DexStorage = {
   };
   metadata: { [key: string]: any };
   token_metadata: { [key: string]: any };
+  permits: { [key: string]: any };
+  permits_counter: BigNumber;
+  default_expiry: BigNumber;
 };
 
 export declare type MetadataStorage = {

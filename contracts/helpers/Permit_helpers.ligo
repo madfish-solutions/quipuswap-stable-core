@@ -141,7 +141,7 @@ function set_permit_expiry(
   const permits         : permits_t;
   const default_expiry  : seconds_t)
                         : permits_t is
-  if new_expiry < permit_expiry_limit
+  if new_expiry < CONSTANTS.permit_expiry_limit
   then case Big_map.find_opt(user, permits) of
   | None               -> permits
   | Some(user_permits) -> case Map.find_opt(permit, user_permits.permits) of

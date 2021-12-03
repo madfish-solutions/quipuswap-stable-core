@@ -127,7 +127,7 @@ describe("Dex", () => {
         async () =>
           await failCase(
             "bob",
-            async () => dex.setAdminRate(rate),
+            async () => dex.setRewardRate(rate),
             "Dex/not-contract-admin"
           ),
         10000
@@ -137,7 +137,7 @@ describe("Dex", () => {
         async () =>
           await failCase(
             "eve",
-            async () => dex.setAdminRate(new BigNumber(100_00001)),
+            async () => dex.setRewardRate(new BigNumber(100_00001)),
             "Dex/wrong-precision"
           ),
         10000

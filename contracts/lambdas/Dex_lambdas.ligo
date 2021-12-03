@@ -553,23 +553,6 @@ function set_default_referral(
     end
   } with (operations, s)
 
-(* 15n set defi rate *)
-function set_defi_rate(
-  const p               : action_t;
-  var s                 : storage_t)
-                        : return_t is
-  block {
-    var operations: list(operation) := CONSTANTS.no_operations;
-    case p of
-    | SetAdminRate(params) -> {
-      is_admin(s.admin);
-      assert_with_error(params <= CONSTANTS.rate_precision, ERRORS.wrong_precision);
-      s.reward_rate := params;
-    }
-    | _ -> skip
-    end
-  } with (operations, s)
-
 (* Claimers of rewards *)
 
 (* 6n Developer *)

@@ -18,6 +18,17 @@ function check_time_expiration(const exp: timestamp): unit is
     ERRORS.time_expired
   );
 
+function set_func_or_fail(
+  const params      : set_lambda_func_t;
+  const max_idx     : nat;
+  var lambda_storage: big_map(nat, bytes))
+                    : big_map(nat, bytes) is
+  block {
+    assert_with_error(params.index < max_idx, ERRORS.high_func_index);
+    assert_with_error(not Big_map.mem(params.index, lambda_storage), ERRORS.func_set);
+    lambda_storage[params.index] := params.func;
+  } with lambda_storage
+
 function sum_all_fee(
   const fee   : fees_storage_t
 )             : nat is

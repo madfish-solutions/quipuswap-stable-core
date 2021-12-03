@@ -36,7 +36,7 @@ export async function setupDexEnvironment(Tezos: TezosToolkit): Promise<{
     token_id: defaultTokenId
   }
   // storage.dex_lambdas = await setupLambdasToStorage(dex_lambdas_comp);
-  storage.token_lambdas = await setupLambdasToStorage(token_lambdas_comp);
+  // storage.token_lambdas = await setupLambdasToStorage(token_lambdas_comp);
   const dex_op = await Tezos.contract.originate({
     code: JSON.parse(dex_contract.michelson),
     storage: storage,
@@ -46,6 +46,5 @@ export async function setupDexEnvironment(Tezos: TezosToolkit): Promise<{
   const dex = await Dex.init(Tezos, dex_op.contractAddress);
   await new Promise((r) => setTimeout(r, 2000));
   const tokens = await setupTrioTokens(dex, Tezos, true);
-  
   return { dex, tokens, quipuToken, lambdaContractAddress };
 }

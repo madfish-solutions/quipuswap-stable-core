@@ -101,7 +101,7 @@ export async function setAdminRateSuccessCase(
   const initRate = dex.storage.storage.reward_rate;
   expect(rate).not.toEqual(initRate);
 
-  await dex.setAdminRate(rate);
+  await dex.setRewardRate(rate);
 
   await dex.updateStorage({});
   const updatedRate = dex.storage.storage.reward_rate;

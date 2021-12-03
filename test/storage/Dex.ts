@@ -19,12 +19,16 @@ const dex_storage = {
     dev_rewards: MichelsonMap.fromLiteral({}),
     referral_rewards: MichelsonMap.fromLiteral({}),
     stakers_balance: MichelsonMap.fromLiteral({}),
-    permits: MichelsonMap.fromLiteral({}),
     quipu_token: {},
   },
   metadata: MichelsonMap.fromLiteral({}),
   token_metadata: MichelsonMap.fromLiteral({}),
+  admin_lambdas: MichelsonMap.fromLiteral({}),
   dex_lambdas: MichelsonMap.fromLiteral({}),
   token_lambdas: MichelsonMap.fromLiteral({}),
+  permit_lambdas: MichelsonMap.fromLiteral({}),
+  permits: MichelsonMap.fromLiteral({}),
+  permits_counter: "0",
+  default_expiry: "2592000",
 };
 export default dex_storage;
