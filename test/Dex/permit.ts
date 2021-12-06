@@ -48,7 +48,6 @@ export async function permitParamHash(
     data: contract.parameterSchema.Encode(entrypoint, parameter),
     type: contract.parameterSchema.root.typeWithoutAnnotations(),
   });
-  console.log(`PACKED PARAM: ${raw_packed.packed}`);
   return blake.blake2bHex(hex2buf(raw_packed.packed), null, 32);
 }
 
@@ -61,10 +60,7 @@ export async function createPermitPayload(
   const signer_key = await tz.signer.publicKey();
   const permit_counter = await contract
     .storage()
-    .then((storage: any) => {
-      console.log(storage)
-      return storage.permits_counter.toNumber()
-    });
+    .then((storage: any) => storage.permits_counter.toNumber());
   const param_hash = await permitParamHash(tz, contract, entrypoint, params);
   const chain_id = await tz.rpc.getChainId();
   const bytesToSign = await tz.rpc.packData({
@@ -76,8 +72,6 @@ export async function createPermitPayload(
     }),
     type: permitSchemaType,
   });
-  console.log(`param hash ${param_hash}`);
-  console.log(`bytes to sign ${bytesToSign.packed}`);
   const sig = await tz.signer.sign(bytesToSign.packed).then((s) => s.prefixSig);
   return [signer_key, sig, param_hash];
 }
