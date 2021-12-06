@@ -88,11 +88,8 @@ function sender_check(
   then s
   else block {
     const action_hash : blake2b_hash_t = Crypto.blake2b(Bytes.pack(action));
-    const user_permits : user_permits_t = case Big_map.find_opt(expected_user, s.permits) of
-    | Some(user_permits) -> user_permits
-    | None               -> (failwith(err_message) : user_permits_t)
-    end;
-  } with case Map.find_opt(action_hash, user_permits.permits) of
+    const user_permits : user_permits_t = unwrap(s.permits[expected_user], err_message);
+  } with case user_permits.permits[action_hash] of
     | None              -> (failwith(err_message) : full_storage_t)
     | Some(permit_info) ->
       if has_expired(s.default_expiry, user_permits.expiry, permit_info)
@@ -176,10 +173,10 @@ function transfer_sender_check(
           (is_tx_operator.owner, param.token_id),
           s.storage.account_data
         );
-        const user : set(address) = account_data.allowances;
+        const allowances : set(address) = account_data.allowances;
 
         is_tx_operator.approved := is_tx_operator.approved and
-          (is_tx_operator.owner = Tezos.sender or Set.mem(Tezos.sender, user));
+          (is_tx_operator.owner = Tezos.sender or Set.mem(Tezos.sender, allowances));
       } with is_tx_operator;
 
     [@inline] function check_operator_for_transfer(
@@ -191,7 +188,6 @@ function transfer_sender_check(
           owner    = param.from_;
           approved = True;
         ];
-
         acc := List.fold(check_operator_for_tx, param.txs, acc);
       } with approved and acc.approved;
 
@@ -205,13 +201,9 @@ function transfer_sender_check(
             const from_ : address = first_param.from_;
             const updated_s : full_storage_t = sender_check(from_, s, action, "FA2_NOT_OPERATOR");
 
-            function check(
-              const param : trsfr_fa2_prm_t)
-                          : unit is
-              if param.from_ =/= from_
-              then failwith("FA2_NOT_OPERATOR")
-              else unit;
-
+            function check(const param : trsfr_fa2_prm_t): unit is
+              assert_with_error(param.from_ = from_, "FA2_NOT_OPERATOR");
             List.iter(check, rest);
+
           } with updated_s
         end

@@ -21,10 +21,11 @@ export declare type AccountsLiteral = typeof senders[number];
 let rpcNode: string = `http://${sandbox.host}:${sandbox.port}`;
 export let Tezos = new TezosToolkit(rpcNode);
 
-export async function initTezos() {
-  const config = await prepareProviderOptions("alice");
-  Tezos.setProvider(config);
-  return Tezos;
+export async function initTezos(signer: AccountsLiteral = 'alice'): Promise<TezosToolkit> {
+  const config = await prepareProviderOptions(signer);
+  const tz = new TezosToolkit(rpcNode);
+  tz.setProvider(config);
+  return tz;
 }
 
 export function getLigo(isDockerizedLigo: boolean): string {

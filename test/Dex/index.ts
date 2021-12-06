@@ -6,4 +6,5 @@ export * as admin from "./admin";
 export * as pools from "./pool_part";
 export * as rewards from "./rewards"
 export * as views from "./views";
+export * as permit from "./permit"
 

@@ -44,23 +44,15 @@ function iterate_transfer(
       const transfer    : trsfr_fa2_dst_t)
                         : full_storage_t is
       block {
-        const user_key : (address * nat) =
-          (user_trx_params.from_,
-          transfer.token_id);
-        var sender_balance : nat := unwrap_or(s.storage.ledger[user_key], 0n);
-        var sender_allowance: set(address) := case s.storage.account_data[user_key] of
-            Some(data) -> data.allowances
-          | None -> (set[]: set(address))
-          end;
-        check_permissions(user_trx_params.from_, sender_allowance);
+        const sender_key =  (user_trx_params.from_, transfer.token_id);
+        var sender_balance : nat := unwrap_or(s.storage.ledger[sender_key], 0n);
         sender_balance := nat_or_error(sender_balance - transfer.amount, "FA2_INSUFFICIENT_BALANCE");
-        s.storage.ledger[user_key] := sender_balance;
+        s.storage.ledger[sender_key] := sender_balance;
 
-        var dest_account : nat :=
-          unwrap_or(s.storage.ledger[(transfer.to_, transfer.token_id)], 0n);
-
+        const dest_key = (transfer.to_, transfer.token_id);
+        var dest_account : nat := unwrap_or(s.storage.ledger[dest_key], 0n);
         dest_account := dest_account + transfer.amount;
-        s.storage.ledger[(transfer.to_, transfer.token_id)] := dest_account;
+        s.storage.ledger[dest_key] := dest_account;
     } with s;
 } with List.fold(make_transfer, user_trx_params.txs, s)
 

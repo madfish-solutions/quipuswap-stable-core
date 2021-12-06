@@ -837,4 +837,73 @@ describe("Dex", () => {
       });
     });
   });
+  describe("6. Permits", () => {
+    const permit = DexTests.permit;
+
+    const signer = "bob";
+    const receiver = "alice";
+    const sender = "eve";
+
+    const signer_account = accounts[signer];
+    const receiver_account = accounts[receiver];
+    const permitTransferParams = [
+      {
+        from_: signer_account.pkh,
+        txs: [{ to_: receiver_account.pkh, token_id: 0, amount: 10 }],
+      },
+    ];
+    let transferParamsTimeExpiry = [
+      {
+        from_: signer_account.pkh,
+        txs: [{ to_: receiver_account.pkh, token_id: 0, amount: 15 }],
+      },
+    ];
+    let paramHash: string;
+    describe("6.1 Standart Permit", () => {
+      it(`${signer} generates permit payload, ${receiver} submits it to contract`, async () => {
+        paramHash = await permit.addPermitFromSignerByReceiverSuccessCase(
+          dex,
+          signer,
+          receiver,
+          permitTransferParams
+        );
+      });
+      it(`${sender} calls contract entrypoint on ${signer}'s behalf`, async () =>
+        await permit.usePermit(
+          Tezos,
+          dex,
+          signer,
+          sender,
+          receiver,
+          paramHash
+        ));
+      it(`${sender} can't use bob's transfer anymore`, async () =>
+        await failCase(
+          sender,
+          async () =>
+            await dex.contract.methods.transfer(permitTransferParams).send(),
+          "FA2_NOT_OPERATOR"
+        ));
+    });
+    describe("6.1 Timeout Permit", () => {
+      it(`${signer} generates permit, ${receiver} submits it, ${signer} sets expiry`, async () =>
+        await permit.setWithExpiry(
+          dex,
+          signer,
+          sender,
+          transferParamsTimeExpiry
+        ));
+      it(`${sender} calls entrypoint on ${signer}'s behalf, but its too late`, async () => {
+        await new Promise((r) => setTimeout(r, 60000));
+        return await failCase(
+          sender,
+          async () =>
+            await dex.contract.methods
+              .transfer(transferParamsTimeExpiry)
+              .send(),
+          "EXPIRED_PERMIT"
+        );
+      });
+    });
+  });
 });
