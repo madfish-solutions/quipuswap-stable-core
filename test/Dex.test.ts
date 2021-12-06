@@ -885,7 +885,7 @@ describe("Dex", () => {
           "FA2_NOT_OPERATOR"
         ));
     });
-    describe("6.1 Timeout Permit", () => {
+    describe("6.2 Timeout Permit", () => {
       it(`${signer} generates permit, ${receiver} submits it, ${signer} sets expiry`, async () =>
         await permit.setWithExpiry(
           dex,
