@@ -4,13 +4,7 @@
   const permit_info     : permit_info_t)
                         : bool is
   block {
-    const expiry : seconds_t = case permit_info.expiry of
-    | Some(expiry) -> expiry
-    | None         -> case user_expiry_opt of
-      | Some(user_expiry) -> user_expiry
-      | None              -> default_expiry
-      end
-    end
+    const expiry : seconds_t = unwrap_or(permit_info.expiry, unwrap_or(user_expiry_opt, default_expiry));
   } with permit_info.created_at + int(expiry) < Tezos.now
 
 [@inline] function delete_expired_permits(
@@ -18,7 +12,7 @@
   const user            : address;
   const permits         : permits_t)
                         : permits_t is
-  case Big_map.find_opt(user, permits) of
+  case permits[user] of
   | None               -> permits
   | Some(user_permits) -> block {
     [@inline] function delete_expired_permit(
@@ -44,11 +38,11 @@ function check_duplicates(
   const user_permits    : user_permits_t;
   const permit          : blake2b_hash_t)
                         : unit is
-  case Map.find_opt(permit, user_permits.permits) of
+  case user_permits.permits[permit] of
   | None              -> unit
   | Some(permit_info) ->
     if not has_expired(default_expiry, user_expiry_opt, permit_info)
-    then failwith("DUP_PERMIT")
+    then failwith(Errors.permit_dupl)
     else unit
   end
 
@@ -59,10 +53,7 @@ function insert_permit(
   const permits         : permits_t)
                         : permits_t is
   block {
-    const user_permits : user_permits_t = case Big_map.find_opt(user, permits) of
-    | Some(user_permits) -> user_permits
-    | None               -> new_user_permits
-    end;
+    const user_permits : user_permits_t = unwrap_or(permits[user], new_user_permits);
 
     check_duplicates(default_expiry, user_permits.expiry, user_permits, permit);
 
@@ -93,7 +84,7 @@ function sender_check(
     | None              -> (failwith(err_message) : full_storage_t)
     | Some(permit_info) ->
       if has_expired(s.default_expiry, user_permits.expiry, permit_info)
-      then (failwith("EXPIRED_PERMIT") : full_storage_t)
+      then (failwith(Errors.permit_expired) : full_storage_t)
       else s with record [
         permits = Big_map.update(
           expected_user,
@@ -113,10 +104,7 @@ function sender_check(
   const permits         : permits_t)
                         : permits_t is
   block {
-    const user_permits : user_permits_t = case Big_map.find_opt(user, permits) of
-    | Some(user_permits) -> user_permits
-    | None               -> new_user_permits
-    end;
+    const user_permits : user_permits_t = unwrap_or(permits[user], new_user_permits);
     const updated_user_permits : user_permits_t = user_permits with record [expiry = Some(new_expiry)];
   } with Big_map.update(user, Some(updated_user_permits), permits)
 
@@ -138,10 +126,10 @@ function set_permit_expiry(
   const permits         : permits_t;
   const default_expiry  : seconds_t)
                         : permits_t is
-  if new_expiry < CONSTANTS.permit_expiry_limit
-  then case Big_map.find_opt(user, permits) of
+  if new_expiry < Constants.permit_expiry_limit
+  then case permits[user] of
   | None               -> permits
-  | Some(user_permits) -> case Map.find_opt(permit, user_permits.permits) of
+  | Some(user_permits) -> case user_permits.permits[permit] of
     | None              -> permits
     | Some(permit_info) -> block {
       const updated_user_permits : user_permits_t = if has_expired(default_expiry, user_permits.expiry, permit_info)
@@ -156,7 +144,7 @@ function set_permit_expiry(
     } with Big_map.update(user, Some(updated_user_permits), permits)
     end
   end
-  else (failwith("EXPIRY_TOO_BIG") : permits_t)
+  else (failwith(Errors.expiration_overflow) : permits_t)
 
 function transfer_sender_check(
   const params          : transfer_prm_t;

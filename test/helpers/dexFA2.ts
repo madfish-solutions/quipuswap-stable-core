@@ -371,7 +371,7 @@ export class Dex extends TokenFA2 {
   async setDexFunction(index: number, lambdaName: string): Promise<void> {
     let ligo = getLigo(true);
     const stdout = execSync(
-      `${ligo} compile expression pascaligo 'SetDexFunction(record [index =${index}n; func = Bytes.pack(${lambdaName})])' --michelson-format json --init-file $PWD/contracts/main/Dex.ligo`,
+      `${ligo} compile expression pascaligo 'Set_dex_function(record [index =${index}n; func = Bytes.pack(${lambdaName})])' --michelson-format json --init-file $PWD/contracts/main/Dex.ligo`,
       { maxBuffer: 1024 * 500 }
     );
     const operation = await this.Tezos.contract.transfer({
@@ -395,7 +395,7 @@ export class Dex extends TokenFA2 {
         `[BATCH:DEX:SETFUNCTION] ${lambdaFunction.index}\t${lambdaFunction.name}`
       );
       const stdout = execSync(
-        `${ligo} compile expression pascaligo 'SetDexFunction(record [index =${lambdaFunction.index}n; func = Bytes.pack(${lambdaFunction.name})])' --michelson-format json --init-file $PWD/contracts/main/Dex.ligo`,
+        `${ligo} compile expression pascaligo 'Set_dex_function(record [index =${lambdaFunction.index}n; func = Bytes.pack(${lambdaFunction.name})])' --michelson-format json --init-file $PWD/contracts/main/Dex.ligo`,
         { maxBuffer: 1024 * 500 }
       );
       batch = batch.withTransfer({
@@ -463,7 +463,7 @@ export class Dex extends TokenFA2 {
   async setTokenFunction(index: number, lambdaName: string): Promise<void> {
     let ligo = getLigo(true);
     const stdout = execSync(
-      `${ligo} compile expression pascaligo 'SetTokenFunction(record [index =${index}n; func = Bytes.pack(${lambdaName})])' --michelson-format json --init-file $PWD/contracts/main/Dex.ligo`,
+      `${ligo} compile expression pascaligo 'Set_token_function(record [index =${index}n; func = Bytes.pack(${lambdaName})])' --michelson-format json --init-file $PWD/contracts/main/Dex.ligo`,
       { maxBuffer: 1024 * 500 }
     );
     const operation = await this.Tezos.contract.transfer({
@@ -487,7 +487,7 @@ export class Dex extends TokenFA2 {
         `[BATCH:TOKEN:SETFUNCTION] ${lambdaFunction.index}\t${lambdaFunction.name}`
       );
       const stdout = execSync(
-        `${ligo} compile expression pascaligo 'SetTokenFunction(record [index =${lambdaFunction.index}n; func = Bytes.pack(${lambdaFunction.name})])' --michelson-format json --init-file $PWD/contracts/main/Dex.ligo`,
+        `${ligo} compile expression pascaligo 'Set_token_function(record [index =${lambdaFunction.index}n; func = Bytes.pack(${lambdaFunction.name})])' --michelson-format json --init-file $PWD/contracts/main/Dex.ligo`,
         { maxBuffer: 1024 * 500 }
       );
       batch = batch.withTransfer({

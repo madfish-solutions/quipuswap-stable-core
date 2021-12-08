@@ -325,44 +325,44 @@ type claim_by_pool_tkn_prm_t is [@layout:comb] record [
 
 type action_t        is
 (* Base actions *)
-| AddPair                 of init_prm_t  (* sets initial liquidity *)
+| Add_pair                 of init_prm_t  (* sets initial liquidity *)
 | Swap                    of swap_prm_t          (* exchanges token to another token and sends them to receiver *)
 | Invest                  of invest_prm_t        (* mints min shares after investing tokens *)
 | Divest                  of divest_prm_t        (* burns shares and sends tokens to the owner *)
 (* Custom actions *)
-| DivestImbalanced        of divest_imb_prm_t
-| DivestOneCoin           of divest_one_c_prm_t
+| Divest_imbalanced        of divest_imb_prm_t
+| Divest_one_coin           of divest_one_c_prm_t
 (* Admin actions *)
-| ClaimDeveloper          of claim_by_tkn_prm_t
-| ClaimReferral           of claim_by_tkn_prm_t
-| ClaimLProvider          of claim_by_pool_tkn_prm_t
-| RampA                   of ramp_a_prm_t
-| StopRampA               of nat
-| SetProxy                of set_proxy_prm_t
-| UpdateProxyLimits       of upd_proxy_lim_prm_t
-| SetFees                 of set_fee_prm_t
-| SetDefaultReferral      of address
+| Claim_developer          of claim_by_tkn_prm_t
+| Claim_referral           of claim_by_tkn_prm_t
+| Claim_liq_provider          of claim_by_pool_tkn_prm_t
+| Ramp_A                   of ramp_a_prm_t
+| Stop_ramp_A               of nat
+| Set_proxy                of set_proxy_prm_t
+| Update_proxy_limits       of upd_proxy_lim_prm_t
+| Set_fees                 of set_fee_prm_t
+| Set_default_referral      of address
 | Stake                   of un_stake_prm_t
 | Unstake                 of un_stake_prm_t
 (* VIEWS *)
-| GetTokensInfo           of reserves_v_prm_t      (* returns the token info *)
-| GetFees                 of get_fee_v_prm_t
+| Get_tokens_info           of reserves_v_prm_t      (* returns the token info *)
+| Get_fees                 of get_fee_v_prm_t
 // | Min_received            of min_received_v_prm_t  (* returns minReceived tokens after swapping *)
 // | Tokens_per_shares       of tps_type           (* returns map of tokens amounts to recieve 1 LP *)
 // | Price_cummulative       of price_cumm_type    (* returns price cumulative and timestamp per block *)
 // | Calc_divest_one_coin    of calc_divest_one_coin
-| GetDy                  of get_dy_v_prm_t        (* returns the current output dy given input dx *)
-| GetA                   of get_a_v_prm_t
+| Get_dy                  of get_dy_v_prm_t        (* returns the current output dy given input dx *)
+| Get_A                   of get_a_v_prm_t
 
 type transfer_prm_t      is list (trsfr_fa2_prm_t)
 type operator_prm_t      is list (upd_operator_prm_t)
 type upd_meta_prm_t      is tkn_meta_info_t
 
 type admin_action_t is
-| AddRemManagers          of set_man_prm_t (* adds a manager to manage LP token metadata *)
-| SetDevAddress           of address
-| SetRewardRate           of nat
-| SetAdmin                of address
+| Add_rem_managers          of set_man_prm_t (* adds a manager to manage LP token metadata *)
+| Set_dev_address           of address
+| Set_reward_rate           of nat
+| Set_admin                of address
 
 type token_action_t  is
 | Transfer               of transfer_prm_t (* transfer asset from one account to another *)
@@ -386,16 +386,16 @@ type full_action_t   is
 // | Update_operators        of operator_prm_t (* updates the token operators *)
 // | Update_metadata         of upd_meta_prm_t
 // | Total_supply            of total_supply_v_prm_t
-| SetAdminFunction        of set_lambda_func_t
-| SetDexFunction          of set_lambda_func_t
+| Set_admin_function        of set_lambda_func_t
+| Set_dex_function          of set_lambda_func_t
 (*  sets the dex specific function,
     is used before the whole system is launched
  *)
-| SetTokenFunction        of set_lambda_func_t
+| Set_token_function        of set_lambda_func_t
 (*  sets the FA function, 
     is used before the whole system is launched
  *)
-| SetPermitFunction       of set_lambda_func_t
+| Set_permit_function       of set_lambda_func_t
 (*  sets the permit (TZIP-17) function,
     is used before the whole system is launched
  *)

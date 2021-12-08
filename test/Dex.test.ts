@@ -199,8 +199,8 @@ describe("Dex", () => {
                 await dex.contract.methods
                   .rampA(
                     pool_id,
-                    adm.RampA.future_a_const,
-                    adm.RampA.future_a_time
+                    adm.Ramp_A.future_a_const,
+                    adm.Ramp_A.future_a_time
                   )
                   .send(),
               "Dex/not-contract-admin"

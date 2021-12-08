@@ -5,7 +5,7 @@ function transfer_ep(
     const action        : full_action_t
   )                     : full_return_t is
   block {
-    var operations: list(operation) := CONSTANTS.no_operations;
+    var operations: list(operation) := Constants.no_operations;
     case p of
     | Transfer(params) ->  s := List.fold(iterate_transfer, params, transfer_sender_check(params, action, s))
     | _                 -> skip
@@ -19,7 +19,7 @@ function get_balance_of(
     const _action       : full_action_t
   )                     : full_return_t is
   block {
-    var operations: list(operation) := CONSTANTS.no_operations;
+    var operations: list(operation) := Constants.no_operations;
     case p of
     | Balance_of(params) -> {
       function bal_look_up(
@@ -54,7 +54,7 @@ function update_operators(
   const action          : full_action_t
   )                     : full_return_t is
   block {
-    var operations: list(operation) := CONSTANTS.no_operations;
+    var operations: list(operation) := Constants.no_operations;
     case p of
     | Update_operators(params) -> s := List.fold(
       iterate_update_operator,
@@ -72,10 +72,10 @@ function update_token_metadata(
     const _action       : full_action_t
   )                     : full_return_t is
   block {
-    var operations: list(operation) := CONSTANTS.no_operations;
+    var operations: list(operation) := Constants.no_operations;
     case p of
     | Update_metadata(params) -> {
-      assert_with_error(s.storage.managers contains Tezos.sender, ERRORS.not_manager);
+      assert_with_error(s.storage.managers contains Tezos.sender, Errors.not_manager);
       s.token_metadata[params.token_id] := params
     }
     | _ -> skip
