@@ -197,7 +197,7 @@ describe("Dex", () => {
               "bob",
               async () =>
                 await dex.contract.methods
-                  .rampA(
+                  .ramp_A(
                     pool_id,
                     adm.Ramp_A.future_a_const,
                     adm.Ramp_A.future_a_time
@@ -213,7 +213,7 @@ describe("Dex", () => {
           async () =>
             await failCase(
               "bob",
-              async () => await dex.contract.methods.stopRampA(pool_id).send(),
+              async () => await dex.contract.methods.stop_ramp_A(pool_id).send(),
               "Dex/not-contract-admin"
             ),
           10000
@@ -252,7 +252,7 @@ describe("Dex", () => {
           return await failCase(
             "bob",
             async () =>
-              await dex.contract.methods.setProxy(pool_id, proxy).send(),
+              await dex.contract.methods.set_proxy(pool_id, proxy).send(),
             "Dex/not-contract-admin"
           );
         }, 10000);
@@ -280,7 +280,7 @@ describe("Dex", () => {
             "bob",
             async () =>
               await dex.contract.methods
-                .updateProxyLimits(pool_id, "0", limits.get("0"))
+                .update_proxy_limits(pool_id, "0", limits.get("0"))
                 .send(),
             "Dex/not-contract-admin"
           );

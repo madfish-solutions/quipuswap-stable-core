@@ -17,7 +17,7 @@ export async function setProxySuccessCase(
   await dex.updateStorage({ pools: [pool_id.toString()] });
   const init_proxy: string =
     dex.storage.storage.pools[pool_id.toString()].proxy_contract;
-  const op = await dex.contract.methods.setProxy(pool_id, proxy).send();
+  const op = await dex.contract.methods.set_proxy(pool_id, proxy).send();
   await confirmOperation(Tezos, op.hash);
   await dex.updateStorage({ pools: [pool_id.toString()] });
   const upd_proxy: string =
@@ -37,7 +37,7 @@ export async function removeProxySuccessCase(
   const init_proxy: string =
     dex.storage.storage.pools[pool_id.toString()].proxy_contract;
   expect(init_proxy).not.toBeNull();
-  const op = await dex.contract.methods.setProxy(pool_id, proxy).send();
+  const op = await dex.contract.methods.set_proxy(pool_id, proxy).send();
   await confirmOperation(Tezos, op.hash);
   await dex.updateStorage({ pools: [pool_id.toString()] });
   const upd_proxy: string =
@@ -73,7 +73,7 @@ export async function setupProxyLimitsSuccessCase(
   const batch = Tezos.contract.batch();
   limits.forEach((v, k) =>
     batch.withContractCall(
-      dex.contract.methods.updateProxyLimits(pool_id, k, v)
+      dex.contract.methods.update_proxy_limits(pool_id, k, v)
     )
   );
   const op = await batch.send();

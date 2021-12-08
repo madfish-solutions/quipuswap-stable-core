@@ -115,7 +115,7 @@ function swap(
       assert_with_error(i < tokens_count and j < tokens_count, Errors.wrong_index);
 
       var pair : pair_t := unwrap(s.pools[params.pair_id], Errors.pair_not_listed);
-      const dy := preform_swap(i, j, dx, pair);
+      const dy = preform_swap(i, j, dx, pair);
       const after_fees = perform_fee_slice(dy, pair.fee, pair.staker_accumulator.total_staked);
       const to_stakers = after_fees.stkr;
 
@@ -280,25 +280,25 @@ function divest_imbalanced(
       var token_supply := pair.total_supply;
       function min_inputs (var acc : info_ops_acc_t; var value : (tkn_pool_idx_t * nat)) : info_ops_acc_t is
         block{
-          var t_i = unwrap(
+          var t_i := unwrap(
               acc.tokens_info[value.0],
               Errors.no_token_info
             );
           t_i.virtual_reserves := nat_or_error(
-            t_i.virtual_reserves - amount_out,
+            t_i.virtual_reserves - value.1,
             Errors.low_virtual_reserves
           );
           t_i.reserves :=
             nat_or_error(
-              t_i.reserves - amount_out,
+              t_i.reserves - value.1,
               Errors.low_reserves
             );
           acc.tokens_info[value.0] := t_i;
-          if amount_out > 0n
+          if value.1 > 0n
             then acc.operations := typed_transfer(
               Tezos.self_address,
               receiver,
-              amount_out,
+              value.1,
               get_token_by_id(value.0, Some(tokens))
             ) # acc.operations;
           else skip;

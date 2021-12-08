@@ -74,7 +74,7 @@ export async function getReferralRewardsSuccessCase(
       uUSD: uUSDRewards,
     };
     let op = await dex.contract.methods
-      .claimReferral("fa12", tokens.USDtz.contract.address, USDtzRewards)
+      .claim_referral("fa12", tokens.USDtz.contract.address, USDtzRewards)
       .send();
     await confirmOperation(Tezos, op.hash);
     console.debug("[CLAIM:REFERRAL] USDtz");
@@ -88,7 +88,7 @@ export async function getReferralRewardsSuccessCase(
     });
     expect(updUSDtzRewards.toNumber()).toEqual(0);
     op = await dex.contract.methods
-      .claimReferral("fa12", tokens.kUSD.contract.address, kUSDRewards)
+      .claim_referral("fa12", tokens.kUSD.contract.address, kUSDRewards)
       .send();
     await confirmOperation(Tezos, op.hash);
     console.debug("[CLAIM:REFERRAL] kUSD");
@@ -102,7 +102,7 @@ export async function getReferralRewardsSuccessCase(
     });
     expect(updkUSDRewards.toNumber()).toEqual(0);
     op = await dex.contract.methods
-      .claimReferral(
+      .claim_referral(
         "fa2",
         tokens.uUSD.contract.address,
         new BigNumber(defaultTokenId),

@@ -41,9 +41,10 @@ function call_dex(
     end;
 
     const lambda_bytes : bytes = unwrap(s.dex_lambdas[idx], Errors.unknown_func);
-    const func = unwrap((Bytes.unpack(lambda_bytes) : option(dex_func_t)), "cant-unpack-use-lambda");
-    const (operations, store) : return_t = func(p, s.storage);
-} with (operations, s with record[ storage = store])
+    const func: dex_func_t = unwrap((Bytes.unpack(lambda_bytes) : option(dex_func_t)), Errors.wrong_use_function);
+    const result: return_t = func(p, s.storage);
+    s.storage := result.1;
+} with (result.0, s)
 
 (*
 
@@ -66,7 +67,7 @@ function call_token(
     | Total_supply(_)     -> 4n
     end;
     const lambda_bytes : bytes = unwrap(s.token_lambdas[idx], Errors.unknown_func);
-    const func = unwrap((Bytes.unpack(lambda_bytes) : option(tkn_func_t)), "cant-unpack-use-lambda");
+    const func: tkn_func_t = unwrap((Bytes.unpack(lambda_bytes) : option(tkn_func_t)), Errors.wrong_use_function);
   } with func(p, s, action);
 
 
@@ -89,7 +90,7 @@ function call_permit(
     end;
 
     const lambda_bytes : bytes = unwrap(s.permit_lambdas[idx], Errors.unknown_func);
-    const func = unwrap((Bytes.unpack(lambda_bytes) : option(permit_func_t)), "cant-unpack-use-lambda");
+    const func: permit_func_t = unwrap((Bytes.unpack(lambda_bytes) : option(permit_func_t)), Errors.wrong_use_function);
   } with (Constants.no_operations, func(p, s, action))
 
 [@inline]
@@ -107,7 +108,7 @@ function call_admin(
     end;
 
     const lambda_bytes : bytes = unwrap(s.admin_lambdas[idx], Errors.unknown_func);
-    const func = unwrap((Bytes.unpack(lambda_bytes) : option(admin_func_t)), "cant-unpack-use-lambda");
+    const func: admin_func_t = unwrap((Bytes.unpack(lambda_bytes) : option(admin_func_t)), Errors.wrong_use_function);
   } with (Constants.no_operations, s with record[ storage = func(p, s.storage) ])
 
 [@inline]

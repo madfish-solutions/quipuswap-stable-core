@@ -36,6 +36,7 @@ const wrong_precision           : string = "Dex/wrong-precision";
 const time_expired              : string = "Dex/time-expired";
 const timestamp_error           : string = "Dex/timestamp-error";
 const fee_overflow              : string = "Dex/fee-overflow";
+const wrong_use_function        : string = "Dex/cant-unpack-use-lambda"
 const not_operator              : string = "FA2_NOT_OPERATOR";
 const not_owner                 : string = "FA2_NOT_OWNER";
 const insufficient_balance      : string = "FA2_INSUFFICIENT_BALANCE";

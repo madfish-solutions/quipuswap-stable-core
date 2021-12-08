@@ -57,7 +57,7 @@ export const compileLambdas = async (
   const init_file = `$PWD/${contract}`;
   try {
     for (const lambda of lambdas) {
-      const func = `Set${type}Function(record [index=${lambda.index}n; func=Bytes.pack(${lambda.name})])`;
+      const func = `Set_${type.toLowerCase()}_function(record [index=${lambda.index}n; func=Bytes.pack(${lambda.name})])`;
       const params = `'${func}' --michelson-format json --init-file ${init_file}`;
       const command = `${ligo} ${ligo_command} ${preferredLigoFlavor} ${params}`;
       const michelson = execSync(command, { maxBuffer: 1024 * 500 }).toString();

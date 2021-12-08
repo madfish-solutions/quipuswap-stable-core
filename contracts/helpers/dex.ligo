@@ -66,15 +66,14 @@ function perform_fee_slice(
     if (total_staked =/= 0n)
       then to_stakers := dy * fee.stakers_fee / Constants.fee_denominator;
     else to_prov := to_prov + dy * fee.stakers_fee / Constants.fee_denominator;
-
-    new_dy := nat_or_error(new_dy - to_prov - to_ref - to_dev - to_stakers, Errors.fee_overflow);
-  } with record[
-    dy = new_dy;
-    ref = to_ref;
-    dev = to_dev;
-    stkr = to_stakers;
-    lp = to_prov
-  ]
+    const return = record[
+      dy = nat_or_error(new_dy - to_prov - to_ref - to_dev - to_stakers, Errors.fee_overflow);
+      ref = to_ref;
+      dev = to_dev;
+      stkr = to_stakers;
+      lp = to_prov
+    ]
+  } with return
 
 function xp_mem(const tokens_info : map(tkn_pool_idx_t, tkn_inf_t)): map(tkn_pool_idx_t, nat) is
   block {
@@ -305,11 +304,9 @@ function calc_withdraw_one_coin(
     } with reduced;
 
     var xp_reduced : map(nat, nat) := Map.map(reduce_xp, xp);
-
-    const xp_red_i = unwrap(xp_reduced[i], Errors.wrong_index)
-      end;
+    const xp_red_i = unwrap(xp_reduced[i], Errors.wrong_index);
     var dy: nat := nat_or_error(xp_red_i - get_y_D(amp, i, xp_reduced, d1, pair), Errors.nat_error);
-    const t_i = unwrap(pair.tokens_info[i], Errors.wrong_index)
+    const t_i = unwrap(pair.tokens_info[i], Errors.wrong_index);
     const precisions_i =  t_i.precision_multiplier;
     const xp_i = unwrap(xp[i], Errors.wrong_index);
     dy := nat_or_error(dy - 1, Errors.nat_error) / precisions_i;  //# Withdraw less to account for rounding errors

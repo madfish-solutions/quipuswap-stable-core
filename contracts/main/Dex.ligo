@@ -1,8 +1,8 @@
 #import "../partials/errors.ligo" "Errors"
 #import "../partials/constants.ligo" "Constants"
 
-#include "../interfaces/i_permit.ligo"
-#include "../interfaces/i_dex.ligo"
+#include "../interfaces/iPermit.ligo"
+#include "../interfaces/iDex.ligo"
 
 #include "../partials/getters.ligo"
 #include "../partials/utils.ligo"

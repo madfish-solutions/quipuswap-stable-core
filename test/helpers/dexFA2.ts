@@ -190,7 +190,7 @@ export class Dex extends TokenFA2 {
       tokens_info.set(i, mapped_item(info));
     }
     const operation = await this.contract.methods
-      .addPair(a_const, input_tokens, tokens_info)
+      .add_pair(a_const, input_tokens, tokens_info)
       .send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
@@ -314,7 +314,7 @@ export class Dex extends TokenFA2 {
     });
 
     const operation = await this.contract.methods
-      .divestImbalanced(pairId, amts, maxSharesBurned, referral)
+      .divest_imbalanced(pairId, amts, maxSharesBurned, referral)
       .send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
@@ -327,7 +327,7 @@ export class Dex extends TokenFA2 {
     mintokenAmount: BigNumber
   ): Promise<TransactionOperation> {
     const operation = await this.contract.methods
-      .divestOneCoin(pairId, sharesBurned, tokenIdx, mintokenAmount)
+      .divest_one_coin(pairId, sharesBurned, tokenIdx, mintokenAmount)
       .send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
@@ -378,7 +378,7 @@ export class Dex extends TokenFA2 {
       to: this.contract.address,
       amount: 0,
       parameter: {
-        entrypoint: "setDexFunction",
+        entrypoint: "set_dex_function",
         value: JSON.parse(stdout.toString()).args[0].args[0].args[0].args[0],
       },
     });
@@ -402,7 +402,7 @@ export class Dex extends TokenFA2 {
         to: this.contract.address,
         amount: 0,
         parameter: {
-          entrypoint: "setDexFunction",
+          entrypoint: "set_dex_function",
           value: JSON.parse(stdout.toString()).args[0].args[0].args[0].args[0],
         },
       });
@@ -422,7 +422,7 @@ export class Dex extends TokenFA2 {
         to: this.contract.address,
         amount: 0,
         parameter: {
-          entrypoint: `set${type}Function`,
+          entrypoint: `set_${type.toLowerCase()}_function`,
           value: lambdaFunction,
         },
       });
@@ -451,7 +451,7 @@ export class Dex extends TokenFA2 {
         to: this.contract.address,
         amount: 0,
         parameter: {
-          entrypoint: `set${type}Function`,
+          entrypoint: `set_${type.toLowerCase()}_function`,
           value: lambdaFunction,
         },
       });
@@ -470,7 +470,7 @@ export class Dex extends TokenFA2 {
       to: this.contract.address,
       amount: 0,
       parameter: {
-        entrypoint: "setTokenFunction",
+        entrypoint: "set_token_function",
         value: JSON.parse(stdout.toString()).args[0].args[0].args[0].args[0],
       },
     });
@@ -494,7 +494,7 @@ export class Dex extends TokenFA2 {
         to: this.contract.address,
         amount: 0,
         parameter: {
-          entrypoint: "setTokenFunction",
+          entrypoint: "set_token_function",
           value: JSON.parse(stdout.toString()).args[0].args[0].args[0].args[0],
         },
       });
@@ -505,7 +505,7 @@ export class Dex extends TokenFA2 {
 
   async setAdmin(new_admin: string): Promise<TransactionOperation> {
     await this.updateStorage({});
-    const operation = await this.contract.methods.setAdmin(new_admin).send();
+    const operation = await this.contract.methods.set_admin(new_admin).send();
 
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
@@ -516,14 +516,14 @@ export class Dex extends TokenFA2 {
   ): Promise<TransactionOperation> {
     await this.updateStorage({});
     const operation = await this.contract.methods
-      .addRemManagers(add, manager)
+      .add_rem_managers(add, manager)
       .send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
   }
   async setDevAddress(dev: string): Promise<TransactionOperation> {
     await this.updateStorage({});
-    const operation = await this.contract.methods.setDevAddress(dev).send();
+    const operation = await this.contract.methods.set_dev_address(dev).send();
 
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
@@ -533,7 +533,7 @@ export class Dex extends TokenFA2 {
     fees: FeeType
   ): Promise<TransactionOperation> {
     const operation = await this.contract.methods
-      .setFees(
+      .set_fees(
         pool_id,
         fees.lp_fee,
         fees.stakers_fee,
@@ -547,13 +547,13 @@ export class Dex extends TokenFA2 {
   }
   async setDefaultReferral(ref: string): Promise<TransactionOperation> {
     const operation = await this.contract.methods
-      .setDefaultReferral(ref)
+      .set_default_referral(ref)
       .send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
   }
   async setRewardRate(rate: BigNumber): Promise<TransactionOperation> {
-    const operation = await this.contract.methods.setRewardRate(rate).send();
+    const operation = await this.contract.methods.set_reward_rate(rate).send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
   }
