@@ -2,9 +2,11 @@ import { TezosToolkit, VIEW_LAMBDA } from "@taquito/taquito";
 import { confirmOperation } from "../helpers/confirmation";
 import { prepareProviderOptions, setupLambdasToStorage } from "../helpers/utils";
 
-import dex_contract from "../../build/Dex.ligo.json";
+import dex_contract from "../../build/dex.ligo.json";
 import dex_lambdas_comp from "../../build/lambdas/Dex_lambdas.json";
 import token_lambdas_comp from "../../build/lambdas/Token_lambdas.json";
+import admin_lambdas_comp from "../../build/lambdas/Admin_lambdas.json";
+import permit_lambdas_comp from "../../build/lambdas/Permit_lambdas.json";
 
 import storage from "../storage/Dex";
 import { accounts } from "./constants";
