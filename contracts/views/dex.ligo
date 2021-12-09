@@ -6,10 +6,10 @@ function get_tokens_info(
   var s                 : storage_t)
                         : return_t is
   block {
-    var operations: list(operation) := CONSTANTS.no_operations;
+    var operations: list(operation) := Constants.no_operations;
     case p of
-      GetTokensInfo(params) -> {
-      const pair : pair_t = unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
+      Get_tokens_info(params) -> {
+      const pair : pair_t = unwrap(s.pools[params.pair_id], Errors.pair_not_listed);
       operations := Tezos.transaction(pair.tokens_info, 0tez, params.receiver) # operations;
       }
     | _ -> skip
@@ -21,7 +21,7 @@ function get_tokens_info(
 //   const _params          : nat;
 //   const s               : full_storage_t)
 //                         : full_return_t is
-//   (CONSTANTS.no_operations, s)
+//   (Constants.no_operations, s)
 
 // (* min received in the swap *)
 // function get_min_received(
@@ -37,13 +37,13 @@ function get_tokens_info(
 //       | None -> (failwith("no such index") : nat)
 //       end;
 //     var dy := nat_or_error(xp_j - y - 1, "y>xp_j");
-//     const dy_fee = sum_all_fee(pair) * dy / CONSTANTS.fee_denominator;
+//     const dy_fee = sum_all_fee(pair) * dy / Constants.fee_denominator;
 
 //     const rate_j = case pair.token_rates[params.j] of
 //       | Some(value) -> value
 //       | None -> (failwith("no such index") : nat)
 //       end;
-//     dy := nat_or_error(dy - dy_fee, "dy_fee>dy") * CONSTANTS.precision / rate_j;
+//     dy := nat_or_error(dy - dy_fee, "dy_fee>dy") * Constants.precision / rate_j;
 //   } with (list [Tezos.transaction(dy, 0tez, params.receiver)], s)
 
 
@@ -61,7 +61,7 @@ function get_tokens_info(
 //           | Some(balc) -> balc
 //           | None -> (failwith("no such balance") : nat)
 //           end;
-//         const ret = bal * value / CONSTANTS.rate_precision;
+//         const ret = bal * value / Constants.rate_precision;
 //       } with ret
 //   } with (list [Tezos.transaction(Map.map(count_limits, pair.proxy_limits), 0tez, params.receiver)], s)
 
@@ -73,7 +73,7 @@ function calc_withdraw_one_coin_view(
   const s               : full_storage_t)
                         : full_return_t is
   block {
-    const pair : pair_t = unwrap(s.storage.pools[params.pair_id], ERRORS.pair_not_listed);
+    const pair : pair_t = unwrap(s.storage.pools[params.pair_id], Errors.pair_not_listed);
     const amp : nat =  get_A(
       pair.initial_A_time,
       pair.initial_A,
@@ -101,19 +101,19 @@ function get_dy(
   var s                 : storage_t)
                         : return_t is
   block {
-    var operations: list(operation) := CONSTANTS.no_operations;
+    var operations: list(operation) := Constants.no_operations;
     case p of
-      GetDy(params) -> {
-        const pair : pair_t = unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
+      Get_dy(params) -> {
+        const pair : pair_t = unwrap(s.pools[params.pair_id], Errors.pair_not_listed);
         const xp: map(nat, nat) = xp(pair);
-        const xp_i = unwrap(xp[params.i], ERRORS.wrong_index);
-        const xp_j = unwrap(xp[params.j], ERRORS.wrong_index);
-        const token_info_i = unwrap(pair.tokens_info[params.i], ERRORS.wrong_index);
-        const token_info_j = unwrap(pair.tokens_info[params.j], ERRORS.wrong_index);
-        const x: nat = xp_i + (params.dx * token_info_i.rate / CONSTANTS.precision);
+        const xp_i = unwrap(xp[params.i], Errors.wrong_index);
+        const xp_j = unwrap(xp[params.j], Errors.wrong_index);
+        const token_info_i = unwrap(pair.tokens_info[params.i], Errors.wrong_index);
+        const token_info_j = unwrap(pair.tokens_info[params.j], Errors.wrong_index);
+        const x: nat = xp_i + (params.dx * token_info_i.rate / Constants.precision);
         const y: nat = get_y(params.i, params.j, x, xp, pair);
-        const dy: nat = nat_or_error(xp_j - y - 1, "y>xp_j") * CONSTANTS.precision / token_info_j.rate;
-        const fee: nat = sum_all_fee(pair.fee) * dy / CONSTANTS.fee_denominator;
+        const dy: nat = nat_or_error(xp_j - y - 1, "y>xp_j") * Constants.precision / token_info_j.rate;
+        const fee: nat = sum_all_fee(pair.fee) * dy / Constants.fee_denominator;
         operations := Tezos.transaction((nat_or_error(dy - fee, "fee>dy")), 0tez, params.receiver) # operations;
       }
     | _ -> skip
@@ -127,16 +127,16 @@ function get_A_view(
   var s                 : storage_t)
                         : return_t is
   block {
-    var operations: list(operation) := CONSTANTS.no_operations;
+    var operations: list(operation) := Constants.no_operations;
     case p of
-      GetA(params) -> {
-      const pair : pair_t = unwrap(s.pools[params.pair_id], ERRORS.pair_not_listed);
+      Get_A(params) -> {
+      const pair : pair_t = unwrap(s.pools[params.pair_id], Errors.pair_not_listed);
       operations := Tezos.transaction(get_A(
         pair.initial_A_time,
         pair.initial_A,
         pair.future_A_time,
         pair.future_A
-      ) / CONSTANTS.a_precision, 0tez, params.receiver) # operations;
+      ) / Constants.a_precision, 0tez, params.receiver) # operations;
     }
     | _ -> skip
     end;
@@ -149,10 +149,10 @@ function get_fees(
   var s                 : storage_t)
                         : return_t is
   block {
-    var operations: list(operation) := CONSTANTS.no_operations;
+    var operations: list(operation) := Constants.no_operations;
     case p of
-      GetFees(params) -> {
-      const pair : pair_t = unwrap(s.pools[params.pool_id], ERRORS.pair_not_listed);
+      Get_fees(params) -> {
+      const pair : pair_t = unwrap(s.pools[params.pool_id], Errors.pair_not_listed);
       operations := Tezos.transaction(pair.fee, 0tez, params.receiver) # operations;
      }
     | _ -> skip

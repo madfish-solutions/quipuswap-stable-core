@@ -2,21 +2,21 @@
 [@inline]
 function check_permissions(const from_account: address; const allowances: set(address)): unit is
   if from_account =/= Tezos.sender and not (allowances contains Tezos.sender)
-    then failwith("FA2_NOT_OPERATOR");
+    then failwith(Errors.not_operator);
   else Unit;
 
 (* Balance check *)
 [@inline]
 function check_balance(const account_bal: nat; const to_spend: nat): unit is
   if account_bal < to_spend
-    then failwith("FA2_INSUFFICIENT_BALANCE")
+    then failwith(Errors.insufficient_balance)
   else Unit;
 
 (* Owner check *)
 [@inline]
 function is_owner(const owner: address): unit is
   if Tezos.sender =/= owner
-    then failwith("FA2_NOT_OWNER")
+    then failwith(Errors.not_owner)
   else Unit;
 
 [@inline]
@@ -24,13 +24,10 @@ function get_account_data(
   const key: address * token_id_t;
   const acc_bm: big_map((address * pool_id_t), account_data_t)
   ): account_data_t is
-  case acc_bm[key] of
-    Some(data) -> data
-  | None -> (record [
+  unwrap_or(acc_bm[key], record [
     allowances      = (set[]  : set(address));
     earned_interest = (map[]  : map(token_t, account_rwrd_t));
-  ]: account_data_t)
-  end;
+  ]);
 
 (* Perform transfers from one owner *)
 [@inline]

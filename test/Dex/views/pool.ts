@@ -10,7 +10,7 @@ export async function getASuccessCase(
 ) {
   await dex.updateStorage({ pools: [pool_id.toString()] });
   const exp_A = dex.storage.storage.pools[pool_id.toString()].initial_A;
-  const a = await dex.contract.views.getA(pool_id).read(lambdaContractAddress);
+  const a = await dex.contract.views.get_A(pool_id).read(lambdaContractAddress);
   expect(a.toNumber()).toEqual(exp_A.dividedBy(100).toNumber());
 }
 
@@ -22,7 +22,7 @@ export async function getFeesSuccessCase(
   await dex.updateStorage({ pools: [pool_id.toString()] });
   const exp_fees: FeeType = dex.storage.storage.pools[pool_id.toString()].fee;
   const fees = (await dex.contract.views
-    .getFees(pool_id)
+    .get_fees(pool_id)
     .read(lambdaContractAddress)) as FeeType;
   expect(fees).toMatchObject(exp_fees);
 }
@@ -36,7 +36,7 @@ export async function getTokensInfoSuccessCase(
   const exp_reserves = dex.storage.storage.pools[pool_id.toString()]
     .tokens_info as any as Map<string, TokenInfo>;
   const reserves = await dex.contract.views
-    .getTokensInfo(pool_id)
+    .get_tokens_info(pool_id)
     .read(lambdaContractAddress);
   reserves.forEach((v: TokenInfo, k: string) => {
     expect(v.reserves.toNumber()).toEqual(
@@ -73,7 +73,7 @@ export async function getDySuccessCase(
     j: j,
     dx: dx,
   };
-  const getdy = dex.contract.views.getDy(
+  const getdy = dex.contract.views.get_dy(
     pool_id,
     new BigNumber(i),
     new BigNumber(j),

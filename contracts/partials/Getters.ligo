@@ -22,8 +22,8 @@ function get_token_by_id(
     const map_entry : option(tkns_map_t)
   )                 : token_t is
   block {
-    const tokens = unwrap(map_entry, ERRORS.pair_not_listed);
-    const token = unwrap(tokens[token_id], ERRORS.wrong_index);
+    const tokens = unwrap(map_entry, Errors.pair_not_listed);
+    const token = unwrap(tokens[token_id], Errors.wrong_index);
   } with token;
 
 (* Helper function to get fa2 token contract *)
@@ -31,14 +31,14 @@ function get_fa2_token_contract(
   const token_address   : address)
                         : contract(entry_fa2_t) is
   unwrap((Tezos.get_entrypoint_opt("%transfer", token_address)
-      : option(contract(entry_fa2_t))), ERRORS.wrong_token_entrypoint);
+      : option(contract(entry_fa2_t))), Errors.wrong_token_entrypoint);
 
 (* Helper function to get fa1.2 token contract *)
 function get_fa12_token_contract(
   const token_address   : address)
                         : contract(entry_fa12_t) is
   unwrap((Tezos.get_entrypoint_opt("%transfer", token_address)
-      : option(contract(entry_fa12_t))), ERRORS.wrong_token_entrypoint);
+      : option(contract(entry_fa12_t))), Errors.wrong_token_entrypoint);
 
 (* Helper function to get token pair *)
 function get_pair_info(
@@ -76,8 +76,5 @@ function get_token_info(
   const key         : tkn_pool_idx_t;
   const tokens_info : map(tkn_pool_idx_t, tkn_inf_t))
                     : tkn_inf_t is
-  case tokens_info[key] of
-  | Some(instance) -> instance
-  | None ->  (failwith(ERRORS.no_token_info) : tkn_inf_t)
-  end;
+  unwrap(tokens_info[key], Errors.no_token_info);
 

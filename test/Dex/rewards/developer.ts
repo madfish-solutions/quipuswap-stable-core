@@ -75,7 +75,7 @@ export async function getDeveloperRewardsSuccessCase(
     uUSD: uUSDRewards,
   };
   let op = await dex.contract.methods
-    .claimDeveloper("fa12", tokens.USDtz.contract.address, USDtzRewards)
+    .claim_developer("fa12", tokens.USDtz.contract.address, USDtzRewards)
     .send();
   await confirmOperation(Tezos, op.hash);
   console.debug("[CLAIM:DEVELOPER] USDtz");
@@ -88,7 +88,7 @@ export async function getDeveloperRewardsSuccessCase(
   });
   expect(updUSDtzRewards.toNumber()).toEqual(0);
   op = await dex.contract.methods
-    .claimDeveloper("fa12", tokens.kUSD.contract.address, kUSDRewards)
+    .claim_developer("fa12", tokens.kUSD.contract.address, kUSDRewards)
     .send();
   await confirmOperation(Tezos, op.hash);
   console.debug("[CLAIM:DEVELOPER] kUSD");
@@ -101,7 +101,7 @@ export async function getDeveloperRewardsSuccessCase(
   });
   expect(updkUSDRewards.toNumber()).toEqual(0);
   op = await dex.contract.methods
-    .claimDeveloper(
+    .claim_developer(
       "fa2",
       tokens.uUSD.contract.address,
       new BigNumber(defaultTokenId),

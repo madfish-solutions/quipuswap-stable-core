@@ -2,20 +2,20 @@
 function is_admin(const admin: address): unit is
   assert_with_error(
     Tezos.sender = admin,
-    ERRORS.not_contract_admin
+    Errors.not_contract_admin
   );
 
 (* Contract admin or dev check *)
 function is_admin_or_dev(const admin: address; const dev: address): unit is
   assert_with_error(
     Tezos.sender = admin or Tezos.sender = dev,
-    ERRORS.not_contract_admin
+    Errors.not_contract_admin
   );
 
 function check_time_expiration(const exp: timestamp): unit is
   assert_with_error(
     exp >= Tezos.now,
-    ERRORS.time_expired
+    Errors.time_expired
   );
 
 function set_func_or_fail(
@@ -24,8 +24,8 @@ function set_func_or_fail(
   var lambda_storage: big_map(nat, bytes))
                     : big_map(nat, bytes) is
   block {
-    assert_with_error(params.index < max_idx, ERRORS.high_func_index);
-    assert_with_error(not Big_map.mem(params.index, lambda_storage), ERRORS.func_set);
+    assert_with_error(params.index < max_idx, Errors.wrong_index);
+    assert_with_error(not Big_map.mem(params.index, lambda_storage), Errors.func_set);
     lambda_storage[params.index] := params.func;
   } with lambda_storage
 
@@ -48,26 +48,36 @@ function perform_fee_slice(
     const dy            : nat;
     const fee           : fees_storage_t;
     const total_staked  : nat
-  )                     : nat * nat * nat * nat is
+  )                     : record[
+    dy  : nat;
+    ref : nat;
+    dev : nat;
+    stkr: nat;
+    lp  : nat;
+  ] is
   block {
-    var new_dy := dy;
-
-    const to_ref = dy * fee.ref_fee / CONSTANTS.fee_denominator;
-    const to_dev = dy * fee.dev_fee / CONSTANTS.fee_denominator;
-    var to_prov := dy * fee.lp_fee / CONSTANTS.fee_denominator;
+    const to_ref = dy * fee.ref_fee / Constants.fee_denominator;
+    const to_dev = dy * fee.dev_fee / Constants.fee_denominator;
+    var to_prov := dy * fee.lp_fee / Constants.fee_denominator;
 
     var to_stakers := 0n;
     if (total_staked =/= 0n)
-      then to_stakers := dy * fee.stakers_fee / CONSTANTS.fee_denominator;
-    else to_prov := to_prov + dy * fee.stakers_fee / CONSTANTS.fee_denominator;
+      then to_stakers := dy * fee.stakers_fee / Constants.fee_denominator;
+    else to_prov := to_prov + dy * fee.stakers_fee / Constants.fee_denominator;
 
-    new_dy := nat_or_error(new_dy - to_prov - to_ref - to_dev - to_stakers, "Fee is too large");
-  } with (new_dy, to_ref, to_dev, to_stakers)
+    const return = record[
+      dy  = nat_or_error(dy - to_prov - to_ref - to_dev - to_stakers, Errors.fee_overflow);
+      ref = to_ref;
+      dev = to_dev;
+      stkr= to_stakers;
+      lp  = to_prov
+    ]
+  } with return
 
 function xp_mem(const tokens_info : map(tkn_pool_idx_t, tkn_inf_t)): map(tkn_pool_idx_t, nat) is
   block {
     function count_result(const _key: nat; var token_info: tkn_inf_t): nat is
-      (token_info.rate * token_info.virtual_reserves) / CONSTANTS.precision;
+      (token_info.rate * token_info.virtual_reserves) / Constants.precision;
   } with Map.map(count_result, tokens_info);
 
 function xp(const s: pair_t): map(nat, nat) is xp_mem(s.tokens_info);
@@ -82,8 +92,8 @@ function get_A(
   if Tezos.now < t1
     then
       if a1 > a0
-        then a0 + abs(a1 - a0) * nat_or_error(Tezos.now - t0, "Time error") / nat_or_error(t1 - t0, "Time error")
-      else nat_or_error(a0 - abs(a0 - a1) * nat_or_error(Tezos.now - t0, "Time error") / nat_or_error(t1 - t0, "Time error"), "A error");
+        then a0 + abs(a1 - a0) * nat_or_error(Tezos.now - t0, Errors.timestamp_error) / nat_or_error(t1 - t0, Errors.timestamp_error)
+      else abs(a0 - abs(a0 - a1) * nat_or_error(Tezos.now - t0, Errors.timestamp_error) / nat_or_error(t1 - t0, Errors.timestamp_error)); (* always a0 > (a0-a1) * (now-t0)/(t1-t0) if t1 > now && a0 > a1 *)
   else a1
 
 
@@ -116,8 +126,8 @@ function get_D(const xp: map(nat, nat); const amp: nat): nat is
         const d_P = Map.fold(count_D_P, xp, tmp.d);
 
         tmp.prev_d := tmp.d;
-        tmp.d := (a_nn * sum_c / CONSTANTS.a_precision + d_P * tokens_count) * tmp.d / (
-          nat_or_error(a_nn - CONSTANTS.a_precision, ERRORS.wrong_precision) * tmp.d / CONSTANTS.a_precision + (tokens_count + 1n) * d_P); (* Equality with the precision of 1 *)
+        tmp.d := (a_nn * sum_c / Constants.a_precision + d_P * tokens_count) * tmp.d / (
+          nat_or_error(a_nn - Constants.a_precision, Errors.wrong_precision) * tmp.d / Constants.a_precision + (tokens_count + 1n) * d_P); (* Equality with the precision of 1 *)
       };
   } with tmp.d
 
@@ -141,15 +151,15 @@ function calc_y(
   block {
     const tokens_count = Map.size(s.tokens_info);
     var _y_prev: nat := 0n;
-    c := c * d * CONSTANTS.a_precision / (a_nn * tokens_count);
+    c := c * d * Constants.a_precision / (a_nn * tokens_count);
 
-    const b: nat = s_ + d * CONSTANTS.a_precision / a_nn;
+    const b: nat = s_ + d * Constants.a_precision / a_nn;
     var y: nat := d;
 
     while abs(y - _y_prev) > 1n
       block {
         _y_prev := y;
-        y := (y * y + c) / nat_or_error(2 * y + b - d, "y_denom_non_nat");
+        y := (y * y + c) / nat_or_error(2 * y + b - d, Errors.nat_error);
       }
   } with y
 
@@ -208,23 +218,6 @@ function get_y(
         s_  = 0n;
         c   = d;
       ])
-
-    // for _i := 0 to (tokens_count - 1)
-    //   block {
-    //     const iter: nat = nat_or_error(_i, "index_not_nat");
-    //     if iter =/= j
-    //       then {
-    //       if iter = i
-    //         then _x := x
-    //       else _x := case xp[iter] of
-    //                 Some(val) -> val
-    //               | None -> (failwith("no such xp[iter] index"): nat)
-    //               end;
-    //       s_ := s_ + _x;
-    //       c := c * d / (_x * tokens_count);
-    //     }
-    //     else skip;
-    //   };
   } with calc_y(res.c, a_nn, res.s_, d, s)
 
 function get_y_D(
@@ -235,13 +228,12 @@ function get_y_D(
   const s   : pair_t)
             : nat is
   block {
-    (*"""
+    (*
     Calculate x[i] if one reduces D from being calculated for xp to D
     Done by solving quadratic equation iteratively.
     x_1**2 + x_1 * (sum' - (A*n**n - 1) * D / (A * n**n)) = D ** (n + 1) / (n ** (2 * n) * prod' * A)
     x_1**2 + b*x_1 = c
     x_1 = (x_1**2 + c) / (2*x_1 + b)
-    """
     # x in the input is converted to the same price/precision
     *)
 
@@ -281,7 +273,7 @@ function get_y_D(
 
 [@inline]
 function divide_fee_for_balance(const fee: nat; const tokens_count: nat): nat
-  is fee * tokens_count / (4n * nat_or_error(tokens_count - 1, "invalid tokens count"));
+  is fee * tokens_count / (4n * nat_or_error(tokens_count - 1n, Errors.wrong_tokens_count));
 
 function calc_withdraw_one_coin(
     const amp : nat;
@@ -298,37 +290,28 @@ function calc_withdraw_one_coin(
     const xp            : map(nat, nat) = xp(pair);
     const d0            : nat           = get_D(xp, amp);
     var   total_supply  : nat           := pair.total_supply;
-    const d1            : nat           = nat_or_error(d0 - (token_amount * d0 / total_supply), "d1_less_0n");
+    const d1            : nat           = nat_or_error(d0 - (token_amount * d0 / total_supply), Errors.nat_error);
     const new_y         : nat           = get_y_D(amp, i, xp, d1, pair);
     const base_fee      : nat           = sum_all_fee(pair.fee);
     function reduce_xp(const key: nat; const value: nat): nat is
       block {
         var dx_expected: nat := 0n;
         if key = i
-          then dx_expected := nat_or_error((value * d1 / d0) - new_y, "dx_exp_lower_0n");
-        else   dx_expected := nat_or_error(value - (value * d1 / d0), "dx_exp_lower_0n");
-        const reduced = nat_or_error(value - dx_expected * divide_fee_for_balance(base_fee, tokens_count) / CONSTANTS.fee_denominator, "dxfee_more_value");
+          then dx_expected := nat_or_error((value * d1 / d0) - new_y, Errors.nat_error);
+        else   dx_expected := nat_or_error(value - (value * d1 / d0), Errors.nat_error);
+        const reduced = nat_or_error(value - dx_expected * divide_fee_for_balance(base_fee, tokens_count) / Constants.fee_denominator, Errors.nat_error);
     } with reduced;
 
     var xp_reduced : map(nat, nat) := Map.map(reduce_xp, xp);
-
-    const xp_red_i = case xp_reduced[i] of
-      | Some(value) -> value
-      | None -> (failwith("no such xp_reduced[i] index"): nat)
-      end;
-    var dy: nat := nat_or_error(xp_red_i - get_y_D(amp, i, xp_reduced, d1, pair), "dy_less_0n");
-    const precisions_i = case pair.tokens_info[i] of
-      | Some(value) -> value.precision_multiplier
-      | None -> (failwith("no such precisions[i] index"): nat)
-      end;
-    const xp_i = case xp[i] of
-      | Some(value) -> value
-      | None -> (failwith("no such xp[i] index"): nat)
-      end;
-    dy := nat_or_error(dy - 1, "dy_less_0n") / precisions_i;  //# Withdraw less to account for rounding errors
-    const dy_0: nat = nat_or_error(xp_i - new_y, "new_y_gt_xp_i") / precisions_i;  //# w/o s.fee
-    total_supply := nat_or_error(pair.total_supply - token_amount, "Not enough supply");
-    const fee = nat_or_error(dy_0 - dy, "dy_less_dy0");
+    const xp_red_i = unwrap(xp_reduced[i], Errors.wrong_index);
+    var dy: nat := nat_or_error(xp_red_i - get_y_D(amp, i, xp_reduced, d1, pair), Errors.nat_error);
+    const t_i = unwrap(pair.tokens_info[i], Errors.wrong_index);
+    const precisions_i =  t_i.precision_multiplier;
+    const xp_i = unwrap(xp[i], Errors.wrong_index);
+    dy := nat_or_error(dy - 1, Errors.nat_error) / precisions_i;  //# Withdraw less to account for rounding errors
+    const dy_0: nat = nat_or_error(xp_i - new_y, Errors.nat_error) / precisions_i;  //# w/o s.fee
+    total_supply := nat_or_error(pair.total_supply - token_amount, Errors.low_total_supply);
+    const fee = nat_or_error(dy_0 - dy, Errors.nat_error);
   } with record[
       dy=dy;
       dy_fee=fee;
@@ -355,79 +338,31 @@ function balance_inputs(
       block {
         const i: tkn_pool_idx_t = entry.0;
         var token_info: tkn_inf_t := entry.1;
-        const old_info: tkn_inf_t = unwrap(init_tokens_info[i], ERRORS.wrong_index);
+        const old_info: tkn_inf_t = unwrap(init_tokens_info[i], Errors.wrong_index);
         const ideal_balance = d1 * old_info.virtual_reserves / d0;
         const diff = abs(ideal_balance - token_info.virtual_reserves);
-        const to_dev = diff * divide_fee_for_balance(fees.dev_fee, tokens_count) / CONSTANTS.fee_denominator;
-        const to_ref = diff * divide_fee_for_balance(fees.ref_fee, tokens_count) / CONSTANTS.fee_denominator;
-        var to_lp := diff * divide_fee_for_balance(fees.lp_fee, tokens_count) / CONSTANTS.fee_denominator;
+        const to_dev = diff * divide_fee_for_balance(fees.dev_fee, tokens_count) / Constants.fee_denominator;
+        const to_ref = diff * divide_fee_for_balance(fees.ref_fee, tokens_count) / Constants.fee_denominator;
+        var to_lp := diff * divide_fee_for_balance(fees.lp_fee, tokens_count) / Constants.fee_denominator;
         var to_stakers := 0n;
         if acc.staker_accumulator.total_staked =/= 0n
           then {
-            to_stakers := diff * divide_fee_for_balance(fees.stakers_fee, tokens_count) / CONSTANTS.fee_denominator;
-            acc.staker_accumulator.accumulator[i] := unwrap_or(acc.staker_accumulator.accumulator[i], 0n) + to_stakers * CONSTANTS.stkr_acc_precision / acc.staker_accumulator.total_staked;
+            to_stakers := diff * divide_fee_for_balance(fees.stakers_fee, tokens_count) / Constants.fee_denominator;
+            acc.staker_accumulator.accumulator[i] := unwrap_or(acc.staker_accumulator.accumulator[i], 0n) + to_stakers * Constants.stkr_acc_precision / acc.staker_accumulator.total_staked;
           }
-        else to_lp := to_lp + diff * divide_fee_for_balance(fees.stakers_fee, tokens_count) / CONSTANTS.fee_denominator;
+        else to_lp := to_lp + diff * divide_fee_for_balance(fees.stakers_fee, tokens_count) / Constants.fee_denominator;
         const token = get_token_by_id(i, Some(tokens));
         acc.dev_rewards[token] := unwrap_or(acc.dev_rewards[token], 0n) + to_dev;
         acc.referral_rewards[(referral, token)] := unwrap_or(acc.referral_rewards[(referral, token)], 0n) + to_ref;
 
-        token_info.reserves := nat_or_error(token_info.reserves - to_dev - to_ref - to_stakers, ERRORS.low_virtual_reserves);
-        token_info.virtual_reserves := nat_or_error(token_info.virtual_reserves - to_dev - to_ref - to_stakers, ERRORS.low_virtual_reserves);
+        token_info.reserves := nat_or_error(token_info.reserves - to_dev - to_ref - to_stakers, Errors.low_virtual_reserves);
+        token_info.virtual_reserves := nat_or_error(token_info.virtual_reserves - to_dev - to_ref - to_stakers, Errors.low_virtual_reserves);
         acc.tokens_info[i] := token_info;
-        token_info.reserves := nat_or_error(token_info.reserves - to_lp, ERRORS.low_virtual_reserves);
-        token_info.virtual_reserves := nat_or_error(token_info.virtual_reserves - to_lp, ERRORS.low_virtual_reserves);
+        token_info.reserves := nat_or_error(token_info.reserves - to_lp, Errors.low_virtual_reserves);
+        token_info.virtual_reserves := nat_or_error(token_info.virtual_reserves - to_lp, Errors.low_virtual_reserves);
         acc.tokens_info_without_lp[i] := token_info;
     } with acc;
 } with Map.fold(balance_it, new_tokens_info, accumulator);
-
-  // function apply_invest_fee(
-  //   const referral  : address;
-  //   const pair_id   : pool_id_t;
-  //   const i         : tkn_pool_idx_t;
-  //   const difference: nat;
-  //   var new_balance : nat;
-  //   var s           : storage_t
-  // )                 : (nat * storage_t) is
-  //   block {
-  //     var pair : pair_t := get_pair(pair_id, s);
-  //     const initial_reserves = case pair.virtual_reserves[i] of
-  //         Some(val) -> val
-  //       | None -> (failwith("no such index"): nat)
-  //       end;
-  //     const fee_all = difference * sum_all_fee(pair);
-  //     const fee_wo_lp = difference * sum_wo_lp_fee(pair);
-  //     const dev_fee = difference * pair.fee.dev_fee;
-  //     const stakers_fee = difference * pair.fee.stakers_fee;
-  //     const referral_fee = difference * pair.fee.ref_fee;
-  //     const token = get_token_by_id(i, pair_id, s);
-  //     const new_reserves = abs(new_balance - fee_wo_lp / CONSTANTS.fee_denominator);
-  //     new_balance := abs(new_balance - fee_all  / CONSTANTS.fee_denominator);
-  //     pair.virtual_reserves[i] := new_reserves;
-  //     pair.reserves[i] := case pair.reserves[i] of
-  //         Some(reserve) -> reserve + abs(new_reserves - initial_reserves)
-  //       | None -> abs(new_reserves - initial_reserves)
-  //       end;
-  //     s.dev_rewards[token] := case s.dev_rewards[token] of
-  //         Some(rewards) -> rewards + dev_fee
-  //       | None -> (dev_fee: nat)
-  //       end;
-  //     const ref_key: address * pool_id_t = (referral, pair_id);
-  //     var ref_rew : rewards_type := case s.referral_rewards[ref_key] of
-  //         Some(reward_map) -> reward_map
-  //       | None -> (map []: rewards_type)
-  //       end;
-  //     ref_rew[i] := case ref_rew[i] of
-  //         Some(reward) -> reward + referral_fee
-  //       | None -> (referral_fee: nat)
-  //       end;
-  //     s.referral_rewards[ref_key] := ref_rew;
-  //     pair.staker_accumulator[i] := case pair.staker_accumulator[i] of
-  //         Some(val) -> val + stakers_fee
-  //       | None -> (stakers_fee: nat)
-  //       end;
-  //     s.pools[pair_id] := pair;
-  //   } with (new_balance, s)
 
 function preform_swap(
   const i: tkn_pool_idx_t;
@@ -436,26 +371,16 @@ function preform_swap(
   const pair: pair_t): nat is
   block {
     const xp = xp(pair);
-    const xp_i = case xp[i] of
-      | Some(value) -> value
-      | None -> (failwith("no such xp[i] index"): nat)
-      end;
-    const xp_j = case xp[j] of
-      | Some(value) -> value
-      | None -> (failwith("no such xp[j] index"): nat)
-      end;
-    const rate_i = case pair.tokens_info[i] of
-      | Some(value) -> value.rate
-      | None -> (failwith("no such rate[i] index"): nat)
-      end;
-    const rate_j = case pair.tokens_info[j] of
-      | Some(value) -> value.rate
-      | None -> (failwith("no such rate[j] index"): nat)
-      end;
-    const x = xp_i + ((dx * rate_i) / CONSTANTS.precision);
+    const xp_i = unwrap(xp[i], Errors.wrong_index);
+    const xp_j = unwrap(xp[j], Errors.wrong_index);
+    const t_i = unwrap(pair.tokens_info[i], Errors.wrong_index);
+    const t_j = unwrap(pair.tokens_info[j], Errors.wrong_index);
+    const rate_i = t_i.rate;
+    const rate_j = t_j.rate;
+    const x = xp_i + ((dx * rate_i) / Constants.precision);
     const y = get_y(i, j, x, xp, pair);
-    const dy = nat_or_error(xp_j - y - 1, "dy_less_0n");  // -1 just in case there were some rounding errors
-  } with dy * CONSTANTS.precision / rate_j
+    const dy = nat_or_error(xp_j - y - 1, Errors.nat_error);  // -1 just in case there were some rounding errors
+  } with dy * Constants.precision / rate_j
 
   function add_liq(
     const params  : add_liq_prm_t;
@@ -479,7 +404,7 @@ function preform_swap(
                       : tkn_inf_t is
       block {
         const input = unwrap_or(params.inputs[key], 0n);
-        assert_with_error(token_supply =/= 0n or input > 0n, ERRORS.zero_in);
+        assert_with_error(token_supply =/= 0n or input > 0n, Errors.zero_in);
         token_info.virtual_reserves := token_info.virtual_reserves + input;
         token_info.reserves := token_info.reserves + input;
       } with token_info;
@@ -487,7 +412,7 @@ function preform_swap(
     var new_tokens_info := Map.map(add_inputs, init_tokens_info);
     const d1 = get_D_mem(new_tokens_info, amp);
 
-    assert_with_error(d1 > d0, ERRORS.zero_in);
+    assert_with_error(d1 > d0, Errors.zero_in);
 
     var mint_amount := 0n;
 
@@ -498,7 +423,7 @@ function preform_swap(
         d0,
         new_tokens_info,
         d1,
-        unwrap(s.tokens[params.pair_id], ERRORS.pair_not_listed),
+        unwrap(s.tokens[params.pair_id], Errors.pair_not_listed),
         pair.fee,
         unwrap_or(params.referral, s.default_referral),
         record [
@@ -513,13 +438,13 @@ function preform_swap(
       pair.staker_accumulator := balanced.staker_accumulator;
       pair.tokens_info := balanced.tokens_info;
       const d2 = get_D_mem(balanced.tokens_info_without_lp, amp);
-      mint_amount := token_supply * nat_or_error(d2 - d0, "d2<d0") / d0;
+      mint_amount := token_supply * nat_or_error(d2 - d0, Errors.nat_error) / d0;
     }
     else {
       pair.tokens_info := new_tokens_info;
       mint_amount := d1;
     };
-    assert_with_error(mint_amount >= params.min_mint_amount, ERRORS.wrong_shares_out);
+    assert_with_error(mint_amount >= params.min_mint_amount, Errors.wrong_shares_out);
 
     const tokens = s.tokens;
     function transfer_to_pool(const operations : list(operation); const input : nat * nat) : list(operation) is
@@ -535,7 +460,7 @@ function preform_swap(
     const user_key = (Tezos.sender, params.pair_id);
     s.ledger[user_key] := unwrap_or(s.ledger[user_key], 0n) + mint_amount;
     s.pools[params.pair_id] := pair;
-  } with (Map.fold(transfer_to_pool, params.inputs, CONSTANTS.no_operations), s)
+  } with (Map.fold(transfer_to_pool, params.inputs, Constants.no_operations), s)
 
 function harvest_staker_rewards(
   var info          : stkr_info_t;
@@ -563,7 +488,7 @@ function harvest_staker_rewards(
           reward = 0n;
         ]);
         const new_former = staker_balance * pool_acc;
-        const reward_amt = (reward.reward + abs(new_former - reward.former)) / CONSTANTS.stkr_acc_precision;
+        const reward_amt = (reward.reward + abs(new_former - reward.former)) / Constants.stkr_acc_precision;
         acc.op := typed_transfer(
           Tezos.self_address,
           Tezos.sender,
@@ -606,10 +531,10 @@ function update_former_and_transfer(
             pool_s_accumulator.total_staked + shares
             )
         | Remove -> (
-            nat_or_error(staker_acc.balance - shares, ERRORS.wrong_shares_out),
+            nat_or_error(staker_acc.balance - shares, Errors.wrong_shares_out),
             Tezos.self_address,
             Tezos.sender,
-            nat_or_error(pool_s_accumulator.total_staked - shares, ERRORS.wrong_shares_out)
+            nat_or_error(pool_s_accumulator.total_staked - shares, Errors.wrong_shares_out)
             )
         end;
       function upd_former(const i: tkn_pool_idx_t; const rew: account_rwrd_t) : account_rwrd_t is
