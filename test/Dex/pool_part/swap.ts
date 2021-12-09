@@ -1,4 +1,4 @@
-import { MichelsonMap, TezosToolkit } from "@taquito/taquito";
+import { TezosToolkit } from "@taquito/taquito";
 import BigNumber from "bignumber.js";
 import { confirmOperation } from "../../helpers/confirmation";
 import { Dex } from "../../helpers/dexFA2";
@@ -12,6 +12,10 @@ import {
 import { accounts, decimals, swap_routes } from "../constants";
 import { setupTokenAmounts } from "../tokensSetups";
 import { AmountsMap, IndexMap, TokensMap } from "../types";
+import {
+  MichelsonV1ExpressionBase,
+  MichelsonV1ExpressionExtended,
+} from "@taquito/rpc";
 
 export async function setupTokenMapping(
   dex: Dex,
@@ -99,7 +103,7 @@ export async function swapSuccessCase(
       .div(new BigNumber(10).pow(18))
       .toFormat()} ${t_to}`
   );
-  await dex.swap(
+  const op = await dex.swap(
     pool_id,
     new BigNumber(i),
     new BigNumber(j),
@@ -115,9 +119,30 @@ export async function swapSuccessCase(
   expect(upd_reserves.get(i.toString()).reserves).toEqual(
     init_reserves.get(i.toString()).reserves.plus(amounts.get(i))
   );
-  const output = init_reserves
-    .get(j.toString())
-    .reserves.minus(upd_reserves.get(j.toString()).reserves);
+
+  // Get output from internal transaction
+  const output_params =
+    op.operationResults[0].metadata.internal_operation_results // swap operation // internal operations
+      .find((val) => val.destination == tok_out.contract.address).parameters // find needed transfer
+      .value as MichelsonV1ExpressionExtended; // transfer params
+  let output: BigNumber;
+  if (tok_out instanceof TokenFA12)
+    output = new BigNumber(
+      (
+        (output_params.args[1] as MichelsonV1ExpressionExtended) // unpack
+          .args[1] as MichelsonV1ExpressionBase
+      ).int
+    );
+  else
+    output = new BigNumber(
+      (
+        (
+          (output_params[0].args[1][0] as MichelsonV1ExpressionExtended)
+            .args[1] as MichelsonV1ExpressionExtended
+        ).args[1] as MichelsonV1ExpressionBase
+      ).int
+    );
+
   console.debug(
     `[SWAP] Swapped to ${output
       .dividedBy(rates[j])
@@ -231,9 +256,7 @@ export async function batchSwap(
     }
     const op = await batch.send();
     await confirmOperation(Tezos, op.hash);
-    console.debug(
-      `[BATCH:SWAP] ${i + 1}/${times} ${op.hash}`
-    );
+    console.debug(`[BATCH:SWAP] ${i + 1}/${times} ${op.hash}`);
     await dex.updateStorage({ pools: [poolId.toString()] });
   }
 }
