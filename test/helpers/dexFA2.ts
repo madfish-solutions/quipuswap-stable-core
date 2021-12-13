@@ -196,53 +196,6 @@ export class Dex extends TokenFA2 {
     return operation;
   }
 
-  // async tokenToTokenRoutePayment(
-  //   swaps: SwapSliceType[],
-  //   amountIn: number,
-  //   minAmountOut: number,
-  //   receiver: string,
-  //   tokenAid: BigNumber = new BigNumber(0),
-  //   tokenBid: BigNumber = new BigNumber(0)
-  // ): Promise<TransactionOperation> {
-  //   let firstSwap = swaps[0];
-  //   if (Object.keys(firstSwap.operation)[0] == "buy") {
-  //     if (["FA2"].includes(standard)) {
-  //       await this.approveFA2Token(
-  //         firstSwap.pair.token_b_address,
-  //         tokenBid,
-  //         amountIn,
-  //         this.contract.address
-  //       );
-  //     } else {
-  //       await this.approveFA12Token(
-  //         firstSwap.pair.token_b_address,
-  //         amountIn,
-  //         this.contract.address
-  //       );
-  //     }
-  //   } else {
-  //     if (["FA2", "MIXED"].includes(standard)) {
-  //       await this.approveFA2Token(
-  //         firstSwap.pair.token_a_address,
-  //         tokenAid,
-  //         amountIn,
-  //         this.contract.address
-  //       );
-  //     } else {
-  //       await this.approveFA12Token(
-  //         firstSwap.pair.token_a_address,
-  //         amountIn,
-  //         this.contract.address
-  //       );
-  //     }
-  //   }
-  //   const operation = await this.contract.methods
-  //     .use("swap", swaps, amountIn, minAmountOut, receiver)
-  //     .send();
-  //   await confirmOperation(this.Tezos, operation.hash);
-  //   return operation;
-  // }
-
   async swap(
     poolId: BigNumber,
     inIdx: BigNumber,
@@ -329,6 +282,60 @@ export class Dex extends TokenFA2 {
     const operation = await this.contract.methods
       .divest_one_coin(pairId, sharesBurned, tokenIdx, mintokenAmount)
       .send();
+    await confirmOperation(this.Tezos, operation.hash);
+    return operation;
+  }
+  async setAdmin(new_admin: string): Promise<TransactionOperation> {
+    await this.updateStorage({});
+    const operation = await this.contract.methods.set_admin(new_admin).send();
+
+    await confirmOperation(this.Tezos, operation.hash);
+    return operation;
+  }
+  async addRemManager(
+    add: boolean,
+    manager: string
+  ): Promise<TransactionOperation> {
+    await this.updateStorage({});
+    const operation = await this.contract.methods
+      .add_rem_managers(add, manager)
+      .send();
+    await confirmOperation(this.Tezos, operation.hash);
+    return operation;
+  }
+  async setDevAddress(dev: string): Promise<TransactionOperation> {
+    await this.updateStorage({});
+    const operation = await this.contract.methods.set_dev_address(dev).send();
+
+    await confirmOperation(this.Tezos, operation.hash);
+    return operation;
+  }
+  async setFees(
+    pool_id: BigNumber,
+    fees: FeeType
+  ): Promise<TransactionOperation> {
+    const operation = await this.contract.methods
+      .set_fees(
+        pool_id,
+        fees.lp_fee,
+        fees.stakers_fee,
+        fees.ref_fee,
+        fees.dev_fee
+      )
+      .send();
+
+    await confirmOperation(this.Tezos, operation.hash);
+    return operation;
+  }
+  async setDefaultReferral(ref: string): Promise<TransactionOperation> {
+    const operation = await this.contract.methods
+      .set_default_referral(ref)
+      .send();
+    await confirmOperation(this.Tezos, operation.hash);
+    return operation;
+  }
+  async setRewardRate(rate: BigNumber): Promise<TransactionOperation> {
+    const operation = await this.contract.methods.set_reward_rate(rate).send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
   }
@@ -442,7 +449,7 @@ export class Dex extends TokenFA2 {
   }
 
   async setFunctionCompilled(
-    type: "Dex" | "Token",
+    type: "Dex" | "Token" | "Permit" | "Admin",
     comp_funcs_map
   ): Promise<void> {
     let idx = 0;
@@ -501,60 +508,5 @@ export class Dex extends TokenFA2 {
     }
     const batchOp = await batch.send();
     await confirmOperation(this.Tezos, batchOp.hash);
-  }
-
-  async setAdmin(new_admin: string): Promise<TransactionOperation> {
-    await this.updateStorage({});
-    const operation = await this.contract.methods.set_admin(new_admin).send();
-
-    await confirmOperation(this.Tezos, operation.hash);
-    return operation;
-  }
-  async addRemManager(
-    add: boolean,
-    manager: string
-  ): Promise<TransactionOperation> {
-    await this.updateStorage({});
-    const operation = await this.contract.methods
-      .add_rem_managers(add, manager)
-      .send();
-    await confirmOperation(this.Tezos, operation.hash);
-    return operation;
-  }
-  async setDevAddress(dev: string): Promise<TransactionOperation> {
-    await this.updateStorage({});
-    const operation = await this.contract.methods.set_dev_address(dev).send();
-
-    await confirmOperation(this.Tezos, operation.hash);
-    return operation;
-  }
-  async setFees(
-    pool_id: BigNumber,
-    fees: FeeType
-  ): Promise<TransactionOperation> {
-    const operation = await this.contract.methods
-      .set_fees(
-        pool_id,
-        fees.lp_fee,
-        fees.stakers_fee,
-        fees.ref_fee,
-        fees.dev_fee
-      )
-      .send();
-
-    await confirmOperation(this.Tezos, operation.hash);
-    return operation;
-  }
-  async setDefaultReferral(ref: string): Promise<TransactionOperation> {
-    const operation = await this.contract.methods
-      .set_default_referral(ref)
-      .send();
-    await confirmOperation(this.Tezos, operation.hash);
-    return operation;
-  }
-  async setRewardRate(rate: BigNumber): Promise<TransactionOperation> {
-    const operation = await this.contract.methods.set_reward_rate(rate).send();
-    await confirmOperation(this.Tezos, operation.hash);
-    return operation;
   }
 }

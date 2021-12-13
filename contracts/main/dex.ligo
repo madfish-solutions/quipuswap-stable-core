@@ -1,27 +1,33 @@
+(* Modules *)
 #import "../partials/errors.ligo" "Errors"
 #import "../partials/constants.ligo" "Constants"
-
-#include "../interfaces/iPermit.ligo"
-#include "../interfaces/iDex.ligo"
-
-#include "../partials/getters.ligo"
+(* Types *)
+#include "../partials/common_types.ligo"
+#include "../partials/admin/types.ligo"
+#include "../partials/fa12/types.ligo"
+#include "../partials/fa2/types.ligo"
+#include "../partials/permit/types.ligo"
+#include "../partials/dex_core/storage.ligo"
+#include "../partials/dex_core/types.ligo"
+(* Helpers and functions *)
 #include "../partials/utils.ligo"
-
-#include "../helpers/fa2.ligo"
-#include "../helpers/permit.ligo"
-#include "../helpers/dex.ligo"
-
-#include "../lambdas/admin.ligo"
-#include "../lambdas/permit.ligo"
-#include "../lambdas/fa2.ligo"
-#include "../lambdas/dex.ligo"
-
-#include "../partials/dex_methods.ligo"
-
-#include "../views/fa2.ligo"
-#include "../views/dex.ligo"
-
-
+#include "../partials/dex_core/math.ligo"
+#include "../partials/fa2/helpers.ligo"
+#include "../partials/permit/helpers.ligo"
+#include "../partials/dex_core/helpers.ligo"
+(* Lambda entrypoints *)
+#include "../partials/admin/lambdas.ligo"
+#include "../partials/fa2/lambdas.ligo"
+#include "../partials/permit/lambdas.ligo"
+#include "../partials/dex_core/lambdas.ligo"
+(* Call methods *)
+#include "../partials/admin/methods.ligo"
+#include "../partials/fa2/methods.ligo"
+#include "../partials/permit/methods.ligo"
+#include "../partials/dex_core/methods.ligo"
+(* View methods *)
+#include "../partials/fa2/views.ligo"
+#include "../partials/dex_core/views.ligo"
 (* Dex - Contract for exchanges between FA12 and FA2 tokens *)
 function main(
   const p               : full_action_t;

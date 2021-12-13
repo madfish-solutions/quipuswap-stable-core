@@ -8,7 +8,7 @@ function total_supply_view(
     var operations: list(operation) := Constants.no_operations;
     case p of
     | Total_supply(params) -> {
-      const pair : pair_t = unwrap(s.storage.pools[params.pool_id], Errors.pair_not_listed);
+      const pair : pair_t = unwrap(s.storage.pools[params.token_id], Errors.pair_not_listed);
       operations := Tezos.transaction(
         pair.total_supply,
         0tz,

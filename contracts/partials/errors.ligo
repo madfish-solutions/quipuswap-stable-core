@@ -44,3 +44,7 @@ const permit_dupl               : string = "DUP_PERMIT";
 const permit_expired            : string = "EXPIRED_PERMIT";
 const expiration_overflow       : string = "EXPIRY_TOO_BIG";
 const nat_error                 : string = "Value_not_natural";
+const flag_set                  : string = "Proxy/flag-set";
+const no_action                 : string = "Proxy/no-action";
+const prx_not_authenticated     : string = "Proxy/not-authorized"
+const ediv_error                : string = "Div/ediv-error";
