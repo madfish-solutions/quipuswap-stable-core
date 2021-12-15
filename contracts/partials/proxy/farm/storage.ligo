@@ -8,7 +8,7 @@ type storage_t is [@layout:comb] record [
   admin: address;
   stake_token: token_t;
   staked: nat;
-  dex: address;
+  dex: dex_info_t;
   tmp: option(tmp_t);
 
   stake_info: farm_inf_t;

@@ -10,7 +10,7 @@ function set_admin(const new_admin: address; const store: storage_t): return_t i
 (* Get tokens from dex. Transfer tokens dex -> proxy. Must be approved/permitted before call. *)
 function stake(const params: stake_prm_t; var store: storage_t): return_t is
   block {
-    verify_sender(store.dex);
+    verify_sender(store.dex.location);
     var return: return_t := add_tokens(params.value, Constants.no_operations, store);
     return.0 := typed_approve(
       store.stake_info.location,
@@ -61,7 +61,7 @@ function unwrap_fa2_bal(const response: list (balance_of_fa2_res_t); const store
 (* Stake tokens to farm. Transfer tokens dex -> farm. Must be approved/permitted before call. *)
 function unstake(const params: unstake_prm_t; const store: storage_t): return_t is
   block {
-    verify_sender(store.dex);
+    verify_sender(store.dex.location);
     var return := redeem_tokens(params, Constants.no_operations, store);
     return.0 := typed_balance_of(
       Tezos.self_address,
@@ -73,5 +73,5 @@ function unstake(const params: unstake_prm_t; const store: storage_t): return_t 
 (* Stake tokens to farm. Transfer tokens dex -> farm. Must be approved/permitted before call. *)
 function claim(const _params: claim_prm_t; const store: storage_t): return_t is
   block {
-    verify_sender(store.dex);
+    verify_sender(store.dex.location);
   } with claim_rewards(Constants.no_operations, store)

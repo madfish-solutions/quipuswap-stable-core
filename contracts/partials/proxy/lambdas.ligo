@@ -36,7 +36,7 @@ function dummy_claim(
     // TODO: should call Dex entrypoint to update rewards
     ops := typed_transfer(
       Tezos.self_address,
-      store.dex,
+      store.dex.location,
       bal - snd_rwd,
       store.reward_token
     ) # ops;
@@ -80,7 +80,7 @@ function dummy_unstake(
     // TODO: should call Dex entrypoint to update reserves
     ops := typed_transfer(
       Tezos.self_address,
-      store.dex,
+      store.dex.location,
       to_dex,
       store.reward_token
     ) # ops;

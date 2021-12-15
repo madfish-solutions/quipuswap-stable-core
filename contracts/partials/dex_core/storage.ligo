@@ -61,13 +61,7 @@ type pair_t             is [@layout:comb] record [
   initial_A_time          : timestamp;
   future_A                : nat;
   future_A_time           : timestamp;
-  // tokens_count            : nat; (* from 2 to 4 tokens at one exchange pool *)
-  // tokens                  : tkns_map_t; (* list of exchange tokens *)
-  // token_rates             : map(tkn_pool_idx_t, nat);
   tokens_info             : map(tkn_pool_idx_t, tkn_inf_t);
-  // reserves                : map(tkn_pool_idx_t, nat); (* list of token reserves in the pool *)
-  // virtual_reserves        : map(tkn_pool_idx_t, nat);
-
   fee                     : fees_storage_t;
 
   staker_accumulator      : stkr_acc_t;

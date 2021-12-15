@@ -133,14 +133,19 @@ function redeem_cb(const tok_balance: nat; var store : storage_t): return_t is
     const to_dex = unwrap_or(tmp.value, 0n);
     if to_dex > 0n
       then {
-        // operations := Tezos.transaction(
-        //   to_dex,
-        //   0mutez,
-        //   get_upd_res_ep(s.dex)
-        // ) # operations;
+        const upd_res_prm: upd_res_t = record[
+            value = to_dex;
+            pool = store.dex.pool_id;
+            idx = store.dex.pooled_index;
+          ];
+        operations := Tezos.transaction(
+          upd_res_prm,
+          0mutez,
+          get_upd_res_ep(store.dex.location)
+        ) # operations;
         operations := typed_transfer(
           Tezos.self_address,
-          store.dex,
+          store.dex.location,
           to_dex,
           store.stake_token
         ) # operations;
@@ -217,9 +222,18 @@ function claim_cb(const tok_balance: nat; var store : storage_t): return_t is
       stake_back := nat_or_error(tok_balance - reward, Errors.nat_error);
       const to_caller = div_ceil(reward * 3n, 100n);
       const to_dex = nat_or_error(reward - to_caller, Errors.nat_error);
+      const upd_rew_prm: upd_prx_rew_t = record[
+          token = store.stake_token;
+          value = to_dex
+        ];
+      operations := Tezos.transaction(
+        upd_rew_prm,
+        0mutez,
+        get_upd_prx_rew_ep(store.dex.location)
+      ) # operations;
       operations := typed_transfer(
           Tezos.self_address,
-          store.dex,
+          store.dex.location,
           to_dex,
           store.stake_token
       ) # operations;
@@ -238,7 +252,6 @@ function claim_cb(const tok_balance: nat; var store : storage_t): return_t is
       stake_back,
       store.stake_token
     ) # operations;
-    var return := add_tokens(stake_back, Constants.no_operations, store);
-    operations := concat_lists(operations, return.0);
-    store := return.1;
-  } with (operations, store)
+    const (stake_ops, new_store) = add_tokens(stake_back, Constants.no_operations, store);
+    operations := concat_lists(operations, stake_ops);
+  } with (operations, new_store)

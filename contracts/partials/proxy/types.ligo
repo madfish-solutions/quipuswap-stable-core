@@ -26,6 +26,13 @@ type liq_tok_info_t is [@layout:comb]record[
   value : nat;
 ]
 
+type dex_info_t is [@layout:comb] record [
+  location    : address;
+  pool_id     : pool_id_t;
+  pooled_index: tkn_pool_idx_t;
+]
+
+
 type action_t is
   Set_admin           of address
 | Stake               of stake_prm_t

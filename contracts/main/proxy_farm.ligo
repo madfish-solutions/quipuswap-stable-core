@@ -11,12 +11,10 @@
 #include "../partials/utils.ligo"
 #include "../partials/proxy/helpers.ligo"
 // (* Methods *)
-// #include "../partials/proxy/farm/methods.ligo"
-// #include "../partials/proxy/methods.ligo"
+#include "../partials/proxy/farm/methods.ligo"
+#include "../partials/proxy/methods.ligo"
 // (* View methods *)
 // // #include "../partials/proxy/views.ligo"
 // (* main *)
-// #include "../partials/proxy/main.ligo"
-
-function main(const _p: action_t; const s: storage_t): return_t is (Constants.no_operations , s)
+#include "../partials/proxy/main.ligo"
 
