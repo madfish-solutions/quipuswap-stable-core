@@ -10,7 +10,7 @@ type storage_t is [@layout:comb] record [
   stake_token: token_t;
   staked: nat;
   dex: address;
-  tmp: optional(tmp_t);
+  tmp: option(tmp_t);
 
   stake_info: land_inf_t;
 ]

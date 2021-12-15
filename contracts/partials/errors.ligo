@@ -48,3 +48,6 @@ const flag_set                  : string = "Proxy/flag-set";
 const no_action                 : string = "Proxy/no-action";
 const prx_not_authenticated     : string = "Proxy/not-authorized"
 const ediv_error                : string = "Div/ediv-error";
+const landing_ep_404            : string = "Proxy/landing-ep-404";
+const dex_ep_404                : string = "Proxy/dex-ep-404";
+const wrong_entrypoint          : string = "Proxy/wrong-ep";

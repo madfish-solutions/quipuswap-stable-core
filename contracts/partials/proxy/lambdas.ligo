@@ -66,7 +66,7 @@ function dummy_unstake(
       Some(recvr) -> {
         ops := typed_transfer(
           Tezos.self_address,
-          recvr.to,
+          recvr.receiver,
           recvr.value,
           store.reward_token
         ) # ops;

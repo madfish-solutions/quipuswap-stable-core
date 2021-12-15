@@ -24,6 +24,8 @@
   "scripts": {
     "start": "npx tezos-sdk -- --help",
     "compile": "yarn compile-contract && yarn compile-lambda-all",
+    "clear-build": "rm -rf ./build",
+    "recompile": "yarn clear-build && yarn compile-contract && yarn compile-lambda-all",
     "compile-contract": "npx tezos-sdk compile",
     "compile-lambda": "ts-node ./scripts/cli.ts compile-lambda",
     "compile-lambda-all": "yarn compile-lambda-admin && yarn compile-lambda-dex && yarn compile-lambda-permit && yarn compile-lambda-token",

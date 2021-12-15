@@ -119,3 +119,16 @@ function set_func_or_fail(
     lambda_storage[params.index] := params.func;
   } with lambda_storage
 
+(*
+ * Helper function that merges two list`s.
+ *)
+function concat_lists(
+  const fst : list (operation);
+  const snd : list (operation))
+            : list (operation) is
+  List.fold_right(
+    function(const operation: operation; const operations: list(operation)): list(operation) is operation # operations,
+    fst,
+    snd
+  )
+

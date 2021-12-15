@@ -1,45 +1,69 @@
-function cas_tmp_extra(const new_flag: nat; const sender: address; const s: storage_t; extra: optional(receiver_t); value: optional(nat)): storage_t is
- block {
-   const tmp = unwrap_or(
-      s.tmp,
-      record [
+function cas_tmp_extra(
+    const new_flag: nat;
+    const sndr: token_t;
+    const s: storage_t;
+    const extra: option(receiver_t);
+    const value: option(nat)
+  ): storage_t is
+  case s.tmp of
+    Some(_) -> failwith(Errors.flag_set)
+  | None -> s with record[
+      tmp = Some(record[
         action_flag = new_flag;
-        sender = sender;
+        sender = sndr;
         extra = extra;
         value = value;
-      ]
-    )
-   assert_with_error(tmp = 0n, Errors.flag_set)
- } with s with record[ tmp = tmp ]
+      ])
+    ]
+  end;
 
-function cas_tmp(const new_flag: nat; const sender: address; const s: storage_t): storage_t is cas_tmp_extra(new_flag, sender, s)
+function cas_tmp(
+    const new_flag: nat;
+    const sndr: token_t;
+    const s: storage_t
+  ): storage_t is
+  cas_tmp_extra(
+    new_flag,
+    sndr,
+    s,
+    (None: option(receiver_t)),
+    (None: option(nat))
+  )
 
-function reset_tmp(const s: storage_t): storage_t is s with record[ tmp = None ]
+function reset_tmp(const s: storage_t): storage_t is s with record[ tmp = (None: option(tmp_t)) ]
 
-function get_bal_fa2_cb(const _: unit): contract(nat) is Tezos.self("%unwrap_fa2_bal")
+[@inline]
+function get_bal_fa2_cb(const self: address): contract(list(balance_of_fa2_res_t)) is unwrap(
+    (Tezos.get_entrypoint_opt("%unwrap_FA2_balance", self): option(contract(list(balance_of_fa2_res_t)))),
+    Errors.wrong_entrypoint
+  );
 
-function get_bal_fa12_cb(const _: unit): contract(nat) is Tezos.self("%balance_cb")
+[@inline]
+function get_bal_fa12_cb(const self: address): contract(nat) is unwrap(
+    (Tezos.get_entrypoint_opt("%balance_cb", self): option(contract(nat))),
+    Errors.wrong_entrypoint
+  );
 
 (* Helper function to get fa2 token contract *)
-function fa2_token_bal_of_ep(const token_address: address): contract(list (balance_of_fa2_res_t)) is
+function fa2_token_bal_of_ep(const token_address: address): contract(balance_fa2_t) is
   unwrap_or(
-    (Tezos.get_entrypoint_opt("%balance_of", token_address): option(contract(list (balance_of_fa2_res_t)))),
+    (Tezos.get_entrypoint_opt("%balance_of", token_address): option(contract(balance_fa2_t))),
     unwrap(
-      (Tezos.get_entrypoint_opt("%balanceOf",  token_address): option(contract(balance_of_fa2_res_t))),
+      (Tezos.get_entrypoint_opt("%balanceOf",  token_address): option(contract(balance_fa2_t))),
       Errors.wrong_token_entrypoint
     )
   );
 
 (* Helper function to get fa1.2 token contract *)
-function fa12_token_bal_of_ep(const token_address: address): contract(nat) is
+function fa12_token_bal_of_ep(const token_address: address): contract(balance_fa12_t) is
   unwrap_or(
-    (Tezos.get_entrypoint_opt("%getBalance", token_address): option(contract(nat))),
+    (Tezos.get_entrypoint_opt("%getBalance", token_address): option(contract(balance_fa12_t))),
     unwrap_or(
-      (Tezos.get_entrypoint_opt("%get_balance", token_address): option(contract(nat))),
+      (Tezos.get_entrypoint_opt("%get_balance", token_address): option(contract(balance_fa12_t))),
       unwrap_or(
-        (Tezos.get_entrypoint_opt("%balanceOf",  token_address): option(contract(nat))),
+        (Tezos.get_entrypoint_opt("%balanceOf",  token_address): option(contract(balance_fa12_t))),
         unwrap(
-          (Tezos.get_entrypoint_opt("%balance_of",  token_address): option(contract(nat))),
+          (Tezos.get_entrypoint_opt("%balance_of",  token_address): option(contract(balance_fa12_t))),
           Errors.wrong_token_entrypoint
         )
       )
@@ -54,9 +78,9 @@ function fa12_token_approve_ep(const token_address: address): contract(approve_f
   );
 
 (* Helper function to get fa1.2 token contract *)
-function fa2_token_approve_ep(const token_address: address): contract(operator_prm_t) is
+function fa2_token_approve_ep(const token_address: address): contract(approve_fa2_t) is
   unwrap(
-    (Tezos.get_entrypoint_opt("%update_operators", token_address): option(contract(operator_prm_t))),
+    (Tezos.get_entrypoint_opt("%update_operators", token_address): option(contract(approve_fa2_t))),
     Errors.wrong_token_entrypoint
   );
 
@@ -68,7 +92,7 @@ function typed_balance_of(
                           : operation is
     case token of
       Fa12(token_address) -> Tezos.transaction(
-        BalanceOfTypeFA12(contract, get_bal_fa12_cb(Unit)),
+        BalanceOfTypeFA12(contract, get_bal_fa12_cb(Tezos.self_address)),
         0mutez,
         fa12_token_bal_of_ep(token_address)
       )
@@ -80,7 +104,7 @@ function typed_balance_of(
               token_id  = token_info.token_id;
             ]
           ];
-          callback = get_bal_fa2_cb(Unit)
+          callback = get_bal_fa2_cb(Tezos.self_address)
         ]
         ),
         0mutez,
@@ -96,7 +120,7 @@ function typed_approve(
                           : operation is
     case token of
       Fa12(token_address) -> Tezos.transaction(
-        ApproveFA12(spender, value),
+        ApproveFA12(record[spender=spender; value=value]),
         0mutez,
         fa12_token_approve_ep(token_address)
       )

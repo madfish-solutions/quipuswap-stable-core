@@ -1,27 +1,27 @@
-type stake_prm_t is [@layout:comb] record [
+type stake_prm_t is [@layout:comb]record[
   value: nat;
 ]
 
-type receiver_t is [@ layout:comb] record [
-  to: address;
-  value: nat;
+type claim_prm_t is unit;
+
+type receiver_t is [@layout:comb]record[
+  receiver: address;
+  value   : nat;
 ]
 
-type unstake_prm_t is [@layout:comb] record [
+type unstake_prm_t is [@layout:comb]record[
   value: nat;
-  additional: optional(receiver_t);
+  additional: option(receiver_t);
 ]
-
-type claim_prm_t is unit
 
 type tmp_t is [@layout:comb] record [
   action_flag: nat;
-  sender: address;
-  extra: optional(receiver_t)
-  value: optional(nat)
+  sender: token_t;
+  extra: option(receiver_t);
+  value: option(nat);
 ]
 
-type liq_tok_info_t is [@ layout:comb]record[
+type liq_tok_info_t is [@layout:comb]record[
   token : token_t;
   value : nat;
 ]
@@ -31,5 +31,5 @@ type action_t is
 | Stake               of stake_prm_t
 | Unstake             of unstake_prm_t
 | Claim               of claim_prm_t
-| Unwrap_FA2_balance  of unwrap_fa2_bal(params, s)
-| Balance_cb          of balance_cb(params, s)
+| Unwrap_FA2_balance  of list(balance_of_fa2_res_t)
+| Balance_cb          of nat

@@ -28,25 +28,24 @@ function add_tokens(
         store := cas_tmp(
           1n,
           store.stake_info.liquidity_info.token,
-          store,
-          None
+          store
         );
 
         ops := Tezos.transaction(
-          Mint(record[
-            tokenId = store.stake_info.market_id,
-            amount = bal
-          ]),
+          record[
+            tokenId = store.stake_info.market_id;
+            amount = bal;
+          ],
           0mutez,
           get_mint_ep(store.stake_info.location)
         ) # ops;
         ops := Tezos.transaction(
-          store.stake_info.market_id,
+          set[store.stake_info.market_id],
           0mutez,
           get_price_ep(store.stake_info.proxy)
         ) # ops;
         ops := Tezos.transaction(
-          UpdateInterest(store.stake_info.market_id),
+          store.stake_info.market_id,
           0mutez,
           get_upd_intrst_ep(store.stake_info.location)
         ) # ops;
@@ -78,9 +77,9 @@ function stake_cb(const tok_balance: nat; var store : storage_t): return_t is
  *)
 function redeem_tokens(
   const params: unstake_prm_t;
-  var   ops   : list(operations)
-  const store: storage_t
-)            : return_t is
+  var   ops   : list(operation);
+  var   store : storage_t
+)             : return_t is
   block {
     ops := typed_balance_of(
       Tezos.self_address,
@@ -91,23 +90,23 @@ function redeem_tokens(
       store.stake_token,
       store,
       params.additional,
-      params.value
+      Some(params.value)
     );
     ops := Tezos.transaction(
-      Redeem(record[
-        tokenId = store.stake_info.market_id,
-        amount = 0n
-      ]),
+      record[
+        tokenId = store.stake_info.market_id;
+        amount = 0n;
+      ],
       0mutez,
       get_redeem_ep(store.stake_info.location)
     ) # ops;
     ops := Tezos.transaction(
-          store.stake_info.market_id,
+          set[store.stake_info.market_id],
           0mutez,
           get_price_ep(store.stake_info.proxy)
     ) # ops;
     ops := Tezos.transaction(
-      UpdateInterest(store.stake_info.market_id),
+      store.stake_info.market_id,
       0mutez,
       get_upd_intrst_ep(store.stake_info.location)
     ) # ops;
@@ -123,25 +122,25 @@ function redeem_cb(const tok_balance: nat; var store : storage_t): return_t is
       Some(prm) -> {
         operations := typed_transfer(
           Tezos.self_address,
-          prm.to,
+          prm.receiver,
           prm.value,
           store.stake_token
         ) # operations;
-        stake_back := nat_or_error(stake_back - prm.to, Errors.nat_error);
+        stake_back := nat_or_error(stake_back - prm.value, Errors.nat_error);
       }
     | None -> skip
     end;
     const to_dex = unwrap_or(tmp.value, 0n);
     if to_dex > 0n
       then {
-        operations := Tezos.transaction(
-          to_dex,
-          0mutez,
-          get_upd_res_ep(s.dex)
-        ) # operations;
+        // operations := Tezos.transaction(
+        //   to_dex,
+        //   0mutez,
+        //   get_upd_res_ep(s.dex)
+        // ) # operations;
         operations := typed_transfer(
           Tezos.self_address,
-          s.dex,
+          store.dex,
           to_dex,
           store.stake_token
         ) # operations;
@@ -152,10 +151,10 @@ function redeem_cb(const tok_balance: nat; var store : storage_t): return_t is
     store.staked := 0n;
     var return := add_tokens(stake_back, operations, store);
     return.0 := typed_approve(
-      s.farm,
+      store.stake_info.location,
       stake_back,
-      s.stake_token
-    )
+      store.stake_token
+    ) # return.0;
   } with return
 
 
@@ -173,8 +172,8 @@ function redeem_cb(const tok_balance: nat; var store : storage_t): return_t is
  * code ops is reversed due to ligo execution order
  *)
 function claim_rewards(
-  var   ops   : list(operations)
-  const store : storage_t
+  var   ops   : list(operation);
+  var   store : storage_t
   )           : return_t is
   block {
     ops := typed_balance_of(
@@ -187,20 +186,20 @@ function claim_rewards(
       store
     );
     ops := Tezos.transaction(
-      Redeem(record[
-        tokenId = store.stake_info.market_id,
-        amount = 0n
-      ]),
+      record[
+        tokenId = store.stake_info.market_id;
+        amount = 0n;
+      ],
       0mutez,
       get_redeem_ep(store.stake_info.location)
     ) # ops;
     ops := Tezos.transaction(
-          store.stake_info.market_id,
+          set[store.stake_info.market_id],
           0mutez,
           get_price_ep(store.stake_info.proxy)
     ) # ops;
     ops := Tezos.transaction(
-      UpdateInterest(store.stake_info.market_id),
+      store.stake_info.market_id,
       0mutez,
       get_upd_intrst_ep(store.stake_info.location)
     ) # ops;
@@ -212,22 +211,17 @@ function claim_cb(const tok_balance: nat; var store : storage_t): return_t is
   block {
     var operations := Constants.no_operations;
     const reward = nat_or_error(tok_balance - store.staked, Errors.nat_error);
-    var stake_back := tok_balance
+    var stake_back := tok_balance;
     if reward > 0n
     then {
       stake_back := nat_or_error(tok_balance - reward, Errors.nat_error);
       const to_caller = div_ceil(reward * 3n, 100n);
       const to_dex = nat_or_error(reward - to_caller, Errors.nat_error);
-      operations := Tezos.transaction(
-        to_dex,
-        0mutez,
-        get_upd_prx_rew_ep(s.dex)
-      ) # operations;
       operations := typed_transfer(
-        Tezos.self_address,
-        s.dex,
-        to_dex,
-        store.stake_token
+          Tezos.self_address,
+          store.dex,
+          to_dex,
+          store.stake_token
       ) # operations;
       operations := typed_transfer(
         Tezos.self_address,
@@ -239,10 +233,12 @@ function claim_cb(const tok_balance: nat; var store : storage_t): return_t is
     else skip;
     store := reset_tmp(store);
     store.staked := 0n;
-    var return := add_tokens(stake_back, operations, store);
-    return.0 := typed_approve(
-      s.farm,
+    operations := typed_approve(
+      store.stake_info.location,
       stake_back,
-      s.stake_token
-    )
-  } with return
+      store.stake_token
+    ) # operations;
+    var return := add_tokens(stake_back, Constants.no_operations, store);
+    operations := concat_lists(operations, return.0);
+    store := return.1;
+  } with (operations, store)
