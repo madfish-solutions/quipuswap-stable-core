@@ -14,21 +14,24 @@ export async function manageInputs(input: BigNumber, tokens: TokensMap) {
       in_amount: decimals.kUSD.multipliedBy(input),
       rate: new BigNumber(10).pow(18),
       precision_multiplier: new BigNumber(1),
-      proxy_limit: new BigNumber(1000000),
+      proxy_rate: new BigNumber(1000000),
+      proxy_soft: new BigNumber(100000),
     },
     {
       asset: tokens.USDtz,
       in_amount: decimals.USDtz.multipliedBy(input),
       rate: new BigNumber(10).pow(18 + 12),
       precision_multiplier: new BigNumber(10).pow(12),
-      proxy_limit: new BigNumber(1000000),
+      proxy_rate: new BigNumber(1000000),
+      proxy_soft: new BigNumber(100000),
     },
     {
       asset: tokens.uUSD,
       in_amount: decimals.uUSD.multipliedBy(input),
       rate: new BigNumber(10).pow(18 + 6),
       precision_multiplier: new BigNumber(10).pow(6),
-      proxy_limit: new BigNumber(1000000),
+      proxy_rate: new BigNumber(1000000),
+      proxy_soft: new BigNumber(100000),
     },
   ];
   inputs = inputs.sort(
