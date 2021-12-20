@@ -2,7 +2,7 @@
 [@inline]
 const no_operations: list(operation) = nil;
 
-const dex_func_count: nat     = 22n;
+const dex_func_count: nat     = 24n;
 const token_func_count: nat   = 5n;
 const permit_func_count: nat  = 2n;
 const admin_func_count: nat   = 4n;
@@ -21,7 +21,7 @@ const proxy_limit: nat        = 100_000_000n; (* 100% of liquidity *)
 
 (* Fee constants *)
 
-const stkr_acc_precision: nat = 10_000_000_000n;
+const acc_precision: nat = 10_000_000_000n;
 
 const fee_denominator: nat    = 10_000_000_000n;
 

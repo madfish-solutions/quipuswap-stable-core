@@ -21,16 +21,3 @@ function get_price_ep(const proxy: address): contract(get_price_prm_t) is
     (Tezos.get_entrypoint_opt("%getPrice", proxy): option(contract(get_price_prm_t))),
     Errors.landing_ep_404
   );
-
-function get_upd_prx_rew_ep(const dex: address): contract(upd_prx_rew_t) is
-  unwrap(
-    (Tezos.get_entrypoint_opt("%update_proxy_reward", dex): option(contract(upd_prx_rew_t))),
-    Errors.dex_ep_404
-  );
-
-function get_upd_res_ep(const dex: address): contract(upd_res_t) is
-  unwrap(
-    (Tezos.get_entrypoint_opt("%update_reserves", dex): option(contract(upd_res_t))),
-    Errors.dex_ep_404
-  );
-

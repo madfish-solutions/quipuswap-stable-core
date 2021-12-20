@@ -3,7 +3,246 @@ const default_tmp_tokens : tmp_tkns_map_t = record [
     tokens = (map[] : tkns_map_t);
     index  = 0n;
 ];
-(* Gets token count by size of reserves map *)
+
+function sum_all_fee(const fee: fees_storage_t): nat is
+    fee.lp_fee
+  + fee.stakers_fee
+  + fee.ref_fee
+  + fee.dev_fee;
+
+function sum_wo_lp_fee(const fee: fees_storage_t): nat is
+    fee.stakers_fee
+  + fee.ref_fee
+  + fee.dev_fee;
+
+(* если не хватает чтоб откусить фии падаем с ошибкой *)
+
+function nip_off_fees(
+  const fees: fees_storage_t;
+  const token_info: tkn_inf_t
+  ): tkn_inf_t is
+  block {
+    const nipped = sum_wo_lp_fee(fees);
+  } with token_info with record[
+      virtual_reserves = nat_or_error(token_info.virtual_reserves - nipped, Errors.low_virtual_reserves);
+      reserves = nat_or_error(token_info.reserves - nipped, Errors.low_reserves);
+    ]
+
+
+[@inline]
+function divide_fee_for_balance(const fee: nat; const tokens_count: nat): nat is
+  fee * tokens_count / (4n * nat_or_error(tokens_count - 1n, Errors.wrong_tokens_count));
+
+function get_stake_proxy(
+  const proxy   : address)
+                        : contract(prx_stake_prm_t) is
+  unwrap((Tezos.get_entrypoint_opt("%stake", proxy)
+      : option(contract(prx_stake_prm_t))), Errors.proxy_ep_404);
+
+
+function get_unstake_proxy(
+  const proxy   : address)
+                        : contract(prx_unstake_prm_t) is
+  unwrap((Tezos.get_entrypoint_opt("%unstake", proxy)
+      : option(contract(prx_unstake_prm_t))), Errors.proxy_ep_404);
+
+function get_claim_proxy(
+  const proxy   : address)
+                        : contract(prx_claim_prm_t) is
+  unwrap((Tezos.get_entrypoint_opt("%claim", proxy)
+      : option(contract(prx_claim_prm_t))), Errors.proxy_ep_404);
+
+function calc_reserves_to_prx(
+  const virtual_reserves: nat;
+  const rate: nat) : nat is div_ceil(virtual_reserves * rate, Constants.proxy_limit)
+
+function stake_to_proxy(
+  const value: nat;
+  const token: token_t;
+  var ops: list(operation);
+  var token_info: tkn_inf_t;
+  const proxy: address
+  ): list(operation) * tkn_inf_t is
+  block {
+    ops := typed_transfer(
+      Tezos.self_address,
+      proxy,
+      value,
+      token
+    ) # ops;
+    ops := Tezos.transaction(
+      record [ value = value; token = token ],
+      0mutez,
+      get_stake_proxy(proxy)
+    ) # ops;
+    token_info.reserves := nat_or_error(token_info.reserves - value, Errors.low_reserves)
+  } with (ops, token_info)
+
+function unstake_with_extra_from_proxy(
+  const value: nat;
+  const token: token_t;
+  const extra: option(extra_receiver_t);
+  const operations: list(operation);
+  const proxy: address
+  ): list(operation) is Tezos.transaction(
+      record[
+        value = value;
+        token = token;
+        additional = extra;
+      ],
+      0mutez,
+      get_unstake_proxy(proxy)
+    ) # operations;
+
+function unstake_from_proxy(
+  const value: nat;
+  const token: token_t;
+  const operations: list(operation);
+  const proxy: address
+  ): list(operation) is
+    unstake_with_extra_from_proxy(value, token, (None:option(extra_receiver_t)), operations, proxy)
+
+function fill_up_reserves(
+  const value: nat;
+  const receiver: address;
+  const token: token_t;
+  var token_info: tkn_inf_t;
+  var operations: list(operation);
+  const proxy : option(address)
+  ): (list(operation) * tkn_inf_t * nat) is
+  block{
+    token_info.virtual_reserves := nat_or_error(token_info.virtual_reserves - value, Errors.low_virtual_reserves);
+    var new_res := token_info.reserves;
+    var to_receiver := value;
+    if value >= token_info.reserves
+      then {
+        const prx = unwrap(proxy, Errors.low_reserves);
+        if token_info.proxy_rate > 0n
+          then {
+            const unstake_val = nat_or_error(
+              token_info.virtual_reserves - calc_reserves_to_prx(token_info.virtual_reserves, token_info.proxy_rate),
+              Errors.nat_error);
+            const extra = record[
+              receiver = receiver;
+              value = nat_or_error(to_receiver - token_info.reserves, Errors.nat_error);
+            ];
+            operations := unstake_with_extra_from_proxy(
+              unstake_val,
+              token,
+              Some(extra),
+              operations,
+              prx
+            );
+            to_receiver := token_info.reserves;
+            token_info.reserves := 0n;
+          }
+        else failwith(Errors.low_reserves)
+      }
+    else skip;
+    token_info.reserves := new_res;
+  } with (operations, token_info, to_receiver)
+
+function check_up_reserves(
+  const diff: diff_t;
+  const receiver: address;
+  const token: token_t;
+  const proxy: option(address);
+  var token_info: tkn_inf_t;
+  var operations: list(operation)
+  ): list(operation) * tkn_inf_t is
+  block {
+    case diff of
+      Plus(value) -> {
+        token_info.virtual_reserves := token_info.virtual_reserves + value;
+        token_info.reserves := token_info.reserves + value;
+        case proxy of
+          Some(prx) -> {
+            const on_proxy = nat_or_error(token_info.virtual_reserves - token_info.reserves, Errors.nat_error);
+            if div_ceil(
+              on_proxy,
+              token_info.virtual_reserves
+              ) < nat_or_error(token_info.proxy_rate - token_info.proxy_soft, Errors.nat_error)
+              then {
+                const (ops, t_i) = stake_to_proxy(
+                  nat_or_error(
+                    calc_reserves_to_prx(
+                      token_info.virtual_reserves,
+                      token_info.proxy_rate
+                    ) - on_proxy,
+                    Errors.nat_error
+                  ),
+                  token,
+                  operations,
+                  token_info,
+                  prx
+                );
+                operations := ops;
+                token_info := t_i;
+              }
+            else skip;
+        }
+        | None -> skip
+        end
+    }
+    | Minus(value) -> {
+        var to_receiver := 0n;
+        if value < token_info.reserves
+          then {
+            token_info.virtual_reserves := nat_or_error(token_info.virtual_reserves - value, Errors.low_virtual_reserves);
+            token_info.reserves := nat_or_error(token_info.reserves - value, Errors.low_reserves);
+            to_receiver := value;
+            case proxy of
+              Some(prx) -> {
+                const on_proxy = nat_or_error(token_info.virtual_reserves - token_info.reserves, Errors.nat_error);
+                if div_ceil(
+                  on_proxy,
+                  token_info.virtual_reserves
+                  ) > token_info.proxy_rate + token_info.proxy_soft
+                  then {
+                    operations := unstake_from_proxy(
+                      nat_or_error(
+                        on_proxy -
+                        calc_reserves_to_prx(
+                          token_info.virtual_reserves,
+                          token_info.proxy_rate
+                        ),
+                        Errors.nat_error
+                      ),
+                      token,
+                      operations,
+                      prx
+                    );
+                  }
+                else skip;
+              }
+            | None -> skip
+            end
+          }
+        else {
+          const res = fill_up_reserves(
+            value,
+            receiver,
+            token,
+            token_info,
+            operations,
+            proxy
+          );
+          operations := res.0;
+          token_info := res.1;
+          to_receiver := res.2;
+        };
+        if to_receiver > 0n
+          then operations := typed_transfer(
+            Tezos.self_address,
+            receiver,
+            to_receiver,
+            token
+          ) # operations;
+        else skip
+    }
+    end
+  } with (operations, token_info)
+
 function get_token_by_id(
     const token_id  : tkn_pool_idx_t;
     const map_entry : option(tkns_map_t)
@@ -43,103 +282,6 @@ function perform_fee_slice(
     ]
   } with return
 
-function preform_swap(
-  const i: tkn_pool_idx_t;
-  const j: tkn_pool_idx_t;
-  const dx: nat;
-  const pair: pair_t): nat is
-  block {
-    const xp = xp(pair);
-    const xp_i = unwrap(xp[i], Errors.wrong_index);
-    const xp_j = unwrap(xp[j], Errors.wrong_index);
-    const t_i = unwrap(pair.tokens_info[i], Errors.wrong_index);
-    const t_j = unwrap(pair.tokens_info[j], Errors.wrong_index);
-    const rate_i = t_i.rate;
-    const rate_j = t_j.rate;
-    const x = xp_i + ((dx * rate_i) / Constants.precision);
-    const y = get_y(i, j, x, xp, pair);
-    const dy = nat_or_error(xp_j - y - 1, Errors.nat_error);  // -1 just in case there were some rounding errors
-  } with dy * Constants.precision / rate_j
-
-function add_liq(
-  const params  : add_liq_prm_t;
-  var   s       : storage_t)
-                : return_t is
-  block {
-    var pair : pair_t := params.pair;
-    const amp = get_A(
-      pair.initial_A_time,
-      pair.initial_A,
-      pair.future_A_time,
-      pair.future_A
-    );
-    // Initial invariant
-    const init_tokens_info = pair.tokens_info;
-    const d0 = get_D_mem(init_tokens_info, amp);
-    const token_supply = pair.total_supply;
-    function add_inputs(
-      const key       : tkn_pool_idx_t;
-      var token_info  : tkn_inf_t)
-                      : tkn_inf_t is
-      block {
-        const input = unwrap_or(params.inputs[key], 0n);
-        assert_with_error(token_supply =/= 0n or input > 0n, Errors.zero_in);
-        token_info.virtual_reserves := token_info.virtual_reserves + input;
-        token_info.reserves := token_info.reserves + input;
-      } with token_info;
-
-    var new_tokens_info := Map.map(add_inputs, init_tokens_info);
-    const d1 = get_D_mem(new_tokens_info, amp);
-
-    assert_with_error(d1 > d0, Errors.zero_in);
-
-    var mint_amount := 0n;
-
-    if token_supply > 0n
-    then {
-      const balanced = balance_inputs(
-        init_tokens_info,
-        d0,
-        new_tokens_info,
-        d1,
-        unwrap(s.tokens[params.pair_id], Errors.pair_not_listed),
-        pair.fee,
-        unwrap_or(params.referral, s.default_referral),
-        record [
-          dev_rewards = s.dev_rewards;
-          referral_rewards = s.referral_rewards;
-          staker_accumulator = pair.staker_accumulator;
-          tokens_info = new_tokens_info;
-          tokens_info_without_lp = new_tokens_info;
-      ]);
-      s.dev_rewards := balanced.dev_rewards;
-      s.referral_rewards := balanced.referral_rewards;
-      pair.staker_accumulator := balanced.staker_accumulator;
-      pair.tokens_info := balanced.tokens_info;
-      const d2 = get_D_mem(balanced.tokens_info_without_lp, amp);
-      mint_amount := token_supply * nat_or_error(d2 - d0, Errors.nat_error) / d0;
-    }
-    else {
-      pair.tokens_info := new_tokens_info;
-      mint_amount := d1;
-    };
-    assert_with_error(mint_amount >= params.min_mint_amount, Errors.wrong_shares_out);
-
-    const tokens = s.tokens;
-    function transfer_to_pool(const operations : list(operation); const input : nat * nat) : list(operation) is
-      if input.1 > 0n
-        then typed_transfer(
-          Tezos.sender,
-          Tezos.self_address,
-          input.1,
-          get_token_by_id(input.0, tokens[params.pair_id])
-        ) # operations
-      else operations;
-    pair.total_supply := pair.total_supply + mint_amount;
-    const user_key = (Tezos.sender, params.pair_id);
-    s.ledger[user_key] := unwrap_or(s.ledger[user_key], 0n) + mint_amount;
-    s.pools[params.pair_id] := pair;
-  } with (Map.fold(transfer_to_pool, params.inputs, Constants.no_operations), s)
 
 function harvest_staker_rewards(
   var info          : stkr_info_t;
@@ -167,7 +309,7 @@ function harvest_staker_rewards(
           reward = 0n;
         ]);
         const new_former = staker_balance * pool_acc;
-        const reward_amt = (reward.reward + abs(new_former - reward.former)) / Constants.stkr_acc_precision;
+        const reward_amt = (reward.reward + abs(new_former - reward.former)) / Constants.acc_precision;
         acc.op := typed_transfer(
           Tezos.self_address,
           Tezos.sender,

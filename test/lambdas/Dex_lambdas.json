@@ -37,50 +37,62 @@
   },
   {
     "index": 9,
-    "name": "ramp_A"
+    "name": "claim_proxy_rewards"
   },
   {
     "index": 10,
-    "name": "stop_ramp_A"
+    "name": "update_proxy_rewards"
   },
   {
     "index": 11,
-    "name": "set_proxy"
+    "name": "update_proxy_reserves"
   },
   {
     "index": 12,
-    "name": "update_proxy_limits"
+    "name": "ramp_A"
   },
   {
     "index": 13,
-    "name": "set_fees"
+    "name": "stop_ramp_A"
   },
   {
     "index": 14,
-    "name": "set_default_referral"
+    "name": "set_proxy"
+  },
+  {
+    "index": 15,
+    "name": "update_proxy_limits"
   },
   {
     "index": 16,
-    "name": "stake_staker"
+    "name": "set_fees"
   },
   {
     "index": 17,
-    "name": "unstake_staker"
+    "name": "set_default_referral"
   },
   {
     "index": 18,
-    "name": "get_tokens_info"
+    "name": "stake_staker"
   },
   {
     "index": 19,
-    "name": "get_fees"
+    "name": "unstake_staker"
   },
   {
     "index": 20,
-    "name": "get_dy"
+    "name": "get_tokens_info"
   },
   {
     "index": 21,
+    "name": "get_fees"
+  },
+  {
+    "index": 22,
+    "name": "get_dy"
+  },
+  {
+    "index": 23,
     "name": "get_A_view"
   }
 ]

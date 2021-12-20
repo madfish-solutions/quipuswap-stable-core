@@ -20,6 +20,7 @@ type set_lambda_func_t  is [@layout:comb] record [
 
 type upd_prx_rew_t is [@layout:comb] record [
   token: token_t;
+  pool: pool_id_t;
   value: nat;
 ]
 

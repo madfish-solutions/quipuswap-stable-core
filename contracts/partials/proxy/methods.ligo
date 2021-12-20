@@ -1,7 +1,3 @@
-[@inline]
-function verify_sender(const approved: address): unit is
-  assert_with_error(Tezos.sender = approved, Errors.prx_not_authenticated);
-
 function set_admin(const new_admin: address; const store: storage_t): return_t is
   block {
     verify_sender(store.admin);
@@ -11,7 +7,7 @@ function set_admin(const new_admin: address; const store: storage_t): return_t i
 function stake(const params: stake_prm_t; var store: storage_t): return_t is
   block {
     verify_sender(store.dex.location);
-    var return: return_t := add_tokens(params.value, Constants.no_operations, store);
+    var return: return_t := add_tokens(params, Constants.no_operations, store);
     return.0 := typed_approve(
       store.stake_info.location,
       params.value,
@@ -71,7 +67,7 @@ function unstake(const params: unstake_prm_t; const store: storage_t): return_t 
   } with return
 
 (* Stake tokens to farm. Transfer tokens dex -> farm. Must be approved/permitted before call. *)
-function claim(const _params: claim_prm_t; const store: storage_t): return_t is
+function claim(const params: claim_prm_t; const store: storage_t): return_t is
   block {
     verify_sender(store.dex.location);
-  } with claim_rewards(Constants.no_operations, store)
+  } with claim_rewards(params, Constants.no_operations, store)

@@ -41,7 +41,8 @@ type tkn_inf_t    is  [@layout:comb] record [
                 1_000_000_000_000_000_000_000_000n;         // Token has 12 decimal places.
                 1_000_000_000_000_000_000_000_000_000_000n; // Token has 6 decimal places.
   *)
-  proxy_limit             : nat;
+  proxy_rate              : nat;
+  proxy_soft              : nat;
   (* percent * 100_000 -
       percent of liquidity could be staked by the proxy to earn additional interest
   *)

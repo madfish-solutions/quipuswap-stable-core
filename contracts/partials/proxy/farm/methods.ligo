@@ -3,7 +3,7 @@
  *)
 
 function add_tokens(
-  const _bal : nat;
+  const _params : stake_prm_t;
   var _ops   : list(operation);
   var _store : storage_t)
             : return_t is (failwith("Not-implemented"): return_t)
@@ -19,6 +19,7 @@ function redeem_tokens(
 function redeem_cb(const _tok_balance: nat; var _store : storage_t): return_t is (failwith("Not-implemented"): return_t)
 
 function claim_rewards(
+  var _params: claim_prm_t;
   var   _ops   : list(operation);
   var   _store : storage_t
   )           : return_t is (failwith("Not-implemented"): return_t)

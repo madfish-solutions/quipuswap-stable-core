@@ -22,21 +22,24 @@ function call_dex(
     | Claim_developer(_)      -> 6n
     | Claim_referral(_)       -> 7n
     | Claim_liq_provider (_)  -> 8n
+    | Claim_proxy_rewards(_)  -> 9n
+    | Update_proxy_rewards(_) -> 10n
+    | Update_proxy_reserves(_)-> 11n
     (* Admin actions *)
-    | Ramp_A(_)               -> 9n
-    | Stop_ramp_A(_)          -> 10n
-    | Set_proxy(_)            -> 11n
-    | Update_proxy_limits(_)  -> 12n
-    | Set_fees(_)             -> 13n
-    | Set_default_referral(_) -> 14n
+    | Ramp_A(_)               -> 12n
+    | Stop_ramp_A(_)          -> 13n
+    | Set_proxy(_)            -> 14n
+    | Update_proxy_limits(_)  -> 15n
+    | Set_fees(_)             -> 16n
+    | Set_default_referral(_) -> 17n
     (* QUIPU stakers *)
-    | Stake(_)                -> 16n
-    | Unstake(_)              -> 17n
+    | Stake(_)                -> 18n
+    | Unstake(_)              -> 19n
     (* VIEWS *)
-    | Get_tokens_info(_)      -> 18n
-    | Get_fees(_)             -> 19n
-    | Get_dy(_)               -> 20n
-    | Get_A(_)                -> 21n
+    | Get_tokens_info(_)      -> 20n
+    | Get_fees(_)             -> 21n
+    | Get_dy(_)               -> 22n
+    | Get_A(_)                -> 23n
 
     end;
 

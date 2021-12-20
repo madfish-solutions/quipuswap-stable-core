@@ -1,9 +1,14 @@
+[@inline]
+function verify_sender(const approved: address): unit is
+  assert_with_error(Tezos.sender = approved, Errors.prx_not_authenticated);
+
 function cas_tmp_extra(
     const new_flag: nat;
     const sndr: token_t;
     const s: storage_t;
     const extra: option(receiver_t);
-    const value: option(nat)
+    const value: option(nat);
+    const op_token: token_t
   ): storage_t is
   case s.tmp of
     Some(_) -> failwith(Errors.flag_set)
@@ -13,6 +18,7 @@ function cas_tmp_extra(
         sender = sndr;
         extra = extra;
         value = value;
+        token = op_token;
       ])
     ]
   end;
@@ -20,17 +26,32 @@ function cas_tmp_extra(
 function cas_tmp(
     const new_flag: nat;
     const sndr: token_t;
-    const s: storage_t
+    const s: storage_t;
+    const op_token: token_t
   ): storage_t is
   cas_tmp_extra(
     new_flag,
     sndr,
     s,
     (None: option(receiver_t)),
-    (None: option(nat))
+    (None: option(nat)),
+    op_token
   )
 
 function reset_tmp(const s: storage_t): storage_t is s with record[ tmp = (None: option(tmp_t)) ]
+
+function get_upd_prx_rew_ep(const dex: address): contract(upd_prx_rew_t) is
+  unwrap(
+    (Tezos.get_entrypoint_opt("%update_proxy_reward", dex): option(contract(upd_prx_rew_t))),
+    Errors.dex_ep_404
+  );
+
+function get_upd_res_ep(const dex: address): contract(upd_res_t) is
+  unwrap(
+    (Tezos.get_entrypoint_opt("%update_reserves", dex): option(contract(upd_res_t))),
+    Errors.dex_ep_404
+  );
+
 
 [@inline]
 function get_bal_fa2_cb(const self: address): contract(list(balance_of_fa2_res_t)) is unwrap(

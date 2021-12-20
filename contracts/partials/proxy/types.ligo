@@ -1,8 +1,12 @@
 type stake_prm_t is [@layout:comb]record[
   value: nat;
+  token: token_t;
 ]
 
-type claim_prm_t is unit;
+type claim_prm_t is record[
+  token: token_t;
+  sender: address;
+];
 
 type receiver_t is [@layout:comb]record[
   receiver: address;
@@ -11,6 +15,7 @@ type receiver_t is [@layout:comb]record[
 
 type unstake_prm_t is [@layout:comb]record[
   value: nat;
+  token: token_t;
   additional: option(receiver_t);
 ]
 
@@ -19,6 +24,7 @@ type tmp_t is [@layout:comb] record [
   sender: token_t;
   extra: option(receiver_t);
   value: option(nat);
+  token: token_t;
 ]
 
 type liq_tok_info_t is [@layout:comb]record[
