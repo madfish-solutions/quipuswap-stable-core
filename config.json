@@ -1,6 +1,6 @@
 {
   "repoName": "quipuswap-stable-core",
-  "ligoVersion": "0.29.0",
+  "ligoVersion": "0.31.0",
   "preferredLigoFlavor": "pascaligo",
   "autoCompile": false,
   "autoSandbox": true,
