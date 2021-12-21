@@ -4,20 +4,30 @@ on:
   push:
     branches:
       - main
+      - develop
   pull_request:
     branches:
       - main
+      - develop
 jobs:
-  compile-and-test:
+  compile:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Setup dependencies
+        uses: actions/setup-node@v1
         with:
           node-version: "14"
+          cache: 'yarn'
+          cache-dependency-path: './yarn.lock'
       - name: Install Git
         run: sudo apt install git -y
       - name: Install modules
-        run: yarn
-      - name: Compile and test the contracts
-        run: yarn compile-n-test
+        run: yarn install
+      - name: Compile contracts
+        run: yarn compile
+      - name: Test the contracts
+        run: yarn test
+  test:
+    runs-on: ubuntu-latest
