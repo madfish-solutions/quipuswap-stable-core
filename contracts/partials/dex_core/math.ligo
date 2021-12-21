@@ -408,7 +408,14 @@ function add_liq(
       else operations;
     pair.total_supply := pair.total_supply + mint_amount;
     const user_key = (Tezos.sender, params.pair_id);
-    s.ledger[user_key] := unwrap_or(s.ledger[user_key], 0n) + mint_amount;
+    const share = unwrap_or(s.ledger[user_key], 0n);
+    s.account_data[user_key] := update_lp_former_and_reward(
+        get_account_data(user_key, s.account_data),
+        share,
+        pair.proxy_reward_acc
+      );
+    const new_shares = share + mint_amount;
+    s.ledger[user_key] := new_shares;
     s.pools[params.pair_id] := pair;
   } with (Map.fold(transfer_to_pool, params.inputs, operations), s)
 

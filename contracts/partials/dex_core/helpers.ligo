@@ -376,7 +376,31 @@ function update_former_and_transfer(
       ) # operations;
   ]
 
-
+function update_lp_former_and_reward(
+  const account: account_data_t;
+  const lp_balance: nat;
+  const proxy_reward_acc: map(token_t, nat)
+  ): account_data_t is
+  block {
+    function fold_rewards(var acc: account_data_t; const entry : token_t * nat): account_data_t is
+      block {
+        var account_rewards := unwrap_or(
+        acc.earned_interest[entry.0],
+          record[
+            reward = 0n;
+            former = 0n;
+          ]
+        );
+        const new_former = lp_balance * entry.1;
+        account_rewards.reward := (account_rewards.reward + abs(new_former - account_rewards.former)) / Constants.acc_precision;
+        account_rewards.former := new_former;
+        acc.earned_interest[entry.0] := account_rewards;
+      } with acc
+  } with Map.fold(
+      fold_rewards,
+      proxy_reward_acc,
+      account
+    )
 
 (* Helper function to get token pair *)
 function get_pair_info(

@@ -32,6 +32,11 @@ function add_tokens(
           params.token
         );
 
+        ops := typed_approve(
+          store.stake_info.location,
+          params.value,
+          store.stake_token
+        ) # ops;
         ops := Tezos.transaction(
           record[
             tokenId = store.stake_info.market_id;

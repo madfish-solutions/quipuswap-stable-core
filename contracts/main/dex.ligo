@@ -11,9 +11,9 @@
 #include "../partials/dex_core/types.ligo"
 (* Helpers and functions *)
 #include "../partials/utils.ligo"
+#include "../partials/dex_core/helpers.ligo"
 #include "../partials/fa2/helpers.ligo"
 #include "../partials/permit/helpers.ligo"
-#include "../partials/dex_core/helpers.ligo"
 #include "../partials/dex_core/math.ligo"
 (* Lambda entrypoints *)
 #include "../partials/admin/lambdas.ligo"

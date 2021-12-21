@@ -224,8 +224,8 @@ function divest_liquidity(
         assert_with_error(params.shares =/= 0n, Errors.zero_in);
 
         var   pair          : pair_t := unwrap(s.pools[params.pair_id], Errors.pair_not_listed);
-        const total_supply  : nat = pair.total_supply;
         const proxy = pair.proxy_contract;
+        const total_supply  : nat = pair.total_supply;
 
         function divest_reserves(
           var acc: (
@@ -258,11 +258,18 @@ function divest_liquidity(
           } with acc;
 
         const tokens : tkns_map_t = unwrap(s.tokens[params.pair_id], Errors.pair_not_listed);
+        const key = (Tezos.sender, params.pair_id);
         const res = Map.fold(divest_reserves, tokens, (pair.tokens_info, operations));
         pair.tokens_info := res.0;
         pair.total_supply := nat_or_error(pair.total_supply - params.shares, Errors.low_total_supply);
-        const share : nat = unwrap_or(s.ledger[(Tezos.sender, params.pair_id)], 0n);
-        s.ledger[(Tezos.sender, params.pair_id)] := nat_or_error(share - params.shares, Errors.insufficient_lp);
+        var share : nat := unwrap_or(s.ledger[key], 0n);
+        s.account_data[key] := update_lp_former_and_reward(
+          get_account_data(key, s.account_data),
+          share,
+          pair.proxy_reward_acc
+        );
+        share := nat_or_error(share - params.shares, Errors.insufficient_lp);
+        s.ledger[key] := share;
         s.pools[params.pair_id] := pair;
         operations := res.1;
       }
@@ -282,7 +289,8 @@ function divest_imbalanced(
     case p of
     | Divest_imbalanced(params) -> {
       const receiver = Tezos.sender;
-      const share         : nat = unwrap_or(s.ledger[(Tezos.sender, params.pair_id)], 0n);
+      const key = (receiver, params.pair_id);
+      const share : nat = unwrap_or(s.ledger[key], 0n);
       assert_with_error(params.max_shares =/= 0n, Errors.zero_in);
       var pair := unwrap(s.pools[params.pair_id], Errors.pair_not_listed);
       const tokens = unwrap(s.tokens[params.pair_id], Errors.pair_not_listed);
@@ -350,6 +358,11 @@ function divest_imbalanced(
       assert_with_error(burn_amount =/= 0n, Errors.zero_burn_amount);
       burn_amount := burn_amount + 1n; // In case of rounding errors - make it unfavorable for the "attacker"
       assert_with_error(burn_amount <= params.max_shares, Errors.low_max_shares_in);
+      s.account_data[key] := update_lp_former_and_reward(
+        get_account_data(key, s.account_data),
+        share,
+        pair.proxy_reward_acc
+      );
       const new_shares = nat_or_error(share - burn_amount, Errors.insufficient_lp);
       patch s with record [
         dev_rewards = balanced.dev_rewards;
@@ -388,41 +401,52 @@ function divest_one_coin(
         pool.future_A
       );
       const result = calc_withdraw_one_coin(amp, params.shares, params.token_index, pool);
-
+      const lp_fee = result.dy_fee * pool.fee.lp_fee / sum_all_fee(pool.fee);
       const dev_fee = result.dy_fee * pool.fee.dev_fee / sum_all_fee(pool.fee);
       const ref_fee = result.dy_fee * pool.fee.ref_fee / sum_all_fee(pool.fee);
       const stkr_fee = result.dy_fee * pool.fee.stakers_fee / sum_all_fee(pool.fee);
 
       assert_with_error(result.dy >= params.min_amount_out, Errors.high_min_out);
 
-      var info := unwrap(pool.tokens_info[params.token_index], Errors.no_token_info);
+      var info := nip_off_fees(
+        record[
+          lp_fee = lp_fee;
+          stakers_fee = stkr_fee;
+          ref_fee = ref_fee;
+          dev_fee = dev_fee;
+        ],
+        unwrap(pool.tokens_info[params.token_index], Errors.no_token_info)
+      );
 
-      info.virtual_reserves := nat_or_error(info.virtual_reserves - (result.dy + dev_fee + stkr_fee), Errors.low_virtual_reserves);
-      info.reserves := nat_or_error(info.reserves - (result.dy + dev_fee + stkr_fee), Errors.low_reserves);
-
-      pool.tokens_info[params.token_index] := info;
       const acc_bal = unwrap_or(s.ledger[sender_key], 0n);
+      s.account_data[sender_key] := update_lp_former_and_reward(
+          get_account_data(sender_key, s.account_data),
+          acc_bal,
+          pool.proxy_reward_acc
+        );
       check_balance(acc_bal, params.shares);
       const new_acc_bal = acc_bal - params.shares;
       if pool.staker_accumulator.total_staked > 0n
         then pool.staker_accumulator.accumulator[params.token_index] := unwrap_or(pool.staker_accumulator.accumulator[params.token_index], 0n)
         + stkr_fee * Constants.acc_precision / pool.staker_accumulator.total_staked;
       else skip;
-      s.ledger[sender_key] := unwrap_or(is_nat(new_acc_bal), 0n); // already checked for nat at check_balance
+      const new_shares = unwrap_or(is_nat(new_acc_bal), 0n);
+      s.ledger[sender_key] := new_shares; // already checked for nat at check_balance
       s.dev_rewards[token] := unwrap_or(s.dev_rewards[token], 0n) + dev_fee;
       const referral: address = unwrap_or(params.referral, s.default_referral);
       s.referral_rewards[(referral, token)] := unwrap_or(s.referral_rewards[(referral, token)], 0n) + ref_fee;
-      s.pools[params.pair_id] := pool with record [
-          total_supply  = result.ts;
-        ];
-      if result.dy > 0n
-        then operations := typed_transfer(
-          Tezos.self_address,
-          Tezos.sender,
-          result.dy,
-          get_token_by_id(params.token_index, s.tokens[params.pair_id])
-        ) # operations;
-      else skip;
+      const prx_update = check_up_reserves(
+        Minus(result.dy),
+        Tezos.sender,
+        get_token_by_id(params.token_index, s.tokens[params.pair_id]),
+        pool.proxy_contract,
+        info,
+        operations
+      );
+      operations := prx_update.0;
+      pool.tokens_info[params.token_index] := prx_update.1;
+      pool.total_supply := result.ts;
+      s.pools[params.pair_id] := pool
     }
     | _ -> skip
     end;
@@ -804,7 +828,12 @@ function update_proxy_rewards(
         var pair : pair_t := unwrap(s.pools[params.pool], Errors.pair_not_listed);
         const proxy = unwrap(pair.proxy_contract, Errors.no_proxy);
         if Tezos.sender = proxy
-          then pair.proxy_reward_acc[params.token] := unwrap_or(pair.proxy_reward_acc[params.token], 0n) + params.value * Constants.acc_precision / pair.total_supply;
+          then {
+            const to_admin = div_ceil(params.value * s.reward_rate, Constants.rate_precision);
+            s.dev_rewards[params.token] := unwrap_or(s.dev_rewards[params.token], 0n) + to_admin;
+            const to_acc = nat_or_error(params.value - to_admin, Errors.nat_error);
+            pair.proxy_reward_acc[params.token] := unwrap_or(pair.proxy_reward_acc[params.token], 0n) + to_acc * Constants.acc_precision / pair.total_supply;
+          }
         else failwith(Errors.prx_not_authenticated);
         s.pools[params.pool] := pair;
       }
@@ -846,23 +875,29 @@ function claim_provider(
     case p of
       | Claim_liq_provider(params) -> {
         const acc_key = (receiver, params.pool_id);
-        var acc_data := get_account_data(acc_key, s.account_data);
+        var pair : pair_t := unwrap(s.pools[params.pool_id], Errors.pair_not_listed);
+        const share : nat = unwrap_or(s.ledger[acc_key], 0n);
+        var acc_data := update_lp_former_and_reward(
+          get_account_data(acc_key, s.account_data),
+          share,
+          pair.proxy_reward_acc
+        );
         var acc_intrst_data: account_rwrd_t := unwrap_or(acc_data.earned_interest[params.token],
           record [
             reward  = 0n;
             former  = 0n;
           ]);
-        const bal = acc_intrst_data.reward;
-        const new_balance = nat_or_error(bal - params.amount, "Amount greater than balance");
-        assert_with_error(params.amount > 0n, Errors.zero_in);
-        operations := typed_transfer(
-          Tezos.self_address,
-          receiver,
-          params.amount,
-          params.token
-        ) # operations;
-        acc_intrst_data.former := 0n;
-        acc_intrst_data.reward := new_balance;
+        if acc_intrst_data.reward > 0n
+          then {
+            operations := typed_transfer(
+              Tezos.self_address,
+              receiver,
+              acc_intrst_data.reward,
+              params.token
+            ) # operations;
+            acc_intrst_data.reward := 0n;
+          }
+        else skip;
         acc_data.earned_interest[params.token] := acc_intrst_data;
         s.account_data[acc_key] := acc_data;
       }
