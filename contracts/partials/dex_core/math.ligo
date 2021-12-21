@@ -1,7 +1,7 @@
 function xp_mem(const tokens_info : map(tkn_pool_idx_t, tkn_inf_t)): map(tkn_pool_idx_t, nat) is
   block {
     function count_result(const _key: nat; var token_info: tkn_inf_t): nat is
-      (token_info.rate * token_info.virtual_reserves) / Constants.precision;
+      (token_info.rate * token_info.reserves) / Constants.precision;
   } with Map.map(count_result, tokens_info);
 
 function xp(const s: pair_t): map(nat, nat) is xp_mem(s.tokens_info);
@@ -240,9 +240,6 @@ function calc_withdraw_one_coin(
 
 
 function balance_inputs(
-  const flag              : a_r_flag_t;
-  const inputs            : map(tkn_pool_idx_t, nat);
-  const receiver          : address;
   const init_tokens_info  : map(tkn_pool_idx_t, tkn_inf_t);
   const d0                : nat;
   const new_tokens_info   : map(tkn_pool_idx_t, tkn_inf_t);
@@ -250,7 +247,6 @@ function balance_inputs(
   const tokens            : tkns_map_t;
   const fees              : fees_storage_t;
   const referral          : address;
-  const proxy             : option(address);
   var accumulator         : balancing_acc_t
   )                       : balancing_acc_t is
   block {
@@ -263,8 +259,8 @@ function balance_inputs(
         const i: tkn_pool_idx_t = entry.0;
         var token_info: tkn_inf_t := entry.1;
         const old_info: tkn_inf_t = unwrap(init_tokens_info[i], Errors.wrong_index);
-        const ideal_balance = d1 * old_info.virtual_reserves / d0;
-        const diff = abs(ideal_balance - token_info.virtual_reserves);
+        const ideal_balance = d1 * old_info.reserves / d0;
+        const diff = abs(ideal_balance - token_info.reserves);
         const to_dev = diff * divide_fee_for_balance(fees.dev_fee, tokens_count) / Constants.fee_denominator;
         const to_ref = diff * divide_fee_for_balance(fees.ref_fee, tokens_count) / Constants.fee_denominator;
         var to_lp := diff * divide_fee_for_balance(fees.lp_fee, tokens_count) / Constants.fee_denominator;
@@ -287,22 +283,8 @@ function balance_inputs(
           ],
           token_info
         );
-        const prx_update = check_up_reserves(
-          case flag of
-            Add -> Plus(unwrap_or(inputs[i], 0n))
-          | Remove -> Minus(unwrap_or(inputs[i], 0n))
-          end,
-          receiver,
-          token,
-          proxy,
-          token_info,
-          acc.operations
-        );
-        acc.operations := prx_update.0;
-        token_info := prx_update.1;
         acc.tokens_info[i] := token_info;
-        //token_info.reserves := nat_or_error(token_info.reserves - to_lp, Errors.low_reserves); (* Could be less 0 in case of low reserves *)
-        token_info.virtual_reserves := nat_or_error(token_info.virtual_reserves - to_lp, Errors.low_virtual_reserves);
+        token_info.reserves := nat_or_error(token_info.reserves - to_lp, Errors.low_reserves);
         acc.tokens_info_without_lp[i] := token_info;
     } with acc;
   } with Map.fold(balance_it, new_tokens_info, accumulator);
@@ -349,7 +331,7 @@ function add_liq(
       block {
         const input = unwrap_or(params.inputs[key], 0n);
         assert_with_error(token_supply =/= 0n or input > 0n, Errors.zero_in);
-        token_info.virtual_reserves := token_info.virtual_reserves + input;
+        //token_info.virtual_reserves := token_info.virtual_reserves + input;
         token_info.reserves := token_info.reserves + input;
       } with token_info;
 
@@ -364,9 +346,6 @@ function add_liq(
     if token_supply > 0n
     then {
       const balanced = balance_inputs(
-        Add,
-        params.inputs,
-        Tezos.sender,
         init_tokens_info,
         d0,
         new_tokens_info,
@@ -374,10 +353,8 @@ function add_liq(
         unwrap(s.tokens[params.pair_id], Errors.pair_not_listed),
         pair.fee,
         unwrap_or(params.referral, s.default_referral),
-        pair.proxy_contract,
         record [
           dev_rewards = s.dev_rewards;
-          operations = operations;
           referral_rewards = s.referral_rewards;
           staker_accumulator = pair.staker_accumulator;
           tokens_info = new_tokens_info;
@@ -409,13 +386,7 @@ function add_liq(
     pair.total_supply := pair.total_supply + mint_amount;
     const user_key = (Tezos.sender, params.pair_id);
     const share = unwrap_or(s.ledger[user_key], 0n);
-    s.account_data[user_key] := update_lp_former_and_reward(
-        get_account_data(user_key, s.account_data),
-        share,
-        pair.proxy_reward_acc
-      );
     const new_shares = share + mint_amount;
     s.ledger[user_key] := new_shares;
     s.pools[params.pair_id] := pair;
   } with (Map.fold(transfer_to_pool, params.inputs, operations), s)
-

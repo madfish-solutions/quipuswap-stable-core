@@ -41,8 +41,6 @@ type tkn_inf_t    is  [@layout:comb] record [
                 1_000_000_000_000_000_000_000_000n;         // Token has 12 decimal places.
                 1_000_000_000_000_000_000_000_000_000_000n; // Token has 6 decimal places.
   *)
-  proxy_rate              : nat;
-  proxy_soft              : nat;
   (* percent * 100_000 -
       percent of liquidity could be staked by the proxy to earn additional interest
   *)
@@ -54,7 +52,6 @@ type tkn_inf_t    is  [@layout:comb] record [
                 1_000_000_000_000n; // Token has 6 decimal places and rate are 10e30.
     *)
   reserves                : nat;
-  virtual_reserves        : nat;
 ]
 
 type pair_t             is [@layout:comb] record [
@@ -83,7 +80,7 @@ type storage_t       is [@layout:comb] record [
   dev_address             : address;
   managers                : set(address);
 
-  reward_rate             : nat; (* DEFI reward rate *)
+  // reward_rate             : nat; (* DEFI reward rate *)
   // entered                 : bool; (* reentrancy protection *)
 
   (* Pools data *)

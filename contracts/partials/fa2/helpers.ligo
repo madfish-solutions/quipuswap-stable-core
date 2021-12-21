@@ -41,24 +41,13 @@ function iterate_transfer(
       const transfer    : trsfr_fa2_dst_t)
                         : full_storage_t is
       block {
-        var pair : pair_t := unwrap(s.storage.pools[transfer.token_id], Errors.pair_not_listed);
         const sender_key =  (user_trx_params.from_, transfer.token_id);
         var sender_balance : nat := unwrap_or(s.storage.ledger[sender_key], 0n);
-        s.storage.account_data[sender_key] := update_lp_former_and_reward(
-          get_account_data(sender_key, s.storage.account_data),
-          sender_balance,
-          pair.proxy_reward_acc
-        );
         sender_balance := nat_or_error(sender_balance - transfer.amount, "FA2_INSUFFICIENT_BALANCE");
         s.storage.ledger[sender_key] := sender_balance;
 
         const dest_key = (transfer.to_, transfer.token_id);
         var dest_account : nat := unwrap_or(s.storage.ledger[dest_key], 0n);
-        s.storage.account_data[dest_key] := update_lp_former_and_reward(
-          get_account_data(dest_key, s.storage.account_data),
-          dest_account,
-          pair.proxy_reward_acc
-        );
         dest_account := dest_account + transfer.amount;
         s.storage.ledger[dest_key] := dest_account;
     } with s;
@@ -88,4 +77,3 @@ function iterate_update_operator(
     }
     end
   } with s
-

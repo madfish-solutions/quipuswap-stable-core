@@ -32,36 +32,12 @@
     "name": "claim_ref"
   },
   {
-    "index": 8,
-    "name": "claim_provider"
-  },
-  {
-    "index": 9,
-    "name": "claim_proxy_rewards"
-  },
-  {
-    "index": 10,
-    "name": "update_proxy_rewards"
-  },
-  {
-    "index": 11,
-    "name": "update_proxy_reserves"
-  },
-  {
     "index": 12,
     "name": "ramp_A"
   },
   {
     "index": 13,
     "name": "stop_ramp_A"
-  },
-  {
-    "index": 14,
-    "name": "set_proxy"
-  },
-  {
-    "index": 15,
-    "name": "update_proxy_limits"
   },
   {
     "index": 16,

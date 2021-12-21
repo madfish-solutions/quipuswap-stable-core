@@ -56,13 +56,6 @@ export async function divestLiquiditySuccessCase(
   res.forEach(
     (value, key) => (raw_res[key] = value.reserves.toFormat(0).toString())
   );
-  const v_res = dex.storage.storage.pools[pool_id.toNumber()]
-    .tokens_info as any as MichelsonMap<string, TokenInfo>;
-  let virt_res = {};
-  v_res.forEach(
-    (value, key) =>
-      (virt_res[key] = value.virtual_reserves.toFormat(0).toString())
-  );
   const init_ledger = dex.storage.storage.ledger[accounts[sender].pkh];
   await dex.divestLiquidity(pool_id, min_amounts, shares);
   await dex.updateStorage({
@@ -102,13 +95,6 @@ export async function divestLiquidityImbalanceSuccessCase(
   let raw_res = {};
   res.forEach(
     (value, key) => (raw_res[key] = value.reserves.toFormat(0).toString())
-  );
-  const v_res = dex.storage.storage.pools[pool_id.toNumber()]
-    .tokens_info as any as MichelsonMap<string, TokenInfo>;
-  let virt_res = {};
-  v_res.forEach(
-    (value, key) =>
-      (virt_res[key] = value.virtual_reserves.toFormat(0).toString())
   );
   const init_ledger = dex.storage.storage.ledger[accounts[sender].pkh];
   await dex.divestImbalanced(pool_id, amounts, max_shares);
@@ -152,13 +138,6 @@ export async function divestLiquidityOneSuccessCase(
   let raw_res = {};
   res.forEach(
     (value, key) => (raw_res[key] = value.reserves.toFormat(0).toString())
-  );
-  const v_res = dex.storage.storage.pools[pool_id.toNumber()]
-    .tokens_info as any as MichelsonMap<string, TokenInfo>;
-  let virt_res = {};
-  v_res.forEach(
-    (value, key) =>
-      (virt_res[key] = value.virtual_reserves.toFormat(0).toString())
   );
   const init_ledger = dex.storage.storage.ledger[accounts[sender].pkh];
   await dex.divestOneCoin(pool_id, shares, token_idx, min_amount);

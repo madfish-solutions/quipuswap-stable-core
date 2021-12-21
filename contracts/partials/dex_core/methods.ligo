@@ -21,15 +21,9 @@ function call_dex(
     | Divest_one_coin(_)      -> 5n
     | Claim_developer(_)      -> 6n
     | Claim_referral(_)       -> 7n
-    | Claim_liq_provider (_)  -> 8n
-    | Claim_proxy_rewards(_)  -> 9n
-    | Update_proxy_rewards(_) -> 10n
-    | Update_proxy_reserves(_)-> 11n
     (* Admin actions *)
     | Ramp_A(_)               -> 12n
     | Stop_ramp_A(_)          -> 13n
-    | Set_proxy(_)            -> 14n
-    | Update_proxy_limits(_)  -> 15n
     | Set_fees(_)             -> 16n
     | Set_default_referral(_) -> 17n
     (* QUIPU stakers *)

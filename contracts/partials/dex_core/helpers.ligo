@@ -24,7 +24,7 @@ function nip_off_fees(
   block {
     const nipped = sum_wo_lp_fee(fees);
   } with token_info with record[
-      virtual_reserves = nat_or_error(token_info.virtual_reserves - nipped, Errors.low_virtual_reserves);
+      //virtual_reserves = nat_or_error(token_info.virtual_reserves - nipped, Errors.low_virtual_reserves);
       reserves = nat_or_error(token_info.reserves - nipped, Errors.low_reserves);
     ]
 
@@ -33,7 +33,7 @@ function nip_off_fees(
 function divide_fee_for_balance(const fee: nat; const tokens_count: nat): nat is
   fee * tokens_count / (4n * nat_or_error(tokens_count - 1n, Errors.wrong_tokens_count));
 
-function get_stake_proxy(
+(*function get_stake_proxy(
   const proxy   : address)
                         : contract(prx_stake_prm_t) is
   unwrap((Tezos.get_entrypoint_opt("%stake", proxy)
@@ -242,7 +242,7 @@ function check_up_reserves(
     }
     end
   } with (operations, token_info)
-
+*)
 function get_token_by_id(
     const token_id  : tkn_pool_idx_t;
     const map_entry : option(tkns_map_t)
@@ -375,7 +375,7 @@ function update_former_and_transfer(
         Fa2(quipu_token)
       ) # operations;
   ]
-
+(*
 function update_lp_former_and_reward(
   const account: account_data_t;
   const lp_balance: nat;
@@ -401,7 +401,7 @@ function update_lp_former_and_reward(
       proxy_reward_acc,
       account
     )
-
+*)
 (* Helper function to get token pair *)
 function get_pair_info(
   const token_bytes     : bytes;
@@ -434,8 +434,5 @@ function get_pair_info(
   } with (pair, token_id)
 
 (* Helper function to get pair info *)
-function get_token_info(
-  const key         : tkn_pool_idx_t;
-  const tokens_info : map(tkn_pool_idx_t, tkn_inf_t))
-                    : tkn_inf_t is
-  unwrap(tokens_info[key], Errors.no_token_info);
+function get_token_info(const key: tkn_pool_idx_t; const tokens_info: map(tkn_pool_idx_t, tkn_inf_t)): tkn_inf_t is
+  unwrap(tokens_info[key], Errors.no_token_info)

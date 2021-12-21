@@ -5,29 +5,6 @@ type func_entry_t    is FAdmin | FPermit | FDex | FToken
 //   token_id      : nat;
 //   token_info    : token_t;
 // ]
-type diff_t is
-  Plus  of nat
-| Minus of nat
-
-type extra_receiver_t is [@layout:comb]record[
-  receiver: address;
-  value   : nat;
-]
-
-type prx_stake_prm_t is [@layout:comb]record[
-  token: token_t;
-  value: nat;
-]
-type prx_unstake_prm_t is [@layout:comb]record[
-  token: token_t;
-  value: nat;
-  additional: option(extra_receiver_t);
-]
-
-type prx_claim_prm_t is record[
-  token: token_t;
-  sender: address;
-];
 
 type withdraw_one_return is [@layout:comb] record [
   dy                      : nat;
@@ -51,7 +28,10 @@ type tmp_get_d_t     is [@layout:comb] record [
   prev_d                  : nat;
 ]
 
-type info_ops_acc_t     is map(tkn_pool_idx_t, tkn_inf_t);
+type info_ops_acc_t     is record [
+  tokens_info             : map(tkn_pool_idx_t, tkn_inf_t);
+  operations              : list(operation);
+];
 
 type init_prm_t  is [@layout:comb] record [
   a_constant              : nat;
@@ -126,22 +106,11 @@ type ramp_a_prm_t      is [@layout:comb] record [
   future_time             : timestamp; (* response receiver *)
 ]
 
-type set_proxy_prm_t   is [@layout:comb] record [
-  pair_id                 : nat; (* pair identifier *)
-  proxy                   : option(address);
-]
-
 type get_a_v_prm_t         is [@layout:comb] record [
   pair_id                 : nat; (* pair identifier *)
   receiver                : contract(nat);
 ]
 
-type upd_proxy_lim_prm_t is [@layout:comb] record [
-  pair_id                 : nat; (* pair identifier *)
-  token_index             : nat; (* pair identifier *)
-  limit                   : nat;
-  soft                    : nat; (* soft limit +- % *)
-]
 
 type set_fee_prm_t       is [@layout:comb] record [
   pool_id                 : pool_id_t;
@@ -168,10 +137,6 @@ type claim_by_pool_tkn_prm_t is [@layout:comb] record [
   token: token_t;
   amount: nat;
 ]
-type claim_prx_t is [@layout:comb] record [
-  pool_id: pool_id_t;
-  token: token_t;
-]
 
 type action_t        is
 (* Base actions *)
@@ -184,18 +149,12 @@ type action_t        is
 | Divest_one_coin          of divest_one_c_prm_t
 | Claim_developer          of claim_by_tkn_prm_t
 | Claim_referral           of claim_by_tkn_prm_t
-| Claim_liq_provider       of claim_by_pool_tkn_prm_t
 | Ramp_A                   of ramp_a_prm_t
 | Stop_ramp_A              of nat
-| Set_proxy                of set_proxy_prm_t
-| Update_proxy_limits      of upd_proxy_lim_prm_t
 | Set_fees                 of set_fee_prm_t
 | Set_default_referral     of address
 | Stake                    of un_stake_prm_t
 | Unstake                  of un_stake_prm_t
-| Claim_proxy_rewards      of claim_prx_t
-| Update_proxy_rewards     of upd_prx_rew_t
-| Update_proxy_reserves    of upd_res_t
 (* VIEWS *)
 | Get_tokens_info           of reserves_v_prm_t      (* returns the token info *)
 | Get_fees                 of get_fee_v_prm_t
@@ -249,5 +208,4 @@ type balancing_acc_t   is record [
   staker_accumulator      : stkr_acc_t;
   tokens_info             : map(tkn_pool_idx_t, tkn_inf_t);
   tokens_info_without_lp  : map(tkn_pool_idx_t, tkn_inf_t);
-  operations              : list(operation);
 ]

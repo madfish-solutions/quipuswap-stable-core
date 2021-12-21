@@ -120,31 +120,6 @@ describe("Dex", () => {
       it("Should change default referral", async () =>
         await adm.setDefaultRefSuccessCase(dex, "eve", aliceAddress, Tezos));
     });
-    describe("1.5. Test DeFi reward rates", () => {
-      const rate = new BigNumber(10_00000);
-      it(
-        "Should fail if not admin try set DeFi reward rates",
-        async () =>
-          await failCase(
-            "bob",
-            async () => dex.setRewardRate(rate),
-            "Dex/not-contract-admin"
-          ),
-        10000
-      );
-      it(
-        "Should fail if try set DeFi reward rates above 100%",
-        async () =>
-          await failCase(
-            "eve",
-            async () => dex.setRewardRate(new BigNumber(100_00001)),
-            "Dex/wrong-precision"
-          ),
-        10000
-      );
-      it("Should change DeFi reward rates", async () =>
-        await adm.setAdminRateSuccessCase(dex, "eve", rate, Tezos));
-    });
   });
 
   describe("2. Testing Pools endpoints", () => {
@@ -240,58 +215,6 @@ describe("Dex", () => {
               "eve",
               pool_id,
               adm_fee.fees,
-              Tezos
-            ),
-          20000
-        );
-      });
-      describe("2.2.3 Setting proxy", () => {
-        const adm_proxy = adm.Proxy;
-        it("Should fail if not admin try to set new proxy", async () => {
-          const proxy: string = bobAddress;
-          return await failCase(
-            "bob",
-            async () =>
-              await dex.contract.methods.set_proxy(pool_id, proxy).send(),
-            "Dex/not-contract-admin"
-          );
-        }, 10000);
-        it(
-          "Should set proxy",
-          async () => await adm_proxy.setProxySuccessCase(dex, pool_id, Tezos),
-          20000
-        );
-        it(
-          "Should remove proxy",
-          async () =>
-            await adm_proxy.removeProxySuccessCase(dex, pool_id, Tezos),
-          20000
-        );
-      });
-      describe("2.2.4 Update proxy limits", () => {
-        const adm_proxy = adm.Proxy;
-        let limits: MichelsonMap<string, BigNumber>;
-
-        beforeAll(async () => {
-          limits = await adm_proxy.setupLimits(dex, pool_id);
-        }, 80000);
-        it("Should fail if not admin try to set new proxy limits", async () => {
-          return await failCase(
-            "bob",
-            async () =>
-              await dex.contract.methods
-                .update_proxy_limits(pool_id, "0", limits.get("0"))
-                .send(),
-            "Dex/not-contract-admin"
-          );
-        }, 10000);
-        it(
-          "Should set proxy limits",
-          async () =>
-            await adm_proxy.setupProxyLimitsSuccessCase(
-              dex,
-              pool_id,
-              limits,
               Tezos
             ),
           20000

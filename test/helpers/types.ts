@@ -32,7 +32,6 @@ export declare type TokenInfo = {
   proxy_limit: BigNumber;
   precision_multiplier: BigNumber;
   reserves: BigNumber;
-  virtual_reserves: BigNumber;
 }
 
 export declare type PairInfo = {
@@ -41,18 +40,12 @@ export declare type PairInfo = {
   future_A: BigNumber;
   future_A_time: Date;
   tokens_info: { [key: string]: TokenInfo },
-  token_rates: { [key: string]: BigNumber };
-  reserves: { [key: string]: BigNumber };
-  virtual_reserves: { [key: string]: BigNumber };
 
   fee: FeeType;
   staker_accumulator: {
     accumulator: { [key: string]: BigNumber };
     total_staked: BigNumber;
   };
-  proxy_contract?: string;
-  proxy_limits: { [key: string]: BigNumber };
-  proxy_reward_acc: { [key: string]: BigNumber };
   total_supply: BigNumber;
 };
 

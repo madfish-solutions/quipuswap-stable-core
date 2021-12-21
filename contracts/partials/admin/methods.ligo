@@ -8,8 +8,7 @@ function call_admin(
     const idx : nat = case p of
     | Add_rem_managers(_) -> 0n
     | Set_dev_address(_)  -> 1n
-    | Set_reward_rate(_)  -> 2n
-    | Set_admin(_)        -> 3n
+    | Set_admin(_)        -> 2n
     end;
 
     const lambda_bytes : bytes = unwrap(s.admin_lambdas[idx], Errors.unknown_func);

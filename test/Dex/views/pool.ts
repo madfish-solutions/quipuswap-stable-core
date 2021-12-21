@@ -42,9 +42,6 @@ export async function getTokensInfoSuccessCase(
     expect(v.reserves.toNumber()).toEqual(
       exp_reserves.get(k).reserves.toNumber()
     );
-    expect(v.virtual_reserves.toNumber()).toEqual(
-      exp_reserves.get(k).virtual_reserves.toNumber()
-    );
     expect(v.proxy_limit.toNumber()).toEqual(
       exp_reserves.get(k).proxy_limit.toNumber()
     );

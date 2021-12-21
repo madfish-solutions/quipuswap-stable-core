@@ -157,7 +157,6 @@ export class Dex extends TokenFA2 {
           proxy_limit: BigNumber;
           precision_multiplier: BigNumber;
           reserves: BigNumber;
-          virtual_reserves: BigNumber;
         };
         if (input.asset instanceof TokenFA2) {
           input_tokens.push({
@@ -171,7 +170,6 @@ export class Dex extends TokenFA2 {
             proxy_limit: input.proxy_limit,
             precision_multiplier: input.precision_multiplier,
             reserves: input.in_amount,
-            virtual_reserves: input.in_amount,
           };
         } else {
           input_tokens.push({
@@ -182,7 +180,6 @@ export class Dex extends TokenFA2 {
             proxy_limit: input.proxy_limit,
             precision_multiplier: input.precision_multiplier,
             reserves: input.in_amount,
-            virtual_reserves: input.in_amount,
           };
         }
         return result;

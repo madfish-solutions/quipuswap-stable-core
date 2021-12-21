@@ -9,10 +9,6 @@
   },
   {
     "index": 2,
-    "name": "set_reward_rate"
-  },
-  {
-    "index": 3,
     "name": "set_admin"
   }
 ]

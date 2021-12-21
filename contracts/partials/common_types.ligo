@@ -17,15 +17,3 @@ type set_lambda_func_t  is [@layout:comb] record [
   func                    : bytes; (* code of the function *)
   index                   : nat; (* the key in functions map *)
 ]
-
-type upd_prx_rew_t is [@layout:comb] record [
-  token: token_t;
-  pool: pool_id_t;
-  value: nat;
-]
-
-type upd_res_t is [@layout:comb] record [
-  idx : tkn_pool_idx_t;
-  pool: pool_id_t;
-  value: nat;
-]
