@@ -1,16 +1,19 @@
 import BigNumber from "bignumber.js";
-import { MichelsonMap } from "@taquito/taquito";
-import { failCase } from "./fail-test";
-import { Dex } from "./helpers/dexFA2";
 
-import { mapTokensToIdx, prepareProviderOptions, Tezos } from "./helpers/utils";
+import { failCase, mapTokensToIdx, prepareProviderOptions, Tezos } from "./helpers/utils";
 
-import * as DexTests from "./Dex";
-import { AmountsMap, IndexMap } from "./Dex/types";
-import { FA12TokenType, FA2TokenType } from "./helpers/types";
-import { TokenFA2 } from "./helpers/tokenFA2";
-const { decimals, a_const, accounts, zero_amount, swap_routes } =
-  DexTests.constants;
+import { API, cases as DexTests, constants, TokenSetups } from "./Dex";
+type Dex = API.DexAPI;
+const { decimals, a_const, accounts, zero_amount, swap_routes } = constants;
+import {
+  AmountsMap,
+  IndexMap,
+  TokensMap,
+  FA12TokenType,
+  FA2TokenType,
+} from "./Dex/types";
+import { TokenFA2 } from "./Token";
+
 
 describe("Dex", () => {
   global.startTime = new Date();
@@ -24,7 +27,8 @@ describe("Dex", () => {
   const manager = aliceAddress;
   const staker = bobAddress;
 
-  let tokens: DexTests.types.TokensMap;
+  let tokens: TokensMap;
+
   let dex: Dex;
   let quipuToken: TokenFA2;
   let lambdaContractAddress: string;
@@ -277,7 +281,7 @@ describe("Dex", () => {
       beforeAll(async () => {
         let config = await prepareProviderOptions(sender);
         Tezos.setProvider(config);
-        const stp = await DexTests.TokenSetups.setupTokenAmounts(
+        const stp = await TokenSetups.setupTokenAmounts(
           dex,
           tokens,
           inputs

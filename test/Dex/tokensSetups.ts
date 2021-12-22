@@ -1,51 +1,20 @@
-const fs = require("fs");
 import BigNumber from "bignumber.js";
 import { prepareProviderOptions } from "../helpers/utils";
-import { AmountsMap, TokensMap } from "./types";
+import { AmountsMap, FA12TokenType, FA2TokenType, TokensMap } from "./types";
 import { TezosToolkit } from "@taquito/taquito";
-import kUSDstorage from "../helpers/tokens/kUSD_storage";
-import uUSDstorage from "../helpers/tokens/uUSD_storage";
-import USDtzstorage from "../helpers/tokens/USDtz_storage";
-import QUIPUstorage from "../helpers/tokens/QUIPU_storage";
 import { confirmOperation } from "../helpers/confirmation";
-import { TokenFA12 } from "../helpers/tokenFA12";
-import { TokenFA2 } from "../helpers/tokenFA2";
-import { Dex } from "../helpers/dexFA2";
+import Dex from "./API";
 import { accounts } from "./constants";
-import { FA12TokenType, FA2TokenType } from "../helpers/types";
-
-const uUSD_contract = fs
-  .readFileSync("./test/helpers/tokens/uUSD.tz")
-  .toString();
-const USDtz_contract = fs
-  .readFileSync("./test/helpers/tokens/USDtz.tz")
-  .toString();
-
-const kUSD_contract = fs
-  .readFileSync("./test/helpers/tokens/kUSD.tz")
-  .toString();
-
-const QUIPU_contract = fs
-  .readFileSync("./test/helpers/tokens/QUIPU.tz")
-  .toString();
+import { TokenFA12, TokenFA2, TokenInitValues } from "../Token";
 
 async function originateTokens(Tezos: TezosToolkit): Promise<TokensMap> {
-  const kUSD = await Tezos.contract.originate({
-    code: kUSD_contract,
-    storage: kUSDstorage,
-  });
+  const kUSD = await Tezos.contract.originate(TokenInitValues.kUSD);
   await confirmOperation(Tezos, kUSD.hash);
   console.debug("[ORIGINATION] kUSD");
-  const USDtz = await Tezos.contract.originate({
-    code: USDtz_contract,
-    storage: USDtzstorage,
-  });
+  const USDtz = await Tezos.contract.originate(TokenInitValues.USDtz);
   await confirmOperation(Tezos, USDtz.hash);
   console.debug("[ORIGINATION] USDtz");
-  const uUSD = await Tezos.contract.originate({
-    code: uUSD_contract,
-    storage: uUSDstorage,
-  });
+  const uUSD = await Tezos.contract.originate(TokenInitValues.uUSD);
   await confirmOperation(Tezos, uUSD.hash);
   console.debug("[ORIGINATION] uUSD");
   return {
@@ -118,10 +87,7 @@ export async function setupTokenAmounts(
 }
 
 export async function setupQuipuGovToken(Tezos: TezosToolkit): Promise<TokenFA2> {
-  const quipu = await Tezos.contract.originate({
-    code: QUIPU_contract,
-    storage: QUIPUstorage,
-  });
+  const quipu = await Tezos.contract.originate(TokenInitValues.QUIPU);
   await confirmOperation(Tezos, quipu.hash);
   return await TokenFA2.init(Tezos, quipu.contractAddress);
 }

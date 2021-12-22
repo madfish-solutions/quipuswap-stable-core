@@ -5,7 +5,7 @@
   "autoCompile": false,
   "autoSandbox": true,
   "sandbox": {
-    "host": "localhost",
+    "host": "159.89.6.101",
     "port": 20000,
     "protocol": "granada",
     "genesisBlockHash": "random",

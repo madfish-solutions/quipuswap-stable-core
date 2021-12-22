@@ -1,11 +1,11 @@
 import BigNumber from "bignumber.js";
 import { TezosToolkit } from "@taquito/taquito";
 import { AccountsLiteral, prepareProviderOptions } from "../../helpers/utils";
-import { Dex } from "../../helpers/dexFA2";
+import Dex from "../API";
 import { accounts, decimals } from "../constants";
 import { TokensMap } from "../types";
-import { defaultTokenId } from "../../helpers/token";
 import { confirmOperation } from "../../helpers/confirmation";
+import { defaultTokenId } from "../../Token";
 
 export async function getReferralRewardsSuccessCase(
   dex: Dex,

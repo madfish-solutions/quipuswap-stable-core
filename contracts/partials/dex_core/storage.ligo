@@ -22,7 +22,6 @@ type stkr_acc_t    is [@layout:comb] record [
 
 type account_data_t  is [@layout:comb] record [
   allowances              : set(address);
-  earned_interest         : map(token_t, account_rwrd_t)
 ]
 
 type fees_storage_t  is [@layout:comb] record [

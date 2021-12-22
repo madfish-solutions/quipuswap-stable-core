@@ -1,5 +1,5 @@
 import { TezosToolkit } from "@taquito/taquito";
-import { Dex } from "../helpers/dexFA2";
+import Dex from "./API";
 import { AccountsLiteral, prepareProviderOptions } from "../helpers/utils";
 
 export async function setAdminSuccessCase(

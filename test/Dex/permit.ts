@@ -4,7 +4,7 @@ import {
   TezosToolkit,
 } from "@taquito/taquito";
 import { MichelsonV1Expression } from "@taquito/rpc";
-import { Dex } from "../helpers/dexFA2";
+import Dex from "./API";
 import {
   AccountsLiteral,
   initTezos,

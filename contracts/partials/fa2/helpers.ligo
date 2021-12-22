@@ -26,7 +26,6 @@ function get_account_data(
   ): account_data_t is
   unwrap_or(acc_bm[key], record [
     allowances      = (set[]  : set(address));
-    earned_interest = (map[]  : map(token_t, account_rwrd_t));
   ]);
 
 (* Perform transfers from one owner *)

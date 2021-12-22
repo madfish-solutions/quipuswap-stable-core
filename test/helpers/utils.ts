@@ -5,10 +5,8 @@ import { sandbox, ligoVersion } from "../../config.json";
 const accounts = sandbox.accounts;
 import { confirmOperation } from "./confirmation";
 import { MichelsonMap, TezosToolkit } from "@taquito/taquito";
-import formatDuration from "date-fns/formatDuration";
-import { intervalToDuration } from "date-fns";
 import { IndexMap, TokensMap } from "../Dex/types";
-import { FA12TokenType, FA2TokenType } from "./types";
+import { FA12TokenType, FA2TokenType } from "../Dex/API/types";
 export const tezPrecision = 1e6;
 
 function stringLiteralArray<T extends string>(a: T[]) {
@@ -17,6 +15,8 @@ function stringLiteralArray<T extends string>(a: T[]) {
 
 const senders: string[] = stringLiteralArray(Object.keys(accounts));
 export declare type AccountsLiteral = typeof senders[number];
+
+export declare type TezosAddress = string;
 
 let rpcNode: string = `http://${sandbox.host}:${sandbox.port}`;
 export let Tezos = new TezosToolkit(rpcNode);
@@ -126,9 +126,9 @@ export function destructObj(obj: any) {
 export async function setupLambdasToStorage(
   lambdas_comp: { prim: string; args: { [key: string]: string | number }[] }[]
 ) {
-  let lambda_func_storage = new MichelsonMap<number, string>();
+  let lambda_func_storage = new MichelsonMap<string, string>();
   for (const lambda of lambdas_comp) {
-    const key: number = lambda.args[1].int as number;
+    const key: string = lambda.args[1].int as string;
     const bytes: string = lambda.args[0].bytes as string;
     lambda_func_storage.set(key, bytes);
   }
@@ -157,4 +157,18 @@ export function mapTokensToIdx(
     }
   }
   return mapping;
+}
+
+export async function failCase(
+  sender: AccountsLiteral,
+  act: Promise<unknown> | (() => Promise<unknown>),
+  errorMsg: string
+) {
+  let config = await prepareProviderOptions(sender);
+  Tezos.setProvider(config);
+  expect.assertions(1);
+  await expect(act).rejects.toMatchObject({
+    message: errorMsg,
+  });
+  return true;
 }

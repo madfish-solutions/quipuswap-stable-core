@@ -9,6 +9,7 @@ on:
       - develop
 jobs:
   test:
+    name: Test Contract Job
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

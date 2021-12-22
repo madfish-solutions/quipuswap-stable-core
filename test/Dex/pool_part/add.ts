@@ -1,11 +1,10 @@
 import BigNumber from "bignumber.js";
 import { TezosToolkit } from "@taquito/taquito";
-import { Dex } from "../../helpers/dexFA2";
-import { TokenFA12 } from "../../helpers/tokenFA12";
-import { TokenFA2 } from "../../helpers/tokenFA2";
+import Dex from "../API";
 import { AccountsLiteral, prepareProviderOptions } from "../../helpers/utils";
 import { TokensMap } from "../types";
 import { decimals } from "../constants";
+import { TokenFA12, TokenFA2 } from "../../Token";
 
 export async function manageInputs(input: BigNumber, tokens: TokensMap) {
   let inputs = [

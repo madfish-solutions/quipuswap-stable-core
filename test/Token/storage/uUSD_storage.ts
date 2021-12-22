@@ -1,6 +1,6 @@
 import { MichelsonMap } from "@taquito/taquito";
-import { defaultTokenId } from '../tokenFA2';
 import { sandbox } from "../../../config.json";
+import { defaultTokenId } from "../token";
 const aliceAddress: string = sandbox.accounts.alice.pkh;
 const bobAddress: string = sandbox.accounts.bob.pkh;
 const eveAddress: string = sandbox.accounts.eve.pkh;

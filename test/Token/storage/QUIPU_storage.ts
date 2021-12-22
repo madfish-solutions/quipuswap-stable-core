@@ -1,7 +1,7 @@
 import { MichelsonMap } from "@taquito/taquito";
 import { sandbox } from "../../../config.json";
 import { BigNumber } from "bignumber.js";
-import { defaultTokenId } from "../tokenFA2";
+import { defaultTokenId } from "../token";
 
 const aliceAddress: string = sandbox.accounts.alice.pkh;
 const bobAddress: string = sandbox.accounts.bob.pkh;

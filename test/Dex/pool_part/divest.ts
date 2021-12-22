@@ -5,10 +5,16 @@ import {
   mapTokensToIdx,
   prepareProviderOptions,
 } from "../../helpers/utils";
-import { Dex } from "../../helpers/dexFA2";
+import Dex from "../API";
 import { accounts } from "../constants";
-import { FA12TokenType, FA2TokenType, TokenInfo } from "../../helpers/types";
-import { AmountsMap, IndexMap, TokensMap } from "../types";
+import {
+  AmountsMap,
+  IndexMap,
+  TokensMap,
+  FA12TokenType,
+  FA2TokenType,
+  TokenInfo,
+} from "../types";
 import { setupTokenAmounts } from "../tokensSetups";
 
 export async function setupMinTokenMapping(

@@ -6,7 +6,6 @@ import {
 } from "@taquito/taquito";
 import { TransactionOperation } from "@taquito/taquito/dist/types/operations/transaction-operation";
 import { BigNumber } from "bignumber.js";
-import { defaultTokenId, TokenFA2 } from "./tokenFA2";
 import {
   DexStorage,
   FA12TokenType,
@@ -15,15 +14,15 @@ import {
   LambdaFunctionType,
   TokenInfo,
 } from "./types";
-import { getLigo } from "./utils";
+import { getLigo } from "../../helpers/utils";
 import { execSync } from "child_process";
-import { confirmOperation } from "./confirmation";
-import { dexLambdas, tokenLambdas } from "../storage/Functions";
-import { TokenFA12 } from "./tokenFA12";
-import admin_lambdas_comp from "../../build/lambdas/Admin_lambdas.json";
-import permit_lambdas_comp from "../../build/lambdas/Permit_lambdas.json";
-import dex_lambdas_comp from "../../build/lambdas/Dex_lambdas.json";
-import token_lambdas_comp from "../../build/lambdas/Token_lambdas.json";
+import { confirmOperation } from "../../helpers/confirmation";
+import { dexLambdas, tokenLambdas } from "../../storage/Functions";
+import admin_lambdas_comp from "../../../build/lambdas/Admin_lambdas.json";
+import permit_lambdas_comp from "../../../build/lambdas/Permit_lambdas.json";
+import dex_lambdas_comp from "../../../build/lambdas/Dex_lambdas.json";
+import token_lambdas_comp from "../../../build/lambdas/Token_lambdas.json";
+import { defaultTokenId, TokenFA12, TokenFA2 } from "../../Token";
 
 const standard = process.env.EXCHANGE_TOKEN_STANDARD;
 
@@ -42,9 +41,9 @@ export class Dex extends TokenFA2 {
 
   static async init(tezos: TezosToolkit, dexAddress: string): Promise<Dex> {
     const dex = new Dex(tezos, await tezos.contract.at(dexAddress));
-    await dex.setFunctionBatchCompilled("Admin", 5, admin_lambdas_comp);
-    await dex.setFunctionBatchCompilled("Permit", 2, permit_lambdas_comp);
-    await dex.setFunctionBatchCompilled("Token", 5, token_lambdas_comp);
+    // await dex.setFunctionBatchCompilled("Admin", 5, admin_lambdas_comp);
+    // await dex.setFunctionBatchCompilled("Permit", 2, permit_lambdas_comp);
+    // await dex.setFunctionBatchCompilled("Token", 5, token_lambdas_comp);
     await dex.setFunctionBatchCompilled("Dex", 4, dex_lambdas_comp);
     return dex;
   }
@@ -59,44 +58,45 @@ export class Dex extends TokenFA2 {
       token_lambdas?: number[];
     } = {}
   ): Promise<void> {
-    const storage: any = await this.contract.storage();
-    this.storage = {
-      storage: {
-        admin: storage.storage.admin,
-        default_referral: storage.storage.default_referral,
-        managers: storage.storage.managers,
-        dev_address: storage.storage.dev_address,
-        reward_rate: storage.storage.reward_rate,
-        pools_count: storage.storage.pools_count,
-        tokens: {},
-        pool_to_id: {},
-        pools: {},
-        ledger: {},
-        account_data: {},
-        dev_rewards: {},
-        referral_rewards: {},
-        stakers_balance: {},
-        permits: {},
-        quipu_token: storage.storage.quipu_token,
-      },
-      dex_lambdas: {},
-      token_lambdas: {},
-      permits: {},
-      permits_counter: new BigNumber("0"),
-      default_expiry: new BigNumber("2592000"),
-      permit_lambdas: {},
-      admin_lambdas: {},
-      metadata: {},
-      token_metadata: {},
-    };
+    this.storage = await this.contract.storage() as DexStorage;
+    // this.storage = {
+    //   storage: {
+    //     admin: storage.storage.admin,
+    //     default_referral: storage.storage.default_referral,
+    //     managers: storage.storage.managers,
+    //     dev_address: storage.storage.dev_address,
+    //     reward_rate: storage.storage.reward_rate,
+    //     pools_count: storage.storage.pools_count,
+    //     tokens: {},
+    //     pool_to_id: {},
+    //     pools: {},
+    //     ledger: {},
+    //     account_data: {},
+    //     dev_rewards: {},
+    //     referral_rewards: {},
+    //     stakers_balance: {},
+    //     permits: {},
+    //     quipu_token: storage.storage.quipu_token,
+    //   },
+    //   dex_lambdas: {},
+    //   token_lambdas: {},
+    //   permits: {},
+    //   permits_counter: new BigNumber("0"),
+    //   default_expiry: new BigNumber("2592000"),
+    //   permit_lambdas: {},
+    //   admin_lambdas: {},
+    //   metadata: {},
+    //   token_metadata: {},
+    // };
     for (let key in maps) {
-      if (["dex_lambdas", "token_lambdas"].includes(key)) continue;
+      if (["dex_lambdas", "token_lambdas", "admin_lambdas", "permit_lambdas"].includes(key))
+        continue;
       this.storage.storage[key] = await maps[key].reduce(
         async (prev, current) => {
           try {
             return {
               ...(await prev),
-              [key == "ledger" ? current[0] : current]: await storage.storage[
+              [key == "ledger" ? current[0] : current]: await this.storage.storage[
                 key
               ].get(current),
             };
@@ -111,12 +111,20 @@ export class Dex extends TokenFA2 {
       );
     }
     for (let key in maps) {
-      if (!["dex_lambdas", "token_lambdas"].includes(key)) continue;
-      this[key] = await maps[key].reduce(async (prev, current) => {
+      if (
+        ![
+          "dex_lambdas",
+          "token_lambdas",
+          "admin_lambdas",
+          "permit_lambdas",
+        ].includes(key)
+      )
+        continue;
+      this.storage[key] = await maps[key].reduce(async (prev, current) => {
         try {
           return {
             ...(await prev),
-            [current]: await storage[key].get(current.toString()),
+            [current]: await this.storage[key].get(current.toString()),
           };
         } catch (ex) {
           return {

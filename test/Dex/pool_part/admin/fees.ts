@@ -1,8 +1,8 @@
 import { TezosToolkit } from "@taquito/taquito";
 import BigNumber from "bignumber.js";
-import { Dex } from "../../../helpers/dexFA2";
-import { FeeType } from "../../../helpers/types";
 import { AccountsLiteral, prepareProviderOptions } from "../../../helpers/utils";
+import Dex from "../../API";
+import { FeeType } from "../../types";
 
 export const fees: FeeType = {
   lp_fee: new BigNumber("2000000"),

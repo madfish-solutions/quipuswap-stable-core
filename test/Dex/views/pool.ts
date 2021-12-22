@@ -1,7 +1,6 @@
 import BigNumber from "bignumber.js";
-import { Dex } from "../../helpers/dexFA2";
-import { FeeType, TokenInfo } from "../../helpers/types";
-import { IndexMap } from "../types";
+import Dex from "../API";
+import { FeeType, IndexMap, TokenInfo } from "../types";
 
 export async function getASuccessCase(
   dex: Dex,

@@ -1,11 +1,10 @@
 import { ContractAbstraction, ContractProvider, TezosToolkit } from "@taquito/taquito";
 import { TransactionOperation } from "@taquito/taquito/dist/types/operations/transaction-operation";
-import { confirmOperation } from "./confirmation";
-import { Token } from "./token";
+import { defaultTokenId, Token } from "./token";
 import BigNumber from "bignumber.js";
 import { TokenStorage } from "./types";
-import { prepareProviderOptions } from "./utils";
-export const defaultTokenId = 0;
+import { prepareProviderOptions } from "../helpers/utils";
+import { confirmOperation } from "../helpers/confirmation";
 
 export class TokenFA2 implements Token {
   public contract: ContractAbstraction<ContractProvider>;

@@ -1,6 +1,6 @@
 import { TezosToolkit } from "@taquito/taquito";
 import BigNumber from "bignumber.js";
-import { Dex } from "../../helpers/dexFA2";
+import Dex from "../API";
 import { prepareProviderOptions } from "../../helpers/utils";
 import { accounts } from "../constants";
 
