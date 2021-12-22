@@ -1,8 +1,12 @@
 # QuipuSwap StableDex core
 
+**Currently Work In Progress**
+
 Contracts of DEX with Curve-like invariant implementation. This contracts allows to exchange tokens with equal price.  💵 -> 💰
 
 Core concept is to provide low slippage swap between stablecoins like uUSD, kUSD, USDtz, etc.
+
+**The code here is currently unverified and unaudited, and is made publicly available only for exploration and discussion purposes. You should not use it for anything serious.**
 
 ## Project structure
 Project based on [lava](https://github.com/uconomy/lava) toolset for fast generating all needed structure and tools.
@@ -16,7 +20,7 @@ Project based on [lava](https://github.com/uconomy/lava) toolset for fast genera
 |──────── helpers/ # helper methods for contacts
 |──────── lambdas/ # lambda methods of contacts
 |──────── views/ # view methods of contacts
-|──────── intrefaces/ # type annotations of contacts
+|──────── interfaces/ # type annotations of contacts
 ├──  test/ # test cases
 ├──────── storage/ # initial storage for contract originations
 ├──────── helpers/ # helpers for test cases
