@@ -59,7 +59,6 @@ function initialize_exchange(
                     : tkn_inf_t is
         value with record [
           reserves = 0n;
-          //virtual_reserves = 0n;
         ];
 
       patch pair_i with record [
@@ -281,11 +280,6 @@ function divest_imbalanced(
             t_i.reserves - value.1,
             Errors.low_reserves
           );
-          (*const res_upd = update_reserves(value.1, receiver, t_i, acc.operations);
-          acc.operations := res_upd.0;
-          t_i := res_upd.1;
-          const to_receiver = res_upd.2;
-          *)
           acc.tokens_info[value.0] := t_i;
           if value.1 > 0n
             then acc.operations := typed_transfer(
@@ -471,112 +465,6 @@ function stop_ramp_A(
     end
   } with (operations, s)
 
-(*// 12n set or remove proxy
-function set_proxy(
-  const p               : action_t;
-  var s                 : storage_t)
-                        : return_t is
-  block {
-    var operations: list(operation) := Constants.no_operations;
-    case p of
-    | Set_proxy(params) -> {
-      is_admin(s.admin);
-      var pair : pair_t := unwrap(s.pools[params.pair_id], Errors.pair_not_listed);
-      const tokens: tkns_map_t = unwrap(s.tokens[params.pair_id], Errors.pair_not_listed);
-      case pair.proxy_contract of
-        Some(prx) -> {
-          function claim_and_unstake(var acc: list(operation); const value : tkn_pool_idx_t * tkn_inf_t) is
-            block {
-              var token_info := value.1;
-              const on_proxy = nat_or_error(token_info.virtual_reserves - token_info.reserves, Errors.nat_error);
-              if on_proxy > 0n
-                then {
-                  const token = get_token_by_id(value.0, Some(tokens));
-                  acc := unstake_from_proxy(on_proxy, token, acc, prx);
-                  acc := Tezos.transaction(
-                    record[
-                      token = token;
-                      sender = Tezos.sender;
-                    ],
-                    0mutez,
-                    get_claim_proxy(prx)
-                  ) # acc;
-                }
-              else skip;
-          } with acc;
-          operations := Map.fold(
-            claim_and_unstake,
-            pair.tokens_info,
-            operations
-          );
-        }
-      | None -> skip
-      end;
-      pair.proxy_contract := params.proxy;
-      s.pools[params.pair_id] := pair;
-      }
-    | _ -> skip
-    end
-  } with (operations, s)
-
- // 13n updates limits percent for proxy
-function update_proxy_limits(
-  const p               : action_t;
-  var s                 : storage_t)
-                        : return_t is
-  block {
-    var operations: list(operation) := Constants.no_operations;
-    case p of
-    | Update_proxy_limits(params) -> {
-      is_admin(s.admin);
-      var pair : pair_t := unwrap(s.pools[params.pair_id], Errors.pair_not_listed);
-      const tokens: tkns_map_t = unwrap(s.tokens[params.pair_id], Errors.pair_not_listed);
-      case pair.proxy_contract of
-        Some(prx) -> {
-          function claim(var acc: list(operation); const value : tkn_pool_idx_t * tkn_inf_t) is
-            block {
-              var token_info := value.1;
-              const on_proxy = nat_or_error(token_info.virtual_reserves - token_info.reserves, Errors.nat_error);
-              if on_proxy > 0n
-                then {
-                  const token = get_token_by_id(value.0, Some(tokens));
-                  acc := Tezos.transaction(
-                    record[
-                      token=token;
-                      sender=Tezos.sender;
-                    ],
-                    0mutez,
-                    get_claim_proxy(prx)
-                  ) # acc;
-                }
-              else skip;
-          } with acc;
-          operations := Map.fold(
-            claim,
-            pair.tokens_info,
-            operations
-          )
-        }
-      | None -> skip
-      end;
-
-      var token_info := unwrap(pair.tokens_info[params.token_index], "no such R index");
-
-      token_info.proxy_rate := if params.limit <= Constants.proxy_limit
-          then params.limit
-        else (failwith(Errors.proxy_limit): nat);
-      token_info.proxy_soft := if params.soft <= token_info.proxy_rate
-          then params.soft
-        else (failwith(Errors.proxy_limit): nat);
-      pair.tokens_info[params.token_index] := token_info;
-
-      s.pools[params.pair_id] := pair;
-      //TODO: claim rewards and old staked values
-      }
-    | _ -> skip
-    end
-  } with (operations, s)
-*)
 (* 14n updates fees percents *)
 function set_fees(
   const p               : action_t;
@@ -747,113 +635,3 @@ function unstake_staker(
         | _ -> skip
         end;
   } with (operations, s)
-(*
-function claim_proxy_rewards(
-  const p : action_t;
-  var s   : storage_t
-  )       : return_t is
-  block {
-    var operations: list(operation) := Constants.no_operations;
-    case p of
-    | Claim_proxy_rewards(params) -> {
-      var pool := unwrap(s.pools[params.pool_id], Errors.pair_not_listed);
-      operations := Tezos.transaction(
-          record[
-            token=params.token;
-            sender=Tezos.sender;
-          ],
-          0mutez,
-          get_claim_proxy(unwrap(pool.proxy_contract, Errors.no_proxy))
-        ) # operations;
-    }
-    | _ -> skip
-    end;
-  } with (operations, s)
-
-function update_proxy_rewards(
-  const p : action_t;
-  var s   : storage_t
-  )       : return_t is
-  block {
-    var operations: list(operation) := Constants.no_operations;
-     case p of
-      | Update_proxy_rewards(params) -> {
-        var pair : pair_t := unwrap(s.pools[params.pool], Errors.pair_not_listed);
-        const proxy = unwrap(pair.proxy_contract, Errors.no_proxy);
-        if Tezos.sender = proxy
-          then {
-            const to_admin = div_ceil(params.value * s.reward_rate, Constants.rate_precision);
-            s.dev_rewards[params.token] := unwrap_or(s.dev_rewards[params.token], 0n) + to_admin;
-            const to_acc = nat_or_error(params.value - to_admin, Errors.nat_error);
-            pair.proxy_reward_acc[params.token] := unwrap_or(pair.proxy_reward_acc[params.token], 0n) + to_acc * Constants.acc_precision / pair.total_supply;
-          }
-        else failwith(Errors.prx_not_authenticated);
-        s.pools[params.pool] := pair;
-      }
-      | _ -> skip
-      end
-  } with (operations, s)
-
-function update_proxy_reserves(
-  const p : action_t;
-  var s   : storage_t
-  )       : return_t is
-  block {
-    var operations: list(operation) := Constants.no_operations;
-     case p of
-      | Update_proxy_reserves(params) -> {
-        var pair : pair_t := unwrap(s.pools[params.pool], Errors.pair_not_listed);
-        const proxy = unwrap(pair.proxy_contract, Errors.no_proxy);
-        if Tezos.sender = proxy
-          then {
-            var t_i := unwrap(pair.tokens_info[params.idx], Errors.no_token);
-            t_i.reserves := t_i.reserves + params.value;
-            pair.tokens_info[params.idx] := t_i;
-          }
-        else failwith(Errors.prx_not_authenticated);
-        s.pools[params.pool] := pair;
-      }
-      | _ -> skip
-      end
-  } with (operations, s)
-// 9n LP providers
-function claim_provider(
-  const p : action_t;
-  var s   : storage_t
-  )       : return_t is
-  block {
-    var operations: list(operation) := Constants.no_operations;
-    const receiver = Tezos.sender;
-    case p of
-      | Claim_liq_provider(params) -> {
-        const acc_key = (receiver, params.pool_id);
-        var pair : pair_t := unwrap(s.pools[params.pool_id], Errors.pair_not_listed);
-        const share : nat = unwrap_or(s.ledger[acc_key], 0n);
-        var acc_data := update_lp_former_and_reward(
-          get_account_data(acc_key, s.account_data),
-          share,
-          pair.proxy_reward_acc
-        );
-        var acc_intrst_data: account_rwrd_t := unwrap_or(acc_data.earned_interest[params.token],
-          record [
-            reward  = 0n;
-            former  = 0n;
-          ]);
-        if acc_intrst_data.reward > 0n
-          then {
-            operations := typed_transfer(
-              Tezos.self_address,
-              receiver,
-              acc_intrst_data.reward,
-              params.token
-            ) # operations;
-            acc_intrst_data.reward := 0n;
-          }
-        else skip;
-        acc_data.earned_interest[params.token] := acc_intrst_data;
-        s.account_data[acc_key] := acc_data;
-      }
-      | _ -> skip
-    end;
-  } with (operations, s)
-*)

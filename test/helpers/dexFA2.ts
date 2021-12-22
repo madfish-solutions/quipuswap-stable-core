@@ -45,7 +45,7 @@ export class Dex extends TokenFA2 {
     await dex.setFunctionBatchCompilled("Admin", 5, admin_lambdas_comp);
     await dex.setFunctionBatchCompilled("Permit", 2, permit_lambdas_comp);
     await dex.setFunctionBatchCompilled("Token", 5, token_lambdas_comp);
-    await dex.setFunctionBatchCompilled("Dex", 1, dex_lambdas_comp);
+    await dex.setFunctionBatchCompilled("Dex", 4, dex_lambdas_comp);
     return dex;
   }
 
@@ -328,11 +328,6 @@ export class Dex extends TokenFA2 {
     const operation = await this.contract.methods
       .set_default_referral(ref)
       .send();
-    await confirmOperation(this.Tezos, operation.hash);
-    return operation;
-  }
-  async setRewardRate(rate: BigNumber): Promise<TransactionOperation> {
-    const operation = await this.contract.methods.set_reward_rate(rate).send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
   }

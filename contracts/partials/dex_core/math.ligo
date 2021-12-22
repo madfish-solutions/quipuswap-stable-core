@@ -331,7 +331,6 @@ function add_liq(
       block {
         const input = unwrap_or(params.inputs[key], 0n);
         assert_with_error(token_supply =/= 0n or input > 0n, Errors.zero_in);
-        //token_info.virtual_reserves := token_info.virtual_reserves + input;
         token_info.reserves := token_info.reserves + input;
       } with token_info;
 
@@ -341,32 +340,31 @@ function add_liq(
     assert_with_error(d1 > d0, Errors.zero_in);
 
     var mint_amount := 0n;
-    var operations := Constants.no_operations;
 
     if token_supply > 0n
-    then {
-      const balanced = balance_inputs(
-        init_tokens_info,
-        d0,
-        new_tokens_info,
-        d1,
-        unwrap(s.tokens[params.pair_id], Errors.pair_not_listed),
-        pair.fee,
-        unwrap_or(params.referral, s.default_referral),
-        record [
-          dev_rewards = s.dev_rewards;
-          referral_rewards = s.referral_rewards;
-          staker_accumulator = pair.staker_accumulator;
-          tokens_info = new_tokens_info;
-          tokens_info_without_lp = new_tokens_info;
-      ]);
-      s.dev_rewards := balanced.dev_rewards;
-      s.referral_rewards := balanced.referral_rewards;
-      pair.staker_accumulator := balanced.staker_accumulator;
-      pair.tokens_info := balanced.tokens_info;
-      const d2 = get_D_mem(balanced.tokens_info_without_lp, amp);
-      mint_amount := token_supply * nat_or_error(d2 - d0, Errors.nat_error) / d0;
-    }
+      then {
+        const balanced = balance_inputs(
+          init_tokens_info,
+          d0,
+          new_tokens_info,
+          d1,
+          unwrap(s.tokens[params.pair_id], Errors.pair_not_listed),
+          pair.fee,
+          unwrap_or(params.referral, s.default_referral),
+          record [
+            dev_rewards = s.dev_rewards;
+            referral_rewards = s.referral_rewards;
+            staker_accumulator = pair.staker_accumulator;
+            tokens_info = new_tokens_info;
+            tokens_info_without_lp = new_tokens_info;
+        ]);
+        s.dev_rewards := balanced.dev_rewards;
+        s.referral_rewards := balanced.referral_rewards;
+        pair.staker_accumulator := balanced.staker_accumulator;
+        pair.tokens_info := balanced.tokens_info;
+        const d2 = get_D_mem(balanced.tokens_info_without_lp, amp);
+        mint_amount := token_supply * nat_or_error(d2 - d0, Errors.nat_error) / d0;
+      }
     else {
       pair.tokens_info := new_tokens_info;
       mint_amount := d1;
@@ -389,4 +387,4 @@ function add_liq(
     const new_shares = share + mint_amount;
     s.ledger[user_key] := new_shares;
     s.pools[params.pair_id] := pair;
-  } with (Map.fold(transfer_to_pool, params.inputs, operations), s)
+  } with (Map.fold(transfer_to_pool, params.inputs, Constants.no_operations), s)

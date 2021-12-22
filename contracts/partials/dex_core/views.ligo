@@ -46,26 +46,6 @@ function get_tokens_info(
 //     dy := nat_or_error(dy - dy_fee, "dy_fee>dy") * Constants.precision / rate_j;
 //   } with (list [Tezos.transaction(dy, 0tez, params.receiver)], s)
 
-
-// (* max defi rate *)
-// [@inline]
-// function get_max_defi_rate(
-//   const params          : max_rate_v_prm_t;
-//   const s               : full_storage_t)
-//                         : full_return_t is
-//   block {
-//     const pair : pair_t = get_pair(params.pair_id, s.storage.pools);
-//     function count_limits(const key:nat; const value:nat): nat is
-//       block {
-//         const bal : nat = case pair.virtual_reserves[key] of
-//           | Some(balc) -> balc
-//           | None -> (failwith("no such balance") : nat)
-//           end;
-//         const ret = bal * value / Constants.rate_precision;
-//       } with ret
-//   } with (list [Tezos.transaction(Map.map(count_limits, pair.proxy_limits), 0tez, params.receiver)], s)
-
-
 (* Calculate the amount received when withdrawing a single coin *)
 [@inline]
 function calc_withdraw_one_coin_view(
