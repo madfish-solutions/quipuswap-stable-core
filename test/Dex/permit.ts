@@ -1,7 +1,6 @@
 import { Schema } from "@taquito/michelson-encoder";
 import {
   Contract,
-  TezosOperationErrorWithMessage,
   TezosToolkit,
 } from "@taquito/taquito";
 import { MichelsonV1Expression } from "@taquito/rpc";
@@ -14,8 +13,6 @@ import {
 import { accounts } from "./constants";
 import { confirmOperation } from "../helpers/confirmation";
 import blake from "blakejs";
-import failCase from "../fail-test";
-import { tokenFunctions } from '../storage/Functions';
 import { MichelsonMap } from '@taquito/taquito';
 
 const { hex2buf } = require("@taquito/utils");

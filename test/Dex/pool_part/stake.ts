@@ -1,4 +1,4 @@
-import { MichelsonMap, TezosToolkit } from "@taquito/taquito";
+import { TezosToolkit } from "@taquito/taquito";
 import BigNumber from "bignumber.js";
 import { confirmOperation } from "../../helpers/confirmation";
 import { Dex } from "../../helpers/dexFA2";

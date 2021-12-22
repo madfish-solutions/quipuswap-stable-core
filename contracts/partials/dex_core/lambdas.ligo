@@ -139,7 +139,7 @@ function swap(
         ],
         unwrap(pair.tokens_info[j], Errors.no_token_info)
       );
-      token_info_j.reserves := nat_or_error(token_info_i.reserves - after_fees.dy, Errors.no_liquidity);
+      token_info_j.reserves := nat_or_error(token_info_j.reserves - after_fees.dy, Errors.no_liquidity);
 
       pair.tokens_info[i] := token_info_i;
       pair.tokens_info[j] := token_info_j;

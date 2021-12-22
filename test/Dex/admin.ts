@@ -1,8 +1,6 @@
 import { TezosToolkit } from "@taquito/taquito";
-import failCase from "../fail-test";
 import { Dex } from "../helpers/dexFA2";
 import { AccountsLiteral, prepareProviderOptions } from "../helpers/utils";
-import BigNumber from 'bignumber.js';
 
 export async function setAdminSuccessCase(
   dex: Dex,
@@ -86,24 +84,4 @@ export async function setDefaultRefSuccessCase(
   await dex.updateStorage({});
   const updatedDev = dex.storage.storage.default_referral;
   expect(ref).toEqual(updatedDev);
-}
-
-export async function setAdminRateSuccessCase(
-  dex: Dex,
-  sender: AccountsLiteral,
-  rate: BigNumber,
-  Tezos: TezosToolkit
-) {
-  let config = await prepareProviderOptions(sender);
-  Tezos.setProvider(config);
-
-  await dex.updateStorage({});
-  const initRate = dex.storage.storage.reward_rate;
-  expect(rate).not.toEqual(initRate);
-
-  await dex.setRewardRate(rate);
-
-  await dex.updateStorage({});
-  const updatedRate = dex.storage.storage.reward_rate;
-  expect(rate).toEqual(updatedRate);
 }
