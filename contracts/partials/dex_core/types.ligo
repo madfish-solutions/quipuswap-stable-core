@@ -6,6 +6,32 @@ type func_entry_t    is FAdmin | FPermit | FDex | FToken
 //   token_info    : token_t;
 // ]
 
+
+type stkr_info_req_t is [@layout:comb] record [
+  user: address;
+  pool_id: pool_id_t;
+]
+
+type stkr_res is [@layout:comb] record [
+  balance : nat;
+  rewards : map(tkn_pool_idx_t, nat);
+]
+
+type stkr_info_res_t is [@layout:comb] record [
+  request: stkr_info_req_t;
+  info: stkr_res;
+]
+
+type ref_rew_req_t is [@layout:comb] record [
+  user: address;
+  token: token_t;
+]
+
+type ref_rew_res_t is [@layout:comb] record [
+  request: ref_rew_req_t;
+  reward: nat
+]
+
 type withdraw_one_return is [@layout:comb] record [
   dy                      : nat;
   dy_fee                  : nat;
@@ -67,29 +93,10 @@ type divest_one_c_prm_t is [@layout:comb] record [
   referral                : option(address);
 ]
 
-type reserves_v_prm_t      is [@layout:comb] record [
-  pair_id                 : nat; (* pair identifier *)
-  receiver                : contract(map(nat, tkn_inf_t)); (* response receiver *)
-]
-
-type min_received_v_prm_t  is [@layout:comb] record [
-  pair_id                 : nat; (* pair identifier *)
-  i                       : nat;
-  j                       : nat;
-  x                       : nat;
-  receiver                : contract(nat); (* response receiver *)
-]
-
-type max_rate_v_prm_t    is [@layout:comb] record [
-  pair_id                 : nat; (* pair identifier *)
-  receiver                : contract(map(nat, nat)); (* response receiver *)
-]
-
 type calc_w_one_c_v_prm_t is [@layout:comb] record [
   pair_id                 : nat; (* pair identifier *)
   token_amount            : nat; (* LP to burn *)
   i                       : nat; (* token index in pair *)
-  receiver                : contract(nat); (* response receiver *)
 ]
 
 type get_dy_v_prm_t      is [@layout:comb] record [
@@ -97,7 +104,6 @@ type get_dy_v_prm_t      is [@layout:comb] record [
   i                       : nat; (* token index *)
   j                       : nat;
   dx                      : nat;
-  receiver                : contract(nat); (* response receiver *)
 ]
 
 type ramp_a_prm_t      is [@layout:comb] record [
@@ -155,15 +161,6 @@ type action_t        is
 | Set_default_referral     of address
 | Stake                    of un_stake_prm_t
 | Unstake                  of un_stake_prm_t
-(* VIEWS *)
-| Get_tokens_info           of reserves_v_prm_t      (* returns the token info *)
-| Get_fees                 of get_fee_v_prm_t
-// | Min_received            of min_received_v_prm_t  (* returns minReceived tokens after swapping *)
-// | Tokens_per_shares       of tps_type           (* returns map of tokens amounts to recieve 1 LP *)
-// | Price_cummulative       of price_cumm_type    (* returns price cumulative and timestamp per block *)
-// | Calc_divest_one_coin    of calc_divest_one_coin
-| Get_dy                  of get_dy_v_prm_t        (* returns the current output dy given input dx *)
-| Get_A                   of get_a_v_prm_t
 
 type full_action_t   is
 | Use_admin               of admin_action_t

@@ -1,57 +1,42 @@
 
 (* 15n tokens per pool info *)
-[@inline]
-function get_tokens_info(
-  const p               : action_t;
-  var s                 : storage_t)
-                        : return_t is
+[@view]
+function get_reserves(
+  const pool_id         : pool_id_t;
+  var s                 : full_storage_t)
+                        : map(tkn_pool_idx_t, nat) is
   block {
-    var operations: list(operation) := Constants.no_operations;
-    case p of
-      Get_tokens_info(params) -> {
-      const pair : pair_t = unwrap(s.pools[params.pair_id], Errors.pair_not_listed);
-      operations := Tezos.transaction(pair.tokens_info, 0tez, params.receiver) # operations;
-      }
-    | _ -> skip
-    end;
-  } with (operations, s)
+    const pair : pair_t = unwrap(s.storage.pools[pool_id], Errors.pair_not_listed);
+  } with Map.map(
+    function(const _: tkn_pool_idx_t; var value: tkn_inf_t): nat is value.reserves,
+    pair.tokens_info
+  )
 
-// (* tokens per 1 pair's share *)
-// function get_tok_per_share(
-//   const _params          : nat;
-//   const s               : full_storage_t)
-//                         : full_return_t is
-//   (Constants.no_operations, s)
+[@view]
+function get_token_map(
+  const pool_id         : pool_id_t;
+  var s                 : full_storage_t)
+                        : map(tkn_pool_idx_t, token_t) is
+  unwrap(s.storage.tokens[pool_id], Errors.pair_not_listed)
 
-// (* min received in the swap *)
-// function get_min_received(
-//   const params          : min_received_v_prm_t;
-//   const s               : full_storage_t)
-//                         : full_return_t is
-//   block {
-//     const pair : pair_t = get_pair(params.pair_id, s.storage.pools);
-//     const xp: map(nat, nat) = _xp(pair);
-//     const y = get_y(params.i, params.j, params.x, xp, pair);
-//     const xp_j = case xp[params.j] of
-//       | Some(value) -> value
-//       | None -> (failwith("no such index") : nat)
-//       end;
-//     var dy := nat_or_error(xp_j - y - 1, "y>xp_j");
-//     const dy_fee = sum_all_fee(pair) * dy / Constants.fee_denominator;
-
-//     const rate_j = case pair.token_rates[params.j] of
-//       | Some(value) -> value
-//       | None -> (failwith("no such index") : nat)
-//       end;
-//     dy := nat_or_error(dy - dy_fee, "dy_fee>dy") * Constants.precision / rate_j;
-//   } with (list [Tezos.transaction(dy, 0tez, params.receiver)], s)
+(* tokens per 1 pair's share *)
+[@view]
+function get_tok_per_share(
+  const pool_id         : pool_id_t;
+  const s               : full_storage_t)
+                        : map(tkn_pool_idx_t, nat) is
+  block {
+    const pool : pair_t = unwrap(s.storage.pools[pool_id], Errors.pair_not_listed);
+    function map_prices(const _: tkn_pool_idx_t; var value: tkn_inf_t) is
+      value.reserves * Constants.precision / pool.total_supply;
+  } with Map.map(map_prices, pool.tokens_info)
 
 (* Calculate the amount received when withdrawing a single coin *)
-[@inline]
-function calc_withdraw_one_coin_view(
+[@view]
+function calc_divest_one_coin(
   const params          : calc_w_one_c_v_prm_t;
   const s               : full_storage_t)
-                        : full_return_t is
+                        : nat is
   block {
     const pair : pair_t = unwrap(s.storage.pools[params.pair_id], Errors.pair_not_listed);
     const amp : nat =  get_A(
@@ -66,75 +51,110 @@ function calc_withdraw_one_coin_view(
       params.i,
       pair
     );
-  } with (list [
-    Tezos.transaction(
-      result.dy,
-      0tez,
-      params.receiver
-    )
-  ], s)
+  } with result.dy
 
 (* 19n Calculate the current output dy given input dx *)
-[@inline]
+[@view]
 function get_dy(
-  const p               : action_t;
-  var s                 : storage_t)
-                        : return_t is
+  const params          : get_dy_v_prm_t;
+  var s                 : full_storage_t)
+                        : nat is
   block {
-    var operations: list(operation) := Constants.no_operations;
-    case p of
-      Get_dy(params) -> {
-        const pair : pair_t = unwrap(s.pools[params.pair_id], Errors.pair_not_listed);
-        const xp: map(nat, nat) = xp(pair);
-        const xp_i = unwrap(xp[params.i], Errors.wrong_index);
-        const xp_j = unwrap(xp[params.j], Errors.wrong_index);
-        const token_info_i = unwrap(pair.tokens_info[params.i], Errors.wrong_index);
-        const token_info_j = unwrap(pair.tokens_info[params.j], Errors.wrong_index);
-        const x: nat = xp_i + (params.dx * token_info_i.rate / Constants.precision);
-        const y: nat = get_y(params.i, params.j, x, xp, pair);
-        const dy: nat = nat_or_error(xp_j - y - 1, "y>xp_j") * Constants.precision / token_info_j.rate;
-        const fee: nat = sum_all_fee(pair.fee) * dy / Constants.fee_denominator;
-        operations := Tezos.transaction((nat_or_error(dy - fee, "fee>dy")), 0tez, params.receiver) # operations;
-      }
-    | _ -> skip
-    end;
-  } with (operations, s)
+    const pair : pair_t = unwrap(s.storage.pools[params.pair_id], Errors.pair_not_listed);
+    const xp: map(nat, nat) = xp(pair);
+    const xp_i = unwrap(xp[params.i], Errors.wrong_index);
+    const xp_j = unwrap(xp[params.j], Errors.wrong_index);
+    const token_info_i = unwrap(pair.tokens_info[params.i], Errors.wrong_index);
+    const token_info_j = unwrap(pair.tokens_info[params.j], Errors.wrong_index);
+    const x: nat = xp_i + (params.dx * token_info_i.rate / Constants.precision);
+    const y: nat = get_y(params.i, params.j, x, xp, pair);
+    const dy: nat = nat_or_error(xp_j - y - 1, "y>xp_j") * Constants.precision / token_info_j.rate;
+    const fee: nat = sum_all_fee(pair.fee) * dy / Constants.fee_denominator;
+  } with nat_or_error(dy - fee, "fee>dy")
 
 (* 20n Get A constant *)
-[@inline]
-function get_A_view(
-  const p               : action_t;
-  var s                 : storage_t)
-                        : return_t is
+[@view]
+function view_A(
+  const pool_id         : pool_id_t;
+  var s                 : full_storage_t)
+                        : nat is
   block {
-    var operations: list(operation) := Constants.no_operations;
-    case p of
-      Get_A(params) -> {
-      const pair : pair_t = unwrap(s.pools[params.pair_id], Errors.pair_not_listed);
-      operations := Tezos.transaction(get_A(
+    const pair : pair_t = unwrap(s.storage.pools[pool_id], Errors.pair_not_listed);
+  } with get_A(
         pair.initial_A_time,
         pair.initial_A,
         pair.future_A_time,
         pair.future_A
-      ) / Constants.a_precision, 0tez, params.receiver) # operations;
-    }
-    | _ -> skip
-    end;
-  } with (operations, s)
+      ) / Constants.a_precision
 
 (* 17n Fees *)
-[@inline]
+[@view]
 function get_fees(
-  const p               : action_t;
-  var s                 : storage_t)
-                        : return_t is
+  const pool_id         : pool_id_t;
+  var s                 : full_storage_t)
+                        : fees_storage_t is
   block {
-    var operations: list(operation) := Constants.no_operations;
-    case p of
-      Get_fees(params) -> {
-      const pair : pair_t = unwrap(s.pools[params.pool_id], Errors.pair_not_listed);
-      operations := Tezos.transaction(pair.fee, 0tez, params.receiver) # operations;
-     }
-    | _ -> skip
-    end;
-  } with (operations, s)
+    const pair : pair_t = unwrap(s.storage.pools[pool_id], Errors.pair_not_listed);
+  } with pair.fee
+
+[@view]
+function get_staker_info(
+  const requests        : list(stkr_info_req_t);
+  const s               : full_storage_t)
+                        : list(stkr_info_res_t) is
+  block {
+    function look_up_info(
+      const params    : stkr_info_req_t;
+      const l         : list(stkr_info_res_t))
+                      : list(stkr_info_res_t) is
+      block {
+        const pool : pair_t = unwrap(s.storage.pools[params.pool_id], Errors.pair_not_listed);
+        const pool_accumulator = pool.staker_accumulator.accumulator;
+        const key = (params.user, params.pool_id);
+        const info : stkr_info_t = unwrap(s.storage.stakers_balance[key], Errors.pair_not_listed);
+        function get_rewards(const key: tkn_pool_idx_t; const value: account_rwrd_t): nat is
+          block {
+            const pool_acc = unwrap_or(pool_accumulator[key], 0n);
+            const new_former = info.balance * pool_acc;
+            const reward_amt = (value.reward + abs(new_former - value.former)) / Constants.acc_precision;
+          } with reward_amt;
+        const rew_info: stkr_res = record[
+            balance = info.balance;
+            rewards = Map.map(get_rewards, info.earnings);
+          ];
+        const response : stkr_info_res_t = record [
+          request = params;
+          info    = rew_info;
+        ];
+      } with response # l;
+
+    const response : list(stkr_info_res_t) = List.fold_right(
+      look_up_info,
+      requests,
+      (nil : list(stkr_info_res_t))
+    );
+  } with response
+
+[@view]
+function get_referral_rewards(
+  const requests        : list(ref_rew_req_t);
+  const s               : full_storage_t)
+                        : list(ref_rew_res_t) is
+  block {
+    function iterate_req(
+      const params    : ref_rew_req_t;
+      const l         : list(ref_rew_res_t))
+                      : list(ref_rew_res_t) is
+      record [
+          request = params;
+          reward  = unwrap_or(
+            s.storage.referral_rewards[(params.user, params.token)],
+            0n
+          );
+        ] # l;
+    const response : list(ref_rew_res_t) = List.fold_right(
+      iterate_req,
+      requests,
+      (nil : list(ref_rew_res_t))
+    );
+  } with response
