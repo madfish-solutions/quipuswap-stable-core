@@ -24,7 +24,8 @@ export async function getReferralRewardsSuccessCase(
       .multipliedBy(batchSwapTimes)
       .multipliedBy(2) // swap in 2 ways
       .multipliedBy(5)
-      .dividedBy(100000); // 0.005% of swap
+      .dividedBy(100000) // 0.005% of swap
+      .plus(0.01);
     await dex.updateStorage({ pools: [pool_id.toString()] });
     const ref_address = accounts[referral].pkh;
     const ref_stor = await dex.contract
