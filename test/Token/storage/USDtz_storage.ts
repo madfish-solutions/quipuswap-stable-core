@@ -4,9 +4,6 @@ const aliceAddress: string = sandbox.accounts.alice.pkh;
 const bobAddress: string = sandbox.accounts.bob.pkh;
 const eveAddress: string = sandbox.accounts.eve.pkh;
 
-
-
-
 const USDtzstorage = {
   admin: aliceAddress,
   ledger: MichelsonMap.fromLiteral({

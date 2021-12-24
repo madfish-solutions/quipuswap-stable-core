@@ -1,5 +1,5 @@
 import BigNumber from "bignumber.js";
-import { MichelsonMap } from '@taquito/taquito';
+import { MichelsonMap } from "@taquito/taquito";
 import { TezosAddress } from "../helpers/utils";
 export declare type AccountTokenInfo = {
   balance: BigNumber;
@@ -8,5 +8,5 @@ export declare type AccountTokenInfo = {
 
 export declare type TokenStorage = {
   total_supply?: BigNumber;
-  ledger?: MichelsonMap<TezosAddress,  AccountTokenInfo>;
+  ledger?: MichelsonMap<TezosAddress, AccountTokenInfo>;
 };

@@ -18,10 +18,12 @@ export declare type AccountsLiteral = typeof senders[number];
 
 export declare type TezosAddress = string;
 
-let rpcNode: string = `http://${sandbox.host}:${sandbox.port}`;
-export let Tezos = new TezosToolkit(rpcNode);
+const rpcNode = `http://${sandbox.host}:${sandbox.port}`;
+export const Tezos = new TezosToolkit(rpcNode);
 
-export async function initTezos(signer: AccountsLiteral = 'alice'): Promise<TezosToolkit> {
+export async function initTezos(
+  signer: AccountsLiteral = "alice"
+): Promise<TezosToolkit> {
   const config = await prepareProviderOptions(signer);
   const tz = new TezosToolkit(rpcNode);
   tz.setProvider(config);
@@ -66,9 +68,9 @@ export function calculateFee(
   address: string
 ): number {
   return operations.reduce((prev, current) => {
-    let trxFee = current.fee;
-    let internalFees = current.operationResults.reduce((prev, current) => {
-      let balanceUpdates = current.metadata.operation_result.balance_updates;
+    const trxFee = current.fee;
+    const internalFees = current.operationResults.reduce((prev, current) => {
+      const balanceUpdates = current.metadata.operation_result.balance_updates;
       if (balanceUpdates) {
         return (
           prev +
@@ -90,7 +92,7 @@ export function calculateFee(
 
 export async function bakeBlocks(count: number) {
   for (let i = 0; i < count; i++) {
-    let operation = await Tezos.contract.transfer({
+    const operation = await Tezos.contract.transfer({
       to: await Tezos.signer.publicKeyHash(),
       amount: 1,
     });
@@ -98,6 +100,7 @@ export async function bakeBlocks(count: number) {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function destructObj(obj: any) {
   let arr = [];
 
@@ -126,7 +129,7 @@ export function destructObj(obj: any) {
 export async function setupLambdasToStorage(
   lambdas_comp: { prim: string; args: { [key: string]: string | number }[] }[]
 ) {
-  let lambda_func_storage = new MichelsonMap<string, string>();
+  const lambda_func_storage = new MichelsonMap<string, string>();
   for (const lambda of lambdas_comp) {
     const key: string = lambda.args[1].int as string;
     const bytes: string = lambda.args[0].bytes as string;
@@ -139,8 +142,8 @@ export function mapTokensToIdx(
   tokens_map: Map<string, FA2TokenType | FA12TokenType>,
   tokens: TokensMap
 ): IndexMap {
-  let mapping = {} as any;
-  for (let [k, v] of tokens_map.entries()) {
+  const mapping = {} as IndexMap;
+  for (const [k, v] of tokens_map.entries()) {
     let token: FA2TokenType | FA12TokenType = v as FA2TokenType;
     let contract_address: string;
     if (token.fa2) {
@@ -164,9 +167,8 @@ export async function failCase(
   act: Promise<unknown> | (() => Promise<unknown>),
   errorMsg: string
 ) {
-  let config = await prepareProviderOptions(sender);
+  const config = await prepareProviderOptions(sender);
   Tezos.setProvider(config);
-  expect.assertions(1);
   await expect(act).rejects.toMatchObject({
     message: errorMsg,
   });

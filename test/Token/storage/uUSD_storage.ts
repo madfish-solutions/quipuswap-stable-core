@@ -5,13 +5,16 @@ const aliceAddress: string = sandbox.accounts.alice.pkh;
 const bobAddress: string = sandbox.accounts.bob.pkh;
 const eveAddress: string = sandbox.accounts.eve.pkh;
 
-let ledger = new MichelsonMap();
-ledger.set({
+const ledger = new MichelsonMap();
+// eslint-disable-next-line jest/require-hook
+ledger.set(
+  {
     token_id: defaultTokenId,
     owner: aliceAddress,
   },
   "1000000000000000000000000"
 );
+// eslint-disable-next-line jest/require-hook
 ledger.set(
   {
     token_id: defaultTokenId,
@@ -19,6 +22,7 @@ ledger.set(
   },
   "1000000000000000000000000"
 );
+// eslint-disable-next-line jest/require-hook
 ledger.set(
   {
     token_id: defaultTokenId,
@@ -27,11 +31,14 @@ ledger.set(
   "1000000000000000000000000"
 );
 const admins = new MichelsonMap();
-admins.set({
-  token_id: defaultTokenId,
-  owner: aliceAddress,
-}, null);
-
+// eslint-disable-next-line jest/require-hook
+admins.set(
+  {
+    token_id: defaultTokenId,
+    owner: aliceAddress,
+  },
+  null
+);
 
 const uUSDstorage = {
   administrators: admins,

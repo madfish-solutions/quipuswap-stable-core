@@ -13,12 +13,19 @@ const account_info = {
     [defaultTokenId]: new BigNumber("1000000000000000000000000"),
   }) as MichelsonMap<string, BigNumber>,
 };
-const accounts_info = new MichelsonMap<string, {
-  allowances: Array<string>,
-  balances: MichelsonMap<string, BigNumber>
-}>();
+const accounts_info = new MichelsonMap<
+  string,
+  {
+    allowances: Array<string>;
+    balances: MichelsonMap<string, BigNumber>;
+  }
+>();
+
+// eslint-disable-next-line jest/require-hook
 accounts_info.set(aliceAddress, account_info);
+// eslint-disable-next-line jest/require-hook
 accounts_info.set(bobAddress, account_info);
+// eslint-disable-next-line jest/require-hook
 accounts_info.set(eveAddress, account_info);
 
 const QUIPUstorage = {

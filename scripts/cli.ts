@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { Command } from 'commander';
-import { addCompileLambdaCommand } from './commands/compile';
+/* eslint-disable jest/require-hook */
+import { Command } from "commander";
+import { addCompileLambdaCommand } from "./commands/compile";
 import {
   debug,
   setCWD,
@@ -11,9 +12,15 @@ const program = new Command();
 
 program
   .version("0.0.1")
-  .option('--debug', 'run the command in debug mode, with a lot more details about it')
-  .option('-f, --folder <cwd>', 'change the working directory to the specified folder')
-  .hook('preAction', (cmd: Command) => {
+  .option(
+    "--debug",
+    "run the command in debug mode, with a lot more details about it"
+  )
+  .option(
+    "-f, --folder <cwd>",
+    "change the working directory to the specified folder"
+  )
+  .hook("preAction", (cmd: Command) => {
     const options = cmd.opts();
 
     if (options.debug) {
@@ -33,10 +40,9 @@ const debugHook = (cmd: Command) => {
   if (options && optionsString !== "{}") {
     debug(`Command options:\n${optionsString}\n`);
   } else {
-    debug('No options were passed to this command.\n');
+    debug("No options were passed to this command.\n");
   }
-}
-
+};
 
 addCompileLambdaCommand(program, debugHook);
 

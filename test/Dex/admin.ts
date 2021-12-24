@@ -8,7 +8,7 @@ export async function setAdminSuccessCase(
   admin: string,
   Tezos: TezosToolkit
 ) {
-  let config = await prepareProviderOptions(sender);
+  const config = await prepareProviderOptions(sender);
   Tezos.setProvider(config);
   const sender_address = await Tezos.signer.publicKeyHash();
 
@@ -31,7 +31,7 @@ export async function updateManagersSuccessCase(
   add: boolean,
   Tezos: TezosToolkit
 ) {
-  let config = await prepareProviderOptions(sender);
+  const config = await prepareProviderOptions(sender);
   Tezos.setProvider(config);
 
   await dex.updateStorage({});
@@ -52,18 +52,18 @@ export async function setDevAddrSuccessCase(
   dev: string,
   Tezos: TezosToolkit
 ) {
-  let config = await prepareProviderOptions(sender);
+  const config = await prepareProviderOptions(sender);
   Tezos.setProvider(config);
 
   await dex.updateStorage({});
   const initDev = dex.storage.storage.dev_address;
-  expect(dev).not.toEqual(initDev);
+  expect(dev).not.toStrictEqual(initDev);
 
   await dex.setDevAddress(dev);
 
   await dex.updateStorage({});
   const updatedDev = dex.storage.storage.dev_address;
-  expect(dev).toEqual(updatedDev);
+  expect(dev).toStrictEqual(updatedDev);
 }
 
 export async function setDefaultRefSuccessCase(
@@ -72,16 +72,16 @@ export async function setDefaultRefSuccessCase(
   ref: string,
   Tezos: TezosToolkit
 ) {
-  let config = await prepareProviderOptions(sender);
+  const config = await prepareProviderOptions(sender);
   Tezos.setProvider(config);
 
   await dex.updateStorage({});
   const initRef = dex.storage.storage.default_referral;
-  expect(ref).not.toEqual(initRef);
+  expect(ref).not.toStrictEqual(initRef);
 
   await dex.setDefaultReferral(ref);
 
   await dex.updateStorage({});
   const updatedDev = dex.storage.storage.default_referral;
-  expect(ref).toEqual(updatedDev);
+  expect(ref).toStrictEqual(updatedDev);
 }

@@ -52,5 +52,5 @@ export const TokenInitValues = {
   QUIPU: {
     code: QUIPU_contract,
     storage: QUIPUstorage,
-  }
+  },
 };

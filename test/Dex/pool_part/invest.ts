@@ -13,7 +13,7 @@ export async function investLiquiditySuccessCase(
   in_amounts: Map<string, BigNumber>,
   Tezos: TezosToolkit
 ) {
-  let config = await prepareProviderOptions(sender);
+  const config = await prepareProviderOptions(sender);
   Tezos.setProvider(config);
 
   await dex.updateStorage({

@@ -1,8 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Schema } from "@taquito/michelson-encoder";
-import {
-  Contract,
-  TezosToolkit,
-} from "@taquito/taquito";
+import { Contract, TezosToolkit } from "@taquito/taquito";
 import { MichelsonV1Expression } from "@taquito/rpc";
 import Dex from "./API";
 import {
@@ -13,9 +11,10 @@ import {
 import { accounts } from "./constants";
 import { confirmOperation } from "../helpers/confirmation";
 import blake from "blakejs";
-import { MichelsonMap } from '@taquito/taquito';
+import { MichelsonMap } from "@taquito/taquito";
 
-const { hex2buf } = require("@taquito/utils");
+import { hex2buf } from "@taquito/utils";
+import { DexStorage } from "./types";
 
 const permitSchemaType: MichelsonV1Expression = {
   prim: "pair",
@@ -57,7 +56,7 @@ export async function createPermitPayload(
   const signer_key = await tz.signer.publicKey();
   const permit_counter = await contract
     .storage()
-    .then((storage: any) => storage.permits_counter.toNumber());
+    .then((storage: DexStorage) => storage.permits_counter.toNumber());
   const param_hash = await permitParamHash(tz, contract, entrypoint, params);
   const chain_id = await tz.rpc.getChainId();
   const bytesToSign = await tz.rpc.packData({
@@ -65,7 +64,7 @@ export async function createPermitPayload(
       0: contract.address,
       1: chain_id,
       2: permit_counter,
-      3: param_hash
+      3: param_hash,
     }),
     type: permitSchemaType,
   });
@@ -83,19 +82,19 @@ export async function addPermitFromSignerByReceiverSuccessCase(
   const tzSigner = await initTezos(signer);
   const tzSender = await initTezos(sender);
   const permitContractSender = await tzSender.contract.at(dex.contract.address);
-  let [bobsKey, bobsSig, permitHash] = await createPermitPayload(
+  const [bobsKey, bobsSig, permitHash] = await createPermitPayload(
     tzSigner,
     dex.contract,
     "transfer",
     params
   );
-  let op = await permitContractSender.methods
+  const op = await permitContractSender.methods
     .permit(bobsKey, bobsSig, permitHash)
     .send();
   await confirmOperation(tzSender, op.hash);
 
-  let storage = (await dex.contract.storage()) as any;
-  let permitValue = await storage.permits
+  const storage = (await dex.contract.storage()) as DexStorage;
+  const permitValue = await storage.permits
     .get(signer_account.pkh)
     .then((signer_permits) => signer_permits.permits);
   expect(permitValue.has(permitHash)).toBeTruthy();
@@ -110,23 +109,23 @@ export async function usePermit(
   receiver: AccountsLiteral,
   expPermitHash: string
 ) {
-  let config = await prepareProviderOptions(sender);
+  const config = await prepareProviderOptions(sender);
   Tezos.setProvider(config);
-  let storage = (await dex.contract.storage()) as any;
+  let storage = (await dex.contract.storage()) as DexStorage;
   let permitValue: MichelsonMap<string, any> = await storage.permits
     .get(accounts[signer].pkh)
     .then((signer_permits) => signer_permits.permits);
   expect(permitValue.has(expPermitHash)).toBeTruthy();
-  let transferParams = [
+  const transferParams = [
     {
       from_: accounts[signer].pkh,
       txs: [{ to_: accounts[receiver].pkh, token_id: 0, amount: 10 }],
     },
   ];
-  let op = await dex.contract.methods.transfer(transferParams).send();
+  const op = await dex.contract.methods.transfer(transferParams).send();
   await confirmOperation(Tezos, op.hash);
 
-  storage = (await dex.contract.storage()) as any;
+  storage = (await dex.contract.storage()) as DexStorage;
   permitValue = await storage.permits
     .get(accounts[signer].pkh)
     .then((signer_permits) => signer_permits.permits);
@@ -141,8 +140,8 @@ export async function setWithExpiry(
 ) {
   const tzSigner = await initTezos(signer);
   const tzSender = await initTezos(sender);
-  let permitContractSender = await tzSender.contract.at(dex.contract.address);
-  let [bobsKey, bobsSig, permitHash] = await createPermitPayload(
+  const permitContractSender = await tzSender.contract.at(dex.contract.address);
+  const [bobsKey, bobsSig, permitHash] = await createPermitPayload(
     tzSigner,
     dex.contract,
     "transfer",
@@ -158,11 +157,11 @@ export async function setWithExpiry(
     .send();
   await confirmOperation(tzSigner, op.hash);
 
-  let storage = (await dex.contract.storage()) as any;
-  let permitValue = await storage.permits
+  const storage = (await dex.contract.storage()) as DexStorage;
+  const permitValue = await storage.permits
     .get(accounts[signer].pkh)
     .then((signer_permits) => signer_permits.permits);
   expect(permitValue.has(permitHash)).toBeTruthy();
-  let permit = await permitValue.get(permitHash);
-  expect(permit.expiry.toNumber()).toStrictEqual(60);
+  const permit = await permitValue.get(permitHash);
+  expect(permit.expiry.toNumber()).toBe(60);
 }

@@ -31,17 +31,13 @@ export async function confirmOperation(
     const currentBlock = await tezos.rpc.getBlock();
     currentBlockLevel = currentBlock.header.level;
 
-    const sync_from = fromBlockLevel ?? (currentBlockLevel - 3);
+    const sync_from = fromBlockLevel ?? currentBlockLevel - 3;
 
-    for (
-      let i = sync_from;
-      i <= currentBlockLevel;
-      i++
-    ) {
+    for (let i = sync_from; i <= currentBlockLevel; i++) {
       const block =
         i === currentBlockLevel
           ? currentBlock
-          : await tezos.rpc.getBlock({ block: i as any });
+          : await tezos.rpc.getBlock({ block: i.toString() });
 
       const opEntry = await findOperation(block, opHash);
       if (opEntry) {
@@ -61,7 +57,7 @@ export async function confirmOperation(
   const timeToWait = Math.max(startedAt + SYNC_INTERVAL - Date.now(), 0);
   await new Promise((r) => setTimeout(r, timeToWait));
 
-  // let result = 
+  // let result =
 
   // await new Promise((r) => setTimeout(r, 1000));
 
@@ -73,7 +69,7 @@ export async function confirmOperation(
 }
 
 export async function findOperation(block: BlockResponse, opHash: string) {
-  for (let i = block.operations.length-1; i >= 0; i--) {
+  for (let i = block.operations.length - 1; i >= 0; i--) {
     for (const op of block.operations[i]) {
       if (op.hash === opHash) {
         return op;

@@ -14,17 +14,20 @@ export async function harvestFromPoolSuccessCase(
   const init_total_stake =
     dex.storage.storage.pools[pool_id.toNumber()].staker_accumulator
       .total_staked;
-  const init_user_rew: MichelsonMap<string, {
-    reward: BigNumber;
-    former: BigNumber;
-  }> = await dex.contract
+  const init_user_rew: MichelsonMap<
+    string,
+    {
+      reward: BigNumber;
+      former: BigNumber;
+    }
+  > = await dex.contract
     .storage()
     .then((storage: DexStorage) => {
       return storage.storage.stakers_balance;
     })
-    .then((balance: any) => balance.get([staker, pool_id.toString()]))
+    .then((balance) => balance.get([staker, pool_id.toString()]))
     .then((value) => value?.earnings);
-  init_user_rew.forEach((earning, key) => {
+  init_user_rew.forEach((earning) => {
     expect(earning.reward.toNumber()).toBeGreaterThanOrEqual(
       new BigNumber(0).toNumber()
     );
@@ -44,9 +47,11 @@ export async function harvestFromPoolSuccessCase(
     .then((storage: DexStorage) => {
       return storage.storage.stakers_balance;
     })
-    .then((balance: any) => balance.get([staker, pool_id.toString()]))
+    .then((balance) => balance.get([staker, pool_id.toString()]))
     .then((value) => value?.earnings);
-  upd_user_rew.forEach((earning, key) => {
-    expect(earning.reward.toNumber()).toEqual(new BigNumber(0).toNumber());
+  upd_user_rew.forEach((earning) => {
+    expect(earning.reward.toNumber()).toStrictEqual(
+      new BigNumber(0).toNumber()
+    );
   });
 }

@@ -1,5 +1,5 @@
 import BigNumber from "bignumber.js";
-import { MichelsonMap, TezosToolkit } from "@taquito/taquito";
+import { TezosToolkit } from "@taquito/taquito";
 import {
   AccountsLiteral,
   mapTokensToIdx,
@@ -7,14 +7,7 @@ import {
 } from "../../helpers/utils";
 import Dex from "../API";
 import { accounts } from "../constants";
-import {
-  AmountsMap,
-  IndexMap,
-  TokensMap,
-  FA12TokenType,
-  FA2TokenType,
-  TokenInfo,
-} from "../types";
+import { AmountsMap, IndexMap, TokensMap } from "../types";
 import { setupTokenAmounts } from "../tokensSetups";
 
 export async function setupMinTokenMapping(
@@ -33,9 +26,7 @@ export async function setupMinTokenMapping(
   });
   const min_amounts = stp.amounts;
   const pool_id = stp.pool_id;
-  const tokens_map = dex.storage.storage.tokens[
-    pool_id.toNumber()
-  ] as any as Map<string, FA2TokenType | FA12TokenType>;
+  const tokens_map = dex.storage.storage.tokens[pool_id.toNumber()];
   return { pool_id, min_amounts, idx_map: mapTokensToIdx(tokens_map, tokens) };
 }
 
@@ -47,7 +38,7 @@ export async function divestLiquiditySuccessCase(
   min_amounts: Map<string, BigNumber>,
   Tezos: TezosToolkit
 ) {
-  let config = await prepareProviderOptions(sender);
+  const config = await prepareProviderOptions(sender);
   Tezos.setProvider(config);
   await dex.updateStorage({
     pools: [pool_id.toString()],
@@ -56,9 +47,8 @@ export async function divestLiquiditySuccessCase(
   const initLPBalance = new BigNumber(
     dex.storage.storage.pools[pool_id.toNumber()].total_supply
   );
-  const res = dex.storage.storage.pools[pool_id.toNumber()]
-    .tokens_info as any as MichelsonMap<string, TokenInfo>;
-  let raw_res = {};
+  const res = dex.storage.storage.pools[pool_id.toNumber()].tokens_info;
+  const raw_res = {};
   res.forEach(
     (value, key) => (raw_res[key] = value.reserves.toFormat(0).toString())
   );
@@ -87,7 +77,7 @@ export async function divestLiquidityImbalanceSuccessCase(
   max_shares: BigNumber,
   Tezos: TezosToolkit
 ) {
-  let config = await prepareProviderOptions(sender);
+  const config = await prepareProviderOptions(sender);
   Tezos.setProvider(config);
   await dex.updateStorage({
     pools: [pool_id.toString()],
@@ -96,9 +86,8 @@ export async function divestLiquidityImbalanceSuccessCase(
   const initLPBalance = new BigNumber(
     dex.storage.storage.pools[pool_id.toNumber()].total_supply
   );
-  const res = dex.storage.storage.pools[pool_id.toNumber()]
-    .tokens_info as any as MichelsonMap<string, TokenInfo>;
-  let raw_res = {};
+  const res = dex.storage.storage.pools[pool_id.toNumber()].tokens_info;
+  const raw_res = {};
   res.forEach(
     (value, key) => (raw_res[key] = value.reserves.toFormat(0).toString())
   );
@@ -130,7 +119,7 @@ export async function divestLiquidityOneSuccessCase(
   min_amount: BigNumber,
   Tezos: TezosToolkit
 ) {
-  let config = await prepareProviderOptions(sender);
+  const config = await prepareProviderOptions(sender);
   Tezos.setProvider(config);
   await dex.updateStorage({
     pools: [pool_id.toString()],
@@ -139,9 +128,8 @@ export async function divestLiquidityOneSuccessCase(
   const initLPBalance = new BigNumber(
     dex.storage.storage.pools[pool_id.toNumber()].total_supply
   );
-  const res = dex.storage.storage.pools[pool_id.toNumber()]
-    .tokens_info as any as MichelsonMap<string, TokenInfo>;
-  let raw_res = {};
+  const res = dex.storage.storage.pools[pool_id.toNumber()].tokens_info;
+  const raw_res = {};
   res.forEach(
     (value, key) => (raw_res[key] = value.reserves.toFormat(0).toString())
   );

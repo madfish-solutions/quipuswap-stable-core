@@ -4,7 +4,7 @@ import { getLigo } from "../../../test/helpers/utils";
 import { em, debug, getCWD } from "create-tezos-smart-contract/dist/console";
 import { ContractsBundle } from "create-tezos-smart-contract/dist/modules/bundle";
 import { preferredLigoFlavor } from "../../../config.json";
-const fs = require("fs");
+import fs from "fs";
 import { execSync } from "child_process";
 export const addCompileLambdaCommand = (
   program: Command,
@@ -44,9 +44,9 @@ export const compileLambdas = async (
   const ligo = getLigo(true);
   const pwd = execSync("echo $PWD").toString();
   const lambdas = JSON.parse(
-    fs.readFileSync(`${pwd.slice(0, pwd.length - 1)}/${json}`)
+    fs.readFileSync(`${pwd.slice(0, pwd.length - 1)}/${json}`).toString()
   );
-  let res = [];
+  const res = [];
   const old_cli = Number(ligoVersion.split(".")[2]) > 25;
   let ligo_command: string;
   if (old_cli) {
@@ -57,7 +57,9 @@ export const compileLambdas = async (
   const init_file = `$PWD/${contract}`;
   try {
     for (const lambda of lambdas) {
-      const func = `Set_${type.toLowerCase()}_function(record [index=${lambda.index}n; func=Bytes.pack(${lambda.name})])`;
+      const func = `Set_${type.toLowerCase()}_function(record [index=${
+        lambda.index
+      }n; func=Bytes.pack(${lambda.name})])`;
       const params = `'${func}' --michelson-format json --init-file ${init_file}`;
       const command = `${ligo} ${ligo_command} ${preferredLigoFlavor} ${params}`;
       const michelson = execSync(command, { maxBuffer: 1024 * 500 }).toString();

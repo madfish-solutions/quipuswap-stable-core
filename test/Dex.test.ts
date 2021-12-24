@@ -1,21 +1,19 @@
 import BigNumber from "bignumber.js";
 
-import { failCase, mapTokensToIdx, prepareProviderOptions, Tezos } from "./helpers/utils";
+import {
+  failCase,
+  mapTokensToIdx,
+  prepareProviderOptions,
+  Tezos,
+} from "./helpers/utils";
 
 import { API, cases as DexTests, constants, TokenSetups } from "./Dex";
 type Dex = API.DexAPI;
 const { decimals, a_const, accounts, zero_amount, swap_routes } = constants;
-import {
-  AmountsMap,
-  IndexMap,
-  TokensMap,
-  FA12TokenType,
-  FA2TokenType,
-} from "./Dex/types";
-import { TokenFA2 } from "./Token";
+import { AmountsMap, IndexMap, TokensMap } from "./Dex/types";
+import { TokenFA12, TokenFA2 } from "./Token";
 
-
-describe("Dex", () => {
+describe("dex", () => {
   global.startTime = new Date();
 
   const aliceAddress: string = accounts.alice.pkh;
@@ -44,9 +42,10 @@ describe("Dex", () => {
 
   describe("1. Testing Admin endpoints", () => {
     const adm = DexTests.admin;
+
     describe("1.1. Test setting new admin", () => {
       it(
-        "Should fail if not admin try to set admin",
+        "should fail if not admin try to set admin",
         async () =>
           await failCase(
             "bob",
@@ -55,16 +54,18 @@ describe("Dex", () => {
           ),
         10000
       );
+
       it(
-        "Should change admin",
+        "should change admin",
         async () =>
           await adm.setAdminSuccessCase(dex, "alice", new_admin, Tezos),
         30000
       );
     });
+
     describe("1.2. Test setting new dev_address", () => {
       it(
-        "Should fail if not admin try to set dev_address",
+        "should fail if not admin try to set dev_address",
         async () =>
           await failCase(
             "bob",
@@ -73,8 +74,9 @@ describe("Dex", () => {
           ),
         10000
       );
+
       it(
-        "Should change dev address",
+        "should change dev address",
         async () => await adm.setDevAddrSuccessCase(dex, "eve", new_dev, Tezos),
         20000
       );
@@ -82,7 +84,7 @@ describe("Dex", () => {
 
     describe("1.3. Test setting managers", () => {
       it(
-        "Should fail if not admin try set manager",
+        "should fail if not admin try set manager",
         async () =>
           await failCase(
             "bob",
@@ -91,14 +93,16 @@ describe("Dex", () => {
           ),
         10000
       );
+
       it(
-        "Should set new manager",
+        "should set new manager",
         async () =>
           await adm.updateManagersSuccessCase(dex, "eve", manager, true, Tezos),
         20000
       );
+
       it(
-        "Should remove manager",
+        "should remove manager",
         async () =>
           await adm.updateManagersSuccessCase(
             dex,
@@ -110,9 +114,10 @@ describe("Dex", () => {
         20000
       );
     });
+
     describe("1.4. Test default referral", () => {
       it(
-        "Should fail if not admin try change default referral",
+        "should fail if not admin try change default referral",
         async () =>
           await failCase(
             "bob",
@@ -121,7 +126,8 @@ describe("Dex", () => {
           ),
         10000
       );
-      it("Should change default referral", async () =>
+
+      it("should change default referral", async () =>
         await adm.setDefaultRefSuccessCase(dex, "eve", aliceAddress, Tezos));
     });
   });
@@ -130,13 +136,20 @@ describe("Dex", () => {
     const pool = DexTests.pools;
 
     describe("2.1. Test adding new pool", () => {
-      let inputs: any[];
+      let inputs: {
+        asset: TokenFA2 | TokenFA12;
+        in_amount: BigNumber;
+        rate: BigNumber;
+        precision_multiplier: BigNumber;
+      }[];
       const norm_input = new BigNumber(10).pow(6);
+
       beforeAll(async () => {
         inputs = await pool.AddPool.manageInputs(norm_input, tokens);
       }, 80000);
+
       it(
-        "Should fail if not admin try to add pool",
+        "should fail if not admin try to add pool",
         async () =>
           await failCase(
             "alice",
@@ -145,8 +158,9 @@ describe("Dex", () => {
           ),
         10000
       );
+
       it(
-        "Should add new pool",
+        "should add new pool",
         async () =>
           await pool.AddPool.addNewPair(
             dex,
@@ -164,13 +178,15 @@ describe("Dex", () => {
     describe("2.2. Test pool administration", () => {
       const adm = pool.PoolAdmin;
       let pool_id: BigNumber;
+
       beforeAll(async () => {
         await dex.updateStorage({});
         pool_id = dex.storage.storage.pools_count.minus(new BigNumber(1));
       }, 80000);
+
       describe("2.2.1. Ramping A constant", () => {
         it(
-          "Should fail if not admin performs ramp A",
+          "should fail if not admin performs ramp A",
           async () =>
             await failCase(
               "bob",
@@ -186,23 +202,29 @@ describe("Dex", () => {
             ),
           10000
         );
-        it.todo("Should ramp A");
+
+        it.todo("should ramp A");
+
         it(
-          "Should fail if not admin performs stopping ramp A",
+          "should fail if not admin performs stopping ramp A",
           async () =>
             await failCase(
               "bob",
-              async () => await dex.contract.methods.stop_ramp_A(pool_id).send(),
+              async () =>
+                await dex.contract.methods.stop_ramp_A(pool_id).send(),
               "Dex/not-contract-admin"
             ),
           10000
         );
-        it.todo("Should stop ramp A");
+
+        it.todo("should stop ramp A");
       });
+
       describe("2.2.2 Setting fees", () => {
         const adm_fee = adm.Fee;
+
         it(
-          "Should fail if not admin try to set new fee",
+          "should fail if not admin try to set new fee",
           async () =>
             await failCase(
               "bob",
@@ -211,8 +233,9 @@ describe("Dex", () => {
             ),
           10000
         );
+
         it(
-          "Should change fees",
+          "should change fees",
           async () =>
             await adm_fee.setFeesSuccessCase(
               dex,
@@ -230,6 +253,7 @@ describe("Dex", () => {
       const stake = pool.stake;
       const input = new BigNumber(10).pow(9);
       let pool_id: BigNumber;
+
       beforeAll(async () => {
         const config = await prepareProviderOptions("bob");
         Tezos.setProvider(config);
@@ -237,8 +261,9 @@ describe("Dex", () => {
         await dex.updateStorage({});
         pool_id = dex.storage.storage.pools_count.minus(new BigNumber(1));
       }, 80000);
+
       it(
-        "Should fail if zero stake amount",
+        "should fail if zero stake amount",
         async () =>
           await failCase(
             "bob",
@@ -250,6 +275,7 @@ describe("Dex", () => {
           ),
         10000
       );
+
       it(
         `Should stake ${input.dividedBy(decimals.QUIPU)} QUIPU to pool`,
         async () =>
@@ -279,21 +305,18 @@ describe("Dex", () => {
       const referral = aliceAddress;
 
       beforeAll(async () => {
-        let config = await prepareProviderOptions(sender);
+        const config = await prepareProviderOptions(sender);
         Tezos.setProvider(config);
-        const stp = await TokenSetups.setupTokenAmounts(
-          dex,
-          tokens,
-          inputs
-        );
+        const stp = await TokenSetups.setupTokenAmounts(dex, tokens, inputs);
         amounts = stp.amounts;
         pool_id = stp.pool_id;
         min_shares = new BigNumber(1); //input.multipliedBy(amounts.size).minus(100);
       }, 80000);
 
-      it("Should fail if zero input", async () => {
+      it("should fail if zero input", async () => {
+        //expect.assertions(1);
         const zero_amounts: Map<string, BigNumber> = new Map<string, BigNumber>(
-          Array.from(amounts.entries()).map(([k, v]) => [k, zero_amount])
+          Array.from(amounts.entries()).map(([k]) => [k, zero_amount])
         );
         await failCase(
           sender,
@@ -307,7 +330,9 @@ describe("Dex", () => {
           "Dex/zero-amount-in"
         );
       }, 10000);
-      it("Should fail if wrong indexes", async () => {
+
+      it("should fail if wrong indexes", async () => {
+        //expect.assertions(1);
         const wrong_idx_amounts: Map<string, BigNumber> = new Map<
           string,
           BigNumber
@@ -329,7 +354,9 @@ describe("Dex", () => {
           "Dex/zero-amount-in"
         );
       }, 10000);
-      it("Should invest liq balanced", async () => {
+
+      it("should invest liq balanced", async () => {
+        //expect.assertions(0);
         await invest.investLiquiditySuccessCase(
           dex,
           sender,
@@ -341,17 +368,16 @@ describe("Dex", () => {
         );
       }, 30000);
 
-      it("Should invest liq imbalanced", async () => {
+      it("should invest liq imbalanced", async () => {
+        //expect.assertions(0);
         await dex.updateStorage({
           tokens: [pool_id.toString()],
           pools: [pool_id.toString()],
         });
-        const tokens_map = dex.storage.storage.tokens[
-          pool_id.toNumber()
-        ] as any as Map<string, FA2TokenType | FA12TokenType>;
+        const tokens_map = dex.storage.storage.tokens[pool_id.toNumber()];
         const idx_map = mapTokensToIdx(tokens_map, tokens);
         const USDtz_amt = amounts.get(idx_map.USDtz);
-        let in_amt = amounts.set(idx_map.USDtz, new BigNumber(0));
+        const in_amt = amounts.set(idx_map.USDtz, new BigNumber(0));
         min_shares = min_shares.multipliedBy(2).dividedToIntegerBy(3);
         await invest.investLiquiditySuccessCase(
           dex,
@@ -362,7 +388,7 @@ describe("Dex", () => {
           in_amt,
           Tezos
         );
-        let USDtz_in = new Map<string, BigNumber>().set(
+        const USDtz_in = new Map<string, BigNumber>().set(
           idx_map.USDtz,
           USDtz_amt
         );
@@ -403,7 +429,9 @@ describe("Dex", () => {
           )),
         80000
       );
-      it("Should fail if expired", async () => {
+
+      it("should fail if expired", async () => {
+        //expect.assertions(1);
         const i = idx_map.uUSD;
         const j = idx_map.kUSD;
         const min_out = new BigNumber(0);
@@ -424,9 +452,11 @@ describe("Dex", () => {
           "Dex/time-expired"
         );
       }, 10000);
+
       it.each(swap_routes)(
-        "Should fail if zero input [%s, %s]",
+        "should fail if zero input [%s, %s]",
         async (t_in, t_to) => {
+          //expect.assertions(1);
           const zero_amount = new BigNumber("0");
           const i = idx_map[t_in];
           const j = idx_map[t_to];
@@ -450,6 +480,7 @@ describe("Dex", () => {
         },
         10000
       );
+
       it.each(swap_routes)(
         `Should swap [${normalized.toString()} %s, ~ ${normalized.toString()} %s]`,
         async (t_in, t_to) =>
@@ -507,7 +538,9 @@ describe("Dex", () => {
         imb_amounts.set(idx_map.kUSD, outputs.kUSD);
         imb_amounts.set(idx_map.uUSD, outputs.uUSD);
       }, 80000);
-      it("Should fail if zero input", async () => {
+
+      it("should fail if zero input", async () => {
+        //expect.assertions(1);
         await failCase(
           "eve",
           async () =>
@@ -515,20 +548,21 @@ describe("Dex", () => {
           "Dex/zero-amount-in"
         );
       }, 10000);
-      it(
-        "Should divest liq balanced",
-        async () =>
-          await divesting.divestLiquiditySuccessCase(
-            dex,
-            "eve",
-            pool_id,
-            amount_in,
-            min_amounts,
-            Tezos
-          ),
-        20000
-      );
-      it("Should divest liq imbalanced", async () => {
+
+      it("should divest liq balanced", async () => {
+        //expect.assertions(0);
+        await divesting.divestLiquiditySuccessCase(
+          dex,
+          "eve",
+          pool_id,
+          amount_in,
+          min_amounts,
+          Tezos
+        );
+      }, 20000);
+
+      it("should divest liq imbalanced", async () => {
+        //expect.assertions(0);
         await divesting.divestLiquidityImbalanceSuccessCase(
           dex,
           "eve",
@@ -538,7 +572,9 @@ describe("Dex", () => {
           Tezos
         );
       });
-      it("Should divest liq in one coin", async () => {
+
+      it("should divest liq in one coin", async () => {
+        //expect.assertions(0);
         await divesting.divestLiquidityOneSuccessCase(
           dex,
           "eve",
@@ -550,41 +586,45 @@ describe("Dex", () => {
         );
       });
     });
+
     describe("2.7 Test unstake QUIPU token from pool", () => {
       const stake = pool.stake;
       const output = new BigNumber(10).pow(7);
       let pool_id: BigNumber;
+
       beforeAll(async () => {
         const config = await prepareProviderOptions("bob");
         Tezos.setProvider(config);
         await dex.updateStorage({});
         pool_id = dex.storage.storage.pools_count.minus(new BigNumber(1));
       }, 80000);
-      it(
-        `Should unstake ${output.dividedBy(
-          decimals.QUIPU
-        )} QUIPU tokens from pool`,
-        async () =>
-          await stake.unstakeFromPoolSuccessCase(
-            dex,
-            staker,
-            pool_id,
-            output,
-            Tezos
-          ),
-        20000
-      );
+
+      it(`Should unstake ${output.dividedBy(
+        decimals.QUIPU
+      )} QUIPU tokens from pool`, async () => {
+        //expect.assertions(0);
+        await stake.unstakeFromPoolSuccessCase(
+          dex,
+          staker,
+          pool_id,
+          output,
+          Tezos
+        );
+      }, 20000);
     });
   });
 
   describe("3. Testing Token endpoints", () => {
     let pool_id: BigNumber;
     const amount = new BigNumber("100000");
+
     beforeAll(async () => {
       pool_id = dex.storage.storage.pools_count.minus(new BigNumber(1));
     }, 80000);
+
     describe("3.1. Test transfer from self", () => {
-      it("Should fail if low balance", async () => {
+      it("should fail if low balance", async () => {
+        //expect.assertions(1);
         await failCase(
           "bob",
           async () =>
@@ -592,14 +632,18 @@ describe("Dex", () => {
           "FA2_INSUFFICIENT_BALANCE"
         );
       }, 10000);
-      it("Should send from self", async () => {
-        let config = await prepareProviderOptions("alice");
+
+      it("should send from self", async () => {
+        //expect.assertions(0);
+        const config = await prepareProviderOptions("alice");
         Tezos.setProvider(config);
         await dex.transfer(pool_id, aliceAddress, bobAddress, amount);
       }, 20000);
     });
+
     describe("3.2. Test approve", () => {
-      it("Should fail send if not approved", async () => {
+      it("should fail send if not approved", async () => {
+        //expect.assertions(1);
         await failCase(
           "bob",
           async () =>
@@ -607,13 +651,17 @@ describe("Dex", () => {
           "FA2_NOT_OPERATOR"
         );
       }, 10000);
-      it("Should update operator", async () => {
-        let config = await prepareProviderOptions("alice");
+
+      it("should update operator", async () => {
+        //expect.assertions(0);
+        const config = await prepareProviderOptions("alice");
         Tezos.setProvider(config);
         await dex.approve(bobAddress, amount);
       }, 20000);
-      it("Should send as operator", async () => {
-        let config = await prepareProviderOptions("bob");
+
+      it("should send as operator", async () => {
+        //expect.assertions(0);
+        const config = await prepareProviderOptions("bob");
         Tezos.setProvider(config);
         await dex.transfer(pool_id, aliceAddress, bobAddress, amount);
       }, 20000);
@@ -644,8 +692,10 @@ describe("Dex", () => {
         Tezos
       );
     });
+
     describe("4.1. Referral reward", () => {
-      it("Should get referral rewards", async () =>
+      it("should get referral rewards", async () => {
+        //expect.assertions(0);
         await rew.referral.getReferralRewardsSuccessCase(
           dex,
           tokens,
@@ -654,11 +704,14 @@ describe("Dex", () => {
           referral,
           lambdaContractAddress,
           Tezos
-        ));
+        );
+      });
     });
+
     describe("4.2. QT stakers reward", () => {
-      it("Should harvest staking rewards", async () => {
-        let config = await prepareProviderOptions("bob");
+      it("should harvest staking rewards", async () => {
+        //expect.assertions(0);
+        const config = await prepareProviderOptions("bob");
         Tezos.setProvider(config);
         await rew.staker.harvestFromPoolSuccessCase(
           dex,
@@ -670,7 +723,7 @@ describe("Dex", () => {
     });
 
     describe("4.3. Developer reward", () => {
-      it("Should get dev rewards", async () =>
+      it("should get dev rewards", async () =>
         await rew.developer.getDeveloperRewardsSuccessCase(
           dex,
           tokens,
@@ -691,6 +744,7 @@ describe("Dex", () => {
       uUSD: string;
       USDtz: string;
     };
+
     beforeAll(async () => {
       await dex.updateStorage({});
       pool_id = dex.storage.storage.pools_count.minus(new BigNumber(1));
@@ -698,38 +752,46 @@ describe("Dex", () => {
         tokens: [pool_id.toString()],
         pools: [pool_id.toString()],
       });
-      const tokens_map = dex.storage.storage.tokens[
-        pool_id.toNumber()
-      ] as any as Map<string, FA2TokenType | FA12TokenType>;
+      const tokens_map = dex.storage.storage.tokens[pool_id.toNumber()];
       map_tokens_idx = mapTokensToIdx(tokens_map, tokens);
     }, 80000);
+
     describe("5.1. Dex views", () => {
-      it("Should return A", async () =>
+      it("should return A", async () =>
         await views.pool.getASuccessCase(dex, pool_id, lambdaContractAddress));
-      it("Should return fees", async () =>
+
+      it("should return fees", async () =>
         await views.pool.getFeesSuccessCase(
           dex,
           pool_id,
           lambdaContractAddress
         ));
-      it("Should return token info", async () =>
+
+      it("should return token info", async () =>
         await views.pool.getTokensInfoSuccessCase(
           dex,
           pool_id,
           lambdaContractAddress
         ));
-      it.todo("Should return min received");
-      it.skip("Should return dy", async () =>
-        views.pool.getDySuccessCase(
+
+      it.todo("should return min received");
+
+      it("should return dy", async () => {
+        //expect.assertions(0);
+        await views.pool.getDySuccessCase(
           dex,
           pool_id,
           map_tokens_idx,
           lambdaContractAddress
-        ));
-      it.todo("Should return price");
+        );
+      });
+
+      it.todo("should return price");
     });
+
     describe("5.2.Token views", () => {
-      it("Should return balance of account", async () => {
+      it("should return balance of account", async () => {
+        //expect.assertions(0);
         const accounts = [
           {
             owner: aliceAddress,
@@ -751,19 +813,22 @@ describe("Dex", () => {
         expect(balances[1].balance.toNumber()).toBeGreaterThanOrEqual(0);
         expect(balances[2].balance.toNumber()).toBeGreaterThanOrEqual(0);
       });
-      it("Should return total supply", async () => {
+
+      it("should return total supply", async () => {
+        //expect.assertions(0);
         const total_supply = await dex.contract.views
           .total_supply(pool_id)
           .read(lambdaContractAddress);
         await dex.updateStorage({
           pools: [pool_id.toString()],
         });
-        expect(total_supply.toNumber()).toEqual(
+        expect(total_supply.toNumber()).toStrictEqual(
           dex.storage.storage.pools[pool_id.toString()].total_supply.toNumber()
         );
       });
     });
   });
+
   describe("6. Permits", () => {
     const permit = DexTests.permit;
 
@@ -779,15 +844,17 @@ describe("Dex", () => {
         txs: [{ to_: receiver_account.pkh, token_id: 0, amount: 10 }],
       },
     ];
-    let transferParamsTimeExpiry = [
+    const transferParamsTimeExpiry = [
       {
         from_: signer_account.pkh,
         txs: [{ to_: receiver_account.pkh, token_id: 0, amount: 15 }],
       },
     ];
     let paramHash: string;
+
     describe("6.1 Standart Permit", () => {
       it(`${signer} generates permit payload, ${receiver} submits it to contract`, async () => {
+        //expect.assertions(0);
         paramHash = await permit.addPermitFromSignerByReceiverSuccessCase(
           dex,
           signer,
@@ -795,23 +862,23 @@ describe("Dex", () => {
           permitTransferParams
         );
       });
-      it(`${sender} calls contract entrypoint on ${signer}'s behalf`, async () =>
-        await permit.usePermit(
-          Tezos,
-          dex,
-          signer,
-          sender,
-          receiver,
-          paramHash
-        ));
-      it(`${sender} can't use bob's transfer anymore`, async () =>
+
+      it(`${sender} calls contract entrypoint on ${signer}'s behalf`, async () => {
+        //expect.assertions(0);
+        await permit.usePermit(Tezos, dex, signer, sender, receiver, paramHash);
+      });
+
+      it(`${sender} can't use bob's transfer anymore`, async () => {
+        //expect.assertions(1);
         await failCase(
           sender,
           async () =>
             await dex.contract.methods.transfer(permitTransferParams).send(),
           "FA2_NOT_OPERATOR"
-        ));
+        );
+      });
     });
+
     describe("6.2 Timeout Permit", () => {
       it(`${signer} generates permit, ${receiver} submits it, ${signer} sets expiry`, async () =>
         await permit.setWithExpiry(
@@ -820,9 +887,11 @@ describe("Dex", () => {
           sender,
           transferParamsTimeExpiry
         ));
+
       it(`${sender} calls entrypoint on ${signer}'s behalf, but its too late`, async () => {
+        //expect.assertions(1);
         await new Promise((r) => setTimeout(r, 60000));
-        return await failCase(
+        await failCase(
           sender,
           async () =>
             await dex.contract.methods

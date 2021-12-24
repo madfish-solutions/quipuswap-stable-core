@@ -1,4 +1,9 @@
-import { ContractAbstraction, ContractProvider, TezosToolkit } from "@taquito/taquito";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import {
+  ContractAbstraction,
+  ContractProvider,
+  TezosToolkit,
+} from "@taquito/taquito";
 import { TransactionOperation } from "@taquito/taquito/dist/types/operations/transaction-operation";
 import { defaultTokenId, Token } from "./token";
 import BigNumber from "bignumber.js";
@@ -27,7 +32,7 @@ export class TokenFA2 implements Token {
   }
 
   async updateProvider(accountName: string): Promise<void> {
-    let config = await prepareProviderOptions(accountName);
+    const config = await prepareProviderOptions(accountName);
     this.Tezos.setProvider(config);
   }
 
@@ -41,7 +46,7 @@ export class TokenFA2 implements Token {
       total_supply: await storage.total_supply[defaultTokenId],
       ledger: {},
     };
-    for (let key in maps) {
+    for (const key in maps) {
       this.storage[key] = await maps[key].reduce(async (prev, current) => {
         try {
           return {
@@ -64,7 +69,7 @@ export class TokenFA2 implements Token {
     to: string,
     amount: BigNumber
   ): Promise<TransactionOperation> {
-    let operation = await this.contract.methods
+    const operation = await this.contract.methods
       .transfer([
         {
           from_: from,
@@ -103,7 +108,7 @@ export class TokenFA2 implements Token {
     }[],
     contract: string
   ): Promise<TransactionOperation> {
-    let operation = await this.contract.methods
+    const operation = await this.contract.methods
       .balance_of({ requests, contract })
       .send();
     await confirmOperation(this.Tezos, operation.hash);
@@ -111,7 +116,7 @@ export class TokenFA2 implements Token {
   }
 
   async tokenMetadataRegistry(receiver: string): Promise<TransactionOperation> {
-    let operation = await this.contract.methods
+    const operation = await this.contract.methods
       .token_metadata_registry(receiver)
       .send();
     await confirmOperation(this.Tezos, operation.hash);
@@ -128,7 +133,7 @@ export class TokenFA2 implements Token {
       };
     }[]
   ): Promise<TransactionOperation> {
-    let operation = await this.contract.methods
+    const operation = await this.contract.methods
       .update_operators(
         params.map((param) => {
           return {

@@ -1,4 +1,8 @@
-import { ContractAbstraction, ContractProvider, TezosToolkit } from "@taquito/taquito";
+import {
+  ContractAbstraction,
+  ContractProvider,
+  TezosToolkit,
+} from "@taquito/taquito";
 import { TransactionOperation } from "@taquito/taquito/dist/types/operations/transaction-operation";
 import { Token } from "./token";
 import { TokenStorage } from "./types";
@@ -27,7 +31,7 @@ export class TokenFA12 implements Token {
   }
 
   async updateProvider(accountName: string): Promise<void> {
-    let config = await prepareProviderOptions(accountName);
+    const config = await prepareProviderOptions(accountName);
     this.Tezos.setProvider(config);
   }
 
@@ -36,8 +40,8 @@ export class TokenFA12 implements Token {
       ledger?: string[];
     } = {}
   ): Promise<void> {
-    this.storage= await this.contract.storage();
-    for (let key in maps) {
+    this.storage = await this.contract.storage();
+    for (const key in maps) {
       this.storage[key] = await maps[key].reduce(async (prev, current) => {
         try {
           return {
@@ -60,7 +64,7 @@ export class TokenFA12 implements Token {
     to: string,
     amount: BigNumber
   ): Promise<TransactionOperation> {
-    let operation = await this.contract.methods
+    const operation = await this.contract.methods
       .transfer(from, to, amount)
       .send();
     await confirmOperation(this.Tezos, operation.hash);
@@ -68,7 +72,7 @@ export class TokenFA12 implements Token {
   }
 
   async approve(to: string, amount: BigNumber): Promise<TransactionOperation> {
-    let operation = await this.contract.methods.approve(to, amount).send();
+    const operation = await this.contract.methods.approve(to, amount).send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
   }
@@ -77,7 +81,7 @@ export class TokenFA12 implements Token {
     owner: string,
     contract: number
   ): Promise<TransactionOperation> {
-    let operation = await this.contract.methods
+    const operation = await this.contract.methods
       .getBalance(owner, contract)
       .send();
     await confirmOperation(this.Tezos, operation.hash);
@@ -89,7 +93,7 @@ export class TokenFA12 implements Token {
     trusted: string,
     contract: number
   ): Promise<TransactionOperation> {
-    let operation = await this.contract.methods
+    const operation = await this.contract.methods
       .getAllowance(owner, trusted, contract)
       .send();
     await confirmOperation(this.Tezos, operation.hash);
@@ -97,7 +101,7 @@ export class TokenFA12 implements Token {
   }
 
   async getTotalSupply(contract: number): Promise<TransactionOperation> {
-    let operation = await this.contract.methods
+    const operation = await this.contract.methods
       .getTotalSupply(null, contract)
       .send();
     await confirmOperation(this.Tezos, operation.hash);

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import BigNumber from "bignumber.js";
 import { MichelsonMap } from "@taquito/taquito";
 import { TezosAddress } from "../../helpers/utils";
@@ -33,7 +34,6 @@ export declare type FeeType = {
 
 export declare type TokenInfo = {
   rate: BigNumber;
-  proxy_limit: BigNumber;
   precision_multiplier: BigNumber;
   reserves: BigNumber;
 };
@@ -101,8 +101,8 @@ export declare type DexStorage = {
 };
 
 declare type RewardsType = {
-  reward: MichelsonMap<string, BigNumber>;
-  former: MichelsonMap<string, BigNumber>;
+  reward: BigNumber;
+  former: BigNumber;
 };
 
 export declare type StakerInfo = {

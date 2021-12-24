@@ -1,6 +1,9 @@
 import { TezosToolkit, VIEW_LAMBDA } from "@taquito/taquito";
 import { confirmOperation } from "../helpers/confirmation";
-import { prepareProviderOptions, setupLambdasToStorage } from "../helpers/utils";
+import {
+  prepareProviderOptions,
+  setupLambdasToStorage,
+} from "../helpers/utils";
 import { BigNumber } from "bignumber.js";
 import dex_contract from "../../build/dex.ligo.json";
 import dex_lambdas_comp from "../../build/lambdas/Dex_lambdas.json";
@@ -9,7 +12,7 @@ import admin_lambdas_comp from "../../build/lambdas/Admin_lambdas.json";
 import permit_lambdas_comp from "../../build/lambdas/Permit_lambdas.json";
 
 import { accounts } from "./constants";
-import { DexAPI as Dex, defaultDexStorage as storage } from './API';
+import { DexAPI as Dex, defaultDexStorage as storage } from "./API";
 import { setupQuipuGovToken, setupTrioTokens } from "./tokensSetups";
 import { TokensMap } from "./types";
 import { defaultTokenId, TokenFA2 } from "../Token";
@@ -20,7 +23,7 @@ export async function setupDexEnvironment(Tezos: TezosToolkit): Promise<{
   quipuToken: TokenFA2;
   lambdaContractAddress: string;
 }> {
-  let config = await prepareProviderOptions("alice");
+  const config = await prepareProviderOptions("alice");
   Tezos.setProvider(config);
   const op = await Tezos.contract.originate({
     code: VIEW_LAMBDA.code,
@@ -34,8 +37,8 @@ export async function setupDexEnvironment(Tezos: TezosToolkit): Promise<{
   storage.storage.dev_address = accounts.eve.pkh;
   storage.storage.quipu_token = {
     token_address: quipuToken.contract.address,
-    token_id: new BigNumber(defaultTokenId)
-  }
+    token_id: new BigNumber(defaultTokenId),
+  };
   // storage.dex_lambdas = await setupLambdasToStorage(dex_lambdas_comp);
   storage.token_lambdas = await setupLambdasToStorage(token_lambdas_comp);
   storage.permit_lambdas = await setupLambdasToStorage(permit_lambdas_comp);
@@ -44,7 +47,7 @@ export async function setupDexEnvironment(Tezos: TezosToolkit): Promise<{
     code: JSON.parse(dex_contract.michelson),
     storage: storage,
   });
-  console.debug(dex_op.results)
+  console.debug(dex_op.results);
   await confirmOperation(Tezos, dex_op.hash);
   console.debug("[ORIGINATION] DEX", dex_op.contractAddress);
   const dex = await Dex.init(Tezos, dex_op.contractAddress);

@@ -31,7 +31,7 @@ async function approveAllTokens(
 ): Promise<boolean> {
   const approveAmount = new BigNumber(10).pow(45);
   for (const spender in accounts) {
-    let config = await prepareProviderOptions(spender);
+    const config = await prepareProviderOptions(spender);
     Tezos.setProvider(config);
     for (const token in tokens) {
       await tokens[token].approve(dex.contract.address, approveAmount);
@@ -44,7 +44,7 @@ async function approveAllTokens(
 export async function setupTrioTokens(
   dex: Dex,
   Tezos: TezosToolkit,
-  approveAll: boolean = false
+  approveAll = false
 ): Promise<TokensMap> {
   console.debug("Setting up tokens");
   const tokens = await originateTokens(Tezos);
@@ -65,8 +65,8 @@ export async function setupTokenAmounts(
   const tokens_map = dex.storage.storage.tokens[
     pool_id.toNumber()
   ] as unknown as Map<string, FA2TokenType | FA12TokenType>;
-  let amounts = new Map<string, BigNumber>();
-  for (let [k, v] of tokens_map.entries()) {
+  const amounts = new Map<string, BigNumber>();
+  for (const [k, v] of tokens_map.entries()) {
     let token: FA2TokenType | FA12TokenType = v as FA2TokenType;
     let contract_address: string;
     if (token.fa2) {
@@ -86,7 +86,9 @@ export async function setupTokenAmounts(
   return { pool_id, amounts };
 }
 
-export async function setupQuipuGovToken(Tezos: TezosToolkit): Promise<TokenFA2> {
+export async function setupQuipuGovToken(
+  Tezos: TezosToolkit
+): Promise<TokenFA2> {
   const quipu = await Tezos.contract.originate(TokenInitValues.QUIPU);
   await confirmOperation(Tezos, quipu.hash);
   return await TokenFA2.init(Tezos, quipu.contractAddress);

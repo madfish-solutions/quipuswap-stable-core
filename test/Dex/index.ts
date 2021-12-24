@@ -14,7 +14,6 @@ export const cases = {
   rewards,
   permit,
   views,
-}
+};
 
 export * as API from "./API";
-

@@ -10,7 +10,7 @@ export async function getASuccessCase(
   await dex.updateStorage({ pools: [pool_id.toString()] });
   const exp_A = dex.storage.storage.pools[pool_id.toString()].initial_A;
   const a = await dex.contract.views.get_A(pool_id).read(lambdaContractAddress);
-  expect(a.toNumber()).toEqual(exp_A.dividedBy(100).toNumber());
+  expect(a.toNumber()).toStrictEqual(exp_A.dividedBy(100).toNumber());
 }
 
 export async function getFeesSuccessCase(
@@ -32,17 +32,19 @@ export async function getTokensInfoSuccessCase(
   lambdaContractAddress: string
 ) {
   await dex.updateStorage({ pools: [pool_id.toString()] });
-  const exp_reserves = dex.storage.storage.pools[pool_id.toString()]
-    .tokens_info as any as Map<string, TokenInfo>;
+  const exp_reserves =
+    dex.storage.storage.pools[pool_id.toString()].tokens_info;
   const reserves = await dex.contract.views
     .get_tokens_info(pool_id)
     .read(lambdaContractAddress);
   reserves.forEach((v: TokenInfo, k: string) => {
-    expect(v.reserves.toNumber()).toEqual(
+    expect(v.reserves.toNumber()).toStrictEqual(
       exp_reserves.get(k).reserves.toNumber()
     );
-    expect(v.rate.toNumber()).toEqual(exp_reserves.get(k).rate.toNumber());
-    expect(v.precision_multiplier.toNumber()).toEqual(
+    expect(v.rate.toNumber()).toStrictEqual(
+      exp_reserves.get(k).rate.toNumber()
+    );
+    expect(v.precision_multiplier.toNumber()).toStrictEqual(
       exp_reserves.get(k).precision_multiplier.toNumber()
     );
   });
@@ -66,14 +68,16 @@ export async function getDySuccessCase(
     j: j,
     dx: dx,
   };
+  console.debug(dex.contract.views);
   const getdy = dex.contract.views.get_dy(
-    pool_id,
-    new BigNumber(i),
-    new BigNumber(j),
-    dx
+    params
+    // pool_id,
+    // new BigNumber(i),
+    // new BigNumber(j),
+    // dx
   );
   console.debug(getdy);
-  const dy = await getdy.read();
+  const dy = await getdy.read(lambdaContractAddress);
   console.debug(dy.toString());
   console.debug(exp_dy.toString(), dy.toString());
   // expect(dy.toNumber()).toBeCloseTo(exp_dy.toNumber());
