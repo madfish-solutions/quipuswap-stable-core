@@ -28,13 +28,13 @@ export async function confirmOperation(
   let currentBlockLevel;
 
   try {
-    const currentBlock = await tezos.rpc.getBlock();
+    const currentBlock: BlockResponse = await tezos.rpc.getBlock();
     currentBlockLevel = currentBlock.header.level;
 
     const sync_from = fromBlockLevel ?? currentBlockLevel - 3;
 
     for (let i = sync_from; i <= currentBlockLevel; i++) {
-      const block =
+      const block: BlockResponse =
         i === currentBlockLevel
           ? currentBlock
           : await tezos.rpc.getBlock({ block: i.toString() });

@@ -40,7 +40,7 @@ export async function setupDexEnvironment(Tezos: TezosToolkit): Promise<{
     token_id: new BigNumber(defaultTokenId),
   };
   // storage.dex_lambdas = await setupLambdasToStorage(dex_lambdas_comp);
-  storage.token_lambdas = await setupLambdasToStorage(token_lambdas_comp);
+  // storage.token_lambdas = await setupLambdasToStorage(token_lambdas_comp);
   storage.permit_lambdas = await setupLambdasToStorage(permit_lambdas_comp);
   storage.admin_lambdas = await setupLambdasToStorage(admin_lambdas_comp);
   const dex_op = await Tezos.contract.originate({

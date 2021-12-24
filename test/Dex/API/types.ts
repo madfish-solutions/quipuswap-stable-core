@@ -10,7 +10,7 @@ export declare type LambdaFunctionType = {
 
 export declare type BytesString = string;
 export declare type FA2 = { token_address: TezosAddress; token_id: BigNumber };
-declare type FA12 = TezosAddress;
+export declare type FA12 = TezosAddress;
 export declare type FA2TokenType = {
   fa2: FA2;
 };

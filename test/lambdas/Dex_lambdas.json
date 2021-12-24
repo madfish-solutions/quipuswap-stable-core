@@ -54,21 +54,5 @@
   {
     "index": 19,
     "name": "unstake_staker"
-  },
-  {
-    "index": 20,
-    "name": "get_tokens_info"
-  },
-  {
-    "index": 21,
-    "name": "get_fees"
-  },
-  {
-    "index": 22,
-    "name": "get_dy"
-  },
-  {
-    "index": 23,
-    "name": "get_A_view"
   }
 ]

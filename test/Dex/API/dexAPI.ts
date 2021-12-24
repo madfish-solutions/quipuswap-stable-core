@@ -41,7 +41,7 @@ export class Dex extends TokenFA2 {
     const dex = new Dex(tezos, await tezos.contract.at(dexAddress));
     // await dex.setFunctionBatchCompilled("Admin", 5, admin_lambdas_comp);
     // await dex.setFunctionBatchCompilled("Permit", 2, permit_lambdas_comp);
-    // await dex.setFunctionBatchCompilled("Token", 5, token_lambdas_comp);
+    await dex.setFunctionBatchCompilled("Token", 5, token_lambdas_comp);
     await dex.setFunctionBatchCompilled("Dex", 4, dex_lambdas_comp);
     return dex;
   }
