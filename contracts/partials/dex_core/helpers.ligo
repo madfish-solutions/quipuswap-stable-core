@@ -190,8 +190,6 @@ function get_pair_info(
         accumulator           = (map []: map(tkn_pool_idx_t, nat));
         total_staked          = 0n;
       ];
-      proxy_contract        = (None: option (address));
-      proxy_reward_acc      = (map []: map(token_t, nat));
       total_supply          = 0n;
     ]);
   } with (pair, token_id)

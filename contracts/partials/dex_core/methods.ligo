@@ -29,11 +29,6 @@ function call_dex(
     (* QUIPU stakers *)
     | Stake(_)                -> 18n
     | Unstake(_)              -> 19n
-    (* VIEWS *)
-    | Get_tokens_info(_)      -> 20n
-    | Get_fees(_)             -> 21n
-    | Get_dy(_)               -> 22n
-    | Get_A(_)                -> 23n
 
     end;
 

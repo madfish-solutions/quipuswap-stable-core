@@ -63,10 +63,6 @@ type pair_t             is [@layout:comb] record [
 
   staker_accumulator      : stkr_acc_t;
 
-  proxy_contract          : option(address);
-  // proxy_limits            : map(tkn_pool_idx_t, nat);
-  proxy_reward_acc        : map(token_t, nat);
-
   (* LP data *)
 
   total_supply            : nat; (* total shares count *)
