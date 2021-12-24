@@ -8,8 +8,8 @@
   "author": "Illia Likhoshva <likhoshva@madfish.solutions> (https://www.madfish.solutions/)",
   "private": true,
   "dependencies": {
-    "@taquito/signer": "^9.1.1",
-    "@taquito/taquito": "^9.1.1",
+    "@taquito/signer": "^11.1.0",
+    "@taquito/taquito": "^11.1.0",
     "@types/jest": "^27.0.2",
     "create-tezos-smart-contract": "^1.1.11",
     "date-fns": "^2.25.0",
@@ -57,5 +57,9 @@
     "eslint-plugin-jest-formatting": "^3.0.0",
     "eslint-plugin-prettier": "^4.0.0",
     "prettier": "^2.5.1"
+  },
+  "resolutions": {
+    "create-tezos-smart-contract/**/@taquito/signer": "^11.1.0",
+    "create-tezos-smart-contract/**/@taquito/taquito": "^11.1.0"
   }
 }

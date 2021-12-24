@@ -14,6 +14,7 @@
     "no-console": 1, // Means warning
     "prettier/prettier": 2, // Means error
     "jest/no-hooks": 0,
-    "jest/expect-expect": 0
+    "jest/expect-expect": 0,
+    "jest/prefer-expect-assertions": 1,
   }
 }
