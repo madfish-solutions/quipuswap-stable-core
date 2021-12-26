@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 import Dex from "../API";
-import { accounts } from "../constants";
+import { accounts, decimals } from "../constants";
 import {
   FA12TokenType,
   FA12,
@@ -9,6 +9,9 @@ import {
   FeeType,
   IndexMap,
   TokensMap,
+  TokenInfo,
+  PairInfo,
+  DexStorage,
 } from "../types";
 import { MichelsonMap } from "@taquito/taquito";
 import { TezosAddress } from "../../helpers/utils";
@@ -39,7 +42,6 @@ export async function getTokenMapSuccessCase(
     string,
     FA12TokenType | FA2TokenType
   >;
-  console.debug(value);
   value.forEach((value, key) => {
     if (key == idx_map.USDtz) {
       expect(tokens_map.USDtz.contract.address).toStrictEqual(
@@ -57,16 +59,42 @@ export async function getTokenMapSuccessCase(
   });
 }
 
-export async function getLPValueSuccessCase(dex: Dex, pool_id: BigNumber) {
-  const value = (await dex.contract.contractViews
+export async function getLPValueSuccessCase(
+  dex: Dex,
+  pool_id: BigNumber,
+  map_tokens_idx: IndexMap
+) {
+  const one_LP = new BigNumber(10).pow(18);
+  dex.updateStorage({ pools: [pool_id.toString()] });
+  const pool_info: PairInfo = dex.storage.storage.pools[pool_id.toString()];
+  const tkns_info = pool_info.tokens_info;
+  const view_result = (await dex.contract.contractViews
     .get_tok_per_share(pool_id)
     .executeView({ viewCaller: accounts["alice"].pkh })) as MichelsonMap<
     string,
     BigNumber
   >;
-  const result = {};
-  value.forEach((value, key) => (result[key] = value.toNumber()));
-  console.debug(result);
+  const pp_tks = {
+    USDtz: null,
+    kUSD: null,
+    uUSD: null,
+  };
+  view_result.forEach((value, key) => {
+    const tkn_info = tkns_info.get(key);
+    const expected = tkn_info.reserves
+      .multipliedBy(one_LP)
+      .dividedToIntegerBy(pool_info.total_supply);
+    expect(value.toNumber()).toStrictEqual(expected.toNumber());
+    if (key == map_tokens_idx.USDtz)
+      pp_tks.USDtz = value.dividedBy(decimals.USDtz);
+    else if (key == map_tokens_idx.kUSD)
+      pp_tks.kUSD = value.dividedBy(decimals.kUSD);
+    else if (key == map_tokens_idx.uUSD)
+      pp_tks.uUSD = value.dividedBy(decimals.uUSD);
+  });
+  console.debug(
+    `1.000000000000000000 of LP costs ${pp_tks.USDtz.toNumber()} USDtz + ${pp_tks.kUSD.toNumber()} kUSD + ${pp_tks.uUSD.toNumber()} uUSD`
+  );
 }
 
 export async function calcDivestOneSuccessCase(
@@ -78,10 +106,20 @@ export async function calcDivestOneSuccessCase(
   },
   map_tokens_idx: IndexMap
 ) {
-  const value = await dex.contract.contractViews
+  const base = params.token_amount.dividedBy(new BigNumber(10).pow(18));
+  const expected = base.minus(base.multipliedBy(5).dividedBy(10000)).toNumber(); // in case of unbalanced pool shoul be calculated based on reserves proportion.
+  const value = (await dex.contract.contractViews
     .calc_divest_one_coin(params)
-    .executeView({ viewCaller: accounts["alice"].pkh });
-  console.debug(value);
+    .executeView({ viewCaller: accounts["alice"].pkh })) as BigNumber;
+  let to_dec: BigNumber;
+  if (map_tokens_idx.USDtz == params.i.toString()) {
+    to_dec = decimals.USDtz;
+  } else if (map_tokens_idx.kUSD == params.i.toString()) {
+    to_dec = decimals.kUSD;
+  } else if (map_tokens_idx.uUSD == params.i.toString()) {
+    to_dec = decimals.uUSD;
+  } else to_dec = new BigNumber(0);
+  expect(value.dividedBy(to_dec).toNumber()).toBeCloseTo(expected, 1);
 }
 
 export async function getDySuccessCase(
@@ -90,8 +128,9 @@ export async function getDySuccessCase(
   token_idxs: IndexMap
 ) {
   await dex.updateStorage({ pools: [pool_id.toString()] });
-  const dx = new BigNumber(10).pow(12 + 3);
-  const exp_dy = new BigNumber(10).pow(6 + 3);
+  const base = new BigNumber(10).pow(3);
+  const dx = decimals.uUSD.multipliedBy(base);
+  const exp_dy = base.minus(base.multipliedBy(5).dividedBy(10000));
   const i = token_idxs.uUSD;
   const j = token_idxs.USDtz;
   const params = {
@@ -100,19 +139,17 @@ export async function getDySuccessCase(
     j: j,
     dx: dx,
   };
-  console.debug(dex.contract.contractViews);
   const dy = await dex.contract.contractViews
     .get_dy(params)
     .executeView({ viewCaller: accounts["alice"].pkh });
-  console.debug(dy.toString());
-  console.debug(exp_dy.toString(), dy.toString());
-  // expect(dy.toNumber()).toBeCloseTo(exp_dy.toNumber());
+  expect(dy.dividedBy(decimals.USDtz).toNumber()).toBeCloseTo(
+    exp_dy.toNumber()
+  );
 }
 
 export async function getASuccessCase(dex: Dex, pool_id: BigNumber) {
   await dex.updateStorage({ pools: [pool_id.toString()] });
   const exp_A = dex.storage.storage.pools[pool_id.toString()].initial_A;
-  console.debug(dex.contract.contractViews);
   const a = await dex.contract.contractViews.view_A(pool_id).executeView({
     viewCaller: accounts["alice"].pkh,
   });
@@ -145,28 +182,37 @@ export async function getStkrInfoSuccessCase(
   dex: Dex,
   requests: Array<StakerInfoRequest>
 ) {
-  const value = (await dex.contract.contractViews
+  const responses = (await dex.contract.contractViews
     .get_staker_info(requests)
     .executeView({
       viewCaller: accounts["alice"].pkh,
     })) as Array<StakerInfoResponse>;
-  value.forEach((value) => {
-    const rewards = {};
-    value.info.rewards.forEach(
-      (value, key) => (rewards[key] = value.toNumber())
+  for (const response of responses) {
+    expect(requests).toContainEqual(response.request);
+    const user_stake: BigNumber = await dex.contract
+      .storage()
+      .then((storage: DexStorage) => {
+        return storage.storage.stakers_balance;
+      })
+      .then((balance) =>
+        balance.get([
+          response.request.user,
+          response.request.pool_id.toString(),
+        ])
+      )
+      .then((value) => (value ? value.balance : new BigNumber(0)));
+    expect(response.info.balance.toNumber()).toStrictEqual(
+      user_stake.toNumber()
     );
-    console.debug({
-      user: value.request.user,
-      pool_id: value.request.pool_id,
-      balance: value.info.balance,
-      rewards: rewards,
-    });
-  });
+    response.info.rewards.forEach(
+      (value) => expect(value.toNumber()).toBe(0) // already claimed in divest coins
+    );
+  }
 }
 
 export declare type ReferralRewardsRequest = {
   user: TezosAddress;
-  token: FA2 | FA12;
+  token: any;
 };
 
 export declare type ReferralRewardsResponse = {

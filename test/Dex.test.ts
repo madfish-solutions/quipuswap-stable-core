@@ -10,7 +10,13 @@ import {
 
 import { API, cases as DexTests, constants, TokenSetups } from "./Dex";
 const { decimals, a_const, accounts, zero_amount, swap_routes } = constants;
-import { AmountsMap, IndexMap, TokensMap } from "./Dex/types";
+import {
+  AmountsMap,
+  FA12TokenType,
+  FA2TokenType,
+  IndexMap,
+  TokensMap,
+} from "./Dex/types";
 import { TokenFA12, TokenFA2 } from "./Token";
 import { defaultTokenId } from "./Token/token";
 
@@ -736,7 +742,7 @@ describe("dex", () => {
         await TView.pool.getDySuccessCase(dex, pool_id, map_tokens_idx));
 
       it("should return LP value", async () =>
-        await TView.pool.getLPValueSuccessCase(dex, pool_id));
+        await TView.pool.getLPValueSuccessCase(dex, pool_id, map_tokens_idx));
 
       it("should return calc divest one", async () =>
         await TView.pool.calcDivestOneSuccessCase(
@@ -753,18 +759,19 @@ describe("dex", () => {
         await TView.pool.getRefRewardsSuccessCase(dex, [
           {
             user: referral,
-            token: {
-              token_address: tokens.uUSD.contract.address,
-              token_id: new BigNumber(defaultTokenId),
-            },
+            token: [
+              tokens.uUSD.contract.address,
+              new BigNumber(defaultTokenId),
+              "fa2",
+            ],
           },
           {
             user: referral,
-            token: tokens.USDtz.contract.address,
+            token: [tokens.USDtz.contract.address, "fa12"],
           },
           {
             user: referral,
-            token: tokens.kUSD.contract.address,
+            token: [tokens.kUSD.contract.address, "fa12"],
           },
         ]));
 
