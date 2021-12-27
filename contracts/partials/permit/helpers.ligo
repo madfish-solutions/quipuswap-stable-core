@@ -130,8 +130,8 @@ function set_permit_expiry(
   then case permits[user] of
   | None               -> permits
   | Some(user_permits) -> case user_permits.permits[permit] of
-    | None              -> permits
-    | Some(permit_info) -> block {
+    | None                -> permits
+    | Some(permit_info)   -> block {
       const updated_user_permits : user_permits_t = if has_expired(default_expiry, user_permits.expiry, permit_info)
         then user_permits
         else user_permits with record [
@@ -153,9 +153,9 @@ function transfer_sender_check(
                         : full_storage_t is
   block {
     [@inline] function check_operator_for_tx(
-      var is_tx_operator    : is_tx_operator_t;
-      const param           : trsfr_fa2_dst_t)
-                            : is_tx_operator_t is
+      var is_tx_operator: is_tx_operator_t;
+      const param       : trsfr_fa2_dst_t)
+                        : is_tx_operator_t is
       block {
         const account_data: account_data_t = get_account_data(
           (is_tx_operator.owner, param.token_id),

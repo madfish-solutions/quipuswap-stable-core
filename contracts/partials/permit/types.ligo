@@ -34,7 +34,7 @@ type set_expiry_t       is [@layout:comb] record [
   permit_hash             : option(blake2b_hash_t);
 ]
 
-type is_tx_operator_t   is [@laoyout:comb] record [
+type is_tx_operator_t   is [@layout:comb] record [
   owner                   : address;
   approved                : bool;
 ]

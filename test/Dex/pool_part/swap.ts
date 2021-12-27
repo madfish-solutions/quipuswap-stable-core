@@ -165,25 +165,19 @@ export async function swapSuccessCase(
   upd_in = upd_in instanceof BigNumber ? upd_in : upd_in[0].balance;
   upd_out = upd_out instanceof BigNumber ? upd_out : upd_out[0].balance;
   console.debug(
-    `[SWAP] Balance ${t_in}: ${init_in
+    `[SWAP] Balances\n ${t_in}: ${init_in
       .dividedBy(rates[i])
       .div(new BigNumber(10).pow(18))
       .toFormat(10)} -> ${upd_in
       .dividedBy(rates[i])
       .div(new BigNumber(10).pow(18))
-      .toFormat(10)}`
-  );
-  console.debug(
-    `[SWAP] Balance ${t_to}: ${init_out
+      .toFormat(10)}\n ${t_to}: ${init_out
       .dividedBy(rates[j])
       .div(new BigNumber(10).pow(18))
       .toFormat(10)} -> ${upd_out
       .dividedBy(rates[j])
       .div(new BigNumber(10).pow(18))
-      .toFormat(10)}`
-  );
-  console.debug(
-    `[SWAP] Reserves ${t_in}: ${init_reserves
+      .toFormat(10)}\n       Reserves\n ${t_in}: ${init_reserves
       .get(i)
       .reserves.dividedBy(rates[i])
       .div(new BigNumber(10).pow(18))
@@ -191,11 +185,7 @@ export async function swapSuccessCase(
       .get(i)
       .reserves.dividedBy(rates[i])
       .div(new BigNumber(10).pow(18))
-      .toFormat(10)}`
-  );
-
-  console.debug(
-    `[SWAP] Reserves ${t_to}: ${init_reserves
+      .toFormat(10)}\n ${t_to}: ${init_reserves
       .get(j)
       .reserves.dividedBy(rates[j])
       .div(new BigNumber(10).pow(18))

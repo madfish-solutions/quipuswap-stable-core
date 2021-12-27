@@ -4,8 +4,7 @@ The function is responsible for fiding the appropriate method
 based on the provided index.
 
 *)
-[@inline]
-function call_token(
+[@inline] function call_token(
   const p               : token_action_t;
   var s                 : full_storage_t;
   const action          : full_action_t)

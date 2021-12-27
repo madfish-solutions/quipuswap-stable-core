@@ -1,36 +1,33 @@
 (* Check permissions *)
-[@inline]
-function check_permissions(const from_account: address; const allowances: set(address)): unit is
-  if from_account =/= Tezos.sender and not (allowances contains Tezos.sender)
-    then failwith(Errors.not_operator);
-  else Unit;
+[@inline] function check_permissions(
+  const from_account    : address;
+  const allowances      : set(address))
+                        : unit is
+  assert_with_error(from_account = Tezos.sender or (allowances contains Tezos.sender), Errors.not_operator);
 
 (* Balance check *)
-[@inline]
-function check_balance(const account_bal: nat; const to_spend: nat): unit is
+[@inline] function check_balance(
+  const account_bal     : nat;
+  const to_spend        : nat)
+                        : unit is
   if account_bal < to_spend
     then failwith(Errors.insufficient_balance)
   else Unit;
 
 (* Owner check *)
-[@inline]
-function is_owner(const owner: address): unit is
-  if Tezos.sender =/= owner
-    then failwith(Errors.not_owner)
-  else Unit;
+[@inline] function validate_owner(
+  const owner           : address)
+                        : unit is
+  assert_with_error(owner = Tezos.sender, Errors.not_owner);
 
-[@inline]
-function get_account_data(
-  const key: address * pool_id_t;
-  const acc_bm: big_map((address * pool_id_t), account_data_t)
-  ): account_data_t is
-  unwrap_or(acc_bm[key], record [
-    allowances      = (set[]  : set(address));
-  ]);
+[@inline] function get_account_data(
+  const key             : address * pool_id_t;
+  const acc_bm          : big_map((address * pool_id_t), account_data_t))
+                        : account_data_t is
+  unwrap_or(acc_bm[key], record [ allowances = (set[]: set(address)); ]);
 
 (* Perform transfers from one owner *)
-[@inline]
-function iterate_transfer(
+[@inline] function iterate_transfer(
   var s                 : full_storage_t;
   const user_trx_params : trsfr_fa2_prm_t)
                         : full_storage_t is
@@ -41,38 +38,37 @@ function iterate_transfer(
                         : full_storage_t is
       block {
         const sender_key =  (user_trx_params.from_, transfer.token_id);
-        var sender_balance : nat := unwrap_or(s.storage.ledger[sender_key], 0n);
+        var sender_balance := unwrap_or(s.storage.ledger[sender_key], 0n);
         sender_balance := nat_or_error(sender_balance - transfer.amount, "FA2_INSUFFICIENT_BALANCE");
         s.storage.ledger[sender_key] := sender_balance;
 
         const dest_key = (transfer.to_, transfer.token_id);
-        var dest_account : nat := unwrap_or(s.storage.ledger[dest_key], 0n);
+        var dest_account := unwrap_or(s.storage.ledger[dest_key], 0n);
         dest_account := dest_account + transfer.amount;
         s.storage.ledger[dest_key] := dest_account;
     } with s;
 } with List.fold(make_transfer, user_trx_params.txs, s)
 
 (* Perform single operator update *)
-[@inline]
-function iterate_update_operator(
+[@inline] function iterate_update_operator(
   var s                 : full_storage_t;
   const params          : upd_operator_prm_t
 )                       : full_storage_t is
   block {
-    case params of
-      Add_operator(param) -> {
-      is_owner(param.owner);
-      const owner_key = (param.owner, param.token_id);
-      var account_data: account_data_t := get_account_data(owner_key, s.storage.account_data);
-      account_data.allowances := Set.add(param.operator, account_data.allowances);
-      s.storage.account_data[owner_key] := account_data;
-    }
-    | Remove_operator(param) -> {
-      is_owner(param.owner);
-      const owner_key = (param.owner, param.token_id);
-      var account_data: account_data_t := get_account_data(owner_key, s.storage.account_data);
-      account_data.allowances := Set.remove(param.operator, account_data.allowances);
-      s.storage.account_data[owner_key] := account_data;
-    }
+    [@inline] function upd_operator(
+      const param       : operator_fa2_prm_t;
+      const add         : bool;
+      var account_s     : big_map((address * pool_id_t), account_data_t))
+                        : big_map((address * pool_id_t), account_data_t) is block {
+        validate_owner(param.owner);
+        const owner_key = (param.owner, param.token_id);
+        var account := get_account_data(owner_key, account_s);
+        account.allowances := Set.update(param.operator, add, account.allowances);
+        account_s[owner_key] := account;
+    } with account_s;
+
+    s.storage.account_data := case params of
+    | Add_operator(param) -> upd_operator(param, True, s.storage.account_data)
+    | Remove_operator(param) -> upd_operator(param, False, s.storage.account_data)
     end
   } with s

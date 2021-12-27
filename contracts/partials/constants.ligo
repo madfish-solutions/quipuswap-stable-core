@@ -1,15 +1,14 @@
 (* define noop for readability *)
-[@inline]
-const no_operations: list(operation) = nil;
+[@inline] const no_operations: list(operation) = nil;
 
-const dex_func_count: nat     = 24n;
+const dex_func_count: nat     = 14n;
 const token_func_count: nat   = 5n;
 const permit_func_count: nat  = 2n;
-const admin_func_count: nat   = 4n;
+const admin_func_count: nat   = 3n;
 
 (* StableSwap constants *)
-const max_tokens_count: nat   = 4n; (* Max available tokens in pair *)
-const min_tokens_count: nat   = 2n; (* Min available tokens in pair *)
+const max_tokens_count: nat   = 4n; (* Max available tokens in pool *)
+const min_tokens_count: nat   = 2n; (* Min available tokens in pool *)
 
 const precision: nat          = 1_000_000_000_000_000_000n; (* 10e18 The precision to convert to *)
 

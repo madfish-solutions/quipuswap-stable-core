@@ -98,7 +98,7 @@ export async function getLPValueSuccessCase(
 export async function calcDivestOneSuccessCase(
   dex: Dex,
   params: {
-    pair_id: BigNumber;
+    pool_id: BigNumber;
     token_amount: BigNumber;
     i: BigNumber;
   },
@@ -132,7 +132,7 @@ export async function getDySuccessCase(
   const i = token_idxs.uUSD;
   const j = token_idxs.USDtz;
   const params = {
-    pair_id: pool_id,
+    pool_id: pool_id,
     i: i,
     j: j,
     dx: dx,

@@ -194,7 +194,7 @@ export class Dex extends TokenFA2 {
       tokens_info.set(i, mapped_item(info));
     }
     const operation = await this.contract.methods
-      .add_pair(a_const, input_tokens, tokens_info)
+      .add_pool(a_const, input_tokens, tokens_info)
       .send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
@@ -244,7 +244,7 @@ export class Dex extends TokenFA2 {
   }
 
   async divestLiquidity(
-    pairId: BigNumber,
+    poolId: BigNumber,
     mintokenAmounts: Map<string, BigNumber>,
     sharesBurned: BigNumber
   ): Promise<TransactionOperation> {
@@ -253,14 +253,14 @@ export class Dex extends TokenFA2 {
       amts.set(key, value);
     });
     const operation = await this.contract.methods
-      .divest(pairId, amts, sharesBurned)
+      .divest(poolId, amts, sharesBurned)
       .send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
   }
 
   async divestImbalanced(
-    pairId: BigNumber,
+    poolId: BigNumber,
     tokenAmounts: Map<string, BigNumber>,
     maxSharesBurned: BigNumber,
     referral: string = null
@@ -271,20 +271,20 @@ export class Dex extends TokenFA2 {
     });
 
     const operation = await this.contract.methods
-      .divest_imbalanced(pairId, amts, maxSharesBurned, referral)
+      .divest_imbalanced(poolId, amts, maxSharesBurned, referral)
       .send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
   }
 
   async divestOneCoin(
-    pairId: BigNumber,
+    poolId: BigNumber,
     sharesBurned: BigNumber,
     tokenIdx: BigNumber,
     mintokenAmount: BigNumber
   ): Promise<TransactionOperation> {
     const operation = await this.contract.methods
-      .divest_one_coin(pairId, sharesBurned, tokenIdx, mintokenAmount)
+      .divest_one_coin(poolId, sharesBurned, tokenIdx, mintokenAmount)
       .send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;

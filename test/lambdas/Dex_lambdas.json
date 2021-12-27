@@ -32,27 +32,27 @@
     "name": "claim_ref"
   },
   {
-    "index": 12,
+    "index": 8,
     "name": "ramp_A"
   },
   {
-    "index": 13,
+    "index": 9,
     "name": "stop_ramp_A"
   },
   {
-    "index": 16,
+    "index": 10,
     "name": "set_fees"
   },
   {
-    "index": 17,
+    "index": 11,
     "name": "set_default_referral"
   },
   {
-    "index": 18,
+    "index": 12,
     "name": "stake_staker"
   },
   {
-    "index": 19,
+    "index": 13,
     "name": "unstake_staker"
   }
 ]

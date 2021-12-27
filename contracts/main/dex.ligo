@@ -35,11 +35,11 @@ function main(
 )                       : full_return_t is
   case p of
   | Set_admin_function(params)  -> set_function(FAdmin, params, s)
-  | Use_admin(params)           -> call_admin(params, s)
   | Set_dex_function(params)    -> set_function(FDex, params, s)
-  | Use_dex(params)             -> call_dex(params, s)
-  | Set_token_function(params)  -> set_function(FToken, params, s)
-  | Use_token(params)           -> call_token(params, s, p)
   | Set_permit_function(params) -> set_function(FPermit, params, s)
+  | Set_token_function(params)  -> set_function(FToken, params, s)
+  | Use_admin(params)           -> call_admin(params, s)
+  | Use_dex(params)             -> call_dex(params, s)
   | Use_permit(params)          -> call_permit(params, s, p)
+  | Use_token(params)           -> call_token(params, s, p)
   end

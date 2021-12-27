@@ -10,13 +10,7 @@ function permit(
       const signature : signature = param.1.0;
       const permit : blake2b_hash_t = param.1.1;
       const issuer: address = Tezos.address(Tezos.implicit_account(Crypto.hash_key(key)));
-      const to_sign : bytes = Bytes.pack(
-        (
-          (Tezos.self_address, Tezos.chain_id),
-          (s.permits_counter, permit)
-        )
-      );
-
+      const to_sign : bytes = Bytes.pack(((Tezos.self_address, Tezos.chain_id),(s.permits_counter, permit)));
       s := if Crypto.check(key, signature, to_sign)
         then s with record [
           permits_counter = s.permits_counter + 1n;

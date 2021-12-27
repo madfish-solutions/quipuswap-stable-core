@@ -194,7 +194,6 @@ describe("dex", () => {
     });
 
     describe("2.2. Test pool administration", () => {
-      const adm = TPool.PoolAdmin;
       let pool_id: BigNumber;
 
       beforeAll(async () => {
@@ -212,8 +211,8 @@ describe("dex", () => {
                 await dex.contract.methods
                   .ramp_A(
                     pool_id,
-                    adm.Ramp_A.future_a_const,
-                    adm.Ramp_A.future_a_time
+                    TPool.PoolAdmin.Ramp_A.future_a_const,
+                    TPool.PoolAdmin.Ramp_A.future_a_time
                   )
                   .send(),
               "Dex/not-contract-admin"
@@ -221,7 +220,22 @@ describe("dex", () => {
           10000
         );
 
-        it.todo("should ramp A");
+        it(
+          "should ramp A",
+          async () =>
+            await prepareProviderOptions("eve").then((config) => {
+              Tezos.setProvider(config);
+              return TPool.PoolAdmin.Ramp_A.rampASuccessCase(
+                dex,
+                pool_id,
+                TPool.PoolAdmin.Ramp_A.future_a_const,
+                new BigNumber(Date.now())
+                  .plus(20)
+                  .plus(TPool.PoolAdmin.Ramp_A.future_a_time)
+              );
+            }),
+          30000
+        );
 
         it(
           "should fail if not admin performs stopping ramp A",
@@ -235,18 +249,20 @@ describe("dex", () => {
           10000
         );
 
-        it.todo("should stop ramp A");
+        it("should stop ramp A", async () =>
+          await prepareProviderOptions("eve").then((config) => {
+            Tezos.setProvider(config);
+            return TPool.PoolAdmin.Ramp_A.stopRampASuccessCase(dex, pool_id);
+          }));
       });
 
       describe("2.2.2 Setting fees", () => {
-        const adm_fee = adm.Fee;
-
         it(
           "should fail if not admin try to set new fee",
           async () =>
             await failCase(
               "bob",
-              async () => await dex.setFees(pool_id, adm_fee.fees),
+              async () => await dex.setFees(pool_id, TPool.PoolAdmin.Fee.fees),
               "Dex/not-contract-admin"
             ),
           10000
@@ -255,11 +271,11 @@ describe("dex", () => {
         it(
           "should change fees",
           async () =>
-            await adm_fee.setFeesSuccessCase(
+            await TPool.PoolAdmin.Fee.setFeesSuccessCase(
               dex,
               "eve",
               pool_id,
-              adm_fee.fees,
+              TPool.PoolAdmin.Fee.fees,
               Tezos
             ),
           20000
@@ -714,6 +730,23 @@ describe("dex", () => {
       it("should return dy", async () =>
         await TView.pool.getDySuccessCase(dex, pool_id, map_tokens_idx));
 
+      it("should fail when return dy because of pool_id", async () =>
+        await failCase(
+          "bob",
+          async () => {
+            const params = {
+              pool_id: pool_id.plus(3),
+              i: map_tokens_idx.USDtz,
+              j: map_tokens_idx.uUSD,
+              dx: new BigNumber(10000000000),
+            };
+            return dex.contract.contractViews
+              .get_dy(params)
+              .executeView({ viewCaller: accounts["alice"].pkh });
+          },
+          "Dex/not-launched"
+        ));
+
       it("should return LP value", async () =>
         await TView.pool.getLPValueSuccessCase(dex, pool_id, map_tokens_idx));
 
@@ -721,7 +754,7 @@ describe("dex", () => {
         await TView.pool.calcDivestOneSuccessCase(
           dex,
           {
-            pair_id: pool_id,
+            pool_id: pool_id,
             token_amount: new BigNumber(10).pow(18).times(100),
             i: new BigNumber(map_tokens_idx.uUSD),
           },
@@ -860,7 +893,7 @@ describe("dex", () => {
             lambdaContractAddress,
             Tezos
           ),
-        20000
+        30000
       );
     });
 

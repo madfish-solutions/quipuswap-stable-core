@@ -1,10 +1,12 @@
-[@inline]
-function call_admin(
+(* This methods called only by admin and modifies only `storage` property of full storage *)
+[@inline] function call_admin(
   const p               : admin_action_t;
   var s                 : full_storage_t)
                         : full_return_t is
   block {
-    is_admin(s.storage.admin);
+
+    check_admin(s.storage.admin);
+
     const idx : nat = case p of
     | Add_rem_managers(_) -> 0n
     | Set_dev_address(_)  -> 1n
