@@ -3,15 +3,13 @@ import Dex from "../API";
 import { accounts, decimals } from "../constants";
 import {
   FA12TokenType,
-  FA12,
-  FA2,
   FA2TokenType,
   FeeType,
   IndexMap,
   TokensMap,
-  TokenInfo,
   PairInfo,
   DexStorage,
+  RewardsType,
 } from "../types";
 import { MichelsonMap } from "@taquito/taquito";
 import { TezosAddress } from "../../helpers/utils";
@@ -189,7 +187,7 @@ export async function getStkrInfoSuccessCase(
     })) as Array<StakerInfoResponse>;
   for (const response of responses) {
     expect(requests).toContainEqual(response.request);
-    const user_stake: BigNumber = await dex.contract
+    const { user_stake, rewards } = await dex.contract
       .storage()
       .then((storage: DexStorage) => {
         return storage.storage.stakers_balance;
@@ -200,19 +198,28 @@ export async function getStkrInfoSuccessCase(
           response.request.pool_id.toString(),
         ])
       )
-      .then((value) => (value ? value.balance : new BigNumber(0)));
+      .then((value) =>
+        value
+          ? { user_stake: value.balance, rewards: value.earnings }
+          : {
+              user_stake: new BigNumber(0),
+              rewards: new MichelsonMap<string, RewardsType>(),
+            }
+      );
     expect(response.info.balance.toNumber()).toStrictEqual(
       user_stake.toNumber()
     );
-    response.info.rewards.forEach(
-      (value) => expect(value.toNumber()).toBe(0) // already claimed in divest coins
-    );
+    response.info.rewards.forEach((value, key) => {
+      const rew_info = rewards.get(key);
+      const expected = rew_info ? rew_info.reward : new BigNumber(0);
+      expect(value.toNumber()).toBeGreaterThanOrEqual(expected.toNumber());
+    });
   }
 }
 
 export declare type ReferralRewardsRequest = {
   user: TezosAddress;
-  token: any;
+  token: FA12TokenType | FA2TokenType;
 };
 
 export declare type ReferralRewardsResponse = {
@@ -224,10 +231,24 @@ export async function getRefRewardsSuccessCase(
   dex: Dex,
   requests: Array<ReferralRewardsRequest>
 ) {
-  const value = (await dex.contract.contractViews
-    .get_referral_rewards(requests)
-    .executeView({
-      viewCaller: accounts["alice"].pkh,
-    })) as Array<ReferralRewardsResponse>;
-  console.debug(value.toString());
+  const responses: Array<ReferralRewardsResponse> =
+    await dex.contract.contractViews
+      .get_referral_rewards(requests)
+      .executeView({
+        viewCaller: accounts["alice"].pkh,
+      });
+  for (const response of responses) {
+    expect(requests).toContainEqual(response.request);
+    const expected_reward = await dex.contract
+      .storage()
+      .then((storage: DexStorage) =>
+        storage.storage.referral_rewards.get({
+          0: response.request.user,
+          1: response.request.token,
+        })
+      );
+    expect(response.reward.toNumber()).toStrictEqual(
+      expected_reward.toNumber()
+    );
+  }
 }

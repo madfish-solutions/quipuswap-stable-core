@@ -100,7 +100,7 @@ export declare type DexStorage = {
   default_expiry: BigNumber;
 };
 
-declare type RewardsType = {
+export declare type RewardsType = {
   reward: BigNumber;
   former: BigNumber;
 };

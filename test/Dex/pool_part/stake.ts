@@ -55,9 +55,7 @@ export async function unstakeFromPoolSuccessCase(
       .total_staked;
   const init_user_stake: BigNumber = await dex.contract
     .storage()
-    .then((storage: DexStorage) => {
-      return storage.storage.stakers_balance;
-    })
+    .then((storage: DexStorage) => storage.storage.stakers_balance)
     .then((balance) => balance.get([staker, pool_id.toString()]))
     .then((value) => (value ? value.balance : new BigNumber(0)));
   const op = await dex.contract.methods.unstake(pool_id, output).send();

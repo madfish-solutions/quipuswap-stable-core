@@ -36,6 +36,10 @@ export async function harvestFromPoolSuccessCase(
     .unstake(pool_id, new BigNumber(0))
     .send();
   await confirmOperation(Tezos, op.hash);
+  await dex.updateStorage({ pools: [pool_id.toString()] });
+  const upd_total_stake =
+    dex.storage.storage.pools[pool_id.toNumber()].staker_accumulator
+      .total_staked;
   const upd_user_rew: MichelsonMap<
     string,
     {
@@ -54,4 +58,5 @@ export async function harvestFromPoolSuccessCase(
       new BigNumber(0).toNumber()
     );
   });
+  expect(init_total_stake.toNumber()).toStrictEqual(upd_total_stake.toNumber());
 }

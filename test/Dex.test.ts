@@ -603,33 +603,6 @@ describe("dex", () => {
         20000
       );
     });
-
-    describe("2.7 Test unstake QUIPU token from pool", () => {
-      const output = new BigNumber(10).pow(7);
-      let pool_id: BigNumber;
-
-      beforeAll(async () => {
-        const config = await prepareProviderOptions("bob");
-        Tezos.setProvider(config);
-        await dex.updateStorage({});
-        pool_id = dex.storage.storage.pools_count.minus(new BigNumber(1));
-      }, 80000);
-
-      it(
-        `Should unstake ${output.dividedBy(
-          decimals.QUIPU
-        )} QUIPU tokens from pool`,
-        async () =>
-          await TPool.stake.unstakeFromPoolSuccessCase(
-            dex,
-            staker,
-            pool_id,
-            output,
-            Tezos
-          ),
-        30000
-      );
-    });
   });
 
   describe("3. Testing Token endpoints", () => {
@@ -759,19 +732,20 @@ describe("dex", () => {
         await TView.pool.getRefRewardsSuccessCase(dex, [
           {
             user: referral,
-            token: [
-              tokens.uUSD.contract.address,
-              new BigNumber(defaultTokenId),
-              "fa2",
-            ],
+            token: {
+              fa2: {
+                token_address: tokens.uUSD.contract.address,
+                token_id: new BigNumber(defaultTokenId),
+              },
+            } as FA2TokenType,
           },
           {
             user: referral,
-            token: [tokens.USDtz.contract.address, "fa12"],
+            token: { fa12: tokens.USDtz.contract.address } as FA12TokenType,
           },
           {
             user: referral,
-            token: [tokens.kUSD.contract.address, "fa12"],
+            token: { fa12: tokens.kUSD.contract.address } as FA12TokenType,
           },
         ]));
 
@@ -822,7 +796,34 @@ describe("dex", () => {
     });
   });
 
-  describe("5. Testing rewards separation", () => {
+  describe("5 Test unstake QUIPU token from pool", () => {
+    const output = new BigNumber(10).pow(7);
+    let pool_id: BigNumber;
+
+    beforeAll(async () => {
+      const config = await prepareProviderOptions("bob");
+      Tezos.setProvider(config);
+      await dex.updateStorage({});
+      pool_id = dex.storage.storage.pools_count.minus(new BigNumber(1));
+    }, 80000);
+
+    it(
+      `Should unstake ${output.dividedBy(
+        decimals.QUIPU
+      )} QUIPU tokens from pool`,
+      async () =>
+        await TPool.stake.unstakeFromPoolSuccessCase(
+          dex,
+          staker,
+          pool_id,
+          output,
+          Tezos
+        ),
+      30000
+    );
+  });
+
+  describe("6. Testing rewards separation", () => {
     let pool_id: BigNumber;
     const batchTimes = 5;
     const referral = "eve";
@@ -846,7 +847,7 @@ describe("dex", () => {
       );
     });
 
-    describe("5.1. Referral reward", () => {
+    describe("6.1. Referral reward", () => {
       it(
         "should get referral rewards",
         async () =>
@@ -863,7 +864,7 @@ describe("dex", () => {
       );
     });
 
-    describe("5.2. QT stakers reward", () => {
+    describe("6.2. QT stakers reward", () => {
       it(
         "should harvest staking rewards",
         async () =>
@@ -880,7 +881,7 @@ describe("dex", () => {
       );
     });
 
-    describe("5.3. Developer reward", () => {
+    describe("6.3. Developer reward", () => {
       it("should get dev rewards", async () =>
         await TReward.developer.getDeveloperRewardsSuccessCase(
           dex,
@@ -894,7 +895,7 @@ describe("dex", () => {
     });
   });
 
-  describe("6. Permits", () => {
+  describe("7. Permits", () => {
     const signer = "bob";
     const receiver = "alice";
     const sender = "eve";
@@ -915,7 +916,7 @@ describe("dex", () => {
     ];
     let paramHash: string;
 
-    describe("6.1 Standart Permit", () => {
+    describe("7.1 Standart Permit", () => {
       it(`${signer} generates permit payload, ${receiver} submits test to contract`, async () =>
         (paramHash = await TPermit.addPermitFromSignerByReceiverSuccessCase(
           dex,
@@ -943,7 +944,7 @@ describe("dex", () => {
         ));
     });
 
-    describe("6.2 Timeout Permit", () => {
+    describe("7.2 Timeout Permit", () => {
       it(`${signer} generates permit, ${receiver} submits test, ${signer} sets expiry`, async () =>
         await TPermit.setWithExpiry(
           dex,
