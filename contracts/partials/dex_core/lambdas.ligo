@@ -212,7 +212,7 @@ function divest_liquidity(
         const res = Map.fold(divest_reserves, tokens, (pool.tokens_info, operations));
         pool.tokens_info := res.0;
         pool.total_supply := nat_or_error(pool.total_supply - params.shares, Errors.low_total_supply);
-        const key = (Tezos.sender, params.pool_id)
+        const key = (Tezos.sender, params.pool_id);
         const share = unwrap_or(s.ledger[key], 0n);
         s.ledger[key] := nat_or_error(share - params.shares, Errors.insufficient_lp);
         s.pools[params.pool_id] := pool;
