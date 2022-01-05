@@ -28,5 +28,9 @@ jobs:
         run: yarn install
       - name: Compile contracts
         run: yarn compile
+      - name: Start sandbox
+        run: yarn sandboz
       - name: Test the contracts
         run: yarn test
+      - name: Stop sandbox
+        run: yarn sandboz
