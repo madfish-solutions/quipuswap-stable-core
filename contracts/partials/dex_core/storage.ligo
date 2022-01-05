@@ -1,11 +1,11 @@
-type account_rwrd_t    is [@layout:comb] record [
+type account_rwrd_t     is [@layout:comb] record [
   reward                  : nat; (* amount of rewards to be minted for user *)
   former                  : nat; (* previous amount of rewards minted for user *)
 ]
 
 type tkns_map_t         is map(nat, token_t); (* NOTE: maximum 4 tokens from 0 to 3 *)
 
-type tmp_tkns_map_t     is record [
+type tmp_tkns_map_t     is [@layout:comb] record [
   tokens                  : tkns_map_t;
   index                   : nat;
 ];

@@ -65,8 +65,8 @@ function initialize_exchange(
       );
 
       const pool = pool_i with record [
-        initial_A       = params.a_constant;
-        future_A        = params.a_constant;
+        initial_A       = params.a_constant * Constants.a_precision;
+        future_A        = params.a_constant * Constants.a_precision;
         initial_A_time  = Tezos.now;
         future_A_time   = Tezos.now;
         tokens_info     = tokens_info;
@@ -395,8 +395,8 @@ function ramp_A(
     | Ramp_A(params) -> {
         check_admin(s.admin);
         var pool : pool_t := unwrap(s.pools[params.pool_id], Errors.pool_not_listed);
-        assert(Tezos.now >= pool.initial_A_time + Constants.min_ramp_time);
-        assert(params.future_time >= Tezos.now + Constants.min_ramp_time); //  # dev: insufficient time
+        assert_with_error(Tezos.now >= pool.initial_A_time + Constants.min_ramp_time, Errors.timestamp_error);
+        assert_with_error(params.future_time >= Tezos.now + Constants.min_ramp_time, Errors.timestamp_error); //  # dev: insufficient time
         const initial_A: nat = get_A(
           pool.initial_A_time,
           pool.initial_A,
@@ -404,10 +404,10 @@ function ramp_A(
           pool.future_A
         );
         const future_A_p: nat = params.future_A * Constants.a_precision;
-        assert((params.future_A > 0n) and (params.future_A < Constants.max_a));
-        if future_A_p < initial_A
-        then assert(future_A_p * Constants.max_a_change >= initial_A)
-        else assert(future_A_p <= initial_A * Constants.max_a_change);
+        assert((params.future_A > 0n) and (params.future_A <= Constants.max_a));
+        if future_A_p >= initial_A
+        then assert_with_error(future_A_p <= initial_A * Constants.max_a_change, Errors.a_limit)
+        else assert_with_error(future_A_p * Constants.max_a_change >= initial_A, Errors.a_limit);
         pool.initial_A := initial_A;
         pool.future_A := future_A_p;
         pool.initial_A_time := Tezos.now;
@@ -440,7 +440,7 @@ function stop_ramp_A(
       pool.initial_A_time := Tezos.now;
       pool.future_A_time := Tezos.now;
       s.pools[pool_id] := pool;
-      }
+    }
     | _ -> skip
     end
   } with (operations, s)

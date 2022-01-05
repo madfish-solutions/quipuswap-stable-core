@@ -1,6 +1,10 @@
 (* Modules *)
 #import "../partials/errors.ligo" "Errors"
+#if TEST
+#import "../partials/constants_test.ligo" "Constants"
+#else
 #import "../partials/constants.ligo" "Constants"
+#endif
 (* Types *)
 #include "../partials/common_types.ligo"
 #include "../partials/admin/types.ligo"

@@ -29,7 +29,8 @@ function get_A(
       const t_den = nat_or_error(t1 - t0, Errors.timestamp_error);
       a := if a1 > a0
         then a0 + abs(a1 - a0) * t_num / t_den
-        else abs(a0 - abs(a0 - a1) * t_num / t_den); (* always a0 > (a0-a1) * (now-t0)/(t1-t0) if t1 > now && a0 > a1 *)
+        else abs(a0 - abs(a0 - a1) * t_num / t_den);
+        (* always a0 > (a0-a1) * (now-t0)/(t1-t0) if t1 > now && a0 > a1 *)
     }
     else skip;
   } with a
