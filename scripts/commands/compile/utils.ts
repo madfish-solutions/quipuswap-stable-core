@@ -31,7 +31,7 @@ const _compileFile = async (
     );
     if (fs.existsSync(`${config.outputDirectory}/${contractFileName}.json`)) {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const oldBuildFile = require(`../../../${config.contractsDirectory}/${contractFileName}.json`);
+      const oldBuildFile = require(`${process.cwd()}/${config.outputDirectory}/${contractFileName}.json`);
 
       if (oldBuildFile.sourcePath !== sourcePath) {
         console.error(
