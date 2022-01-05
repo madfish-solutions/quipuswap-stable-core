@@ -143,7 +143,7 @@ export const compileLambdas = async (
 ) => {
   console.log(`Compiling ${contract} contract lambdas of ${type} type...\n`);
 
-  const ligo = getLigo(true);
+  const ligo = `docker run -v $PWD:$PWD --rm -i -w $PWD ligolang/ligo:${config.ligoVersion}`;
   const pwd = execSync("echo $PWD").toString();
   const lambdas = JSON.parse(
     fs.readFileSync(`${pwd.slice(0, pwd.length - 1)}/${json}`).toString()
