@@ -98,10 +98,10 @@ const _compileFile = async (
     ligo.stderr.on("data", (data) => {
       const message: string = data.toString();
       if (message.toLowerCase().includes("err")) {
-        console.error(data.toString());
+        console.error(message);
         reject(ligo.stderr);
         process.exit(1);
-      }
+      } else console.warn(message);
     });
   });
 };
