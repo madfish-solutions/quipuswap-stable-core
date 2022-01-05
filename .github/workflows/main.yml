@@ -29,8 +29,8 @@ jobs:
       - name: Compile contracts
         run: yarn compile
       - name: Start sandbox
-        run: yarn sandbox
+        run: yarn start-sandbox && sleep 10s
       - name: Test the contracts
         run: yarn test
       - name: Stop sandbox
-        run: yarn sandbox
+        run: yarn stop-sandbox
