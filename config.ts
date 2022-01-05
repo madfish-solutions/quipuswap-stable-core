@@ -5,7 +5,7 @@ export const config = {
   preferredLigoFlavor: "pascaligo",
   networks: {
     sandbox: {
-      host: "159.89.6.101",
+      host: "localhost",
       port: 20000,
       protocol: TezosProtocols.HANGZHOU,
       genesisBlockHash: "random",
