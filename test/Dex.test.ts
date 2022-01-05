@@ -229,12 +229,10 @@ describe("dex", () => {
                 dex,
                 pool_id,
                 TPool.PoolAdmin.Ramp_A.future_a_const,
-                new BigNumber(Date.now())
-                  .plus(20)
-                  .plus(TPool.PoolAdmin.Ramp_A.future_a_time)
+                TPool.PoolAdmin.Ramp_A.future_a_time
               );
             }),
-          30000
+          50000
         );
 
         it(
