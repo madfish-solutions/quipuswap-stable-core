@@ -31,7 +31,9 @@ const _compileFile = async (
     );
     if (fs.existsSync(`${config.outputDirectory}/${contractFileName}.json`)) {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const oldBuildFile = require(`${process.cwd()}/${config.outputDirectory}/${contractFileName}.json`);
+      const oldBuildFile = require(`${process.cwd()}/${
+        config.outputDirectory
+      }/${contractFileName}.json`);
 
       if (oldBuildFile.sourcePath !== sourcePath) {
         console.error(
@@ -94,9 +96,12 @@ const _compileFile = async (
     });
 
     ligo.stderr.on("data", (data) => {
-      console.error(data.toString());
-      reject(ligo.stderr);
-      process.exit(1);
+      const message: string = data.toString();
+      if (message.toLowerCase().includes("err")) {
+        console.error(data.toString());
+        reject(ligo.stderr);
+        process.exit(1);
+      }
     });
   });
 };
