@@ -1,12 +1,12 @@
 import { execSync } from "child_process";
 import { InMemorySigner } from "@taquito/signer";
 import { TransactionOperation } from "@taquito/taquito/dist/types/operations/transaction-operation";
-import { sandbox, ligoVersion } from "../../config.json";
-const accounts = sandbox.accounts;
+import config from "../../config";
+const accounts = config.networks.sandbox.accounts;
 import { confirmOperation } from "./confirmation";
 import { MichelsonMap, TezosToolkit } from "@taquito/taquito";
-import { IndexMap, TokensMap } from "../Dex/types";
-import { FA12TokenType, FA2TokenType } from "../Dex/API/types";
+import { IndexMap, TokensMap } from "../../test/Dex/types";
+import { FA12TokenType, FA2TokenType } from "../../test/Dex/API/types";
 export const tezPrecision = 1e6;
 
 function stringLiteralArray<T extends string>(a: T[]) {
@@ -16,9 +16,12 @@ function stringLiteralArray<T extends string>(a: T[]) {
 const senders: string[] = stringLiteralArray(Object.keys(accounts));
 export declare type AccountsLiteral = typeof senders[number];
 
+const nw: string[] = stringLiteralArray(Object.keys(config.networks));
+export declare type NetworkLiteral = typeof nw[number];
+
 export declare type TezosAddress = string;
 
-const rpcNode = `http://${sandbox.host}:${sandbox.port}`;
+const rpcNode = `http://${config.networks.sandbox.host}:${config.networks.sandbox.port}`;
 export const Tezos = new TezosToolkit(rpcNode);
 
 export async function initTezos(
@@ -33,7 +36,7 @@ export async function initTezos(
 export function getLigo(isDockerizedLigo: boolean): string {
   let path = "ligo";
   if (isDockerizedLigo) {
-    path = `docker run -v $PWD:$PWD --rm -i ligolang/ligo:${ligoVersion}`;
+    path = `docker run -v $PWD:$PWD --rm -i ligolang/ligo:${config.ligoVersion}`;
     try {
       execSync(`${path}  --help`);
     } catch (err) {
@@ -44,7 +47,7 @@ export function getLigo(isDockerizedLigo: boolean): string {
     try {
       execSync(`${path}  --help`);
     } catch (err) {
-      path = `docker run -v $PWD:$PWD --rm -i ligolang/ligo:${ligoVersion}`;
+      path = `docker run -v $PWD:$PWD --rm -i ligolang/ligo:${config.ligoVersion}`;
       execSync(`${path}  --help`);
     }
   }

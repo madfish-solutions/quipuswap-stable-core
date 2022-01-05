@@ -1,5 +1,5 @@
 import BigNumber from "bignumber.js";
-import config from "../../config.json";
+import config from "../../config";
 
 export const decimals = {
   kUSD: new BigNumber(10).pow(18),
@@ -18,7 +18,7 @@ export const swap_routes = [
   ["uUSD", "kUSD"],
 ];
 
-export const accounts = config.sandbox.accounts;
+export const accounts = config.networks.sandbox.accounts;
 
 export const zero_amount = new BigNumber("0");
 

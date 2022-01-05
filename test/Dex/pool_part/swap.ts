@@ -1,12 +1,12 @@
 import { TezosToolkit } from "@taquito/taquito";
 import BigNumber from "bignumber.js";
-import { confirmOperation } from "../../helpers/confirmation";
+import { confirmOperation } from "../../../scripts/helpers/confirmation";
 import Dex from "../API";
 import {
   AccountsLiteral,
   mapTokensToIdx,
   prepareProviderOptions,
-} from "../../helpers/utils";
+} from "../../../scripts/helpers/utils";
 import { accounts, decimals, swap_routes } from "../constants";
 import { setupTokenAmounts } from "../tokensSetups";
 import { AmountsMap, IndexMap, TokensMap } from "../types";
@@ -165,19 +165,19 @@ export async function swapSuccessCase(
   upd_in = upd_in instanceof BigNumber ? upd_in : upd_in[0].balance;
   upd_out = upd_out instanceof BigNumber ? upd_out : upd_out[0].balance;
   console.debug(
-    `[SWAP] Balances\n ${t_in}: ${init_in
+    `[SWAP] Balances\n\t\t${t_in}:\t${init_in
       .dividedBy(rates[i])
       .div(new BigNumber(10).pow(18))
       .toFormat(10)} -> ${upd_in
       .dividedBy(rates[i])
       .div(new BigNumber(10).pow(18))
-      .toFormat(10)}\n ${t_to}: ${init_out
+      .toFormat(10)}\n\t\t${t_to}:\t${init_out
       .dividedBy(rates[j])
       .div(new BigNumber(10).pow(18))
       .toFormat(10)} -> ${upd_out
       .dividedBy(rates[j])
       .div(new BigNumber(10).pow(18))
-      .toFormat(10)}\n       Reserves\n ${t_in}: ${init_reserves
+      .toFormat(10)}\n       Reserves\n\t\t${t_in}:\t${init_reserves
       .get(i)
       .reserves.dividedBy(rates[i])
       .div(new BigNumber(10).pow(18))
@@ -185,7 +185,7 @@ export async function swapSuccessCase(
       .get(i)
       .reserves.dividedBy(rates[i])
       .div(new BigNumber(10).pow(18))
-      .toFormat(10)}\n ${t_to}: ${init_reserves
+      .toFormat(10)}\n\t\t${t_to}:\t${init_reserves
       .get(j)
       .reserves.dividedBy(rates[j])
       .div(new BigNumber(10).pow(18))

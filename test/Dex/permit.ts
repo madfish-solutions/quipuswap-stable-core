@@ -7,9 +7,9 @@ import {
   AccountsLiteral,
   initTezos,
   prepareProviderOptions,
-} from "../helpers/utils";
+} from "../../scripts/helpers/utils";
 import { accounts } from "./constants";
-import { confirmOperation } from "../helpers/confirmation";
+import { confirmOperation } from "../../scripts/helpers/confirmation";
 import blake from "blakejs";
 import { MichelsonMap } from "@taquito/taquito";
 

@@ -1,8 +1,8 @@
 import BigNumber from "bignumber.js";
 import { TezosToolkit } from "@taquito/taquito";
-import { confirmOperation } from "../../helpers/confirmation";
+import { confirmOperation } from "../../../scripts/helpers/confirmation";
 import Dex from "../API";
-import { prepareProviderOptions } from "../../helpers/utils";
+import { prepareProviderOptions } from "../../../scripts/helpers/utils";
 import { decimals } from "../constants";
 import { DexStorage, TokensMap } from "../types";
 import { defaultTokenId } from "../../Token";
@@ -65,7 +65,7 @@ export async function getDeveloperRewardsSuccessCase(
   console.debug(uUSDRewards.dividedBy(decimals.uUSD).toFormat());
   expect(uUSDRewards.dividedBy(decimals.uUSD).toNumber()).toBeCloseTo(
     expectedRewardNormalized
-      .plus(13.35) // approx. from invests / divests and swaps before
+      .plus(13.33) // approx. from invests / divests and swaps before
       .toNumber(),
     1
   );

@@ -1,8 +1,8 @@
 import BigNumber from "bignumber.js";
-import { prepareProviderOptions } from "../helpers/utils";
+import { prepareProviderOptions } from "../../scripts/helpers/utils";
 import { AmountsMap, FA12TokenType, FA2TokenType, TokensMap } from "./types";
 import { TezosToolkit } from "@taquito/taquito";
-import { confirmOperation } from "../helpers/confirmation";
+import { confirmOperation } from "../../scripts/helpers/confirmation";
 import Dex from "./API";
 import { accounts } from "./constants";
 import { TokenFA12, TokenFA2, TokenInitValues } from "../Token";

@@ -6,7 +6,7 @@ import {
   prepareProviderOptions,
   Tezos,
   TezosAddress,
-} from "./helpers/utils";
+} from "../scripts/helpers/utils";
 
 import { API, cases as DexTests, constants, TokenSetups } from "./Dex";
 const { decimals, a_const, accounts, zero_amount, swap_routes } = constants;
@@ -744,7 +744,7 @@ describe("dex", () => {
               .get_dy(params)
               .executeView({ viewCaller: accounts["alice"].pkh });
           },
-          "Dex/not-launched"
+          'The simulation of the on-chain view named get_dy failed with: {"string":"Dex/not-launched"}'
         ));
 
       it("should return LP value", async () =>

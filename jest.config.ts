@@ -3,8 +3,6 @@
  * https://jestjs.io/docs/configuration
  */
 
-import { setupJestEnv } from "create-tezos-smart-contract/dist/modules/jest/env";
-
 const config = {
   coverageProvider: "v8",
 
@@ -21,13 +19,7 @@ const config = {
 
 /** @type {import('ts-jest/dist/types').InitialOptionsTsJest} */
 module.exports = async () => {
-  const globals = await setupJestEnv();
-
   return {
     ...config,
-    globals: {
-      //  ...config.globals,
-      ...globals,
-    },
   };
 };

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import BigNumber from "bignumber.js";
 import { MichelsonMap } from "@taquito/taquito";
-import { TezosAddress } from "../../helpers/utils";
+import { TezosAddress } from "../../../scripts/helpers/utils";
 
 export declare type LambdaFunctionType = {
   index: number;

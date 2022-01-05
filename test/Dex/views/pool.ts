@@ -12,7 +12,7 @@ import {
   RewardsType,
 } from "../types";
 import { MichelsonMap } from "@taquito/taquito";
-import { TezosAddress } from "../../helpers/utils";
+import { TezosAddress } from "../../../scripts/helpers/utils";
 
 export async function getReservesSuccessCase(dex: Dex, pool_id: BigNumber) {
   await dex.updateStorage({ pools: [pool_id.toString()] });

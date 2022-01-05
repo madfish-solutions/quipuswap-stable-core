@@ -3,7 +3,7 @@ import BigNumber from "bignumber.js";
 import {
   AccountsLiteral,
   prepareProviderOptions,
-} from "../../../helpers/utils";
+} from "../../../../scripts/helpers/utils";
 import Dex from "../../API";
 import { DexStorage, FeeType } from "../../types";
 

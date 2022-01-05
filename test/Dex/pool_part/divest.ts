@@ -4,7 +4,7 @@ import {
   AccountsLiteral,
   mapTokensToIdx,
   prepareProviderOptions,
-} from "../../helpers/utils";
+} from "../../../scripts/helpers/utils";
 import Dex from "../API";
 import { accounts } from "../constants";
 import { AmountsMap, IndexMap, TokensMap } from "../types";

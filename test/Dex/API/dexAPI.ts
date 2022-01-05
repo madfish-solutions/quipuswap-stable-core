@@ -14,9 +14,9 @@ import {
   LambdaFunctionType,
   TokenInfo,
 } from "./types";
-import { getLigo } from "../../helpers/utils";
+import { getLigo } from "../../../scripts/helpers/utils";
 import { execSync } from "child_process";
-import { confirmOperation } from "../../helpers/confirmation";
+import { confirmOperation } from "../../../scripts/helpers/confirmation";
 import { dexLambdas, tokenLambdas } from "../../storage/Functions";
 import admin_lambdas_comp from "../../../build/lambdas/Admin_lambdas.json";
 import permit_lambdas_comp from "../../../build/lambdas/Permit_lambdas.json";

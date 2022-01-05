@@ -1,11 +1,11 @@
 import { TezosToolkit, VIEW_LAMBDA } from "@taquito/taquito";
-import { confirmOperation } from "../helpers/confirmation";
+import { confirmOperation } from "../../scripts/helpers/confirmation";
 import {
   prepareProviderOptions,
   setupLambdasToStorage,
-} from "../helpers/utils";
+} from "../../scripts/helpers/utils";
 import { BigNumber } from "bignumber.js";
-import dex_contract from "../../build/dex.ligo.json";
+import dex_contract from "../../build/dex_test.json";
 import dex_lambdas_comp from "../../build/lambdas/Dex_lambdas.json";
 import token_lambdas_comp from "../../build/lambdas/Token_lambdas.json";
 import admin_lambdas_comp from "../../build/lambdas/Admin_lambdas.json";

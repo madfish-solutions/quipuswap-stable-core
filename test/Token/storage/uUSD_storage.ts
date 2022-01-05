@@ -1,9 +1,9 @@
 import { MichelsonMap } from "@taquito/taquito";
-import { sandbox } from "../../../config.json";
 import { defaultTokenId } from "../token";
-const aliceAddress: string = sandbox.accounts.alice.pkh;
-const bobAddress: string = sandbox.accounts.bob.pkh;
-const eveAddress: string = sandbox.accounts.eve.pkh;
+import config from "../../../config";
+const aliceAddress: string = config.networks.sandbox.accounts.alice.pkh;
+const bobAddress: string = config.networks.sandbox.accounts.bob.pkh;
+const eveAddress: string = config.networks.sandbox.accounts.eve.pkh;
 
 const ledger = new MichelsonMap();
 // eslint-disable-next-line jest/require-hook
