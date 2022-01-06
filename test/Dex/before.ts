@@ -6,10 +6,10 @@ import {
 } from "../../scripts/helpers/utils";
 import { BigNumber } from "bignumber.js";
 import dex_contract from "../../build/dex_test.json";
-import dex_lambdas_comp from "../../build/lambdas/Dex_lambdas.json";
-import token_lambdas_comp from "../../build/lambdas/Token_lambdas.json";
-import admin_lambdas_comp from "../../build/lambdas/Admin_lambdas.json";
-import permit_lambdas_comp from "../../build/lambdas/Permit_lambdas.json";
+import dex_lambdas_comp from "../../build/lambdas/test/Dex_lambdas.json";
+import token_lambdas_comp from "../../build/lambdas/test/Token_lambdas.json";
+import admin_lambdas_comp from "../../build/lambdas/test/Admin_lambdas.json";
+import permit_lambdas_comp from "../../build/lambdas/test/Permit_lambdas.json";
 
 import { accounts } from "./constants";
 import { DexAPI as Dex, defaultDexStorage as storage } from "./API";

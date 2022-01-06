@@ -143,6 +143,7 @@ export const compileLambdas = async (
 ) => {
   console.log(`Compiling ${contract} contract lambdas of ${type} type...\n`);
 
+  const test_path = contract.toLowerCase().includes("test");
   const ligo = `docker run -v $PWD:$PWD --rm -i -w $PWD ligolang/ligo:${config.ligoVersion}`;
   const pwd = execSync("echo $PWD").toString();
   const lambdas = JSON.parse(
@@ -177,17 +178,21 @@ export const compileLambdas = async (
           " successfully compiled."
       );
     }
-
     if (!fs.existsSync(`${config.outputDirectory}/lambdas`)) {
       fs.mkdirSync(`${config.outputDirectory}/lambdas`);
     }
+    if (test_path) {
+      if (!fs.existsSync(`${config.outputDirectory}/lambdas/test`)) {
+        fs.mkdirSync(`${config.outputDirectory}/lambdas/test`);
+      }
+    }
     const json_file_path = json.split("/");
     const file_name = json_file_path[json_file_path.length - 1];
-    fs.writeFileSync(
-      `${config.outputDirectory}/lambdas/${file_name}`,
-      JSON.stringify(res)
-    );
-    console.log(`Saved to ${config.outputDirectory}/lambdas/${file_name}`);
+    const save_path = `${config.outputDirectory}/lambdas/${
+      test_path ? "test/" + file_name : file_name
+    }`;
+    fs.writeFileSync(save_path, JSON.stringify(res));
+    console.log(`Saved to ${save_path}`);
   } catch (e) {
     console.error(e);
   }

@@ -26,9 +26,9 @@ jobs:
         run: sudo apt install git -y
       - name: Install modules
         run: yarn install
-      - name: Compile contracts
-        run: yarn compile
-      - name: Start sandbox
+      - name: Compile contracts for tests
+        run: yarn compile-for-test
+      - name: Start sandbox and wait for initialization
         run: yarn start-sandbox && sleep 10s
       - name: Test the contracts
         run: yarn test

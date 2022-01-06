@@ -18,10 +18,10 @@ import { getLigo } from "../../../scripts/helpers/utils";
 import { execSync } from "child_process";
 import { confirmOperation } from "../../../scripts/helpers/confirmation";
 import { dexLambdas, tokenLambdas } from "../../storage/Functions";
-import admin_lambdas_comp from "../../../build/lambdas/Admin_lambdas.json";
-import permit_lambdas_comp from "../../../build/lambdas/Permit_lambdas.json";
-import dex_lambdas_comp from "../../../build/lambdas/Dex_lambdas.json";
-import token_lambdas_comp from "../../../build/lambdas/Token_lambdas.json";
+import admin_lambdas_comp from "../../../build/lambdas/test/Admin_lambdas.json";
+import permit_lambdas_comp from "../../../build/lambdas/test/Permit_lambdas.json";
+import dex_lambdas_comp from "../../../build/lambdas/test/Dex_lambdas.json";
+import token_lambdas_comp from "../../../build/lambdas/test/Token_lambdas.json";
 import { defaultTokenId, TokenFA12, TokenFA2 } from "../../Token";
 
 export class Dex extends TokenFA2 {
