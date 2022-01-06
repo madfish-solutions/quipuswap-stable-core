@@ -57,35 +57,6 @@ export class Dex extends TokenFA2 {
     } = {}
   ): Promise<void> {
     this.storage = (await this.contract.storage()) as DexStorage;
-    // this.storage = {
-    //   storage: {
-    //     admin: storage.storage.admin,
-    //     default_referral: storage.storage.default_referral,
-    //     managers: storage.storage.managers,
-    //     dev_address: storage.storage.dev_address,
-    //     reward_rate: storage.storage.reward_rate,
-    //     pools_count: storage.storage.pools_count,
-    //     tokens: {},
-    //     pool_to_id: {},
-    //     pools: {},
-    //     ledger: {},
-    //     account_data: {},
-    //     dev_rewards: {},
-    //     referral_rewards: {},
-    //     stakers_balance: {},
-    //     permits: {},
-    //     quipu_token: storage.storage.quipu_token,
-    //   },
-    //   dex_lambdas: {},
-    //   token_lambdas: {},
-    //   permits: {},
-    //   permits_counter: new BigNumber("0"),
-    //   default_expiry: new BigNumber("2592000"),
-    //   permit_lambdas: {},
-    //   admin_lambdas: {},
-    //   metadata: {},
-    //   token_metadata: {},
-    // };
     for (const key in maps) {
       if (
         [

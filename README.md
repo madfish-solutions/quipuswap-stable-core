@@ -5,28 +5,46 @@ Contracts of DEX with Curve-like invariant implementation. This contracts allows
 Core concept is to provide low slippage swap between stablecoins like uUSD, kUSD, USDtz, etc.
 
 ## Project structure
-Project based on [lava](https://github.com/uconomy/lava) toolset for fast generating all needed structure and tools.
 
-```
-.
-├──  build/ # (gitignored) builded sources of contracts in json
-├──  contracts/ # contracts
-|──────── main/ # the contracts to be compiled
-|──────── partials/ # the code parts imported by main contracts
-|──────── helpers/ # helper methods for contacts
-|──────── lambdas/ # lambda methods of contacts
-|──────── views/ # view methods of contacts
-|──────── intrefaces/ # type annotations of contacts
-├──  test/ # test cases
-├──────── storage/ # initial storage for contract originations
-├──────── helpers/ # helpers for test cases
-├──  scripts/ # cli for dex/factory actions
-├──  README.md # current file
-├──  .gitignore
-├──  config.json # configuration file for compile, deploy and test
-├──  package.json
-├──  yarn.lock
-└──  tsconfig.json
+```shell
+├./
+├── build/                        # (gitignored) builded sources of contracts (*.json files)
+├─────── lambdas/                 # (gitignored) builded sources of contract lambdas (*.json files)
+├──────────── test/               # (gitignored) builded lambdas for tests (*.json files)
+├── contracts/                    # contracts sources directory (*.ligo files)
+├─────── main/                    # the contracts to be compiled
+├──────────── dex.ligo            # main DEX contract
+├──────────── dex_test.ligo       # modified DEX contract for tests
+├─────── partials/                # the code parts imported by main contracts
+├──────────── admin/              # admin part of DEX contact
+├──────────── dex_core/           # core codebase of DEX contact
+├──────────── fa2/                # token of FA2 standart sources for DEX contact
+├──────────── fa12/               # helpers for interaction with FA12 tokens for DEX contact
+├──────────── permit/             # permit part for token methods of DEX contract
+├──────────── common_types.ligo   # common types used for interaction with contracts
+├──────────── constants.ligo      # constants that used in DEX contract
+├──────────── constants_test.ligo # modified constants that used in tests of DEX contract
+├──────────── errors.ligo         # errors thrown from DEX contract
+├──────────── utils.ligo          # utils for contracts
+├── migrations/                   # migrations folder
+├─────── NN_xxxx.ts               # migration file with deployment data (storage and initial contract setup)
+├── test/                         # test cases
+├──────── storage/                # initial storage for contract originations
+├──────── lambdas/                # *.json files that contains indexes and names of lambdas to be compiled
+├──────── Dex/                    # DEX test codebase
+├──────────── API/                # DEX contract base API
+├──────── Token/                  # Token (FA12/FA2) contract API
+├──────── Dex.test.ts             # main test case file
+├── scripts/                      # cli for setup environment, test and deploy contracts
+├── .gitignore
+├── .eslintrc
+├── config.ts                     # configuration file for compile, deploy and test
+├── jest.setup.ts                 # setup environment file for jest tests
+├── jest.config.ts                # configuration file of jest tests
+├── README.md                     # current file
+├── package.json
+├── yarn.lock
+└── tsconfig.json
 
 ```
 
@@ -54,9 +72,17 @@ or with yarn
 yarn
 ```
 
+## Cli
+
+Project provides cli interface for compile test and deploy contracts.
+
+With cli you can `compile`, `compile-lambda`, start/stop `sandbox` and `migrate` (deploy contracts)
+
+Launch `npm run cli -- --help` or the shorter `yarn cli --help` to see the full guide.
+
 ## Compiling
 
-As easy as:
+You can compile all contracts and lambdas with one simple command:
 
 ```bash
 npm run compile
@@ -68,7 +94,9 @@ or with yarn
 yarn compile
 ```
 
-You have several options available for this command, as the ability to specify a single contract to compile or your preferred LIGO version. Launch `npm run compile -- --help` or the shorter `yarn compile --help` to see the full guide.
+Or if you want to compile modified version for tests replace `compile` with `compile-for-test`
+
+This commands is shotcut for running `yarn cli compile` and `yarn cli compile-lambda` for specified contracts.
 
 ## Testing
 
@@ -76,7 +104,7 @@ Tests are run by [**Jest**](https://jestjs.io), with a proper setup to write uni
 
 You can find tests in the `test` folder.
 
-Testing is tought to be simulating user interaction with your smart contract. This is to ensure that the expected usage of your contract produces the expexted storage/operations in the Tezos blockchain.
+Testing is thought to be simulating user interaction with smart contract. This is to ensure that the expected usage of contract produces the expexted storage/operations in the Tezos blockchain.
 
 To easily start a local Sandboxed environment (local Tezos network)
 
@@ -104,23 +132,26 @@ or, with Yarn
 yarn test
 ```
 
-and you'll see your tests being performed. If you want the local sandbox to be started and stopped automatically every test run, please set `autoSandbox: true` in your *config.json*.
+and you'll see your tests being performed. If you want contracts to be compilled and the local sandbox to be started and stopped automatically every test run, please use the `yarn compile-n-test` command.
 
 ## Deploy
 
-You have a super-easy deploy tool in this repository. To bring it up, just launch this command:
+This repository contains command that allows deploy the contracts to chosen network (from [config.ts](./config.ts)). To bring it up, just launch this command:
 
 ```bash
-npm run deploy
+npm run migrate
 ```
 
 or, with Yarn
 
 ```bash
-yarn deploy
+yarn migrate
 ```
 
-It will guide you through all the step needed to Deploy the smart contract.
 Pass `--network=testnet` or `--network=mainnet` to deploy in the specific network.
+
+Pass `--from <number>` or `--to <number>` to deploy only specific migrations, provided at [migrations](./migrations) directory.
+
+Pass `--key <string>` to deploy from specific account. By default this is "Alice" (`edsk3QoqBuvdamxouPhin7swCvkQNgq4jP5KZPbwWNnwdZpSpJiEbq`) standard private key.
 
 <p align="center"> Made with ❤️ by <a href=https://www.madfish.solutions>Madfish.Solutions</a>
