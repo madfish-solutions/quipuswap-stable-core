@@ -12,7 +12,7 @@ export const addMigrateCommand = (program: Command) => {
       "-n, --network <network>",
       "network to deploy",
       (value): NetworkLiteral => value.toLowerCase() as NetworkLiteral,
-      "mainnet"
+      "sandbox"
     )
     .requiredOption<number>(
       "-s, --from <from>",
@@ -24,11 +24,15 @@ export const addMigrateCommand = (program: Command) => {
       "-e, --to <to>",
       "the migrations counter to end with",
       (val, prev = 0) => parseInt(val) + prev,
-      migrations.length
+      migrations.length - 1
     )
-    .requiredOption("-k --key", "Secret key to sign with", accounts.alice.sk)
+    .requiredOption(
+      "-k --key <key>",
+      "Secret key to sign with",
+      accounts.alice.sk
+    )
     .showHelpAfterError(true)
     .action(async (argv) => {
-      runMigrations(argv.network, argv.from, argv.to);
+      runMigrations(argv.network, argv.from, argv.to, argv.key, migrations);
     });
 };

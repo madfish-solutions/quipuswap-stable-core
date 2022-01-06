@@ -75,9 +75,6 @@ type storage_t          is [@layout:comb] record [
   dev_address             : address;
   managers                : set(address);
 
-  // reward_rate             : nat; (* DEFI reward rate *)
-  // entered                 : bool; (* reentrancy protection *)
-
   (* Pools data *)
   pools_count             : nat; (* total pools count *)
   tokens                  : big_map(pool_id_t, tkns_map_t); (* all the tokens list *)

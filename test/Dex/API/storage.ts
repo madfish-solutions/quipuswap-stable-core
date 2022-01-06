@@ -9,8 +9,6 @@ const dex_storage: DexStorage = {
     default_referral: null as string,
     managers: [],
 
-    reward_rate: new BigNumber("0"),
-
     pools_count: new BigNumber("0"),
     tokens: new MichelsonMap(),
     pool_to_id: new MichelsonMap(),

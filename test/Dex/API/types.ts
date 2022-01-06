@@ -58,7 +58,6 @@ export declare type DexMainStorage = {
   default_referral: TezosAddress;
   managers: Array<TezosAddress>;
   dev_address: TezosAddress;
-  reward_rate: BigNumber;
   pools_count: BigNumber;
   tokens: MichelsonMap<
     string,

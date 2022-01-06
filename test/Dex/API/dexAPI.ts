@@ -420,7 +420,7 @@ export class Dex extends TokenFA2 {
     type: "Dex" | "Token" | "Permit" | "Admin",
     batchBy: number,
     comp_funcs_map
-  ): Promise<void> {
+  ): Promise<Dex> {
     let batch = this.Tezos.contract.batch();
     let idx = 0;
     for (const lambdaFunction of comp_funcs_map) {
@@ -445,6 +445,7 @@ export class Dex extends TokenFA2 {
         if (idx < comp_funcs_map.length) batch = this.Tezos.contract.batch();
       }
     }
+    return this;
   }
 
   async setFunctionCompilled(
