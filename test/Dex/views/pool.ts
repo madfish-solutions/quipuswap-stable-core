@@ -147,11 +147,14 @@ export async function getDySuccessCase(
 
 export async function getASuccessCase(dex: Dex, pool_id: BigNumber) {
   await dex.updateStorage({ pools: [pool_id.toString()] });
-  const exp_A = dex.storage.storage.pools[pool_id.toString()].initial_A;
-  const a = await dex.contract.contractViews.view_A(pool_id).executeView({
-    viewCaller: accounts["alice"].pkh,
-  });
-  expect(a.toNumber()).toStrictEqual(exp_A.dividedBy(100).toNumber());
+  const exp_A: BigNumber =
+    dex.storage.storage.pools[pool_id.toString()].initial_A;
+  const a: BigNumber = await dex.contract.contractViews
+    .view_A(pool_id)
+    .executeView({
+      viewCaller: accounts["alice"].pkh,
+    });
+  expect(a.toNumber()).toStrictEqual(exp_A.dividedToIntegerBy(100).toNumber());
 }
 
 export async function getFeesSuccessCase(dex: Dex, pool_id: BigNumber) {

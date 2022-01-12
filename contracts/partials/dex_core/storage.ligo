@@ -110,5 +110,5 @@ type full_storage_t     is [@layout:comb] record [
   default_expiry          : nat;
 ]
 
-type return_t           is list (operation) * storage_t
-type full_return_t      is list (operation) * full_storage_t
+type return_t           is list(operation) * storage_t
+type full_return_t      is list(operation) * full_storage_t

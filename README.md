@@ -136,6 +136,14 @@ and you'll see your tests being performed. If you want contracts to be compilled
 
 ## Deploy
 
+----------
+
+### Before deployment
+
+Setup storage objects inside migrations. Replace `null` values with needed and setup other params if needed.
+
+----------
+
 This repository contains command that allows deploy the contracts to chosen network (from [config.ts](./config.ts)). To bring it up, just launch this command:
 
 ```bash

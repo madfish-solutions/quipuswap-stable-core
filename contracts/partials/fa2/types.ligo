@@ -6,10 +6,10 @@ type trsfr_fa2_dst_t    is [@layout:comb] record [
 
 type trsfr_fa2_prm_t    is [@layout:comb] record [
   from_                   : address;
-  txs                     : list (trsfr_fa2_dst_t);
+  txs                     : list(trsfr_fa2_dst_t);
 ]
 
-type transfer_prm_t     is list (trsfr_fa2_prm_t)
+type transfer_prm_t     is list(trsfr_fa2_prm_t)
 
 type operator_fa2_prm_t is [@layout:comb] record [
   owner                   : address;
@@ -21,7 +21,7 @@ type upd_operator_prm_t is
 | Add_operator            of operator_fa2_prm_t
 | Remove_operator         of operator_fa2_prm_t
 
-type operator_prm_t     is list (upd_operator_prm_t)
+type operator_prm_t     is list(upd_operator_prm_t)
 
 type tkn_meta_info_t    is [@layout:comb] record [
   token_id                : nat;
@@ -46,11 +46,11 @@ type balc_of_fa2_res_t  is [@layout:comb] record [
 ]
 
 type bal_fa2_prm_t      is [@layout:comb] record [
-  requests                : list (balc_of_fa2_req_t);
-  callback                : contract (list (balc_of_fa2_res_t));
+  requests                : list(balc_of_fa2_req_t);
+  callback                : contract(list(balc_of_fa2_res_t));
 ]
 
-type trsfr_fa2_t        is list (trsfr_fa2_prm_t)
+type trsfr_fa2_t        is list(trsfr_fa2_prm_t)
 
 type entry_fa2_t        is TransferTypeFA2 of trsfr_fa2_t
 

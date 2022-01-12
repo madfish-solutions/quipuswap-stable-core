@@ -22,7 +22,7 @@ function permit(
         ]
       else block {
         const failwith_ : (string * bytes -> full_storage_t) = [%Michelson ({|{FAILWITH}|} : string * bytes -> full_storage_t)];
-      } with (failwith_("MISSIGNED", to_sign) : full_storage_t);
+      } with (failwith_(Errors.Permit.missigned, to_sign) : full_storage_t);
     }
     | _ -> skip
     end
@@ -40,7 +40,7 @@ function set_expiry(
       const new_expiry : seconds_t = param.expiry;
       const specific_permit_or_default : option(blake2b_hash_t) = param.permit_hash;
 
-      s := sender_check(owner, s, full_param, "NOT_PERMIT_ISSUER");
+      s := sender_check(owner, s, full_param, Errors.Permit.not_issuer);
 
       const updated_permits : permits_t = case specific_permit_or_default of
       | None       -> set_user_default_expiry(owner, new_expiry, s.permits)

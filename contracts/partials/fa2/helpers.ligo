@@ -3,7 +3,7 @@
   const from_account    : address;
   const allowances      : set(address))
                         : unit is
-  assert_with_error(from_account = Tezos.sender or (allowances contains Tezos.sender), Errors.not_operator);
+  assert_with_error(from_account = Tezos.sender or (allowances contains Tezos.sender), Errors.FA2.not_operator);
 
 (* Balance check *)
 [@inline] function check_balance(
@@ -11,14 +11,14 @@
   const to_spend        : nat)
                         : unit is
   if account_bal < to_spend
-    then failwith(Errors.insufficient_balance)
+    then failwith(Errors.FA2.insufficient_balance)
   else Unit;
 
 (* Owner check *)
 [@inline] function validate_owner(
   const owner           : address)
                         : unit is
-  assert_with_error(owner = Tezos.sender, Errors.not_owner);
+  assert_with_error(owner = Tezos.sender, Errors.FA2.not_owner);
 
 [@inline] function get_account_data(
   const key             : address * pool_id_t;
@@ -39,7 +39,7 @@
       block {
         const sender_key =  (user_trx_params.from_, transfer.token_id);
         var sender_balance := unwrap_or(s.storage.ledger[sender_key], 0n);
-        sender_balance := nat_or_error(sender_balance - transfer.amount, "FA2_INSUFFICIENT_BALANCE");
+        sender_balance := nat_or_error(sender_balance - transfer.amount, Errors.FA2.insufficient_balance);
         s.storage.ledger[sender_key] := sender_balance;
 
         const dest_key = (transfer.to_, transfer.token_id);

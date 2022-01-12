@@ -11,6 +11,7 @@ export async function investLiquiditySuccessCase(
   referral: string,
   min_shares: BigNumber,
   in_amounts: Map<string, BigNumber>,
+  expiration: Date,
   Tezos: TezosToolkit
 ) {
   const config = await prepareProviderOptions(sender);
@@ -26,7 +27,13 @@ export async function investLiquiditySuccessCase(
   const initLedger =
     dex.storage.storage.ledger[accounts[sender].pkh] || new BigNumber(0);
 
-  await dex.investLiquidity(pool_id, in_amounts, min_shares, referral);
+  await dex.investLiquidity(
+    pool_id,
+    in_amounts,
+    min_shares,
+    expiration,
+    referral
+  );
 
   await dex.updateStorage({
     pools: [pool_id.toString()],

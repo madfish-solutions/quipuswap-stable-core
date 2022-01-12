@@ -13,6 +13,6 @@
     | Set_admin(_)        -> 2n
     end;
 
-    const lambda_bytes : bytes = unwrap(s.admin_lambdas[idx], Errors.unknown_func);
-    const func: admin_func_t = unwrap((Bytes.unpack(lambda_bytes) : option(admin_func_t)), Errors.wrong_use_function);
+    const lambda_bytes : bytes = unwrap(s.admin_lambdas[idx], Errors.Dex.unknown_func);
+    const func: admin_func_t = unwrap((Bytes.unpack(lambda_bytes) : option(admin_func_t)), Errors.Dex.wrong_use_function);
   } with (Constants.no_operations, s with record[ storage = func(p, s.storage) ])

@@ -63,7 +63,7 @@ describe("dex", () => {
           await failCase(
             "bob",
             async () => await dex.setAdmin(new_admin),
-            "Dex/not-contract-admin"
+            "not-contract-admin"
           ),
         10000
       );
@@ -83,7 +83,7 @@ describe("dex", () => {
           await failCase(
             "bob",
             async () => dex.setDevAddress(new_dev),
-            "Dex/not-contract-admin"
+            "not-contract-admin"
           ),
         10000
       );
@@ -103,7 +103,7 @@ describe("dex", () => {
           await failCase(
             "bob",
             async () => dex.addRemManager(true, manager),
-            "Dex/not-contract-admin"
+            "not-contract-admin"
           ),
         10000
       );
@@ -142,7 +142,7 @@ describe("dex", () => {
           await failCase(
             "bob",
             async () => dex.setDefaultReferral(aliceAddress),
-            "Dex/not-contract-admin"
+            "not-contract-admin"
           ),
         10000
       );
@@ -172,7 +172,7 @@ describe("dex", () => {
           await failCase(
             "alice",
             async () => await dex.initializeExchange(a_const, inputs, false),
-            "Dex/not-contract-admin"
+            "not-contract-admin"
           ),
         10000
       );
@@ -215,7 +215,7 @@ describe("dex", () => {
                     TPool.PoolAdmin.Ramp_A.future_a_time
                   )
                   .send(),
-              "Dex/not-contract-admin"
+              "not-contract-admin"
             ),
           10000
         );
@@ -242,7 +242,7 @@ describe("dex", () => {
               "bob",
               async () =>
                 await dex.contract.methods.stop_ramp_A(pool_id).send(),
-              "Dex/not-contract-admin"
+              "not-contract-admin"
             ),
           10000
         );
@@ -261,7 +261,7 @@ describe("dex", () => {
             await failCase(
               "bob",
               async () => await dex.setFees(pool_id, TPool.PoolAdmin.Fee.fees),
-              "Dex/not-contract-admin"
+              "not-contract-admin"
             ),
           10000
         );
@@ -292,20 +292,6 @@ describe("dex", () => {
         await dex.updateStorage({});
         pool_id = dex.storage.storage.pools_count.minus(new BigNumber(1));
       }, 80000);
-
-      it(
-        "should fail if zero stake amount",
-        async () =>
-          await failCase(
-            "bob",
-            async () =>
-              await dex.contract.methods
-                .stake(pool_id, new BigNumber(0))
-                .send(),
-            "Dex/zero-amount-in"
-          ),
-        10000
-      );
 
       it(
         `Should stake ${input.dividedBy(decimals.QUIPU)} QUIPU to pool`,
@@ -364,9 +350,28 @@ describe("dex", () => {
                 pool_id,
                 zero_amounts,
                 min_shares,
+                new Date(Date.now() + 1000 * 60 * 60 * 24),
                 referral
               ),
-            "Dex/zero-amount-in"
+            "zero-amount-in"
+          ),
+        10000
+      );
+
+      it(
+        "should fail if expired",
+        async () =>
+          await failCase(
+            sender,
+            async () =>
+              await dex.investLiquidity(
+                pool_id,
+                amounts,
+                min_shares,
+                new Date(0),
+                referral
+              ),
+            "time-expired"
           ),
         10000
       );
@@ -381,9 +386,10 @@ describe("dex", () => {
                 pool_id,
                 wrong_idx_amounts,
                 min_shares,
+                new Date(Date.now() + 1000 * 60 * 60 * 24),
                 referral
               ),
-            "Dex/zero-amount-in"
+            "zero-amount-in"
           ),
         10000
       );
@@ -398,6 +404,7 @@ describe("dex", () => {
             referral,
             min_shares,
             amounts,
+            new Date(Date.now() + 1000 * 60 * 60 * 24),
             Tezos
           ),
         50000
@@ -420,6 +427,7 @@ describe("dex", () => {
           referral,
           min_shares,
           in_amt,
+          new Date(Date.now() + 1000 * 60 * 60 * 24),
           Tezos
         );
         const USDtz_in = new Map<string, BigNumber>().set(
@@ -434,6 +442,7 @@ describe("dex", () => {
           referral,
           min_shares,
           USDtz_in,
+          new Date(Date.now() + 1000 * 60 * 60 * 24),
           Tezos
         );
       });
@@ -475,7 +484,7 @@ describe("dex", () => {
                 bobAddress,
                 referral
               ),
-            "Dex/time-expired"
+            "time-expired"
           ),
         10000
       );
@@ -496,7 +505,7 @@ describe("dex", () => {
                 bobAddress,
                 referral
               ),
-            "Dex/zero-amount-in"
+            "zero-amount-in"
           ),
         10000
       );
@@ -567,9 +576,27 @@ describe("dex", () => {
               await dex.divestLiquidity(
                 pool_id,
                 min_amounts,
-                new BigNumber("0")
+                new BigNumber("0"),
+                new Date(Date.now() + 1000 * 60 * 60 * 24)
               ),
-            "Dex/zero-amount-in"
+            "zero-amount-in"
+          ),
+        10000
+      );
+
+      it(
+        "should fail if expired",
+        async () =>
+          await failCase(
+            "eve",
+            async () =>
+              await dex.divestLiquidity(
+                pool_id,
+                min_amounts,
+                amount_in,
+                new Date(0)
+              ),
+            "time-expired"
           ),
         10000
       );
@@ -583,6 +610,7 @@ describe("dex", () => {
             pool_id,
             amount_in,
             min_amounts,
+            new Date(Date.now() + 1000 * 60 * 60 * 24),
             Tezos
           ),
         20000
@@ -597,6 +625,7 @@ describe("dex", () => {
             pool_id,
             imb_amounts,
             amount_in,
+            new Date(Date.now() + 1000 * 60 * 60 * 24),
             Tezos
           ),
         20000
@@ -612,6 +641,7 @@ describe("dex", () => {
             amount_in,
             new BigNumber(idx_map.kUSD),
             min_out_amount,
+            new Date(Date.now() + 1000 * 60 * 60 * 24),
             Tezos
           ),
         20000
@@ -742,7 +772,7 @@ describe("dex", () => {
               .get_dy(params)
               .executeView({ viewCaller: accounts["alice"].pkh });
           },
-          'The simulation of the on-chain view named get_dy failed with: {"string":"Dex/not-launched"}'
+          'The simulation of the on-chain view named get_dy failed with: {"string":"not-launched"}'
         ));
 
       it("should return LP value", async () =>

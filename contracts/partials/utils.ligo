@@ -39,7 +39,7 @@ function get_fa2_token_transfer_contract(
                         : contract(entry_fa2_t) is
   unwrap(
     (Tezos.get_entrypoint_opt("%transfer", token_address): option(contract(entry_fa2_t))),
-    Errors.wrong_token_entrypoint
+    Errors.Dex.wrong_token_entrypoint
   );
 
 (* Helper function to get fa1.2 token contract *)
@@ -48,7 +48,7 @@ function get_fa12_token_transfer_contract(
                         : contract(entry_fa12_t) is
   unwrap(
     (Tezos.get_entrypoint_opt("%transfer", token_address): option(contract(entry_fa12_t))),
-    Errors.wrong_token_entrypoint
+    Errors.Dex.wrong_token_entrypoint
   );
 
 
@@ -87,26 +87,26 @@ function typed_transfer(
   | Some(result) -> if result.1 > 0n
     then result.0 + 1n
     else result.0
-  | None -> (failwith(Errors.ediv_error): nat)
+  | None -> (failwith(Errors.Math.ediv_error): nat)
   end;
 
 (* Contract admin check *)
 function check_admin(
   const admin           : address)
                         : unit is
-  assert_with_error(Tezos.sender = admin, Errors.not_contract_admin);
+  assert_with_error(Tezos.sender = admin, Errors.Dex.not_contract_admin);
 
 (* Contract admin or dev check *)
 function check_admin_or_dev(
   const admin           : address;
   const dev             : address)
                         : unit is
-  assert_with_error(Tezos.sender = admin or Tezos.sender = dev, Errors.not_contract_admin);
+  assert_with_error(Tezos.sender = admin or Tezos.sender = dev, Errors.Dex.not_contract_admin);
 
 function check_time_expiration(
   const exp             : timestamp)
                         : unit is
-  assert_with_error(exp >= Tezos.now, Errors.time_expired);
+  assert_with_error(exp >= Tezos.now, Errors.Dex.time_expired);
 
 function set_func_or_fail(
   const params          : set_lambda_func_t;
@@ -114,8 +114,8 @@ function set_func_or_fail(
   var lambda_storage    : big_map(nat, bytes))
                         : big_map(nat, bytes) is
   block {
-    assert_with_error(params.index < max_idx, Errors.wrong_index);
-    assert_with_error(not Big_map.mem(params.index, lambda_storage), Errors.func_set);
+    assert_with_error(params.index < max_idx, Errors.Dex.wrong_index);
+    assert_with_error(not Big_map.mem(params.index, lambda_storage), Errors.Dex.func_set);
     lambda_storage[params.index] := params.func;
   } with lambda_storage
 
@@ -123,9 +123,9 @@ function set_func_or_fail(
  * Helper function that merges two list`s.
  *)
 function concat_lists(
-  const fst             : list (operation);
-  const snd             : list (operation))
-                        : list (operation) is
+  const fst             : list(operation);
+  const snd             : list(operation))
+                        : list(operation) is
   List.fold_right(
     function(
       const operation   : operation;

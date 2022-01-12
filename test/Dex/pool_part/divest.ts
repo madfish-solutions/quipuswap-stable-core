@@ -36,6 +36,7 @@ export async function divestLiquiditySuccessCase(
   pool_id: BigNumber,
   shares: BigNumber,
   min_amounts: Map<string, BigNumber>,
+  expiration: Date,
   Tezos: TezosToolkit
 ) {
   const config = await prepareProviderOptions(sender);
@@ -53,7 +54,7 @@ export async function divestLiquiditySuccessCase(
     (value, key) => (raw_res[key] = value.reserves.toFormat(0).toString())
   );
   const init_ledger = dex.storage.storage.ledger[accounts[sender].pkh];
-  await dex.divestLiquidity(pool_id, min_amounts, shares);
+  await dex.divestLiquidity(pool_id, min_amounts, shares, expiration);
   await dex.updateStorage({
     pools: [pool_id.toString()],
     ledger: [[accounts[sender].pkh, pool_id.toNumber()]],
@@ -75,6 +76,7 @@ export async function divestLiquidityImbalanceSuccessCase(
   pool_id: BigNumber,
   amounts: Map<string, BigNumber>,
   max_shares: BigNumber,
+  expiration: Date,
   Tezos: TezosToolkit
 ) {
   const config = await prepareProviderOptions(sender);
@@ -92,7 +94,7 @@ export async function divestLiquidityImbalanceSuccessCase(
     (value, key) => (raw_res[key] = value.reserves.toFormat(0).toString())
   );
   const init_ledger = dex.storage.storage.ledger[accounts[sender].pkh];
-  await dex.divestImbalanced(pool_id, amounts, max_shares);
+  await dex.divestImbalanced(pool_id, amounts, max_shares, expiration);
   await dex.updateStorage({
     pools: [pool_id.toString()],
     ledger: [[accounts[sender].pkh, pool_id.toNumber()]],
@@ -117,6 +119,7 @@ export async function divestLiquidityOneSuccessCase(
   shares: BigNumber,
   token_idx: BigNumber,
   min_amount: BigNumber,
+  expiration: Date,
   Tezos: TezosToolkit
 ) {
   const config = await prepareProviderOptions(sender);
@@ -134,7 +137,7 @@ export async function divestLiquidityOneSuccessCase(
     (value, key) => (raw_res[key] = value.reserves.toFormat(0).toString())
   );
   const init_ledger = dex.storage.storage.ledger[accounts[sender].pkh];
-  await dex.divestOneCoin(pool_id, shares, token_idx, min_amount);
+  await dex.divestOneCoin(pool_id, shares, token_idx, min_amount, expiration);
   await dex.updateStorage({
     pools: [pool_id.toString()],
     ledger: [[accounts[sender].pkh, pool_id.toNumber()]],

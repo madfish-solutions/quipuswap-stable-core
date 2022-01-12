@@ -201,6 +201,7 @@ export class Dex extends TokenFA2 {
     poolId: BigNumber,
     tokenAmounts: Map<string, BigNumber>,
     minShares: BigNumber,
+    expiration: Date,
     refferal: string
   ): Promise<TransactionOperation> {
     const in_amounts = new MichelsonMap();
@@ -208,7 +209,13 @@ export class Dex extends TokenFA2 {
       in_amounts.set(key, value);
     });
     const operation = await this.contract.methods
-      .invest(poolId, minShares, in_amounts, refferal)
+      .invest(
+        poolId,
+        minShares,
+        in_amounts,
+        new BigNumber(expiration.getTime()),
+        refferal
+      )
       .send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
@@ -217,14 +224,15 @@ export class Dex extends TokenFA2 {
   async divestLiquidity(
     poolId: BigNumber,
     mintokenAmounts: Map<string, BigNumber>,
-    sharesBurned: BigNumber
+    sharesBurned: BigNumber,
+    expiration: Date
   ): Promise<TransactionOperation> {
     const amts = new MichelsonMap<string, BigNumber>();
     mintokenAmounts.forEach((value, key) => {
       amts.set(key, value);
     });
     const operation = await this.contract.methods
-      .divest(poolId, amts, sharesBurned)
+      .divest(poolId, amts, sharesBurned, new BigNumber(expiration.getTime()))
       .send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
@@ -234,6 +242,7 @@ export class Dex extends TokenFA2 {
     poolId: BigNumber,
     tokenAmounts: Map<string, BigNumber>,
     maxSharesBurned: BigNumber,
+    expiration: Date,
     referral: string = null
   ): Promise<TransactionOperation> {
     const amts = new MichelsonMap<string, BigNumber>();
@@ -242,7 +251,13 @@ export class Dex extends TokenFA2 {
     });
 
     const operation = await this.contract.methods
-      .divest_imbalanced(poolId, amts, maxSharesBurned, referral)
+      .divest_imbalanced(
+        poolId,
+        amts,
+        maxSharesBurned,
+        new BigNumber(expiration.getTime()),
+        referral
+      )
       .send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
@@ -252,10 +267,17 @@ export class Dex extends TokenFA2 {
     poolId: BigNumber,
     sharesBurned: BigNumber,
     tokenIdx: BigNumber,
-    mintokenAmount: BigNumber
+    mintokenAmount: BigNumber,
+    expiration: Date
   ): Promise<TransactionOperation> {
     const operation = await this.contract.methods
-      .divest_one_coin(poolId, sharesBurned, tokenIdx, mintokenAmount)
+      .divest_one_coin(
+        poolId,
+        sharesBurned,
+        tokenIdx,
+        mintokenAmount,
+        new BigNumber(expiration.getTime())
+      )
       .send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;

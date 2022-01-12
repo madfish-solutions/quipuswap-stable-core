@@ -42,7 +42,7 @@ function check_duplicates(
   | None              -> unit
   | Some(permit_info) ->
     if not has_expired(default_expiry, user_expiry_opt, permit_info)
-    then failwith(Errors.permit_dupl)
+    then failwith(Errors.Permit.permit_dupl)
     else unit
   end
 
@@ -84,7 +84,7 @@ function sender_check(
     | None              -> (failwith(err_message) : full_storage_t)
     | Some(permit_info) ->
       if has_expired(s.default_expiry, user_permits.expiry, permit_info)
-      then (failwith(Errors.permit_expired) : full_storage_t)
+      then (failwith(Errors.Permit.permit_expired) : full_storage_t)
       else s with record [
         permits = Big_map.update(
           expected_user,
@@ -144,7 +144,7 @@ function set_permit_expiry(
     } with Big_map.update(user, Some(updated_user_permits), permits)
     end
   end
-  else (failwith(Errors.expiration_overflow) : permits_t)
+  else (failwith(Errors.Permit.expiration_overflow) : permits_t)
 
 function transfer_sender_check(
   const params          : transfer_prm_t;
@@ -187,10 +187,10 @@ function transfer_sender_check(
         | nil -> s
         | first_param # rest -> block {
             const from_ : address = first_param.from_;
-            const updated_s : full_storage_t = sender_check(from_, s, action, "FA2_NOT_OPERATOR");
+            const updated_s : full_storage_t = sender_check(from_, s, action, Errors.FA2.not_operator);
 
             function check(const param : trsfr_fa2_prm_t): unit is
-              assert_with_error(param.from_ = from_, "FA2_NOT_OPERATOR");
+              assert_with_error(param.from_ = from_, Errors.FA2.not_operator);
             List.iter(check, rest);
 
           } with updated_s
