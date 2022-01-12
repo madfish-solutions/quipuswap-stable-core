@@ -1,5 +1,5 @@
 
-(* 15n tokens per pool info *)
+(* tokens per pool info *)
 [@view] function get_reserves(
   const pool_id         : pool_id_t;
   var s                 : full_storage_t)
@@ -56,7 +56,7 @@
     );
   } with result.dy
 
-(* 19n Calculate the current output dy given input dx *)
+(* Calculate the current output dy given input dx *)
 [@view] function get_dy(
   const params          : get_dy_v_prm_t;
   var s                 : full_storage_t)
@@ -67,7 +67,7 @@
     const fee: nat  = sum_all_fee(pool.fee) * dy / Constants.fee_denominator;
   } with nat_or_error(dy - fee, Errors.Dex.fee_overflow)
 
-(* 20n Get A constant *)
+(* Get A constant *)
 [@view] function view_A(
   const pool_id         : pool_id_t;
   var s                 : full_storage_t)
@@ -81,7 +81,7 @@
         pool.future_A
       ) / Constants.a_precision
 
-(* 17n Fees *)
+(* Fees *)
 [@view] function get_fees(
   const pool_id         : pool_id_t;
   var s                 : full_storage_t)

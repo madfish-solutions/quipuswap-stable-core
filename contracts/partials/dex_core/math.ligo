@@ -238,7 +238,7 @@ function calc_withdraw_one_coin(
     const fee = nat_or_error(dy_0 - dy, Errors.Math.nat_error);
   } with record [ dy = dy; dy_fee = fee; ts = total_supply ]
 
-
+(* Balance pool when imbalanced request *)
 function balance_inputs(
   const init_tokens_info: map(tkn_pool_idx_t, tkn_inf_t);
   const d0              : nat;
@@ -293,7 +293,6 @@ function balance_inputs(
     } with acc;
   } with Map.fold(balance_it, new_tokens_info, accumulator);
 
-
 function perform_swap(
   const i               : tkn_pool_idx_t;
   const j               : tkn_pool_idx_t;
@@ -310,9 +309,10 @@ function perform_swap(
     const rate_j  = t_j.rate;
     const x       = xp_i + ((dx * rate_i) / Constants.precision);
     const y       = get_y(i, j, x, xp, pool);
-    const dy      = nat_or_error(xp_j - y - 1, Errors.Math.nat_error);  // -1 just in case there were some rounding Errors.Dex
+    const dy      = nat_or_error(xp_j - y - 1, Errors.Math.nat_error);  // -1 just in case there were some rounding errors
   } with dy * Constants.precision / rate_j
 
+(* Adds liquidity to pool *)
 function add_liq(
   const params          : add_liq_prm_t;
   var   s               : storage_t)

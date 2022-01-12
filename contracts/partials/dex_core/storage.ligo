@@ -40,9 +40,6 @@ type tkn_inf_t          is  [@layout:comb] record [
                 1_000_000_000_000_000_000_000_000n;         // Token has 12 decimal places.
                 1_000_000_000_000_000_000_000_000_000_000n; // Token has 6 decimal places.
   *)
-  (* percent * 100_000 -
-      percent of liquidity could be staked by the proxy to earn additional interest
-  *)
   precision_multiplier    : nat;
   (* each value = 10eN
       where N is the number of decimal places to normalize to 10e18 from `rate`.

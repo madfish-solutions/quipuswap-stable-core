@@ -1,23 +1,21 @@
-
 const default_tmp_tokens: tmp_tkns_map_t = record [
     tokens = (map[]: tkns_map_t);
     index  = 0n;
 ];
 
-function sum_all_fee(
-  const fee             : fees_storage_t)
-                        : nat is
-    fee.lp_fee
-  + fee.stakers_fee
-  + fee.ref_fee
-  + fee.dev_fee;
-
+(* Helper for sum fees that separated from reserves  *)
 [@inline] function sum_wo_lp_fee(
   const fee             : fees_storage_t)
                         : nat is
     fee.stakers_fee
   + fee.ref_fee
   + fee.dev_fee;
+
+(* Helper for sum all fee  *)
+function sum_all_fee(
+  const fee             : fees_storage_t)
+                        : nat is
+    fee.lp_fee + sum_wo_lp_fee(fee);
 
 (* Update reserves with pre-calculated `fees` *)
 [@inline] function nip_off_fees(
@@ -26,12 +24,14 @@ function sum_all_fee(
                         : tkn_inf_t is
   token_info with record [ reserves = nat_or_error(token_info.reserves - sum_wo_lp_fee(fees), Errors.Dex.low_reserves); ]
 
+(* Helper for separating fee when request is imbalanced *)
 [@inline] function divide_fee_for_balance(
   const fee             : nat;
   const tokens_count    : nat)
                         : nat is
   fee * tokens_count / (4n * nat_or_error(tokens_count - 1n, Errors.Dex.wrong_tokens_count));
 
+(* Get token from map tokens of pool by inner index *)
 function get_token_by_id(
   const token_id        : tkn_pool_idx_t;
   const map_entry       : option(tkns_map_t))
@@ -170,6 +170,7 @@ function update_former_and_transfer(
     ) # operations;
   ]
 
+(* Harvest staked rewards and stakes/unstakes QUIPU tokens if amount > 0n *)
 function perform_un_stake(
   const flag            : a_r_flag_t;
   const params          : un_stake_prm_t;

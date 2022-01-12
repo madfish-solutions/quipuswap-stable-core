@@ -28,10 +28,7 @@ function unwrap(
   const value           : int;
   const err             : string)
                         : nat is
-  case is_nat(value) of
-  | Some(natural) -> natural
-  | None -> (failwith(err): nat)
-  end;
+  unwrap(is_nat(value), err);
 
 (* Helper function to get fa2 token contract *)
 function get_fa2_token_transfer_contract(

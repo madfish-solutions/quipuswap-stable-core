@@ -143,7 +143,7 @@ type un_stake_prm_t     is [@layout:comb] record [
 
 type action_t           is
 (* Base actions *)
-| Add_pool                of init_prm_t  (* sets initial liquidity *)
+| Add_pool                of init_prm_t          (* sets initial liquidity *)
 | Swap                    of swap_prm_t          (* exchanges token to another token and sends them to receiver *)
 | Invest                  of invest_prm_t        (* mints min shares after investing tokens *)
 | Divest                  of divest_prm_t        (* burns shares and sends tokens to the owner *)
