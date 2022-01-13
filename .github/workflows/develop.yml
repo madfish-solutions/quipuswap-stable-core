@@ -1,17 +1,14 @@
-name: Main Testing Pipeline
+name: Develop Testing Pipeline
 
 on:
   push:
     branches:
-      - main
       - develop
   pull_request:
     branches:
-      - main
       - develop
 jobs:
   test:
-    name: Test Contract Job
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -26,11 +23,8 @@ jobs:
         run: sudo apt install git -y
       - name: Install modules
         run: yarn install
-      - name: Compile contracts for tests
-        run: yarn compile-for-test
-      - name: Start sandbox and wait for initialization
-        run: yarn start-sandbox && sleep 10s
+      - name: Compile contracts
+        run: yarn compile
       - name: Test the contracts
         run: yarn test
-      - name: Stop sandbox
-        run: yarn stop-sandbox
+

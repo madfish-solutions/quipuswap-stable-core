@@ -1,8 +1,12 @@
 # QuipuSwap StableDex core
 
+**Currently Work In Progress**
+
 Contracts of DEX with Curve-like invariant implementation. This contracts allows to exchange tokens with equal price.  💵 -> 💰
 
 Core concept is to provide low slippage swap between stablecoins like uUSD, kUSD, USDtz, etc.
+
+**The code here is currently unverified and unaudited, and is made publicly available only for exploration and discussion purposes. You should not use it for anything serious.**
 
 ## Project structure
 
@@ -45,7 +49,6 @@ Core concept is to provide low slippage swap between stablecoins like uUSD, kUSD
 ├── package.json
 ├── yarn.lock
 └── tsconfig.json
-
 ```
 
 ## Requirements
