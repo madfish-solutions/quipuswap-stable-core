@@ -44,7 +44,7 @@
     "recompile": "yarn clear-build && yarn compile-contract && yarn compile-lambda-all",
     "migrate": "yarn cli migrate",
     "test": "jest",
-    "compile-n-test": "yarn compile-for-test && yarn start-sandbox && sleep 10s && yarn test && yarn stop-sandbox",
+    "compile-n-test": "yarn compile-for-test && yarn start-sandbox && sleep 10 && yarn test && yarn stop-sandbox",
     "clear-build": "rm -rf ./build",
     "lint": "eslint --ext .ts .",
     "fix": "eslint --ext .ts --fix ."

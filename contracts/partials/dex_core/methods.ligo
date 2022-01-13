@@ -30,12 +30,13 @@ based on the argument type.
     | Unstake(_)              -> 13n
     end;
 
-    const lambda_bytes : bytes = unwrap(s.dex_lambdas[idx], Errors.unknown_func);
-    const func: dex_func_t = unwrap((Bytes.unpack(lambda_bytes) : option(dex_func_t)), Errors.wrong_use_function);
+    const lambda_bytes : bytes = unwrap(s.dex_lambdas[idx], Errors.Dex.unknown_func);
+    const func: dex_func_t = unwrap((Bytes.unpack(lambda_bytes) : option(dex_func_t)), Errors.Dex.wrong_use_function);
     const result: return_t = func(p, s.storage);
     s.storage := result.1;
 } with (result.0, s)
 
+(* Lambda setter (only for admin usage in init setup) *)
 [@inline] function set_function(
   const f_type          : func_entry_t;
   const params          : set_lambda_func_t;

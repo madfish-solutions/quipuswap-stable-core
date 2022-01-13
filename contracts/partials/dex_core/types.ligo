@@ -64,6 +64,8 @@ type invest_prm_t       is [@layout:comb] record [
   pool_id                 : nat; (* pool identifier *)
   shares                  : nat; (* the amount of shares to receive *)
   in_amounts              : map(nat, nat); (* amount of tokens, where `index of value` == `index of token` to be invested *)
+  time_expiration         : timestamp;
+  receiver                : option(address);
   referral                : option(address);
 ]
 
@@ -71,12 +73,16 @@ type divest_prm_t       is [@layout:comb] record [
   pool_id                 : nat; (* pool identifier *)
   min_amounts_out         : map(tkn_pool_idx_t, nat); (* min amount of tokens, where `index of value` == `index of token` to be received to accept the divestment *)
   shares                  : nat; (* amount of shares to be burnt *)
+  time_expiration         : timestamp;
+  receiver                : option(address);
 ]
 
 type divest_imb_prm_t   is [@layout:comb] record [
   pool_id                 : nat; (* pool identifier *)
   amounts_out             : map(tkn_pool_idx_t, nat); (* amounts of tokens, where `index of value` == `index of token` to be received to accept the divestment *)
   max_shares              : nat; (* amount of shares to be burnt *)
+  time_expiration         : timestamp;
+  receiver                : option(address);
   referral                : option(address);
 ]
 
@@ -85,6 +91,8 @@ type divest_one_c_prm_t is [@layout:comb] record [
   shares                  : nat; (* amount of shares to be burnt *)
   token_index             : tkn_pool_idx_t;
   min_amount_out          : nat;
+  time_expiration         : timestamp;
+  receiver                : option(address);
   referral                : option(address);
 ]
 
@@ -135,7 +143,7 @@ type un_stake_prm_t     is [@layout:comb] record [
 
 type action_t           is
 (* Base actions *)
-| Add_pool                of init_prm_t  (* sets initial liquidity *)
+| Add_pool                of init_prm_t          (* sets initial liquidity *)
 | Swap                    of swap_prm_t          (* exchanges token to another token and sends them to receiver *)
 | Invest                  of invest_prm_t        (* mints min shares after investing tokens *)
 | Divest                  of divest_prm_t        (* burns shares and sends tokens to the owner *)
@@ -179,6 +187,7 @@ type add_liq_prm_t      is record [
   pool                    : pool_t;
   inputs                  : map(tkn_pool_idx_t, nat);
   min_mint_amount         : nat;
+  receiver                : option(address);
 ]
 
 type balancing_acc_t    is record [
