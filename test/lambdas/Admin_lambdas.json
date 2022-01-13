@@ -1,0 +1,14 @@
+[
+  {
+    "index": 0,
+    "name": "add_rem_managers"
+  },
+  {
+    "index": 1,
+    "name": "set_dev_address"
+  },
+  {
+    "index": 2,
+    "name": "set_admin"
+  }
+]

@@ -11,6 +11,6 @@
     "types": ["node", "@types/jest"],
     "resolveJsonModule": true,
   },
-  "exclude": ["node_modules", "build", "cache", "artifacts", "scripts"],
+  "exclude": ["node_modules", "build", "cache", "artifacts"],
   "include": ["./**/*.ts"]
 }
