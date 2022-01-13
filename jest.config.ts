@@ -1,9 +1,7 @@
 /*
-* For a detailed explanation regarding each configuration property, visit:
-* https://jestjs.io/docs/configuration
-*/
-
-import { setupJestEnv } from "create-tezos-smart-contract/dist/modules/jest/env";
+ * For a detailed explanation regarding each configuration property, visit:
+ * https://jestjs.io/docs/configuration
+ */
 
 const config = {
   coverageProvider: "v8",
@@ -13,7 +11,7 @@ const config = {
 
   // The paths to modules that run some code to configure or set up the testing environment before each test
   //setupFiles: ["create-tezos-smart-contract/dist/modules/jest/globals.js"],
-  setupFilesAfterEnv: ['./jest.setup.ts'],
+  setupFilesAfterEnv: ["./jest.setup.ts"],
   preset: "ts-jest/presets/js-with-ts",
   testEnvironment: "node",
   testRunner: "jest-circus/runner",
@@ -21,14 +19,7 @@ const config = {
 
 /** @type {import('ts-jest/dist/types').InitialOptionsTsJest} */
 module.exports = async () => {
-  const globals = await setupJestEnv();
-
- return {
-   ...config,
-   globals: {
-    //  ...config.globals,
-     ...globals,
-   }
- };
+  return {
+    ...config,
+  };
 };
-

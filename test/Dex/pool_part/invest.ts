@@ -1,7 +1,7 @@
 import { TezosToolkit } from "@taquito/taquito";
 import BigNumber from "bignumber.js";
-import { Dex } from "../../helpers/dexFA2";
-import { prepareProviderOptions } from "../../helpers/utils";
+import Dex from "../API";
+import { prepareProviderOptions } from "../../../scripts/helpers/utils";
 import { accounts } from "../constants";
 
 export async function investLiquiditySuccessCase(
@@ -11,9 +11,10 @@ export async function investLiquiditySuccessCase(
   referral: string,
   min_shares: BigNumber,
   in_amounts: Map<string, BigNumber>,
+  expiration: Date,
   Tezos: TezosToolkit
 ) {
-  let config = await prepareProviderOptions(sender);
+  const config = await prepareProviderOptions(sender);
   Tezos.setProvider(config);
 
   await dex.updateStorage({
@@ -26,7 +27,13 @@ export async function investLiquiditySuccessCase(
   const initLedger =
     dex.storage.storage.ledger[accounts[sender].pkh] || new BigNumber(0);
 
-  await dex.investLiquidity(pool_id, in_amounts, min_shares, referral);
+  await dex.investLiquidity(
+    pool_id,
+    in_amounts,
+    min_shares,
+    expiration,
+    referral
+  );
 
   await dex.updateStorage({
     pools: [pool_id.toString()],

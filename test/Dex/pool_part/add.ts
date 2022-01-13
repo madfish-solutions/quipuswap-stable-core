@@ -1,34 +1,43 @@
 import BigNumber from "bignumber.js";
 import { TezosToolkit } from "@taquito/taquito";
-import { Dex } from "../../helpers/dexFA2";
-import { TokenFA12 } from "../../helpers/tokenFA12";
-import { TokenFA2 } from "../../helpers/tokenFA2";
-import { AccountsLiteral, prepareProviderOptions } from "../../helpers/utils";
+import Dex from "../API";
+import {
+  AccountsLiteral,
+  prepareProviderOptions,
+} from "../../../scripts/helpers/utils";
 import { TokensMap } from "../types";
 import { decimals } from "../constants";
+import { TokenFA12, TokenFA2 } from "../../Token";
 
-export async function manageInputs(input: BigNumber, tokens: TokensMap) {
+export async function manageInputs(
+  input: BigNumber,
+  tokens: TokensMap
+): Promise<
+  Array<{
+    asset: TokenFA12 | TokenFA2;
+    in_amount: BigNumber;
+    rate: BigNumber;
+    precision_multiplier: BigNumber;
+  }>
+> {
   let inputs = [
     {
       asset: tokens.kUSD,
       in_amount: decimals.kUSD.multipliedBy(input),
       rate: new BigNumber(10).pow(18),
       precision_multiplier: new BigNumber(1),
-      proxy_limit: new BigNumber(1000000),
     },
     {
       asset: tokens.USDtz,
       in_amount: decimals.USDtz.multipliedBy(input),
       rate: new BigNumber(10).pow(18 + 12),
       precision_multiplier: new BigNumber(10).pow(12),
-      proxy_limit: new BigNumber(1000000),
     },
     {
       asset: tokens.uUSD,
       in_amount: decimals.uUSD.multipliedBy(input),
       rate: new BigNumber(10).pow(18 + 6),
       precision_multiplier: new BigNumber(10).pow(6),
-      proxy_limit: new BigNumber(1000000),
     },
   ];
   inputs = inputs.sort(
@@ -57,19 +66,18 @@ export async function addNewPair(
     in_amount: BigNumber;
     rate: BigNumber;
     precision_multiplier: BigNumber;
-    proxy_limit: BigNumber;
   }[],
-  approve: boolean = false,
+  approve = false,
   Tezos: TezosToolkit
 ) {
-  let config = await prepareProviderOptions(sender);
+  const config = await prepareProviderOptions(sender);
   Tezos.setProvider(config);
   const sender_addr = await Tezos.signer.publicKeyHash();
 
   await dex.updateStorage({});
   const initPairCount = new BigNumber(dex.storage.storage.pools_count);
 
-  expect(sender_addr).toEqual(dex.storage.storage.admin);
+  expect(sender_addr).toStrictEqual(dex.storage.storage.admin);
   await dex.initializeExchange(a_const, inputs, approve);
 
   await dex.updateStorage({});
@@ -79,8 +87,10 @@ export async function addNewPair(
   });
   const updatedPairCount = new BigNumber(dex.storage.storage.pools_count);
   const updatedSenderBalance = dex.storage.storage.ledger[sender_addr];
-  expect(initPairCount.toNumber() + 1).toEqual(updatedPairCount.toNumber());
-  expect(updatedSenderBalance.toNumber()).toEqual(
+  expect(initPairCount.toNumber() + 1).toStrictEqual(
+    updatedPairCount.toNumber()
+  );
+  expect(updatedSenderBalance.toNumber()).toStrictEqual(
     new BigNumber(10)
       .pow(18)
       .multipliedBy(exp_input)

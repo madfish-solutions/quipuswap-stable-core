@@ -1,14 +1,12 @@
 import { TezosToolkit } from "@taquito/taquito";
 import BigNumber from "bignumber.js";
-import { confirmOperation } from "../../helpers/confirmation";
-import { Dex } from "../../helpers/dexFA2";
-import { TokenFA12 } from "../../helpers/tokenFA12";
-import { FA12TokenType, FA2TokenType, TokenInfo } from "../../helpers/types";
+import { confirmOperation } from "../../../scripts/helpers/confirmation";
+import Dex from "../API";
 import {
   AccountsLiteral,
   mapTokensToIdx,
   prepareProviderOptions,
-} from "../../helpers/utils";
+} from "../../../scripts/helpers/utils";
 import { accounts, decimals, swap_routes } from "../constants";
 import { setupTokenAmounts } from "../tokensSetups";
 import { AmountsMap, IndexMap, TokensMap } from "../types";
@@ -16,6 +14,7 @@ import {
   MichelsonV1ExpressionBase,
   MichelsonV1ExpressionExtended,
 } from "@taquito/rpc";
+import { TokenFA12 } from "../../Token";
 
 export async function setupTokenMapping(
   dex: Dex,
@@ -27,14 +26,12 @@ export async function setupTokenMapping(
   idx_map: IndexMap;
 }> {
   const stp = await setupTokenAmounts(dex, tokens, inputs);
-  let amounts = new Map<string, BigNumber>();
+  const amounts = new Map<string, BigNumber>();
   stp.amounts.forEach((v, k) => {
     amounts.set(k, v);
   });
   const pool_id = stp.pool_id;
-  const tokens_map = dex.storage.storage.tokens[
-    pool_id.toNumber()
-  ] as any as Map<string, FA2TokenType | FA12TokenType>;
+  const tokens_map = dex.storage.storage.tokens[pool_id.toNumber()];
   return {
     pool_id,
     amounts,
@@ -57,21 +54,16 @@ export async function swapSuccessCase(
   lambdaContractAddress: string,
   Tezos: TezosToolkit
 ) {
-  let config = await prepareProviderOptions(sender);
+  const config = await prepareProviderOptions(sender);
   Tezos.setProvider(config);
   const i = idx_map[t_in];
   const j = idx_map[t_to];
   await dex.updateStorage({ pools: [pool_id.toString()] });
   // printFormattedOutput(dex.storage.storage.pools[pool_id.toString()]);
-  const init_reserves = dex.storage.storage.pools[pool_id.toString()]
-    .tokens_info as any as Map<string, TokenInfo>;
+  const init_reserves =
+    dex.storage.storage.pools[pool_id.toString()].tokens_info;
   const rates = {};
-  (
-    dex.storage.storage.pools[pool_id.toString()].tokens_info as any as Map<
-      string,
-      TokenInfo
-    >
-  ).forEach((v, k) => {
+  dex.storage.storage.pools[pool_id.toString()].tokens_info.forEach((v, k) => {
     rates[k] = new BigNumber(10).pow(18).dividedBy(v.rate);
   });
   const tok_in = tokens[t_in];
@@ -114,9 +106,9 @@ export async function swapSuccessCase(
     referral
   );
   await dex.updateStorage({ pools: [pool_id.toString()] });
-  const upd_reserves = dex.storage.storage.pools[pool_id.toString()]
-    .tokens_info as any as Map<string, TokenInfo>;
-  expect(upd_reserves.get(i.toString()).reserves).toEqual(
+  const upd_reserves =
+    dex.storage.storage.pools[pool_id.toString()].tokens_info;
+  expect(upd_reserves.get(i.toString()).reserves).toStrictEqual(
     init_reserves.get(i.toString()).reserves.plus(amounts.get(i))
   );
 
@@ -173,20 +165,33 @@ export async function swapSuccessCase(
   upd_in = upd_in instanceof BigNumber ? upd_in : upd_in[0].balance;
   upd_out = upd_out instanceof BigNumber ? upd_out : upd_out[0].balance;
   console.debug(
-    `[SWAP] Reserves ${t_in}: ${init_in
+    `[SWAP] Balances\n\t\t${t_in}:\t${init_in
       .dividedBy(rates[i])
       .div(new BigNumber(10).pow(18))
       .toFormat(10)} -> ${upd_in
       .dividedBy(rates[i])
       .div(new BigNumber(10).pow(18))
-      .toFormat(10)}`
-  );
-  console.debug(
-    `[SWAP] Reserves ${t_to}: ${init_out
+      .toFormat(10)}\n\t\t${t_to}:\t${init_out
       .dividedBy(rates[j])
       .div(new BigNumber(10).pow(18))
       .toFormat(10)} -> ${upd_out
       .dividedBy(rates[j])
+      .div(new BigNumber(10).pow(18))
+      .toFormat(10)}\n       Reserves\n\t\t${t_in}:\t${init_reserves
+      .get(i)
+      .reserves.dividedBy(rates[i])
+      .div(new BigNumber(10).pow(18))
+      .toFormat(10)} -> ${upd_reserves
+      .get(i)
+      .reserves.dividedBy(rates[i])
+      .div(new BigNumber(10).pow(18))
+      .toFormat(10)}\n\t\t${t_to}:\t${init_reserves
+      .get(j)
+      .reserves.dividedBy(rates[j])
+      .div(new BigNumber(10).pow(18))
+      .toFormat(10)} -> ${upd_reserves
+      .get(j)
+      .reserves.dividedBy(rates[j])
       .div(new BigNumber(10).pow(18))
       .toFormat(10)}`
   );
@@ -214,28 +219,24 @@ export async function batchSwap(
   ref: string,
   Tezos: TezosToolkit
 ): Promise<void> {
-  let amounts: Map<string, BigNumber>;
   const inputs: AmountsMap = {
     kUSD: decimals.kUSD.multipliedBy(amount),
     uUSD: decimals.uUSD.multipliedBy(amount),
     USDtz: decimals.USDtz.multipliedBy(amount),
   };
-  let map_tokens_idx: IndexMap;
   const stp = await setupTokenAmounts(dex, tokens, {
     kUSD: inputs.kUSD.multipliedBy(2),
     uUSD: inputs.uUSD.multipliedBy(2),
     USDtz: inputs.USDtz.multipliedBy(2),
   });
-  amounts = new Map<string, BigNumber>();
+  const amounts: Map<string, BigNumber> = new Map<string, BigNumber>();
   stp.amounts.forEach((v, k) => {
     amounts.set(k, v.dividedBy(2));
   });
-  const tokens_map = dex.storage.storage.tokens[
-    poolId.toNumber()
-  ] as any as Map<string, FA2TokenType | FA12TokenType>;
-  map_tokens_idx = mapTokensToIdx(tokens_map, tokens);
+  const tokens_map = dex.storage.storage.tokens[poolId.toNumber()];
+  const map_tokens_idx: IndexMap = mapTokensToIdx(tokens_map, tokens);
   for (let i = 0; i < times; i++) {
-    let batch = Tezos.contract.batch();
+    const batch = Tezos.contract.batch();
     for (const [t_in, t_out] of swap_routes) {
       const i = map_tokens_idx[t_in];
       const j = map_tokens_idx[t_out];

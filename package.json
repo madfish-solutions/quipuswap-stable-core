@@ -4,13 +4,14 @@
   "homepage": "https://github.com/madfish-solutions/quipuswap-stable-core#readme",
   "repository": "github:madfish-solutions/quipuswap-stable-core.git",
   "bugs": "https://github.com/madfish-solutions/quipuswap-stable-core/issues",
-  "description": "Token2Token DEX for equal-price tokens based on StableSwap algos on top of Tezos.",
+  "description": "Token2Token DEX for equal-price tokens based on StableSwap algos on top of Tezos. This package installs dependencies for testing and deployment purposes",
   "author": "Illia Likhoshva <likhoshva@madfish.solutions> (https://www.madfish.solutions/)",
+  "private": true,
   "dependencies": {
-    "@taquito/signer": "^9.1.1",
-    "@taquito/taquito": "^9.1.1",
+    "@taquito/signer": "^11.1.0",
+    "@taquito/taquito": "^11.1.0",
     "@types/jest": "^27.0.2",
-    "create-tezos-smart-contract": "^1.1.11",
+    "commander": "^8.3.0",
     "date-fns": "^2.25.0",
     "jest": "^27.0.6",
     "ts-jest": "^27.0.5",
@@ -22,19 +23,31 @@
     "yarn": ">=1.22.0"
   },
   "scripts": {
-    "start": "npx tezos-sdk -- --help",
+    "cli": "ts-node ./scripts/cli.ts",
+    "help": "yarn cli --help",
+    "start-sandbox": "yarn cli sandbox up",
+    "stop-sandbox": "yarn cli sandbox down",
     "compile": "yarn compile-contract && yarn compile-lambda-all",
-    "compile-contract": "npx tezos-sdk compile",
-    "compile-lambda": "ts-node ./scripts/cli.ts compile-lambda",
+    "compile-for-test": "yarn compile-contract -c dex_test && yarn compile-lambda-all-test",
+    "compile-contract": "yarn cli compile",
+    "compile-lambda": "yarn cli compile-lambda",
     "compile-lambda-all": "yarn compile-lambda-admin && yarn compile-lambda-dex && yarn compile-lambda-permit && yarn compile-lambda-token",
     "compile-lambda-dex": "yarn -s compile-lambda -T Dex -J ./test/lambdas/Dex_lambdas.json -C ./contracts/main/dex.ligo",
     "compile-lambda-token": "yarn -s compile-lambda -T Token -J ./test/lambdas/Token_lambdas.json -C ./contracts/main/dex.ligo",
     "compile-lambda-permit": "yarn -s compile-lambda -T Permit -J ./test/lambdas/Permit_lambdas.json -C ./contracts/main/dex.ligo",
     "compile-lambda-admin": "yarn -s compile-lambda -T Admin -J ./test/lambdas/Admin_lambdas.json -C ./contracts/main/dex.ligo",
-    "start-sandbox": "npx tezos-sdk start-sandbox",
-    "test": "npx tezos-sdk test",
-    "compile-n-test": "yarn compile && yarn test",
-    "deploy": "npx tezos-sdk deploy"
+    "compile-lambda-all-test": "yarn compile-lambda-admin-test && yarn compile-lambda-dex-test && yarn compile-lambda-permit-test && yarn compile-lambda-token-test",
+    "compile-lambda-dex-test": "yarn -s compile-lambda -T Dex -J ./test/lambdas/Dex_lambdas.json -C ./contracts/main/dex_test.ligo",
+    "compile-lambda-token-test": "yarn -s compile-lambda -T Token -J ./test/lambdas/Token_lambdas.json -C ./contracts/main/dex_test.ligo",
+    "compile-lambda-permit-test": "yarn -s compile-lambda -T Permit -J ./test/lambdas/Permit_lambdas.json -C ./contracts/main/dex_test.ligo",
+    "compile-lambda-admin-test": "yarn -s compile-lambda -T Admin -J ./test/lambdas/Admin_lambdas.json -C ./contracts/main/dex_test.ligo",
+    "recompile": "yarn clear-build && yarn compile-contract && yarn compile-lambda-all",
+    "migrate": "yarn cli migrate",
+    "test": "jest",
+    "compile-n-test": "yarn compile-for-test && yarn start-sandbox && sleep 10 && yarn test && yarn stop-sandbox",
+    "clear-build": "rm -rf ./build",
+    "lint": "eslint --ext .ts .",
+    "fix": "eslint --ext .ts --fix ."
   },
   "keywords": [
     "quipuswap",
@@ -44,8 +57,13 @@
     "blockchain"
   ],
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.8.0",
+    "@typescript-eslint/parser": "^5.8.0",
     "eslint": "^8.2.0",
+    "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-jest": "^25.2.4",
-    "eslint-plugin-jest-formatting": "^3.0.0"
+    "eslint-plugin-jest-formatting": "^3.0.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "prettier": "^2.5.1"
   }
 }

@@ -1,27 +1,37 @@
+(* Modules *)
 #import "../partials/errors.ligo" "Errors"
+#if TEST
+#import "../partials/constants_test.ligo" "Constants"
+#else
 #import "../partials/constants.ligo" "Constants"
-
-#include "../interfaces/iPermit.ligo"
-#include "../interfaces/iDex.ligo"
-
-#include "../partials/getters.ligo"
+#endif
+(* Types *)
+#include "../partials/common_types.ligo"
+#include "../partials/admin/types.ligo"
+#include "../partials/fa12/types.ligo"
+#include "../partials/fa2/types.ligo"
+#include "../partials/permit/types.ligo"
+#include "../partials/dex_core/storage.ligo"
+#include "../partials/dex_core/types.ligo"
+(* Helpers and functions *)
 #include "../partials/utils.ligo"
-
-#include "../helpers/fa2.ligo"
-#include "../helpers/permit.ligo"
-#include "../helpers/dex.ligo"
-
-#include "../lambdas/admin.ligo"
-#include "../lambdas/permit.ligo"
-#include "../lambdas/fa2.ligo"
-#include "../lambdas/dex.ligo"
-
-#include "../partials/dex_methods.ligo"
-
-#include "../views/fa2.ligo"
-#include "../views/dex.ligo"
-
-
+#include "../partials/dex_core/helpers.ligo"
+#include "../partials/fa2/helpers.ligo"
+#include "../partials/permit/helpers.ligo"
+#include "../partials/dex_core/math.ligo"
+(* Lambda entrypoints *)
+#include "../partials/admin/lambdas.ligo"
+#include "../partials/fa2/lambdas.ligo"
+#include "../partials/permit/lambdas.ligo"
+#include "../partials/dex_core/lambdas.ligo"
+(* Call methods *)
+#include "../partials/admin/methods.ligo"
+#include "../partials/fa2/methods.ligo"
+#include "../partials/permit/methods.ligo"
+#include "../partials/dex_core/methods.ligo"
+(* View methods *)
+#include "../partials/fa2/views.ligo"
+#include "../partials/dex_core/views.ligo"
 (* Dex - Contract for exchanges between FA12 and FA2 tokens *)
 function main(
   const p               : full_action_t;
@@ -29,11 +39,11 @@ function main(
 )                       : full_return_t is
   case p of
   | Set_admin_function(params)  -> set_function(FAdmin, params, s)
-  | Use_admin(params)           -> call_admin(params, s)
   | Set_dex_function(params)    -> set_function(FDex, params, s)
-  | Use_dex(params)             -> call_dex(params, s)
-  | Set_token_function(params)  -> set_function(FToken, params, s)
-  | Use_token(params)           -> call_token(params, s, p)
   | Set_permit_function(params) -> set_function(FPermit, params, s)
+  | Set_token_function(params)  -> set_function(FToken, params, s)
+  | Use_admin(params)           -> call_admin(params, s)
+  | Use_dex(params)             -> call_dex(params, s)
   | Use_permit(params)          -> call_permit(params, s, p)
+  | Use_token(params)           -> call_token(params, s, p)
   end

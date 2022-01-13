@@ -1,51 +1,20 @@
-const fs = require("fs");
 import BigNumber from "bignumber.js";
-import { prepareProviderOptions } from "../helpers/utils";
-import { AmountsMap, TokensMap } from "./types";
+import { prepareProviderOptions } from "../../scripts/helpers/utils";
+import { AmountsMap, FA12TokenType, FA2TokenType, TokensMap } from "./types";
 import { TezosToolkit } from "@taquito/taquito";
-import kUSDstorage from "../helpers/tokens/kUSD_storage";
-import uUSDstorage from "../helpers/tokens/uUSD_storage";
-import USDtzstorage from "../helpers/tokens/USDtz_storage";
-import QUIPUstorage from "../helpers/tokens/QUIPU_storage";
-import { confirmOperation } from "../helpers/confirmation";
-import { TokenFA12 } from "../helpers/tokenFA12";
-import { TokenFA2 } from "../helpers/tokenFA2";
-import { Dex } from "../helpers/dexFA2";
+import { confirmOperation } from "../../scripts/helpers/confirmation";
+import Dex from "./API";
 import { accounts } from "./constants";
-import { FA12TokenType, FA2TokenType } from "../helpers/types";
-
-const uUSD_contract = fs
-  .readFileSync("./test/helpers/tokens/uUSD.tz")
-  .toString();
-const USDtz_contract = fs
-  .readFileSync("./test/helpers/tokens/USDtz.tz")
-  .toString();
-
-const kUSD_contract = fs
-  .readFileSync("./test/helpers/tokens/kUSD.tz")
-  .toString();
-
-const QUIPU_contract = fs
-  .readFileSync("./test/helpers/tokens/QUIPU.tz")
-  .toString();
+import { TokenFA12, TokenFA2, TokenInitValues } from "../Token";
 
 async function originateTokens(Tezos: TezosToolkit): Promise<TokensMap> {
-  const kUSD = await Tezos.contract.originate({
-    code: kUSD_contract,
-    storage: kUSDstorage,
-  });
+  const kUSD = await Tezos.contract.originate(TokenInitValues.kUSD);
   await confirmOperation(Tezos, kUSD.hash);
   console.debug("[ORIGINATION] kUSD");
-  const USDtz = await Tezos.contract.originate({
-    code: USDtz_contract,
-    storage: USDtzstorage,
-  });
+  const USDtz = await Tezos.contract.originate(TokenInitValues.USDtz);
   await confirmOperation(Tezos, USDtz.hash);
   console.debug("[ORIGINATION] USDtz");
-  const uUSD = await Tezos.contract.originate({
-    code: uUSD_contract,
-    storage: uUSDstorage,
-  });
+  const uUSD = await Tezos.contract.originate(TokenInitValues.uUSD);
   await confirmOperation(Tezos, uUSD.hash);
   console.debug("[ORIGINATION] uUSD");
   return {
@@ -62,7 +31,7 @@ async function approveAllTokens(
 ): Promise<boolean> {
   const approveAmount = new BigNumber(10).pow(45);
   for (const spender in accounts) {
-    let config = await prepareProviderOptions(spender);
+    const config = await prepareProviderOptions(spender);
     Tezos.setProvider(config);
     for (const token in tokens) {
       await tokens[token].approve(dex.contract.address, approveAmount);
@@ -75,7 +44,7 @@ async function approveAllTokens(
 export async function setupTrioTokens(
   dex: Dex,
   Tezos: TezosToolkit,
-  approveAll: boolean = false
+  approveAll = false
 ): Promise<TokensMap> {
   console.debug("Setting up tokens");
   const tokens = await originateTokens(Tezos);
@@ -96,8 +65,8 @@ export async function setupTokenAmounts(
   const tokens_map = dex.storage.storage.tokens[
     pool_id.toNumber()
   ] as unknown as Map<string, FA2TokenType | FA12TokenType>;
-  let amounts = new Map<string, BigNumber>();
-  for (let [k, v] of tokens_map.entries()) {
+  const amounts = new Map<string, BigNumber>();
+  for (const [k, v] of tokens_map.entries()) {
     let token: FA2TokenType | FA12TokenType = v as FA2TokenType;
     let contract_address: string;
     if (token.fa2) {
@@ -117,11 +86,10 @@ export async function setupTokenAmounts(
   return { pool_id, amounts };
 }
 
-export async function setupQuipuGovToken(Tezos: TezosToolkit): Promise<TokenFA2> {
-  const quipu = await Tezos.contract.originate({
-    code: QUIPU_contract,
-    storage: QUIPUstorage,
-  });
+export async function setupQuipuGovToken(
+  Tezos: TezosToolkit
+): Promise<TokenFA2> {
+  const quipu = await Tezos.contract.originate(TokenInitValues.QUIPU);
   await confirmOperation(Tezos, quipu.hash);
   return await TokenFA2.init(Tezos, quipu.contractAddress);
 }

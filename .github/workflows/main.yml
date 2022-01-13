@@ -10,13 +10,14 @@ on:
       - main
       - develop
 jobs:
-  compile:
+  test:
+    name: Test Contract Job
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Setup dependencies
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v2
         with:
           node-version: "14"
           cache: 'yarn'
@@ -25,9 +26,11 @@ jobs:
         run: sudo apt install git -y
       - name: Install modules
         run: yarn install
-      - name: Compile contracts
-        run: yarn compile
+      - name: Compile contracts for tests
+        run: yarn compile-for-test
+      - name: Start sandbox and wait for initialization
+        run: yarn start-sandbox && sleep 10s
       - name: Test the contracts
         run: yarn test
-  test:
-    runs-on: ubuntu-latest
+      - name: Stop sandbox
+        run: yarn stop-sandbox

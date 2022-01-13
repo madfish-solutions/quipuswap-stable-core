@@ -1,8 +1,8 @@
-import { MichelsonMap, TezosToolkit } from "@taquito/taquito";
+import { TezosToolkit } from "@taquito/taquito";
 import BigNumber from "bignumber.js";
-import { confirmOperation } from "../../helpers/confirmation";
-import { Dex } from "../../helpers/dexFA2";
-import { DexStorage } from "../../helpers/types";
+import { confirmOperation } from "../../../scripts/helpers/confirmation";
+import Dex from "../API";
+import { DexStorage } from "../types";
 
 export async function stakeToPoolSuccessCase(
   dex: Dex,
@@ -20,7 +20,7 @@ export async function stakeToPoolSuccessCase(
     .then((storage: DexStorage) => {
       return storage.storage.stakers_balance;
     })
-    .then((balance: any) => balance.get([staker, pool_id.toString()]))
+    .then((balance) => balance.get([staker, pool_id.toString()]))
     .then((value) => (value ? value.balance : new BigNumber(0)));
   const op = await dex.contract.methods.stake(pool_id, input).send();
   await confirmOperation(Tezos, op.hash);
@@ -33,12 +33,12 @@ export async function stakeToPoolSuccessCase(
     .then((storage: DexStorage) => {
       return storage.storage.stakers_balance;
     })
-    .then((balance: any) => balance.get([staker, pool_id.toString()]))
+    .then((balance) => balance.get([staker, pool_id.toString()]))
     .then((value) => value.balance);
-  expect(init_user_stake.plus(input).toNumber()).toEqual(
+  expect(init_user_stake.plus(input).toNumber()).toStrictEqual(
     upd_user_stake.toNumber()
   );
-  expect(init_total_stake.plus(input).toNumber()).toEqual(
+  expect(init_total_stake.plus(input).toNumber()).toStrictEqual(
     upd_total_stake.toNumber()
   );
 }
@@ -55,10 +55,8 @@ export async function unstakeFromPoolSuccessCase(
       .total_staked;
   const init_user_stake: BigNumber = await dex.contract
     .storage()
-    .then((storage: DexStorage) => {
-      return storage.storage.stakers_balance;
-    })
-    .then((balance: any) => balance.get([staker, pool_id.toString()]))
+    .then((storage: DexStorage) => storage.storage.stakers_balance)
+    .then((balance) => balance.get([staker, pool_id.toString()]))
     .then((value) => (value ? value.balance : new BigNumber(0)));
   const op = await dex.contract.methods.unstake(pool_id, output).send();
   await confirmOperation(Tezos, op.hash);
@@ -71,12 +69,12 @@ export async function unstakeFromPoolSuccessCase(
     .then((storage: DexStorage) => {
       return storage.storage.stakers_balance;
     })
-    .then((balance: any) => balance.get([staker, pool_id.toString()]))
+    .then((balance) => balance.get([staker, pool_id.toString()]))
     .then((value) => value.balance);
-  expect(init_user_stake.minus(output).toNumber()).toEqual(
-      upd_user_stake.toNumber()
-    );
-  expect(init_total_stake.minus(output).toNumber()).toEqual(
+  expect(init_user_stake.minus(output).toNumber()).toStrictEqual(
+    upd_user_stake.toNumber()
+  );
+  expect(init_total_stake.minus(output).toNumber()).toStrictEqual(
     upd_total_stake.toNumber()
   );
 }
