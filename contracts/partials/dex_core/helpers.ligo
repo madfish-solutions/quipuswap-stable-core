@@ -5,24 +5,27 @@ const default_tmp_tokens: tmp_tkns_map_t = record [
 
 (* Helper for sum fees that separated from reserves  *)
 [@inline] function sum_wo_lp_fee(
-  const fee             : fees_storage_t)
+  const fee             : fees_storage_t;
+  const dev_fee         : nat)
                         : nat is
     fee.stakers_fee
   + fee.ref_fee
-  + fee.dev_fee;
+  + dev_fee;
 
 (* Helper for sum all fee  *)
 function sum_all_fee(
-  const fee             : fees_storage_t)
+  const fee             : fees_storage_t;
+  const dev_fee         : nat)
                         : nat is
-    fee.lp_fee + sum_wo_lp_fee(fee);
+    fee.lp_fee + sum_wo_lp_fee(fee, dev_fee);
 
 (* Update reserves with pre-calculated `fees` *)
 [@inline] function nip_off_fees(
   const fees            : fees_storage_t;
+  const dev_fee         : nat;
   const token_info      : tkn_inf_t)
                         : tkn_inf_t is
-  token_info with record [ reserves = nat_or_error(token_info.reserves - sum_wo_lp_fee(fees), Errors.Dex.low_reserves); ]
+  token_info with record [ reserves = nat_or_error(token_info.reserves - sum_wo_lp_fee(fees, dev_fee), Errors.Dex.low_reserves); ]
 
 (* Helper for separating fee when request is imbalanced *)
 [@inline] function divide_fee_for_balance(
@@ -45,11 +48,12 @@ function get_token_by_id(
 function perform_fee_slice(
     const dy            : nat;
     const fee           : fees_storage_t;
+    const dev_fee       : nat;
     const total_staked  : nat)
                         : record [ dy: nat; ref: nat; dev: nat; stkr: nat; lp: nat; ] is
   block {
     const to_ref = dy * fee.ref_fee / Constants.fee_denominator;
-    const to_dev = dy * fee.dev_fee / Constants.fee_denominator;
+    const to_dev = dy * dev_fee / Constants.fee_denominator;
     var to_prov := dy * fee.lp_fee / Constants.fee_denominator;
 
     var to_stakers := 0n;
@@ -230,7 +234,6 @@ function get_pool_info(
       future_A_time       = Tezos.now;
       tokens_info         = (map []: map(tkn_pool_idx_t, tkn_inf_t));
       fee                 = record [
-        dev_fee             = 0n;
         lp_fee              = 0n;
         ref_fee             = 0n;
         stakers_fee         = 0n;

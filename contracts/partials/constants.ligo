@@ -2,9 +2,10 @@
 [@inline] const no_operations: list(operation) = nil;
 
 const dex_func_count: nat       = 14n;
+const dev_func_count: nat       = 2n;
 const token_func_count: nat     = 5n;
 const permit_func_count: nat    = 2n;
-const admin_func_count: nat     = 3n;
+const admin_func_count: nat     = 2n;
 
 (* StableSwap constants *)
 const max_tokens_count: nat     = 4n; (* Max available tokens in pool *)

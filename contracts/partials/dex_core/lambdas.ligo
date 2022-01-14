@@ -1,93 +1,3 @@
-(* Initial exchange setup
- * note: tokens should be approved before the operation
- *)
-function initialize_exchange(
-  const p               : action_t;
-  var s                 : storage_t)
-                        : return_t is
-  block {
-    var operations: list(operation) := Constants.no_operations;
-    case p of
-    | Add_pool(params) -> {
-      check_admin(s.admin);
-
-      (* Params check *)
-      const n_tokens = Set.size(params.input_tokens);
-
-      assert_with_error(
-        n_tokens < Constants.max_tokens_count
-        and n_tokens >= Constants.min_tokens_count
-        and n_tokens = Map.size(params.tokens_info),
-        Errors.Dex.wrong_tokens_count
-      );
-
-      function get_tokens_from_param(
-        var result      : tmp_tkns_map_t;
-        const value     : token_t)
-                        : tmp_tkns_map_t is
-        block {
-          result.tokens[result.index] := value;
-          result.index := result.index + 1n;
-        }
-        with result;
-
-      const result: tmp_tkns_map_t = Set.fold(get_tokens_from_param, params.input_tokens, default_tmp_tokens);
-
-      const tokens : tkns_map_t = result.tokens;
-      const token_bytes : bytes = Bytes.pack(tokens);
-      var (pool_i, token_id) := get_pool_info(token_bytes, s.pools_count, s.pool_to_id, s.pools);
-
-      s.tokens[token_id] := tokens;
-
-      assert_with_error(pool_i.total_supply = 0n, Errors.Dex.pool_listed);
-
-      if s.pools_count = token_id
-      then {
-        s.pool_to_id[token_bytes] := token_id;
-        s.pools_count := s.pools_count + 1n;
-      }
-      else skip;
-
-      assert_with_error(Constants.max_a >= params.a_constant, Errors.Dex.a_limit);
-
-      function separate_inputs(
-        var acc         : map(tkn_pool_idx_t, tkn_inf_t) * map(tkn_pool_idx_t, nat);
-        const entry     : tkn_pool_idx_t * tkn_inf_t)
-                        : map(tkn_pool_idx_t, tkn_inf_t) * map(tkn_pool_idx_t, nat) is
-        block {
-          acc.1[entry.0] := entry.1.reserves;
-          acc.0[entry.0] := entry.1 with record [ reserves = 0n; ]
-        } with acc;
-
-      const (tokens_info, inputs) = Map.fold(
-        separate_inputs,
-        params.tokens_info,
-        (params.tokens_info, (map[]:map(tkn_pool_idx_t, nat)))
-      );
-
-      const pool = pool_i with record [
-        initial_A       = params.a_constant * Constants.a_precision;
-        future_A        = params.a_constant * Constants.a_precision;
-        initial_A_time  = Tezos.now;
-        future_A_time   = Tezos.now;
-        tokens_info     = tokens_info;
-      ];
-
-      const res = add_liq(record [
-        referral        = (None: option(address));
-        pool_id         = token_id;
-        pool            = pool;
-        inputs          = inputs;
-        min_mint_amount = 1n;
-        receiver        = Some(Tezos.sender)
-      ], s);
-      operations := res.op;
-      s := res.s;
-    }
-    | _                 -> skip
-    end
-  } with (operations, s)
-
 (* Swap token i to j
  * note: tokens should be approved before the operation
  *)
@@ -110,7 +20,7 @@ function swap(
       assert_with_error(i < tokens_count and j < tokens_count, Errors.Dex.wrong_index);
       var pool : pool_t := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
       const dy = perform_swap(i, j, dx, pool);
-      const after_fees = perform_fee_slice(dy, pool.fee, pool.staker_accumulator.total_staked);
+      const after_fees = perform_fee_slice(dy, pool.fee, get_dev_fee(s), pool.staker_accumulator.total_staked);
       const to_stakers = after_fees.stkr;
       const referral: address = unwrap_or(params.referral, s.default_referral);
       const token_j = unwrap(tokens[j], Errors.Dex.no_token);
@@ -132,8 +42,8 @@ function swap(
           lp_fee      = after_fees.lp;
           stakers_fee = to_stakers;
           ref_fee     = after_fees.ref;
-          dev_fee     = after_fees.dev;
         ],
+        after_fees.dev,
         unwrap(pool.tokens_info[j], Errors.Dex.no_token_info)
       );
 
@@ -320,6 +230,7 @@ function divest_imbalanced(
         d1,
         tokens,
         pool.fee,
+        get_dev_fee(s),
         unwrap_or(params.referral, s.default_referral),
         record[
           dev_rewards = s.dev_rewards;
@@ -379,11 +290,12 @@ function divest_one_coin(
         pool.future_A_time,
         pool.future_A
       );
-      const result = calc_withdraw_one_coin(amp, params.shares, params.token_index, pool);
-      const lp_fee = result.dy_fee * pool.fee.lp_fee / sum_all_fee(pool.fee);
-      const dev_fee = result.dy_fee * pool.fee.dev_fee / sum_all_fee(pool.fee);
-      const ref_fee = result.dy_fee * pool.fee.ref_fee / sum_all_fee(pool.fee);
-      const stkr_fee = result.dy_fee * pool.fee.stakers_fee / sum_all_fee(pool.fee);
+      const dev_fee_v = get_dev_fee(s);
+      const result = calc_withdraw_one_coin(amp, params.shares, params.token_index, dev_fee_v, pool);
+      const lp_fee = result.dy_fee * pool.fee.lp_fee / sum_all_fee(pool.fee, dev_fee_v);
+      const dev_fee = result.dy_fee * dev_fee_v / sum_all_fee(pool.fee, dev_fee_v);
+      const ref_fee = result.dy_fee * pool.fee.ref_fee / sum_all_fee(pool.fee, dev_fee_v);
+      const stkr_fee = result.dy_fee * pool.fee.stakers_fee / sum_all_fee(pool.fee, dev_fee_v);
 
       assert_with_error(result.dy >= params.min_amount_out, Errors.Dex.high_min_out);
 
@@ -392,8 +304,8 @@ function divest_one_coin(
           lp_fee = lp_fee;
           stakers_fee = stkr_fee;
           ref_fee = ref_fee;
-          dev_fee = dev_fee;
         ],
+        dev_fee,
         unwrap(pool.tokens_info[params.token_index], Errors.Dex.no_token_info)
       );
 
@@ -430,7 +342,7 @@ function divest_one_coin(
           Tezos.self_address,
           receiver,
           result.dy,
-          get_token_by_id(params.token_index, s.tokens[params.pool_id])
+          token
         ) # operations;
       else skip;
     }
@@ -521,7 +433,7 @@ function set_fees(
       check_admin(s.admin);
 
       var pool := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
-
+      assert_with_error(sum_all_fee(params.fee, get_dev_fee(s)) <= Constants.fee_denominator, Errors.Dex.fee_overflow);
       pool.fee := params.fee;
       s.pools[params.pool_id] := pool;
     }
@@ -557,7 +469,7 @@ function claim_dev(
     var operations: list(operation) := Constants.no_operations;
     case p of
     | Claim_developer(params) -> {
-      check_admin_or_dev(s.admin, s.dev_address);
+      check_dev(get_dev_address(s));
 
       const bal = unwrap_or(s.dev_rewards[params.token], 0n);
 
@@ -567,7 +479,7 @@ function claim_dev(
 
       operations := typed_transfer(
         Tezos.self_address,
-        s.dev_address,
+        get_dev_address(s),
         params.amount,
         params.token
       ) # operations;

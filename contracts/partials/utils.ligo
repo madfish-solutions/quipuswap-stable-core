@@ -94,11 +94,10 @@ function check_admin(
   assert_with_error(Tezos.sender = admin, Errors.Dex.not_contract_admin);
 
 (* Contract admin or dev check *)
-function check_admin_or_dev(
-  const admin           : address;
+function check_dev(
   const dev             : address)
                         : unit is
-  assert_with_error(Tezos.sender = admin or Tezos.sender = dev, Errors.Dex.not_contract_admin);
+  assert_with_error(Tezos.sender = dev, Errors.Dex.not_developer);
 
 function check_time_expiration(
   const exp             : timestamp)

@@ -1,6 +1,6 @@
 type a_r_flag_t         is Add | Remove
 
-type func_entry_t       is FAdmin | FPermit | FDex | FToken
+type func_entry_t       is FAdmin | FPermit | FDex | FToken | FDev
 
 type stkr_info_req_t    is [@layout:comb] record [
   user                    : address;
@@ -120,7 +120,6 @@ type get_a_v_prm_t      is [@layout:comb] record [
   receiver                : contract(nat);
 ]
 
-
 type set_fee_prm_t      is [@layout:comb] record [
   pool_id                 : pool_id_t;
   fee                     : fees_storage_t;
@@ -172,6 +171,11 @@ type full_action_t      is
 (*  sets the FA function, is used before the whole system is launched *)
 | Set_permit_function       of set_lambda_func_t
 (*  sets the permit (TZIP-17) function, is used before the whole system is launched *)
+#if !FACTORY
+| Set_dev_function        of set_lambda_func_t
+| Use_dev                 of dev_action_t
+#else
+#endif
 
 type admin_func_t       is (admin_action_t * storage_t) -> storage_t
 

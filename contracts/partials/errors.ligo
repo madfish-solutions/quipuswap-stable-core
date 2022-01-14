@@ -27,6 +27,7 @@ module Dex is {
   const balance_overflow          : string = "balance-overflow";
   const time_expired              : string = "time-expired";
   const timestamp_error           : string = "timestamp-error";
+  const not_developer             : string = "not-developer";
 }
 
 module Permit is {
@@ -44,6 +45,11 @@ module FA2 is {
 }
 
 module Math is {
-  const nat_error                 : string = "Value_not_natural";
+  const nat_error                 : string = "value-not-natural";
   const ediv_error                : string = "ediv-error";
+}
+
+module Factory is {
+  const no_fee                    : string = "no-fee-view";
+  const no_address                : string = "no-address";
 }

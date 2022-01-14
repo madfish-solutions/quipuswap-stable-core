@@ -29,7 +29,6 @@ export declare type FeeType = {
   lp_fee: BigNumber;
   stakers_fee: BigNumber;
   ref_fee: BigNumber;
-  dev_fee: BigNumber;
 };
 
 export declare type TokenInfo = {
@@ -57,7 +56,6 @@ export declare type DexMainStorage = {
   admin: TezosAddress;
   default_referral: TezosAddress;
   managers: Array<TezosAddress>;
-  dev_address: TezosAddress;
   pools_count: BigNumber;
   tokens: MichelsonMap<
     string,
@@ -83,6 +81,12 @@ export declare type DexMainStorage = {
     },
     StakerInfo
   >;
+  dev_store?: {
+    dev_address: TezosAddress;
+    dev_fee: BigNumber;
+    dev_lambdas: MichelsonMap<string, BytesString>;
+  };
+  factory_address?: TezosAddress;
 };
 
 export declare type DexStorage = {

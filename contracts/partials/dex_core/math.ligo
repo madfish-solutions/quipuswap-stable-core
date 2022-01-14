@@ -198,6 +198,7 @@ function calc_withdraw_one_coin(
     const amp           : nat;
     const token_amount  : nat;
     const i             : nat;
+    const dev_fee       : nat;
     const pool          : pool_t)
                         : withdraw_one_rtrn is
   block {
@@ -211,7 +212,7 @@ function calc_withdraw_one_coin(
     var   total_supply  : nat           := pool.total_supply;
     const d1            : nat           = nat_or_error(d0 - (token_amount * d0 / total_supply), Errors.Math.nat_error);
     const new_y         : nat           = get_y_D(amp, i, xp, d1, pool);
-    const base_fee      : nat           = sum_all_fee(pool.fee);
+    const base_fee      : nat           = sum_all_fee(pool.fee, dev_fee);
 
     function reduce_xp(const key: nat; const value: nat): nat is
       block {
@@ -246,6 +247,7 @@ function balance_inputs(
   const d1              : nat;
   const tokens          : tkns_map_t;
   const fees            : fees_storage_t;
+  const dev_fee         : nat;
   const referral        : address;
   var accumulator       : balancing_acc_t)
                         : balancing_acc_t is
@@ -262,7 +264,7 @@ function balance_inputs(
         const old_info = unwrap(init_tokens_info[i], Errors.Dex.wrong_index);
         const ideal_balance = d1 * old_info.reserves / d0;
         const diff = abs(ideal_balance - token_info.reserves);
-        const to_dev = diff * divide_fee_for_balance(fees.dev_fee, tokens_count) / Constants.fee_denominator;
+        const to_dev = diff * divide_fee_for_balance(dev_fee, tokens_count) / Constants.fee_denominator;
         const to_ref = diff * divide_fee_for_balance(fees.ref_fee, tokens_count) / Constants.fee_denominator;
         var to_lp := diff * divide_fee_for_balance(fees.lp_fee, tokens_count) / Constants.fee_denominator;
         var to_stakers := 0n;
@@ -283,8 +285,8 @@ function balance_inputs(
             lp_fee = to_lp;
             stakers_fee = to_stakers;
             ref_fee = to_ref;
-            dev_fee = to_dev;
           ],
+          to_dev,
           token_info
         );
         acc.tokens_info[i] := token_info;
@@ -356,6 +358,7 @@ function add_liq(
         d1,
         unwrap(s.tokens[params.pool_id], Errors.Dex.pool_not_listed),
         pool.fee,
+        get_dev_fee(s),
         unwrap_or(params.referral, s.default_referral),
         record [
           dev_rewards = s.dev_rewards;

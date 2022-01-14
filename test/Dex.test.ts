@@ -9,6 +9,7 @@ import {
 } from "../scripts/helpers/utils";
 
 import { API, cases as DexTests, constants, TokenSetups } from "./Dex";
+import { dev_fee } from "./Dex/pool_part/admin/fees";
 const { decimals, a_const, accounts, zero_amount, swap_routes } = constants;
 import {
   AmountsMap,
@@ -76,22 +77,40 @@ describe("dex", () => {
       );
     });
 
-    describe("1.2. Test setting new dev_address", () => {
+    describe("1.2. Test setting new dev params", () => {
       it(
-        "should fail if not admin try to set dev_address",
+        "should fail if not dev try to set dev_address",
         async () =>
           await failCase(
             "bob",
             async () => dex.setDevAddress(new_dev),
-            "not-contract-admin"
+            "not-developer"
           ),
         10000
+      );
+
+      it(
+        "should fail if not dev try to set fee",
+        async () =>
+          await failCase(
+            "bob",
+            async () => await dex.setDevFee(dev_fee),
+            "not-developer"
+          ),
+        20000
       );
 
       it(
         "should change dev address",
         async () =>
           await TMng.setDevAddrSuccessCase(dex, "eve", new_dev, Tezos),
+        20000
+      );
+
+      it(
+        "should change dev fee",
+        async () =>
+          await TMng.setDevFeesSuccessCase(dex, "bob", dev_fee, Tezos),
         20000
       );
     });
@@ -892,7 +911,7 @@ describe("dex", () => {
 
     beforeAll(async () => {
       await dex.updateStorage({});
-      dev_address = dex.storage.storage.dev_address;
+      dev_address = dex.storage.storage.dev_store.dev_address;
       const amount = new BigNumber(10).pow(4);
       pool_id = dex.storage.storage.pools_count.minus(new BigNumber(1));
       const exp = new Date(Date.now() + 1000 * 60 * 60 * 24);

@@ -141,7 +141,8 @@ export async function getDySuccessCase(
     .get_dy(params)
     .executeView({ viewCaller: accounts["alice"].pkh });
   expect(dy.dividedBy(decimals.USDtz).toNumber()).toBeCloseTo(
-    exp_dy.toNumber()
+    exp_dy.toNumber(),
+    1
   );
 }
 

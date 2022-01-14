@@ -11,10 +11,20 @@
 #include "../partials/fa12/types.ligo"
 #include "../partials/fa2/types.ligo"
 #include "../partials/permit/types.ligo"
+#if !FACTORY
+#include "../partials/dev/types.ligo"
+#else
+#endif
 #include "../partials/dex_core/storage.ligo"
 #include "../partials/dex_core/types.ligo"
 (* Helpers and functions *)
 #include "../partials/utils.ligo"
+#if FACTORY
+#include "../partials/dex_core/factory/helpers.ligo"
+#else
+#include "../partials/dex_core/standalone/helpers.ligo"
+#include "../partials/dev/lambdas.ligo"
+#endif
 #include "../partials/dex_core/helpers.ligo"
 #include "../partials/fa2/helpers.ligo"
 #include "../partials/permit/helpers.ligo"
@@ -23,6 +33,11 @@
 #include "../partials/admin/lambdas.ligo"
 #include "../partials/fa2/lambdas.ligo"
 #include "../partials/permit/lambdas.ligo"
+#if !FACTORY
+#include "../partials/dex_core/standalone/lambdas.ligo"
+#include "../partials/dev/methods.ligo"
+#else
+#endif
 #include "../partials/dex_core/lambdas.ligo"
 (* Call methods *)
 #include "../partials/admin/methods.ligo"
@@ -35,15 +50,31 @@
 (* Dex - Contract for exchanges between FA12 and FA2 tokens *)
 function main(
   const p               : full_action_t;
-  const s               : full_storage_t
+  var s                 : full_storage_t
 )                       : full_return_t is
-  case p of
-  | Set_admin_function(params)  -> set_function(FAdmin, params, s)
-  | Set_dex_function(params)    -> set_function(FDex, params, s)
-  | Set_permit_function(params) -> set_function(FPermit, params, s)
-  | Set_token_function(params)  -> set_function(FToken, params, s)
-  | Use_admin(params)           -> call_admin(params, s)
-  | Use_dex(params)             -> call_dex(params, s)
-  | Use_permit(params)          -> call_permit(params, s, p)
-  | Use_token(params)           -> call_token(params, s, p)
-  end
+  block {
+    var operations := Constants.no_operations;
+    case p of
+    | Set_admin_function(params)  -> s := set_function(FAdmin, params, s)
+    | Set_dex_function(params)    -> s := set_function(FDex, params, s)
+    | Set_permit_function(params) -> s := set_function(FPermit, params, s)
+    | Set_token_function(params)  -> s := set_function(FToken, params, s)
+    | Use_admin(params)           -> s := call_admin(params, s)
+    | Use_dex(params)             -> {
+      const run = call_dex(params, s);
+      operations := run.0;
+      s := run.1;
+    }
+    | Use_permit(params)          -> s := call_permit(params, s, p)
+    | Use_token(params)           -> {
+      const run = call_token(params, s, p);
+      operations := run.0;
+      s := run.1;
+    }
+#if !FACTORY
+    | Set_dev_function(params)    -> s := set_function(FDev, params, s)
+    | Use_dev(params)             -> s.storage.dev_store := call_dev(params, s.storage.dev_store)
+#else
+#endif
+    end;
+  } with (operations, s)

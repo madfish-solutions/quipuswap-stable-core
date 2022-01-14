@@ -1,9 +1,12 @@
 import { TezosToolkit } from "@taquito/taquito";
-import Dex from "./API";
+import { DexAPI as Dex } from "./API";
 import {
   AccountsLiteral,
   prepareProviderOptions,
 } from "../../scripts/helpers/utils";
+import { DexStorage } from "./types";
+import BigNumber from "bignumber.js";
+import { dev_fee } from "./pool_part/admin/fees";
 
 export async function setAdminSuccessCase(
   dex: Dex,
@@ -59,14 +62,40 @@ export async function setDevAddrSuccessCase(
   Tezos.setProvider(config);
 
   await dex.updateStorage({});
-  const initDev = dex.storage.storage.dev_address;
+  const initDev = dex.storage.storage.dev_store.dev_address;
   expect(dev).not.toStrictEqual(initDev);
 
   await dex.setDevAddress(dev);
 
   await dex.updateStorage({});
-  const updatedDev = dex.storage.storage.dev_address;
+  const updatedDev = dex.storage.storage.dev_store.dev_address;
   expect(dev).toStrictEqual(updatedDev);
+}
+
+export async function setDevFeesSuccessCase(
+  dex: Dex,
+  sender: AccountsLiteral,
+  fee: BigNumber = dev_fee,
+  Tezos: TezosToolkit
+) {
+  const config = await prepareProviderOptions(sender);
+  Tezos.setProvider(config);
+  await expect(Tezos.signer.publicKeyHash()).resolves.toStrictEqual(
+    dex.storage.storage.dev_store.dev_address
+  );
+  const initFee = dex.storage.storage.dev_store.dev_fee as BigNumber;
+  for (const key in initFee) {
+    expect(initFee.toNumber()).not.toStrictEqual(fee.toNumber());
+  }
+
+  await dex.setDevFee(fee);
+
+  const updStorage: DexStorage = await dex.contract.storage();
+  const updatedFees: BigNumber = await updStorage.storage.dev_store.dev_fee;
+  console.log(updatedFees);
+  for (const key in updatedFees) {
+    expect(updatedFees.toNumber()).toStrictEqual(fee.toNumber());
+  }
 }
 
 export async function setDefaultRefSuccessCase(

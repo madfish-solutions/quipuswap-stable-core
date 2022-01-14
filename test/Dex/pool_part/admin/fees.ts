@@ -11,8 +11,8 @@ export const fees: FeeType = {
   lp_fee: new BigNumber("2000000"),
   stakers_fee: new BigNumber("2000000"),
   ref_fee: new BigNumber("500000"),
-  dev_fee: new BigNumber("500000"),
 };
+export const dev_fee = new BigNumber("500000");
 export async function setFeesSuccessCase(
   dex: Dex,
   sender: AccountsLiteral,
@@ -34,9 +34,10 @@ export async function setFeesSuccessCase(
   await dex.setFees(pool_id, fees);
 
   await dex.updateStorage({ pools: [pool_id.toString()] });
-  const updStorage = (await dex.contract.storage()) as DexStorage;
+  const updStorage: DexStorage = await dex.contract.storage();
   const updatedFees = (await updStorage.storage.pools.get(pool_id.toString()))
     .fee as FeeType;
+  console.log(updatedFees);
   for (const key in updatedFees) {
     expect(updatedFees[key].toNumber()).toStrictEqual(fees[key].toNumber());
   }

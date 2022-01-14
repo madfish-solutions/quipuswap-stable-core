@@ -21,6 +21,7 @@ import { dexLambdas, tokenLambdas } from "../../storage/Functions";
 import admin_lambdas_comp from "../../../build/lambdas/test/Admin_lambdas.json";
 import permit_lambdas_comp from "../../../build/lambdas/test/Permit_lambdas.json";
 import dex_lambdas_comp from "../../../build/lambdas/test/Dex_lambdas.json";
+import dev_lambdas_comp from "../../../build/lambdas/test/Dev_lambdas.json";
 import token_lambdas_comp from "../../../build/lambdas/test/Token_lambdas.json";
 import { defaultTokenId, TokenFA12, TokenFA2 } from "../../Token";
 
@@ -39,8 +40,9 @@ export class Dex extends TokenFA2 {
 
   static async init(tezos: TezosToolkit, dexAddress: string): Promise<Dex> {
     const dex = new Dex(tezos, await tezos.contract.at(dexAddress));
-    // await dex.setFunctionBatchCompilled("Admin", 5, admin_lambdas_comp);
-    // await dex.setFunctionBatchCompilled("Permit", 2, permit_lambdas_comp);
+    // await dex.setFunctionBatchCompilled("Admin", 4, admin_lambdas_comp);
+    // await dex.setFunctionBatchCompilled("Dev", 2, token_lambdas_comp);
+    await dex.setFunctionBatchCompilled("Permit", 2, permit_lambdas_comp);
     await dex.setFunctionBatchCompilled("Token", 5, token_lambdas_comp);
     await dex.setFunctionBatchCompilled("Dex", 4, dex_lambdas_comp);
     return dex;
@@ -312,15 +314,15 @@ export class Dex extends TokenFA2 {
     fees: FeeType
   ): Promise<TransactionOperation> {
     const operation = await this.contract.methods
-      .set_fees(
-        pool_id,
-        fees.lp_fee,
-        fees.stakers_fee,
-        fees.ref_fee,
-        fees.dev_fee
-      )
+      .set_fees(pool_id, fees.lp_fee, fees.stakers_fee, fees.ref_fee)
       .send();
 
+    await confirmOperation(this.Tezos, operation.hash);
+    return operation;
+  }
+
+  async setDevFee(fee: BigNumber): Promise<TransactionOperation> {
+    const operation = await this.contract.methods.set_dev_fee(fee).send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
   }

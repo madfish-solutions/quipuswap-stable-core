@@ -16,7 +16,7 @@ export async function getDeveloperRewardsSuccessCase(
   lambdaContractAddress: string,
   Tezos: TezosToolkit
 ) {
-  const config = await prepareProviderOptions("eve");
+  const config = await prepareProviderOptions("bob");
   Tezos.setProvider(config);
   const expectedRewardNormalized = new BigNumber(10)
     .pow(4)

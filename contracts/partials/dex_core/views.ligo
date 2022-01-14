@@ -48,10 +48,12 @@
       pool.future_A_time,
       pool.future_A
     );
+    const dev_fee_v = get_dev_fee(s.storage);
     const result = calc_withdraw_one_coin(
       amp,
       params.token_amount,
       params.i,
+      dev_fee_v,
       pool
     );
   } with result.dy
@@ -64,7 +66,7 @@
   block {
     const pool      = unwrap(s.storage.pools[params.pool_id], Errors.Dex.pool_not_listed);
     const dy: nat   = perform_swap(params.i, params.j,params.dx, pool);
-    const fee: nat  = sum_all_fee(pool.fee) * dy / Constants.fee_denominator;
+    const fee: nat  = sum_all_fee(pool.fee, get_dev_fee(s.storage)) * dy / Constants.fee_denominator;
   } with nat_or_error(dy - fee, Errors.Dex.fee_overflow)
 
 (* Get A constant *)

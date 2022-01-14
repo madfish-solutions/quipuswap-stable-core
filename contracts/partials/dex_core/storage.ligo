@@ -28,7 +28,6 @@ type fees_storage_t     is [@layout:comb] record [
   lp_fee                  : nat;
   stakers_fee             : nat;
   ref_fee                 : nat;
-  dev_fee                 : nat;
 ]
 
 
@@ -69,7 +68,6 @@ type storage_t          is [@layout:comb] record [
   (* Management *)
   admin                   : address;
   default_referral        : address;
-  dev_address             : address;
   managers                : set(address);
 
   (* Pools data *)
@@ -85,8 +83,14 @@ type storage_t          is [@layout:comb] record [
   (* Rewards and accumulators *)
   dev_rewards             : big_map(token_t, nat);
   referral_rewards        : big_map((address * token_t), nat);
+  stakers_balance         : big_map((address * pool_id_t), stkr_info_t);
   quipu_token             : fa2_token_t;
-  stakers_balance         : big_map((address * pool_id_t), stkr_info_t); (**)
+  (* dev storage params *)
+#if FACTORY
+  factory_address         : address;
+#else
+  dev_store               : dev_storage_t;
+#endif
 ]
 
 

@@ -70,6 +70,8 @@ const _compileFile = async (
       "main",
       "--michelson-format",
       "json",
+      "--protocol",
+      "hangzhou",
     ];
 
     console.debug(`\t🔥 Compiling with LIGO (${ligoVersion})...`);
@@ -139,7 +141,7 @@ export const compile = async (options) => {
 export const compileLambdas = async (
   json: string,
   contract: string,
-  type: "Dex" | "Token" | "Permit" | "Admin"
+  type: "Dex" | "Token" | "Permit" | "Admin" | "Dev"
 ) => {
   console.log(`Compiling ${contract} contract lambdas of ${type} type...\n`);
 
@@ -167,7 +169,7 @@ export const compileLambdas = async (
       const command = `${ligo} ${ligo_command} ${config.preferredLigoFlavor} ${params}`;
       const michelson = execSync(command, { maxBuffer: 1024 * 500 }).toString();
 
-      res.push(JSON.parse(michelson).args[0].args[0].args[0]);
+      res.push(JSON.parse(michelson).args[0].args[0].args[0].args[0]);
       console.log(
         lambda.index +
           1 +
