@@ -1,7 +1,7 @@
 import { TezosProtocols } from "./scripts/commands/sandbox/types";
 export const config = {
   repoName: "quipuswap-stable-core",
-  ligoVersion: "0.31.0",
+  ligoVersion: "0.33.0",
   preferredLigoFlavor: "pascaligo",
   networks: {
     sandbox: {
