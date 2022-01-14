@@ -6,7 +6,8 @@ import { execSync, spawn } from "child_process";
 
 const _compileFile = async (
   contractFileName: string,
-  ligoVersion: string
+  ligoVersion: string,
+  format: "tz" | "json"
 ): Promise<void> => {
   return new Promise((resolve, reject) => {
     console.log(`🚀 Compiling contract "${contractFileName}"...`);
@@ -29,11 +30,21 @@ const _compileFile = async (
       cwd,
       `${config.contractsDirectory}/${contractFileName}.ligo`
     );
-    if (fs.existsSync(`${config.outputDirectory}/${contractFileName}.json`)) {
+    if (
+      fs.existsSync(
+        `${
+          format === "json"
+            ? config.outputDirectory
+            : config.contractsDirectory + "/../" + "compiled"
+        }/${contractFileName}.${format}`
+      )
+    ) {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const oldBuildFile = require(`${process.cwd()}/${
-        config.outputDirectory
-      }/${contractFileName}.json`);
+        format === "json"
+          ? config.outputDirectory
+          : config.contractsDirectory + "/../" + "compiled"
+      }/${contractFileName}.${format}`);
 
       if (oldBuildFile.sourcePath !== sourcePath) {
         console.error(
@@ -68,11 +79,10 @@ const _compileFile = async (
       `${sourcePath}`,
       "-e",
       "main",
-      "--michelson-format",
-      "json",
       "--protocol",
       "hangzhou",
     ];
+    if (format === "json") args.push("--michelson-format", "json");
 
     console.debug(`\t🔥 Compiling with LIGO (${ligoVersion})...`);
     const ligo = spawn("docker", args, {});
@@ -80,12 +90,19 @@ const _compileFile = async (
     ligo.on("close", async () => {
       console.log("\t\t✅ Done.");
 
-      const outFile = `${config.outputDirectory}/${contractFileName}.json`;
+      const outFile = `${
+        format === "json"
+          ? config.outputDirectory
+          : config.contractsDirectory + "/../" + "compiled"
+      }/${contractFileName}.${format}`;
 
       console.log(
         `\t📦 Writing output file "${path.relative(cwd, outFile)}"...`
       );
-      fs.writeFileSync(outFile, JSON.stringify(built));
+      fs.writeFileSync(
+        outFile,
+        format === "json" ? JSON.stringify(built) : built.michelson
+      );
       console.log("\t\t✅ Done.");
 
       console.log("\t🥖 Contract compiled succesfully.");
@@ -119,20 +136,24 @@ const getContractsList = () => {
 export const compile = async (options) => {
   console.log(`Compiling contracts...\n`);
   // Check the existence of build folder
-  if (!fs.existsSync(config.outputDirectory)) {
+  const outputDirectory =
+    options.format === "json"
+      ? config.outputDirectory
+      : config.contractsDirectory + "/../" + "compiled";
+  if (!fs.existsSync(outputDirectory)) {
     console.log(
-      `Creating output directory "${config.outputDirectory}" since it was not present.`
+      `Creating output directory "${outputDirectory}" since it was not present.`
     );
-    fs.mkdirSync(config.outputDirectory);
+    fs.mkdirSync(outputDirectory);
   }
 
   if (options.contract) {
-    await _compileFile(options.contract, config.ligoVersion);
+    await _compileFile(options.contract, config.ligoVersion, options.format);
   } else {
     const contracts = getContractsList();
 
     for (const contract of contracts) {
-      await _compileFile(contract, config.ligoVersion);
+      await _compileFile(contract, config.ligoVersion, options.format);
     }
   }
 };
@@ -165,7 +186,7 @@ export const compileLambdas = async (
       const func = `Set_${type.toLowerCase()}_function(record [index=${
         lambda.index
       }n; func=Bytes.pack(${lambda.name})])`;
-      const params = `'${func}' --michelson-format json --init-file ${init_file}`;
+      const params = `'${func}' --michelson-format json --init-file ${init_file} --protocol hangzhou`;
       const command = `${ligo} ${ligo_command} ${config.preferredLigoFlavor} ${params}`;
       const michelson = execSync(command, { maxBuffer: 1024 * 500 }).toString();
 

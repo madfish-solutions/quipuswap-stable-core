@@ -14,6 +14,11 @@ export const addCompileCommand = (program: Command) => {
       `Choose a specific LIGO version in format exmpl: 0.31.0 or "next". Default is "next".`,
       "next"
     )
+    .option(
+      "-F, --format <format>",
+      `Choose a specific LIGO format: tz or json. Default is "json".`,
+      "json"
+    )
     .action((options) => {
       compile(options);
     });

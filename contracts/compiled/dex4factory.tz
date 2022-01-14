@@ -1,0 +1,2511 @@
+{ parameter
+    (or (or (or (pair %set_admin_function (bytes %func) (nat %index))
+                (pair %set_dex_function (bytes %func) (nat %index)))
+            (or (pair %set_permit_function (bytes %func) (nat %index))
+                (pair %set_token_function (bytes %func) (nat %index))))
+        (or (or (or %use_admin
+                   (pair %add_rem_managers (bool %add) (address %candidate))
+                   (address %set_admin))
+                (or %use_dex
+                   (or (or (or (pair %add_pool
+                                  (nat %a_constant)
+                                  (pair (set %input_tokens
+                                           (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                        (map %tokens_info
+                                           nat
+                                           (pair (nat %rate) (pair (nat %precision_multiplier) (nat %reserves))))))
+                               (pair %claim_developer
+                                  (or %token (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                                  (nat %amount)))
+                           (or (pair %claim_referral
+                                  (or %token (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                                  (nat %amount))
+                               (pair %divest
+                                  (nat %pool_id)
+                                  (pair (map %min_amounts_out nat nat)
+                                        (pair (nat %shares) (pair (timestamp %time_expiration) (option %receiver address)))))))
+                       (or (or (pair %divest_imbalanced
+                                  (nat %pool_id)
+                                  (pair (map %amounts_out nat nat)
+                                        (pair (nat %max_shares)
+                                              (pair (timestamp %time_expiration)
+                                                    (pair (option %receiver address) (option %referral address))))))
+                               (pair %divest_one_coin
+                                  (nat %pool_id)
+                                  (pair (nat %shares)
+                                        (pair (nat %token_index)
+                                              (pair (nat %min_amount_out)
+                                                    (pair (timestamp %time_expiration)
+                                                          (pair (option %receiver address) (option %referral address))))))))
+                           (or (pair %invest
+                                  (nat %pool_id)
+                                  (pair (nat %shares)
+                                        (pair (map %in_amounts nat nat)
+                                              (pair (timestamp %time_expiration)
+                                                    (pair (option %receiver address) (option %referral address))))))
+                               (pair %ramp_A (nat %pool_id) (pair (nat %future_A) (timestamp %future_time))))))
+                   (or (or (or (address %set_default_referral)
+                               (pair %set_fees
+                                  (nat %pool_id)
+                                  (pair %fee (nat %lp_fee) (pair (nat %stakers_fee) (nat %ref_fee)))))
+                           (or (pair %stake (nat %pool_id) (nat %amount)) (nat %stop_ramp_A)))
+                       (or (pair %swap
+                              (nat %pool_id)
+                              (pair (nat %idx_from)
+                                    (pair (nat %idx_to)
+                                          (pair (nat %amount)
+                                                (pair (nat %min_amount_out)
+                                                      (pair (timestamp %time_expiration)
+                                                            (pair (option %receiver address) (option %referral address))))))))
+                           (pair %unstake (nat %pool_id) (nat %amount))))))
+            (or (or %use_permit
+                   (pair %permit key (pair signature (bytes %permit_hash)))
+                   (pair %set_expiry (address %issuer) (pair (nat %expiry) (option %permit_hash bytes))))
+                (or %use_token
+                   (or (or (pair %balance_of
+                              (list %requests (pair (address %owner) (nat %token_id)))
+                              (contract %callback
+                                 (list (pair (pair %request (address %owner) (nat %token_id)) (nat %balance)))))
+                           (pair %total_supply (nat %token_id) (contract %receiver nat)))
+                       (or (list %transfer
+                              (pair (address %from_)
+                                    (list %txs (pair (address %to_) (pair (nat %token_id) (nat %amount))))))
+                           (pair %update_metadata (nat %token_id) (map %token_info string bytes))))
+                   (list %update_operators
+                      (or (pair %add_operator (address %owner) (pair (address %operator) (nat %token_id)))
+                          (pair %remove_operator (address %owner) (pair (address %operator) (nat %token_id))))))))) ;
+  storage
+    (pair (pair %storage
+             (address %admin)
+             (pair (address %default_referral)
+                   (pair (set %managers address)
+                         (pair (nat %pools_count)
+                               (pair (big_map %tokens
+                                        nat
+                                        (map nat (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))))
+                                     (pair (big_map %pool_to_id bytes nat)
+                                           (pair (big_map %pools
+                                                    nat
+                                                    (pair (nat %initial_A)
+                                                          (pair (timestamp %initial_A_time)
+                                                                (pair (nat %future_A)
+                                                                      (pair (timestamp %future_A_time)
+                                                                            (pair (map %tokens_info
+                                                                                     nat
+                                                                                     (pair (nat %rate) (pair (nat %precision_multiplier) (nat %reserves))))
+                                                                                  (pair (pair %fee (nat %lp_fee) (pair (nat %stakers_fee) (nat %ref_fee)))
+                                                                                        (pair (pair %staker_accumulator (map %accumulator nat nat) (nat %total_staked))
+                                                                                              (nat %total_supply)))))))))
+                                                 (pair (big_map %ledger (pair address nat) nat)
+                                                       (pair (big_map %account_data (pair address nat) (set address))
+                                                             (pair (big_map %dev_rewards
+                                                                      (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                                                                      nat)
+                                                                   (pair (big_map %referral_rewards
+                                                                            (pair address
+                                                                                  (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                                            nat)
+                                                                         (pair (big_map %stakers_balance
+                                                                                  (pair address nat)
+                                                                                  (pair (nat %balance) (map %earnings nat (pair (nat %reward) (nat %former)))))
+                                                                               (pair (pair %quipu_token (address %token_address) (nat %token_id))
+                                                                                     (address %factory_address))))))))))))))
+          (pair (big_map %metadata string bytes)
+                (pair (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
+                      (pair (big_map %admin_lambdas nat bytes)
+                            (pair (big_map %dex_lambdas nat bytes)
+                                  (pair (big_map %token_lambdas nat bytes)
+                                        (pair (big_map %permit_lambdas nat bytes)
+                                              (pair (big_map %permits
+                                                       address
+                                                       (pair (map %permits bytes (pair (timestamp %created_at) (option %expiry nat)))
+                                                             (option %expiry nat)))
+                                                    (pair (nat %permits_counter) (nat %default_expiry)))))))))) ;
+  code { LAMBDA
+           (pair (option bytes) string)
+           bytes
+           { UNPAIR ; IF_NONE { FAILWITH } { SWAP ; DROP } } ;
+         LAMBDA
+           address
+           unit
+           { PUSH string "not-contract-admin" ;
+             SWAP ;
+             SENDER ;
+             COMPARE ;
+             EQ ;
+             IF { DROP ; UNIT } { FAILWITH } } ;
+         LAMBDA
+           (pair (pair (pair bytes nat) nat) (big_map nat bytes))
+           (big_map nat bytes)
+           { UNPAIR ;
+             UNPAIR ;
+             PUSH string "wrong-index" ;
+             DUG 2 ;
+             DUP ;
+             DUG 3 ;
+             CDR ;
+             COMPARE ;
+             LT ;
+             IF { DROP } { FAILWITH } ;
+             PUSH string "function-set" ;
+             DUP 3 ;
+             DUP 3 ;
+             CDR ;
+             MEM ;
+             NOT ;
+             IF { DROP } { FAILWITH } ;
+             DUP ;
+             DUG 2 ;
+             CAR ;
+             DIG 2 ;
+             CDR ;
+             SWAP ;
+             SOME ;
+             SWAP ;
+             UPDATE } ;
+         DIG 3 ;
+         UNPAIR ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
+         NIL operation ;
+         PAIR ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
+         IF_LEFT
+           { DIG 2 ;
+             DIG 6 ;
+             DROP 2 ;
+             IF_LEFT
+               { IF_LEFT
+                   { DIG 2 ;
+                     SWAP ;
+                     UNIT ;
+                     LEFT unit ;
+                     LEFT (or unit unit) ;
+                     LEFT unit ;
+                     DUP 3 ;
+                     CAR ;
+                     CAR ;
+                     DIG 6 ;
+                     SWAP ;
+                     EXEC ;
+                     DROP ;
+                     IF_LEFT
+                       { IF_LEFT
+                           { IF_LEFT
+                               { DROP ;
+                                 SWAP ;
+                                 DUP ;
+                                 GET 7 ;
+                                 PUSH nat 2 ;
+                                 DIG 3 ;
+                                 PAIR ;
+                                 PAIR ;
+                                 DIG 3 ;
+                                 SWAP ;
+                                 EXEC ;
+                                 UPDATE 7 }
+                               { SWAP ; DIG 4 ; DROP 3 } }
+                           { IF_LEFT
+                               { DROP ;
+                                 SWAP ;
+                                 DUP ;
+                                 GET 9 ;
+                                 PUSH nat 14 ;
+                                 DIG 3 ;
+                                 PAIR ;
+                                 PAIR ;
+                                 DIG 3 ;
+                                 SWAP ;
+                                 EXEC ;
+                                 UPDATE 9 }
+                               { DROP ;
+                                 SWAP ;
+                                 DUP ;
+                                 GET 13 ;
+                                 PUSH nat 2 ;
+                                 DIG 3 ;
+                                 PAIR ;
+                                 PAIR ;
+                                 DIG 3 ;
+                                 SWAP ;
+                                 EXEC ;
+                                 UPDATE 13 } } }
+                       { DROP ;
+                         SWAP ;
+                         DUP ;
+                         GET 11 ;
+                         PUSH nat 5 ;
+                         DIG 3 ;
+                         PAIR ;
+                         PAIR ;
+                         DIG 3 ;
+                         SWAP ;
+                         EXEC ;
+                         UPDATE 11 } ;
+                     SWAP ;
+                     CAR ;
+                     PAIR }
+                   { DIG 2 ;
+                     SWAP ;
+                     UNIT ;
+                     LEFT unit ;
+                     RIGHT (or unit unit) ;
+                     LEFT unit ;
+                     DUP 3 ;
+                     CAR ;
+                     CAR ;
+                     DIG 6 ;
+                     SWAP ;
+                     EXEC ;
+                     DROP ;
+                     IF_LEFT
+                       { IF_LEFT
+                           { IF_LEFT
+                               { DROP ;
+                                 SWAP ;
+                                 DUP ;
+                                 GET 7 ;
+                                 PUSH nat 2 ;
+                                 DIG 3 ;
+                                 PAIR ;
+                                 PAIR ;
+                                 DIG 3 ;
+                                 SWAP ;
+                                 EXEC ;
+                                 UPDATE 7 }
+                               { SWAP ; DIG 4 ; DROP 3 } }
+                           { IF_LEFT
+                               { DROP ;
+                                 SWAP ;
+                                 DUP ;
+                                 GET 9 ;
+                                 PUSH nat 14 ;
+                                 DIG 3 ;
+                                 PAIR ;
+                                 PAIR ;
+                                 DIG 3 ;
+                                 SWAP ;
+                                 EXEC ;
+                                 UPDATE 9 }
+                               { DROP ;
+                                 SWAP ;
+                                 DUP ;
+                                 GET 13 ;
+                                 PUSH nat 2 ;
+                                 DIG 3 ;
+                                 PAIR ;
+                                 PAIR ;
+                                 DIG 3 ;
+                                 SWAP ;
+                                 EXEC ;
+                                 UPDATE 13 } } }
+                       { DROP ;
+                         SWAP ;
+                         DUP ;
+                         GET 11 ;
+                         PUSH nat 5 ;
+                         DIG 3 ;
+                         PAIR ;
+                         PAIR ;
+                         DIG 3 ;
+                         SWAP ;
+                         EXEC ;
+                         UPDATE 11 } ;
+                     SWAP ;
+                     CAR ;
+                     PAIR } }
+               { IF_LEFT
+                   { DIG 2 ;
+                     SWAP ;
+                     UNIT ;
+                     RIGHT unit ;
+                     RIGHT (or unit unit) ;
+                     LEFT unit ;
+                     DUP 3 ;
+                     CAR ;
+                     CAR ;
+                     DIG 6 ;
+                     SWAP ;
+                     EXEC ;
+                     DROP ;
+                     IF_LEFT
+                       { IF_LEFT
+                           { IF_LEFT
+                               { DROP ;
+                                 SWAP ;
+                                 DUP ;
+                                 GET 7 ;
+                                 PUSH nat 2 ;
+                                 DIG 3 ;
+                                 PAIR ;
+                                 PAIR ;
+                                 DIG 3 ;
+                                 SWAP ;
+                                 EXEC ;
+                                 UPDATE 7 }
+                               { SWAP ; DIG 4 ; DROP 3 } }
+                           { IF_LEFT
+                               { DROP ;
+                                 SWAP ;
+                                 DUP ;
+                                 GET 9 ;
+                                 PUSH nat 14 ;
+                                 DIG 3 ;
+                                 PAIR ;
+                                 PAIR ;
+                                 DIG 3 ;
+                                 SWAP ;
+                                 EXEC ;
+                                 UPDATE 9 }
+                               { DROP ;
+                                 SWAP ;
+                                 DUP ;
+                                 GET 13 ;
+                                 PUSH nat 2 ;
+                                 DIG 3 ;
+                                 PAIR ;
+                                 PAIR ;
+                                 DIG 3 ;
+                                 SWAP ;
+                                 EXEC ;
+                                 UPDATE 13 } } }
+                       { DROP ;
+                         SWAP ;
+                         DUP ;
+                         GET 11 ;
+                         PUSH nat 5 ;
+                         DIG 3 ;
+                         PAIR ;
+                         PAIR ;
+                         DIG 3 ;
+                         SWAP ;
+                         EXEC ;
+                         UPDATE 11 } ;
+                     SWAP ;
+                     CAR ;
+                     PAIR }
+                   { DIG 2 ;
+                     SWAP ;
+                     UNIT ;
+                     RIGHT (or (or unit unit) (or unit unit)) ;
+                     DUP 3 ;
+                     CAR ;
+                     CAR ;
+                     DIG 6 ;
+                     SWAP ;
+                     EXEC ;
+                     DROP ;
+                     IF_LEFT
+                       { IF_LEFT
+                           { IF_LEFT
+                               { DROP ;
+                                 SWAP ;
+                                 DUP ;
+                                 GET 7 ;
+                                 PUSH nat 2 ;
+                                 DIG 3 ;
+                                 PAIR ;
+                                 PAIR ;
+                                 DIG 3 ;
+                                 SWAP ;
+                                 EXEC ;
+                                 UPDATE 7 }
+                               { SWAP ; DIG 4 ; DROP 3 } }
+                           { IF_LEFT
+                               { DROP ;
+                                 SWAP ;
+                                 DUP ;
+                                 GET 9 ;
+                                 PUSH nat 14 ;
+                                 DIG 3 ;
+                                 PAIR ;
+                                 PAIR ;
+                                 DIG 3 ;
+                                 SWAP ;
+                                 EXEC ;
+                                 UPDATE 9 }
+                               { DROP ;
+                                 SWAP ;
+                                 DUP ;
+                                 GET 13 ;
+                                 PUSH nat 2 ;
+                                 DIG 3 ;
+                                 PAIR ;
+                                 PAIR ;
+                                 DIG 3 ;
+                                 SWAP ;
+                                 EXEC ;
+                                 UPDATE 13 } } }
+                       { DROP ;
+                         SWAP ;
+                         DUP ;
+                         GET 11 ;
+                         PUSH nat 5 ;
+                         DIG 3 ;
+                         PAIR ;
+                         PAIR ;
+                         DIG 3 ;
+                         SWAP ;
+                         EXEC ;
+                         UPDATE 11 } ;
+                     SWAP ;
+                     CAR ;
+                     PAIR } } }
+           { DIG 4 ;
+             DROP ;
+             IF_LEFT
+               { DIG 2 ;
+                 DROP ;
+                 IF_LEFT
+                   { DIG 2 ;
+                     DUP ;
+                     DUG 2 ;
+                     CAR ;
+                     CAR ;
+                     DIG 4 ;
+                     SWAP ;
+                     EXEC ;
+                     DROP ;
+                     PUSH string "function-not-set" ;
+                     DUP 3 ;
+                     GET 7 ;
+                     DUP 3 ;
+                     IF_LEFT { DROP ; PUSH nat 0 } { DROP ; PUSH nat 2 } ;
+                     GET ;
+                     PAIR ;
+                     DIG 4 ;
+                     SWAP ;
+                     EXEC ;
+                     PUSH string "cant-unpack-use-lambda" ;
+                     SWAP ;
+                     UNPACK
+                       (lambda
+                          (pair (or (pair %add_rem_managers (bool %add) (address %candidate)) (address %set_admin))
+                                (pair (address %admin)
+                                      (pair (address %default_referral)
+                                            (pair (set %managers address)
+                                                  (pair (nat %pools_count)
+                                                        (pair (big_map %tokens
+                                                                 nat
+                                                                 (map nat (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))))
+                                                              (pair (big_map %pool_to_id bytes nat)
+                                                                    (pair (big_map %pools
+                                                                             nat
+                                                                             (pair (nat %initial_A)
+                                                                                   (pair (timestamp %initial_A_time)
+                                                                                         (pair (nat %future_A)
+                                                                                               (pair (timestamp %future_A_time)
+                                                                                                     (pair (map %tokens_info
+                                                                                                              nat
+                                                                                                              (pair (nat %rate) (pair (nat %precision_multiplier) (nat %reserves))))
+                                                                                                           (pair (pair %fee (nat %lp_fee) (pair (nat %stakers_fee) (nat %ref_fee)))
+                                                                                                                 (pair (pair %staker_accumulator (map %accumulator nat nat) (nat %total_staked))
+                                                                                                                       (nat %total_supply)))))))))
+                                                                          (pair (big_map %ledger (pair address nat) nat)
+                                                                                (pair (big_map %account_data (pair address nat) (set address))
+                                                                                      (pair (big_map %dev_rewards
+                                                                                               (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                                                                                               nat)
+                                                                                            (pair (big_map %referral_rewards
+                                                                                                     (pair address
+                                                                                                           (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                                                                     nat)
+                                                                                                  (pair (big_map %stakers_balance
+                                                                                                           (pair address nat)
+                                                                                                           (pair (nat %balance) (map %earnings nat (pair (nat %reward) (nat %former)))))
+                                                                                                        (pair (pair %quipu_token (address %token_address) (nat %token_id))
+                                                                                                              (address %factory_address)))))))))))))))
+                          (pair (address %admin)
+                                (pair (address %default_referral)
+                                      (pair (set %managers address)
+                                            (pair (nat %pools_count)
+                                                  (pair (big_map %tokens
+                                                           nat
+                                                           (map nat (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))))
+                                                        (pair (big_map %pool_to_id bytes nat)
+                                                              (pair (big_map %pools
+                                                                       nat
+                                                                       (pair (nat %initial_A)
+                                                                             (pair (timestamp %initial_A_time)
+                                                                                   (pair (nat %future_A)
+                                                                                         (pair (timestamp %future_A_time)
+                                                                                               (pair (map %tokens_info
+                                                                                                        nat
+                                                                                                        (pair (nat %rate) (pair (nat %precision_multiplier) (nat %reserves))))
+                                                                                                     (pair (pair %fee (nat %lp_fee) (pair (nat %stakers_fee) (nat %ref_fee)))
+                                                                                                           (pair (pair %staker_accumulator (map %accumulator nat nat) (nat %total_staked))
+                                                                                                                 (nat %total_supply)))))))))
+                                                                    (pair (big_map %ledger (pair address nat) nat)
+                                                                          (pair (big_map %account_data (pair address nat) (set address))
+                                                                                (pair (big_map %dev_rewards
+                                                                                         (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                                                                                         nat)
+                                                                                      (pair (big_map %referral_rewards
+                                                                                               (pair address
+                                                                                                     (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                                                               nat)
+                                                                                            (pair (big_map %stakers_balance
+                                                                                                     (pair address nat)
+                                                                                                     (pair (nat %balance) (map %earnings nat (pair (nat %reward) (nat %former)))))
+                                                                                                  (pair (pair %quipu_token (address %token_address) (nat %token_id))
+                                                                                                        (address %factory_address))))))))))))))) ;
+                     IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                     DIG 2 ;
+                     DUP ;
+                     CAR ;
+                     DIG 3 ;
+                     PAIR ;
+                     DIG 2 ;
+                     SWAP ;
+                     EXEC ;
+                     UPDATE 1 ;
+                     SWAP ;
+                     CAR ;
+                     PAIR }
+                   { SWAP ;
+                     DIG 3 ;
+                     DROP 2 ;
+                     PUSH string "function-not-set" ;
+                     DUP 3 ;
+                     GET 9 ;
+                     DUP 3 ;
+                     IF_LEFT
+                       { IF_LEFT
+                           { IF_LEFT
+                               { IF_LEFT { DROP ; PUSH nat 0 } { DROP ; PUSH nat 6 } }
+                               { IF_LEFT { DROP ; PUSH nat 7 } { DROP ; PUSH nat 3 } } }
+                           { IF_LEFT
+                               { IF_LEFT { DROP ; PUSH nat 4 } { DROP ; PUSH nat 5 } }
+                               { IF_LEFT { DROP ; PUSH nat 2 } { DROP ; PUSH nat 8 } } } }
+                       { IF_LEFT
+                           { IF_LEFT
+                               { IF_LEFT { DROP ; PUSH nat 11 } { DROP ; PUSH nat 10 } }
+                               { IF_LEFT { DROP ; PUSH nat 12 } { DROP ; PUSH nat 9 } } }
+                           { IF_LEFT { DROP ; PUSH nat 1 } { DROP ; PUSH nat 13 } } } ;
+                     GET ;
+                     PAIR ;
+                     DIG 3 ;
+                     SWAP ;
+                     EXEC ;
+                     PUSH string "cant-unpack-use-lambda" ;
+                     SWAP ;
+                     UNPACK
+                       (lambda
+                          (pair (or (or (or (or (pair %add_pool
+                                                   (nat %a_constant)
+                                                   (pair (set %input_tokens
+                                                            (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                         (map %tokens_info
+                                                            nat
+                                                            (pair (nat %rate) (pair (nat %precision_multiplier) (nat %reserves))))))
+                                                (pair %claim_developer
+                                                   (or %token (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                                                   (nat %amount)))
+                                            (or (pair %claim_referral
+                                                   (or %token (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                                                   (nat %amount))
+                                                (pair %divest
+                                                   (nat %pool_id)
+                                                   (pair (map %min_amounts_out nat nat)
+                                                         (pair (nat %shares) (pair (timestamp %time_expiration) (option %receiver address)))))))
+                                        (or (or (pair %divest_imbalanced
+                                                   (nat %pool_id)
+                                                   (pair (map %amounts_out nat nat)
+                                                         (pair (nat %max_shares)
+                                                               (pair (timestamp %time_expiration)
+                                                                     (pair (option %receiver address) (option %referral address))))))
+                                                (pair %divest_one_coin
+                                                   (nat %pool_id)
+                                                   (pair (nat %shares)
+                                                         (pair (nat %token_index)
+                                                               (pair (nat %min_amount_out)
+                                                                     (pair (timestamp %time_expiration)
+                                                                           (pair (option %receiver address) (option %referral address))))))))
+                                            (or (pair %invest
+                                                   (nat %pool_id)
+                                                   (pair (nat %shares)
+                                                         (pair (map %in_amounts nat nat)
+                                                               (pair (timestamp %time_expiration)
+                                                                     (pair (option %receiver address) (option %referral address))))))
+                                                (pair %ramp_A (nat %pool_id) (pair (nat %future_A) (timestamp %future_time))))))
+                                    (or (or (or (address %set_default_referral)
+                                                (pair %set_fees
+                                                   (nat %pool_id)
+                                                   (pair %fee (nat %lp_fee) (pair (nat %stakers_fee) (nat %ref_fee)))))
+                                            (or (pair %stake (nat %pool_id) (nat %amount)) (nat %stop_ramp_A)))
+                                        (or (pair %swap
+                                               (nat %pool_id)
+                                               (pair (nat %idx_from)
+                                                     (pair (nat %idx_to)
+                                                           (pair (nat %amount)
+                                                                 (pair (nat %min_amount_out)
+                                                                       (pair (timestamp %time_expiration)
+                                                                             (pair (option %receiver address) (option %referral address))))))))
+                                            (pair %unstake (nat %pool_id) (nat %amount)))))
+                                (pair (address %admin)
+                                      (pair (address %default_referral)
+                                            (pair (set %managers address)
+                                                  (pair (nat %pools_count)
+                                                        (pair (big_map %tokens
+                                                                 nat
+                                                                 (map nat (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))))
+                                                              (pair (big_map %pool_to_id bytes nat)
+                                                                    (pair (big_map %pools
+                                                                             nat
+                                                                             (pair (nat %initial_A)
+                                                                                   (pair (timestamp %initial_A_time)
+                                                                                         (pair (nat %future_A)
+                                                                                               (pair (timestamp %future_A_time)
+                                                                                                     (pair (map %tokens_info
+                                                                                                              nat
+                                                                                                              (pair (nat %rate) (pair (nat %precision_multiplier) (nat %reserves))))
+                                                                                                           (pair (pair %fee (nat %lp_fee) (pair (nat %stakers_fee) (nat %ref_fee)))
+                                                                                                                 (pair (pair %staker_accumulator (map %accumulator nat nat) (nat %total_staked))
+                                                                                                                       (nat %total_supply)))))))))
+                                                                          (pair (big_map %ledger (pair address nat) nat)
+                                                                                (pair (big_map %account_data (pair address nat) (set address))
+                                                                                      (pair (big_map %dev_rewards
+                                                                                               (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                                                                                               nat)
+                                                                                            (pair (big_map %referral_rewards
+                                                                                                     (pair address
+                                                                                                           (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                                                                     nat)
+                                                                                                  (pair (big_map %stakers_balance
+                                                                                                           (pair address nat)
+                                                                                                           (pair (nat %balance) (map %earnings nat (pair (nat %reward) (nat %former)))))
+                                                                                                        (pair (pair %quipu_token (address %token_address) (nat %token_id))
+                                                                                                              (address %factory_address)))))))))))))))
+                          (pair (list operation)
+                                (pair (address %admin)
+                                      (pair (address %default_referral)
+                                            (pair (set %managers address)
+                                                  (pair (nat %pools_count)
+                                                        (pair (big_map %tokens
+                                                                 nat
+                                                                 (map nat (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))))
+                                                              (pair (big_map %pool_to_id bytes nat)
+                                                                    (pair (big_map %pools
+                                                                             nat
+                                                                             (pair (nat %initial_A)
+                                                                                   (pair (timestamp %initial_A_time)
+                                                                                         (pair (nat %future_A)
+                                                                                               (pair (timestamp %future_A_time)
+                                                                                                     (pair (map %tokens_info
+                                                                                                              nat
+                                                                                                              (pair (nat %rate) (pair (nat %precision_multiplier) (nat %reserves))))
+                                                                                                           (pair (pair %fee (nat %lp_fee) (pair (nat %stakers_fee) (nat %ref_fee)))
+                                                                                                                 (pair (pair %staker_accumulator (map %accumulator nat nat) (nat %total_staked))
+                                                                                                                       (nat %total_supply)))))))))
+                                                                          (pair (big_map %ledger (pair address nat) nat)
+                                                                                (pair (big_map %account_data (pair address nat) (set address))
+                                                                                      (pair (big_map %dev_rewards
+                                                                                               (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                                                                                               nat)
+                                                                                            (pair (big_map %referral_rewards
+                                                                                                     (pair address
+                                                                                                           (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                                                                     nat)
+                                                                                                  (pair (big_map %stakers_balance
+                                                                                                           (pair address nat)
+                                                                                                           (pair (nat %balance) (map %earnings nat (pair (nat %reward) (nat %former)))))
+                                                                                                        (pair (pair %quipu_token (address %token_address) (nat %token_id))
+                                                                                                              (address %factory_address)))))))))))))))) ;
+                     IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                     DUP 3 ;
+                     CAR ;
+                     DIG 2 ;
+                     PAIR ;
+                     EXEC ;
+                     DUP ;
+                     DUG 2 ;
+                     CDR ;
+                     UPDATE 1 ;
+                     SWAP ;
+                     CAR ;
+                     PAIR } }
+               { DIG 4 ;
+                 DROP ;
+                 IF_LEFT
+                   { DIG 2 ;
+                     DIG 3 ;
+                     DIG 2 ;
+                     PUSH string "function-not-set" ;
+                     DUP 3 ;
+                     GET 13 ;
+                     DUP 3 ;
+                     IF_LEFT { DROP ; PUSH nat 0 } { DROP ; PUSH nat 1 } ;
+                     GET ;
+                     PAIR ;
+                     DIG 5 ;
+                     SWAP ;
+                     EXEC ;
+                     PUSH string "cant-unpack-use-lambda" ;
+                     SWAP ;
+                     UNPACK
+                       (lambda
+                          (pair (pair (or (pair %permit key (pair signature (bytes %permit_hash)))
+                                          (pair %set_expiry (address %issuer) (pair (nat %expiry) (option %permit_hash bytes))))
+                                      (pair (pair %storage
+                                               (address %admin)
+                                               (pair (address %default_referral)
+                                                     (pair (set %managers address)
+                                                           (pair (nat %pools_count)
+                                                                 (pair (big_map %tokens
+                                                                          nat
+                                                                          (map nat (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))))
+                                                                       (pair (big_map %pool_to_id bytes nat)
+                                                                             (pair (big_map %pools
+                                                                                      nat
+                                                                                      (pair (nat %initial_A)
+                                                                                            (pair (timestamp %initial_A_time)
+                                                                                                  (pair (nat %future_A)
+                                                                                                        (pair (timestamp %future_A_time)
+                                                                                                              (pair (map %tokens_info
+                                                                                                                       nat
+                                                                                                                       (pair (nat %rate) (pair (nat %precision_multiplier) (nat %reserves))))
+                                                                                                                    (pair (pair %fee (nat %lp_fee) (pair (nat %stakers_fee) (nat %ref_fee)))
+                                                                                                                          (pair (pair %staker_accumulator (map %accumulator nat nat) (nat %total_staked))
+                                                                                                                                (nat %total_supply)))))))))
+                                                                                   (pair (big_map %ledger (pair address nat) nat)
+                                                                                         (pair (big_map %account_data (pair address nat) (set address))
+                                                                                               (pair (big_map %dev_rewards
+                                                                                                        (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                                                                                                        nat)
+                                                                                                     (pair (big_map %referral_rewards
+                                                                                                              (pair address
+                                                                                                                    (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                                                                              nat)
+                                                                                                           (pair (big_map %stakers_balance
+                                                                                                                    (pair address nat)
+                                                                                                                    (pair (nat %balance) (map %earnings nat (pair (nat %reward) (nat %former)))))
+                                                                                                                 (pair (pair %quipu_token (address %token_address) (nat %token_id))
+                                                                                                                       (address %factory_address))))))))))))))
+                                            (pair (big_map %metadata string bytes)
+                                                  (pair (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
+                                                        (pair (big_map %admin_lambdas nat bytes)
+                                                              (pair (big_map %dex_lambdas nat bytes)
+                                                                    (pair (big_map %token_lambdas nat bytes)
+                                                                          (pair (big_map %permit_lambdas nat bytes)
+                                                                                (pair (big_map %permits
+                                                                                         address
+                                                                                         (pair (map %permits bytes (pair (timestamp %created_at) (option %expiry nat)))
+                                                                                               (option %expiry nat)))
+                                                                                      (pair (nat %permits_counter) (nat %default_expiry)))))))))))
+                                (or (or (or (pair %set_admin_function (bytes %func) (nat %index))
+                                            (pair %set_dex_function (bytes %func) (nat %index)))
+                                        (or (pair %set_permit_function (bytes %func) (nat %index))
+                                            (pair %set_token_function (bytes %func) (nat %index))))
+                                    (or (or (or %use_admin
+                                               (pair %add_rem_managers (bool %add) (address %candidate))
+                                               (address %set_admin))
+                                            (or %use_dex
+                                               (or (or (or (pair %add_pool
+                                                              (nat %a_constant)
+                                                              (pair (set %input_tokens
+                                                                       (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                                    (map %tokens_info
+                                                                       nat
+                                                                       (pair (nat %rate) (pair (nat %precision_multiplier) (nat %reserves))))))
+                                                           (pair %claim_developer
+                                                              (or %token (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                                                              (nat %amount)))
+                                                       (or (pair %claim_referral
+                                                              (or %token (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                                                              (nat %amount))
+                                                           (pair %divest
+                                                              (nat %pool_id)
+                                                              (pair (map %min_amounts_out nat nat)
+                                                                    (pair (nat %shares) (pair (timestamp %time_expiration) (option %receiver address)))))))
+                                                   (or (or (pair %divest_imbalanced
+                                                              (nat %pool_id)
+                                                              (pair (map %amounts_out nat nat)
+                                                                    (pair (nat %max_shares)
+                                                                          (pair (timestamp %time_expiration)
+                                                                                (pair (option %receiver address) (option %referral address))))))
+                                                           (pair %divest_one_coin
+                                                              (nat %pool_id)
+                                                              (pair (nat %shares)
+                                                                    (pair (nat %token_index)
+                                                                          (pair (nat %min_amount_out)
+                                                                                (pair (timestamp %time_expiration)
+                                                                                      (pair (option %receiver address) (option %referral address))))))))
+                                                       (or (pair %invest
+                                                              (nat %pool_id)
+                                                              (pair (nat %shares)
+                                                                    (pair (map %in_amounts nat nat)
+                                                                          (pair (timestamp %time_expiration)
+                                                                                (pair (option %receiver address) (option %referral address))))))
+                                                           (pair %ramp_A (nat %pool_id) (pair (nat %future_A) (timestamp %future_time))))))
+                                               (or (or (or (address %set_default_referral)
+                                                           (pair %set_fees
+                                                              (nat %pool_id)
+                                                              (pair %fee (nat %lp_fee) (pair (nat %stakers_fee) (nat %ref_fee)))))
+                                                       (or (pair %stake (nat %pool_id) (nat %amount)) (nat %stop_ramp_A)))
+                                                   (or (pair %swap
+                                                          (nat %pool_id)
+                                                          (pair (nat %idx_from)
+                                                                (pair (nat %idx_to)
+                                                                      (pair (nat %amount)
+                                                                            (pair (nat %min_amount_out)
+                                                                                  (pair (timestamp %time_expiration)
+                                                                                        (pair (option %receiver address) (option %referral address))))))))
+                                                       (pair %unstake (nat %pool_id) (nat %amount))))))
+                                        (or (or %use_permit
+                                               (pair %permit key (pair signature (bytes %permit_hash)))
+                                               (pair %set_expiry (address %issuer) (pair (nat %expiry) (option %permit_hash bytes))))
+                                            (or %use_token
+                                               (or (or (pair %balance_of
+                                                          (list %requests (pair (address %owner) (nat %token_id)))
+                                                          (contract %callback
+                                                             (list (pair (pair %request (address %owner) (nat %token_id)) (nat %balance)))))
+                                                       (pair %total_supply (nat %token_id) (contract %receiver nat)))
+                                                   (or (list %transfer
+                                                          (pair (address %from_)
+                                                                (list %txs (pair (address %to_) (pair (nat %token_id) (nat %amount))))))
+                                                       (pair %update_metadata (nat %token_id) (map %token_info string bytes))))
+                                               (list %update_operators
+                                                  (or (pair %add_operator (address %owner) (pair (address %operator) (nat %token_id)))
+                                                      (pair %remove_operator (address %owner) (pair (address %operator) (nat %token_id))))))))))
+                          (pair (pair %storage
+                                   (address %admin)
+                                   (pair (address %default_referral)
+                                         (pair (set %managers address)
+                                               (pair (nat %pools_count)
+                                                     (pair (big_map %tokens
+                                                              nat
+                                                              (map nat (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))))
+                                                           (pair (big_map %pool_to_id bytes nat)
+                                                                 (pair (big_map %pools
+                                                                          nat
+                                                                          (pair (nat %initial_A)
+                                                                                (pair (timestamp %initial_A_time)
+                                                                                      (pair (nat %future_A)
+                                                                                            (pair (timestamp %future_A_time)
+                                                                                                  (pair (map %tokens_info
+                                                                                                           nat
+                                                                                                           (pair (nat %rate) (pair (nat %precision_multiplier) (nat %reserves))))
+                                                                                                        (pair (pair %fee (nat %lp_fee) (pair (nat %stakers_fee) (nat %ref_fee)))
+                                                                                                              (pair (pair %staker_accumulator (map %accumulator nat nat) (nat %total_staked))
+                                                                                                                    (nat %total_supply)))))))))
+                                                                       (pair (big_map %ledger (pair address nat) nat)
+                                                                             (pair (big_map %account_data (pair address nat) (set address))
+                                                                                   (pair (big_map %dev_rewards
+                                                                                            (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                                                                                            nat)
+                                                                                         (pair (big_map %referral_rewards
+                                                                                                  (pair address
+                                                                                                        (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                                                                  nat)
+                                                                                               (pair (big_map %stakers_balance
+                                                                                                        (pair address nat)
+                                                                                                        (pair (nat %balance) (map %earnings nat (pair (nat %reward) (nat %former)))))
+                                                                                                     (pair (pair %quipu_token (address %token_address) (nat %token_id))
+                                                                                                           (address %factory_address))))))))))))))
+                                (pair (big_map %metadata string bytes)
+                                      (pair (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
+                                            (pair (big_map %admin_lambdas nat bytes)
+                                                  (pair (big_map %dex_lambdas nat bytes)
+                                                        (pair (big_map %token_lambdas nat bytes)
+                                                              (pair (big_map %permit_lambdas nat bytes)
+                                                                    (pair (big_map %permits
+                                                                             address
+                                                                             (pair (map %permits bytes (pair (timestamp %created_at) (option %expiry nat)))
+                                                                                   (option %expiry nat)))
+                                                                          (pair (nat %permits_counter) (nat %default_expiry))))))))))) ;
+                     IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                     DUG 3 ;
+                     PAIR ;
+                     PAIR ;
+                     EXEC ;
+                     SWAP ;
+                     CAR ;
+                     PAIR }
+                   { SWAP ;
+                     DROP ;
+                     SWAP ;
+                     DUG 2 ;
+                     PUSH string "function-not-set" ;
+                     DUP 3 ;
+                     GET 11 ;
+                     DUP 3 ;
+                     IF_LEFT
+                       { IF_LEFT
+                           { IF_LEFT { DROP ; PUSH nat 1 } { DROP ; PUSH nat 4 } }
+                           { IF_LEFT { DROP ; PUSH nat 0 } { DROP ; PUSH nat 3 } } }
+                       { DROP ; PUSH nat 2 } ;
+                     GET ;
+                     PAIR ;
+                     DIG 4 ;
+                     SWAP ;
+                     EXEC ;
+                     PUSH string "cant-unpack-use-lambda" ;
+                     SWAP ;
+                     UNPACK
+                       (lambda
+                          (pair (pair (or (or (or (pair %balance_of
+                                                     (list %requests (pair (address %owner) (nat %token_id)))
+                                                     (contract %callback
+                                                        (list (pair (pair %request (address %owner) (nat %token_id)) (nat %balance)))))
+                                                  (pair %total_supply (nat %token_id) (contract %receiver nat)))
+                                              (or (list %transfer
+                                                     (pair (address %from_)
+                                                           (list %txs (pair (address %to_) (pair (nat %token_id) (nat %amount))))))
+                                                  (pair %update_metadata (nat %token_id) (map %token_info string bytes))))
+                                          (list %update_operators
+                                             (or (pair %add_operator (address %owner) (pair (address %operator) (nat %token_id)))
+                                                 (pair %remove_operator (address %owner) (pair (address %operator) (nat %token_id))))))
+                                      (pair (pair %storage
+                                               (address %admin)
+                                               (pair (address %default_referral)
+                                                     (pair (set %managers address)
+                                                           (pair (nat %pools_count)
+                                                                 (pair (big_map %tokens
+                                                                          nat
+                                                                          (map nat (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))))
+                                                                       (pair (big_map %pool_to_id bytes nat)
+                                                                             (pair (big_map %pools
+                                                                                      nat
+                                                                                      (pair (nat %initial_A)
+                                                                                            (pair (timestamp %initial_A_time)
+                                                                                                  (pair (nat %future_A)
+                                                                                                        (pair (timestamp %future_A_time)
+                                                                                                              (pair (map %tokens_info
+                                                                                                                       nat
+                                                                                                                       (pair (nat %rate) (pair (nat %precision_multiplier) (nat %reserves))))
+                                                                                                                    (pair (pair %fee (nat %lp_fee) (pair (nat %stakers_fee) (nat %ref_fee)))
+                                                                                                                          (pair (pair %staker_accumulator (map %accumulator nat nat) (nat %total_staked))
+                                                                                                                                (nat %total_supply)))))))))
+                                                                                   (pair (big_map %ledger (pair address nat) nat)
+                                                                                         (pair (big_map %account_data (pair address nat) (set address))
+                                                                                               (pair (big_map %dev_rewards
+                                                                                                        (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                                                                                                        nat)
+                                                                                                     (pair (big_map %referral_rewards
+                                                                                                              (pair address
+                                                                                                                    (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                                                                              nat)
+                                                                                                           (pair (big_map %stakers_balance
+                                                                                                                    (pair address nat)
+                                                                                                                    (pair (nat %balance) (map %earnings nat (pair (nat %reward) (nat %former)))))
+                                                                                                                 (pair (pair %quipu_token (address %token_address) (nat %token_id))
+                                                                                                                       (address %factory_address))))))))))))))
+                                            (pair (big_map %metadata string bytes)
+                                                  (pair (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
+                                                        (pair (big_map %admin_lambdas nat bytes)
+                                                              (pair (big_map %dex_lambdas nat bytes)
+                                                                    (pair (big_map %token_lambdas nat bytes)
+                                                                          (pair (big_map %permit_lambdas nat bytes)
+                                                                                (pair (big_map %permits
+                                                                                         address
+                                                                                         (pair (map %permits bytes (pair (timestamp %created_at) (option %expiry nat)))
+                                                                                               (option %expiry nat)))
+                                                                                      (pair (nat %permits_counter) (nat %default_expiry)))))))))))
+                                (or (or (or (pair %set_admin_function (bytes %func) (nat %index))
+                                            (pair %set_dex_function (bytes %func) (nat %index)))
+                                        (or (pair %set_permit_function (bytes %func) (nat %index))
+                                            (pair %set_token_function (bytes %func) (nat %index))))
+                                    (or (or (or %use_admin
+                                               (pair %add_rem_managers (bool %add) (address %candidate))
+                                               (address %set_admin))
+                                            (or %use_dex
+                                               (or (or (or (pair %add_pool
+                                                              (nat %a_constant)
+                                                              (pair (set %input_tokens
+                                                                       (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                                    (map %tokens_info
+                                                                       nat
+                                                                       (pair (nat %rate) (pair (nat %precision_multiplier) (nat %reserves))))))
+                                                           (pair %claim_developer
+                                                              (or %token (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                                                              (nat %amount)))
+                                                       (or (pair %claim_referral
+                                                              (or %token (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                                                              (nat %amount))
+                                                           (pair %divest
+                                                              (nat %pool_id)
+                                                              (pair (map %min_amounts_out nat nat)
+                                                                    (pair (nat %shares) (pair (timestamp %time_expiration) (option %receiver address)))))))
+                                                   (or (or (pair %divest_imbalanced
+                                                              (nat %pool_id)
+                                                              (pair (map %amounts_out nat nat)
+                                                                    (pair (nat %max_shares)
+                                                                          (pair (timestamp %time_expiration)
+                                                                                (pair (option %receiver address) (option %referral address))))))
+                                                           (pair %divest_one_coin
+                                                              (nat %pool_id)
+                                                              (pair (nat %shares)
+                                                                    (pair (nat %token_index)
+                                                                          (pair (nat %min_amount_out)
+                                                                                (pair (timestamp %time_expiration)
+                                                                                      (pair (option %receiver address) (option %referral address))))))))
+                                                       (or (pair %invest
+                                                              (nat %pool_id)
+                                                              (pair (nat %shares)
+                                                                    (pair (map %in_amounts nat nat)
+                                                                          (pair (timestamp %time_expiration)
+                                                                                (pair (option %receiver address) (option %referral address))))))
+                                                           (pair %ramp_A (nat %pool_id) (pair (nat %future_A) (timestamp %future_time))))))
+                                               (or (or (or (address %set_default_referral)
+                                                           (pair %set_fees
+                                                              (nat %pool_id)
+                                                              (pair %fee (nat %lp_fee) (pair (nat %stakers_fee) (nat %ref_fee)))))
+                                                       (or (pair %stake (nat %pool_id) (nat %amount)) (nat %stop_ramp_A)))
+                                                   (or (pair %swap
+                                                          (nat %pool_id)
+                                                          (pair (nat %idx_from)
+                                                                (pair (nat %idx_to)
+                                                                      (pair (nat %amount)
+                                                                            (pair (nat %min_amount_out)
+                                                                                  (pair (timestamp %time_expiration)
+                                                                                        (pair (option %receiver address) (option %referral address))))))))
+                                                       (pair %unstake (nat %pool_id) (nat %amount))))))
+                                        (or (or %use_permit
+                                               (pair %permit key (pair signature (bytes %permit_hash)))
+                                               (pair %set_expiry (address %issuer) (pair (nat %expiry) (option %permit_hash bytes))))
+                                            (or %use_token
+                                               (or (or (pair %balance_of
+                                                          (list %requests (pair (address %owner) (nat %token_id)))
+                                                          (contract %callback
+                                                             (list (pair (pair %request (address %owner) (nat %token_id)) (nat %balance)))))
+                                                       (pair %total_supply (nat %token_id) (contract %receiver nat)))
+                                                   (or (list %transfer
+                                                          (pair (address %from_)
+                                                                (list %txs (pair (address %to_) (pair (nat %token_id) (nat %amount))))))
+                                                       (pair %update_metadata (nat %token_id) (map %token_info string bytes))))
+                                               (list %update_operators
+                                                  (or (pair %add_operator (address %owner) (pair (address %operator) (nat %token_id)))
+                                                      (pair %remove_operator (address %owner) (pair (address %operator) (nat %token_id))))))))))
+                          (pair (list operation)
+                                (pair (pair %storage
+                                         (address %admin)
+                                         (pair (address %default_referral)
+                                               (pair (set %managers address)
+                                                     (pair (nat %pools_count)
+                                                           (pair (big_map %tokens
+                                                                    nat
+                                                                    (map nat (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))))
+                                                                 (pair (big_map %pool_to_id bytes nat)
+                                                                       (pair (big_map %pools
+                                                                                nat
+                                                                                (pair (nat %initial_A)
+                                                                                      (pair (timestamp %initial_A_time)
+                                                                                            (pair (nat %future_A)
+                                                                                                  (pair (timestamp %future_A_time)
+                                                                                                        (pair (map %tokens_info
+                                                                                                                 nat
+                                                                                                                 (pair (nat %rate) (pair (nat %precision_multiplier) (nat %reserves))))
+                                                                                                              (pair (pair %fee (nat %lp_fee) (pair (nat %stakers_fee) (nat %ref_fee)))
+                                                                                                                    (pair (pair %staker_accumulator (map %accumulator nat nat) (nat %total_staked))
+                                                                                                                          (nat %total_supply)))))))))
+                                                                             (pair (big_map %ledger (pair address nat) nat)
+                                                                                   (pair (big_map %account_data (pair address nat) (set address))
+                                                                                         (pair (big_map %dev_rewards
+                                                                                                  (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                                                                                                  nat)
+                                                                                               (pair (big_map %referral_rewards
+                                                                                                        (pair address
+                                                                                                              (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                                                                        nat)
+                                                                                                     (pair (big_map %stakers_balance
+                                                                                                              (pair address nat)
+                                                                                                              (pair (nat %balance) (map %earnings nat (pair (nat %reward) (nat %former)))))
+                                                                                                           (pair (pair %quipu_token (address %token_address) (nat %token_id))
+                                                                                                                 (address %factory_address))))))))))))))
+                                      (pair (big_map %metadata string bytes)
+                                            (pair (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
+                                                  (pair (big_map %admin_lambdas nat bytes)
+                                                        (pair (big_map %dex_lambdas nat bytes)
+                                                              (pair (big_map %token_lambdas nat bytes)
+                                                                    (pair (big_map %permit_lambdas nat bytes)
+                                                                          (pair (big_map %permits
+                                                                                   address
+                                                                                   (pair (map %permits bytes (pair (timestamp %created_at) (option %expiry nat)))
+                                                                                         (option %expiry nat)))
+                                                                                (pair (nat %permits_counter) (nat %default_expiry)))))))))))) ;
+                     IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                     DUG 3 ;
+                     PAIR ;
+                     PAIR ;
+                     EXEC } } } } ;
+  view "get_referral_rewards"
+       (list (pair (address %user)
+                   (or %token (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))))
+       (list (pair (pair %request
+                      (address %user)
+                      (or %token (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                   (nat %reward)))
+       { UNPAIR ;
+         NIL (pair (pair address (or address (pair address nat))) nat) ;
+         SWAP ;
+         NIL (pair address (or address (pair address nat))) ;
+         SWAP ;
+         ITER { CONS } ;
+         ITER { SWAP ;
+                PUSH nat 0 ;
+                DUP 4 ;
+                CAR ;
+                GET 21 ;
+                DUP 4 ;
+                CDR ;
+                DUP 5 ;
+                CAR ;
+                PAIR ;
+                GET ;
+                IF_NONE {} { SWAP ; DROP } ;
+                DIG 2 ;
+                PAIR ;
+                CONS } ;
+         SWAP ;
+         DROP } ;
+  view "get_staker_info"
+       (list (pair (address %user) (nat %pool_id)))
+       (list (pair (pair %request (address %user) (nat %pool_id))
+                   (pair %info (nat %balance) (map %rewards nat nat))))
+       { UNPAIR ;
+         NIL (pair (pair address nat) (pair nat (map nat nat))) ;
+         SWAP ;
+         NIL (pair address nat) ;
+         SWAP ;
+         ITER { CONS } ;
+         ITER { PUSH string "not-launched" ;
+                DUP 4 ;
+                CAR ;
+                GET 13 ;
+                DUP 3 ;
+                CDR ;
+                GET ;
+                IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                PUSH string "not-launched" ;
+                DUP 5 ;
+                CAR ;
+                GET 23 ;
+                DUP 4 ;
+                CDR ;
+                DUP 5 ;
+                CAR ;
+                PAIR ;
+                GET ;
+                IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                DUP ;
+                CDR ;
+                MAP { UNPAIR ;
+                      PUSH nat 0 ;
+                      DUP 5 ;
+                      GET 13 ;
+                      CAR ;
+                      DIG 2 ;
+                      GET ;
+                      IF_NONE {} { SWAP ; DROP } ;
+                      DUP 3 ;
+                      CAR ;
+                      MUL ;
+                      PUSH nat 10000000000 ;
+                      DUP 3 ;
+                      CDR ;
+                      DIG 2 ;
+                      SUB ;
+                      ABS ;
+                      DIG 2 ;
+                      CAR ;
+                      ADD ;
+                      EDIV ;
+                      IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                      CAR } ;
+                DIG 2 ;
+                DROP ;
+                SWAP ;
+                CAR ;
+                PAIR ;
+                DIG 2 ;
+                SWAP ;
+                DIG 2 ;
+                PAIR ;
+                CONS } ;
+         SWAP ;
+         DROP } ;
+  view "get_fees"
+       nat
+       (pair (nat %lp_fee) (pair (nat %stakers_fee) (nat %ref_fee)))
+       { UNPAIR ;
+         PUSH string "not-launched" ;
+         DIG 2 ;
+         CAR ;
+         GET 13 ;
+         DIG 2 ;
+         GET ;
+         IF_NONE { FAILWITH } { SWAP ; DROP } ;
+         GET 11 } ;
+  view "view_A"
+       nat
+       nat
+       { LAMBDA
+           (pair (option nat) string)
+           nat
+           { UNPAIR ; IF_NONE { FAILWITH } { SWAP ; DROP } } ;
+         SWAP ;
+         UNPAIR ;
+         PUSH string "not-launched" ;
+         DIG 2 ;
+         CAR ;
+         GET 13 ;
+         DIG 2 ;
+         GET ;
+         IF_NONE { FAILWITH } { SWAP ; DROP } ;
+         PUSH nat 100 ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
+         GET 5 ;
+         DUP 3 ;
+         GET 7 ;
+         PAIR ;
+         DUP 3 ;
+         CAR ;
+         DIG 3 ;
+         GET 3 ;
+         DIG 2 ;
+         UNPAIR ;
+         DUP ;
+         NOW ;
+         COMPARE ;
+         LT ;
+         IF { PUSH string "timestamp-error" ;
+              DUP 4 ;
+              NOW ;
+              SUB ;
+              ISNAT ;
+              PAIR ;
+              DUP 7 ;
+              SWAP ;
+              EXEC ;
+              PUSH string "timestamp-error" ;
+              DIG 4 ;
+              DIG 3 ;
+              SUB ;
+              ISNAT ;
+              PAIR ;
+              DIG 5 ;
+              SWAP ;
+              EXEC ;
+              DUP 4 ;
+              DUP 4 ;
+              COMPARE ;
+              GT ;
+              IF { SWAP ;
+                   DUP 4 ;
+                   DIG 3 ;
+                   SUB ;
+                   ABS ;
+                   MUL ;
+                   EDIV ;
+                   IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                   CAR ;
+                   ADD }
+                 { SWAP ;
+                   DIG 2 ;
+                   DUP 4 ;
+                   SUB ;
+                   ABS ;
+                   MUL ;
+                   EDIV ;
+                   IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                   CAR ;
+                   SWAP ;
+                   SUB ;
+                   ABS } }
+            { DIG 2 ; DIG 3 ; DIG 5 ; DROP 4 } ;
+         EDIV ;
+         IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+         CAR } ;
+  view "get_dy"
+       (pair (nat %pool_id) (pair (nat %i) (pair (nat %j) (nat %dx))))
+       nat
+       { LAMBDA
+           (pair (option nat) string)
+           nat
+           { UNPAIR ; IF_NONE { FAILWITH } { SWAP ; DROP } } ;
+         LAMBDA
+           (pair (option (pair nat (pair nat nat))) string)
+           (pair nat (pair nat nat))
+           { UNPAIR ; IF_NONE { FAILWITH } { SWAP ; DROP } } ;
+         DIG 2 ;
+         UNPAIR ;
+         PUSH string "not-launched" ;
+         DUP 3 ;
+         CAR ;
+         GET 13 ;
+         DUP 3 ;
+         CAR ;
+         GET ;
+         IF_NONE { FAILWITH } { SWAP ; DROP } ;
+         DUP ;
+         DUP 3 ;
+         GET 6 ;
+         PAIR ;
+         DUP 3 ;
+         GET 5 ;
+         DIG 3 ;
+         GET 3 ;
+         DIG 2 ;
+         UNPAIR ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
+         GET 9 ;
+         MAP { CDR ;
+               PUSH nat 1000000000000000000 ;
+               SWAP ;
+               DUP ;
+               DUG 2 ;
+               GET 4 ;
+               DIG 2 ;
+               CAR ;
+               MUL ;
+               EDIV ;
+               IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+               CAR } ;
+         PUSH string "wrong-index" ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
+         DUP 6 ;
+         GET ;
+         PAIR ;
+         DUP 10 ;
+         SWAP ;
+         EXEC ;
+         PUSH string "wrong-index" ;
+         DUP 3 ;
+         DUP 8 ;
+         GET ;
+         PAIR ;
+         DUP 11 ;
+         SWAP ;
+         EXEC ;
+         PUSH string "wrong-index" ;
+         DUP 6 ;
+         GET 9 ;
+         DUP 8 ;
+         GET ;
+         PAIR ;
+         DUP 11 ;
+         SWAP ;
+         EXEC ;
+         PUSH string "wrong-index" ;
+         DUP 7 ;
+         GET 9 ;
+         DUP 10 ;
+         GET ;
+         PAIR ;
+         DIG 11 ;
+         SWAP ;
+         EXEC ;
+         PUSH nat 1000000000000000000 ;
+         DIG 2 ;
+         CAR ;
+         DIG 6 ;
+         MUL ;
+         EDIV ;
+         IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+         CAR ;
+         DIG 3 ;
+         ADD ;
+         DIG 4 ;
+         DIG 4 ;
+         DIG 2 ;
+         PAIR ;
+         DIG 5 ;
+         DIG 5 ;
+         DIG 2 ;
+         UNPAIR ;
+         DUP 5 ;
+         GET 9 ;
+         SIZE ;
+         DUP 5 ;
+         DUP 5 ;
+         COMPARE ;
+         NEQ ;
+         IF {} { PUSH string "failed assertion" ; FAILWITH } ;
+         DUP ;
+         DUP 6 ;
+         COMPARE ;
+         LT ;
+         PUSH nat 0 ;
+         DUP 7 ;
+         COMPARE ;
+         GE ;
+         AND ;
+         IF {} { PUSH string "failed assertion" ; FAILWITH } ;
+         DUP ;
+         DUP 5 ;
+         COMPARE ;
+         LT ;
+         PUSH nat 0 ;
+         DUP 6 ;
+         COMPARE ;
+         GE ;
+         AND ;
+         IF {} { PUSH string "failed assertion" ; FAILWITH } ;
+         DUP 6 ;
+         GET 5 ;
+         DUP 7 ;
+         GET 7 ;
+         PAIR ;
+         DUP 7 ;
+         CAR ;
+         DUP 8 ;
+         GET 3 ;
+         DIG 2 ;
+         UNPAIR ;
+         DUP ;
+         NOW ;
+         COMPARE ;
+         LT ;
+         IF { PUSH string "timestamp-error" ;
+              DUP 4 ;
+              NOW ;
+              SUB ;
+              ISNAT ;
+              PAIR ;
+              DUP 16 ;
+              SWAP ;
+              EXEC ;
+              PUSH string "timestamp-error" ;
+              DIG 4 ;
+              DIG 3 ;
+              SUB ;
+              ISNAT ;
+              PAIR ;
+              DUP 15 ;
+              SWAP ;
+              EXEC ;
+              DUP 4 ;
+              DUP 4 ;
+              COMPARE ;
+              GT ;
+              IF { SWAP ;
+                   DUP 4 ;
+                   DIG 3 ;
+                   SUB ;
+                   ABS ;
+                   MUL ;
+                   EDIV ;
+                   IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                   CAR ;
+                   ADD }
+                 { SWAP ;
+                   DIG 2 ;
+                   DUP 4 ;
+                   SUB ;
+                   ABS ;
+                   MUL ;
+                   EDIV ;
+                   IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                   CAR ;
+                   SWAP ;
+                   SUB ;
+                   ABS } }
+            { DIG 2 ; DIG 3 ; DROP 3 } ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
+         MUL ;
+         SWAP ;
+         DUP 5 ;
+         PUSH nat 0 ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
+         ITER { CDR ; ADD } ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
+         SIZE ;
+         DUP ;
+         DIG 4 ;
+         MUL ;
+         PUSH nat 0 ;
+         DUP 4 ;
+         PAIR ;
+         DUP 17 ;
+         DIG 5 ;
+         DIG 5 ;
+         DIG 5 ;
+         DIG 5 ;
+         PAIR 5 ;
+         LAMBDA
+           (pair (pair nat (pair nat (pair nat (pair (map nat nat) (lambda (pair (option nat) string) nat)))))
+                 (pair nat nat))
+           (pair bool (pair nat nat))
+           { UNPAIR ;
+             UNPAIR 5 ;
+             DIG 5 ;
+             PUSH nat 1 ;
+             SWAP ;
+             DUP ;
+             DUG 2 ;
+             CDR ;
+             DUP 3 ;
+             CAR ;
+             SUB ;
+             ABS ;
+             COMPARE ;
+             GT ;
+             IF { DUP ;
+                  CAR ;
+                  DIG 5 ;
+                  ITER { SWAP ;
+                         DUP 5 ;
+                         DIG 2 ;
+                         CDR ;
+                         MUL ;
+                         DUP 3 ;
+                         CAR ;
+                         DIG 2 ;
+                         MUL ;
+                         EDIV ;
+                         IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                         CAR } ;
+                  SWAP ;
+                  DUP ;
+                  CAR ;
+                  UPDATE 2 ;
+                  DUP ;
+                  DUP 3 ;
+                  PUSH nat 1 ;
+                  DUP 7 ;
+                  ADD ;
+                  MUL ;
+                  PUSH nat 100 ;
+                  DUP 4 ;
+                  CAR ;
+                  PUSH string "wrong-precision" ;
+                  PUSH nat 100 ;
+                  DUP 9 ;
+                  SUB ;
+                  ISNAT ;
+                  PAIR ;
+                  DIG 10 ;
+                  SWAP ;
+                  EXEC ;
+                  MUL ;
+                  EDIV ;
+                  IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                  CAR ;
+                  ADD ;
+                  DIG 2 ;
+                  CAR ;
+                  DIG 5 ;
+                  DIG 4 ;
+                  MUL ;
+                  PUSH nat 100 ;
+                  DIG 6 ;
+                  DIG 6 ;
+                  MUL ;
+                  EDIV ;
+                  IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                  CAR ;
+                  ADD ;
+                  MUL ;
+                  EDIV ;
+                  IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                  CAR ;
+                  UPDATE 1 ;
+                  PUSH bool True ;
+                  PAIR }
+                { SWAP ; DIG 2 ; DIG 3 ; DIG 4 ; DIG 5 ; DROP 5 ; PUSH bool False ; PAIR } } ;
+         SWAP ;
+         APPLY ;
+         SWAP ;
+         PUSH bool True ;
+         LOOP { DIP { DUP } ; EXEC ; UNPAIR } ;
+         SWAP ;
+         DROP ;
+         CAR ;
+         PUSH nat 0 ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
+         PAIR ;
+         DIG 5 ;
+         ITER { DUP ;
+                DUG 2 ;
+                CAR ;
+                DUP 9 ;
+                SWAP ;
+                DUP ;
+                DUG 2 ;
+                COMPARE ;
+                NEQ ;
+                IF { DUP 8 ;
+                     SWAP ;
+                     COMPARE ;
+                     EQ ;
+                     IF { SWAP ; DROP ; DUP 5 } { SWAP ; CDR } ;
+                     DUP ;
+                     DUP 3 ;
+                     CDR ;
+                     ADD ;
+                     DIG 2 ;
+                     CAR ;
+                     PAIR ;
+                     DUP ;
+                     CDR ;
+                     DUP 6 ;
+                     DUP 4 ;
+                     MUL ;
+                     DUP 5 ;
+                     DIG 3 ;
+                     CAR ;
+                     MUL ;
+                     EDIV ;
+                     IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                     CAR ;
+                     PAIR ;
+                     SWAP ;
+                     PAIR }
+                   { DIG 2 ; DROP 2 ; PUSH nat 0 ; PAIR } ;
+                CDR } ;
+         DIG 3 ;
+         DIG 4 ;
+         DIG 5 ;
+         DIG 6 ;
+         DROP 4 ;
+         DIG 3 ;
+         DUG 2 ;
+         DUP ;
+         DUG 3 ;
+         CDR ;
+         PAIR ;
+         DIG 3 ;
+         DIG 3 ;
+         CAR ;
+         DIG 2 ;
+         UNPAIR ;
+         DIG 4 ;
+         GET 9 ;
+         SIZE ;
+         DUP 5 ;
+         MUL ;
+         PUSH nat 100 ;
+         DUP 4 ;
+         DIG 5 ;
+         MUL ;
+         MUL ;
+         EDIV ;
+         IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+         CAR ;
+         DIG 3 ;
+         PUSH nat 100 ;
+         DUP 5 ;
+         MUL ;
+         EDIV ;
+         IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+         CAR ;
+         DIG 2 ;
+         ADD ;
+         DUP 3 ;
+         PUSH nat 0 ;
+         PAIR ;
+         DUP 9 ;
+         DIG 4 ;
+         DIG 4 ;
+         DIG 4 ;
+         PAIR 4 ;
+         LAMBDA
+           (pair (pair nat (pair nat (pair nat (lambda (pair (option nat) string) nat)))) (pair nat nat))
+           (pair bool (pair nat nat))
+           { UNPAIR ;
+             UNPAIR 4 ;
+             DIG 4 ;
+             PUSH nat 1 ;
+             SWAP ;
+             DUP ;
+             DUG 2 ;
+             CAR ;
+             DUP 3 ;
+             CDR ;
+             SUB ;
+             ABS ;
+             COMPARE ;
+             GT ;
+             IF { DUP ;
+                  CDR ;
+                  SWAP ;
+                  CDR ;
+                  PAIR ;
+                  PUSH string "value-not-natural" ;
+                  DIG 4 ;
+                  DIG 3 ;
+                  DUP 4 ;
+                  CDR ;
+                  PUSH int 2 ;
+                  MUL ;
+                  ADD ;
+                  SUB ;
+                  ISNAT ;
+                  PAIR ;
+                  DIG 3 ;
+                  SWAP ;
+                  EXEC ;
+                  DUG 2 ;
+                  DUP ;
+                  DUG 3 ;
+                  CDR ;
+                  DUP 4 ;
+                  CDR ;
+                  MUL ;
+                  ADD ;
+                  EDIV ;
+                  IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                  CAR ;
+                  SWAP ;
+                  CAR ;
+                  PAIR ;
+                  PUSH bool True ;
+                  PAIR }
+                { SWAP ; DIG 2 ; DIG 3 ; DIG 4 ; DROP 4 ; PUSH bool False ; PAIR } } ;
+         SWAP ;
+         APPLY ;
+         SWAP ;
+         PUSH bool True ;
+         LOOP { DIP { DUP } ; EXEC ; UNPAIR } ;
+         SWAP ;
+         DROP ;
+         CDR ;
+         PUSH string "value-not-natural" ;
+         PUSH int 1 ;
+         DIG 2 ;
+         DIG 4 ;
+         SUB ;
+         SUB ;
+         ISNAT ;
+         PAIR ;
+         DUP 5 ;
+         SWAP ;
+         EXEC ;
+         SWAP ;
+         CAR ;
+         PUSH nat 1000000000000000000 ;
+         DIG 2 ;
+         MUL ;
+         EDIV ;
+         IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+         CAR ;
+         PUSH nat 10000000000 ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
+         PUSH string "no-fee-view" ;
+         DIG 5 ;
+         CAR ;
+         GET 26 ;
+         UNIT ;
+         VIEW "dev_fee" nat ;
+         PAIR ;
+         DUP 6 ;
+         SWAP ;
+         EXEC ;
+         DIG 4 ;
+         GET 11 ;
+         DUP ;
+         DUG 2 ;
+         DUP ;
+         DUG 2 ;
+         GET 4 ;
+         DIG 2 ;
+         GET 3 ;
+         ADD ;
+         ADD ;
+         SWAP ;
+         CAR ;
+         ADD ;
+         MUL ;
+         EDIV ;
+         IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+         CAR ;
+         PUSH string "fee-overflow" ;
+         SWAP ;
+         DIG 2 ;
+         SUB ;
+         ISNAT ;
+         PAIR ;
+         EXEC } ;
+  view "calc_divest_one_coin"
+       (pair (nat %pool_id) (pair (nat %token_amount) (nat %i)))
+       nat
+       { LAMBDA
+           (pair (option nat) string)
+           nat
+           { UNPAIR ; IF_NONE { FAILWITH } { SWAP ; DROP } } ;
+         DUP ;
+         LAMBDA
+           (pair (lambda (pair (option nat) string) nat)
+                 (pair (pair (pair nat nat) (pair (map nat nat) nat))
+                       (pair nat
+                             (pair timestamp
+                                   (pair nat
+                                         (pair timestamp
+                                               (pair (map nat (pair nat (pair nat nat)))
+                                                     (pair (pair nat (pair nat nat)) (pair (pair (map nat nat) nat) nat)))))))))
+           nat
+           { UNPAIR ;
+             SWAP ;
+             UNPAIR ;
+             UNPAIR ;
+             UNPAIR ;
+             DIG 2 ;
+             UNPAIR ;
+             DUP 5 ;
+             GET 9 ;
+             SIZE ;
+             PUSH string "wrong-index" ;
+             PUSH nat 0 ;
+             DUP 7 ;
+             COMPARE ;
+             GE ;
+             IF { DROP } { FAILWITH } ;
+             PUSH string "wrong-index" ;
+             SWAP ;
+             DUP ;
+             DUG 2 ;
+             DUP 7 ;
+             COMPARE ;
+             LT ;
+             IF { DROP } { FAILWITH } ;
+             DUP ;
+             DIG 4 ;
+             MUL ;
+             PUSH nat 0 ;
+             DUP 5 ;
+             PAIR ;
+             DIG 3 ;
+             ITER { SWAP ;
+                    DUP 6 ;
+                    DUP 3 ;
+                    CAR ;
+                    COMPARE ;
+                    NEQ ;
+                    IF { SWAP ;
+                         CDR ;
+                         DUP ;
+                         DUP 3 ;
+                         CDR ;
+                         ADD ;
+                         DIG 2 ;
+                         CAR ;
+                         PAIR ;
+                         DUP ;
+                         CDR ;
+                         DUP 5 ;
+                         DUP 4 ;
+                         MUL ;
+                         DUP 7 ;
+                         DIG 3 ;
+                         CAR ;
+                         MUL ;
+                         EDIV ;
+                         IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                         CAR ;
+                         PAIR ;
+                         SWAP ;
+                         PAIR }
+                       { SWAP ; DROP ; PUSH nat 0 ; PAIR } ;
+                    CDR } ;
+             DIG 2 ;
+             DIG 4 ;
+             DROP 2 ;
+             DIG 3 ;
+             DIG 3 ;
+             DUP 3 ;
+             CDR ;
+             PAIR ;
+             DIG 3 ;
+             DIG 3 ;
+             CAR ;
+             DIG 2 ;
+             UNPAIR ;
+             DIG 4 ;
+             GET 9 ;
+             SIZE ;
+             DUP 5 ;
+             MUL ;
+             PUSH nat 100 ;
+             DUP 4 ;
+             DIG 5 ;
+             MUL ;
+             MUL ;
+             EDIV ;
+             IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+             CAR ;
+             DIG 3 ;
+             PUSH nat 100 ;
+             DUP 5 ;
+             MUL ;
+             EDIV ;
+             IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+             CAR ;
+             DIG 2 ;
+             ADD ;
+             DUP 3 ;
+             PUSH nat 0 ;
+             PAIR ;
+             DUG 4 ;
+             PAIR 4 ;
+             LAMBDA
+               (pair (pair nat (pair nat (pair nat (lambda (pair (option nat) string) nat)))) (pair nat nat))
+               (pair bool (pair nat nat))
+               { UNPAIR ;
+                 UNPAIR 4 ;
+                 DIG 4 ;
+                 PUSH nat 1 ;
+                 SWAP ;
+                 DUP ;
+                 DUG 2 ;
+                 CAR ;
+                 DUP 3 ;
+                 CDR ;
+                 SUB ;
+                 ABS ;
+                 COMPARE ;
+                 GT ;
+                 IF { DUP ;
+                      CDR ;
+                      SWAP ;
+                      CDR ;
+                      PAIR ;
+                      PUSH string "value-not-natural" ;
+                      DIG 4 ;
+                      DIG 3 ;
+                      DUP 4 ;
+                      CDR ;
+                      PUSH int 2 ;
+                      MUL ;
+                      ADD ;
+                      SUB ;
+                      ISNAT ;
+                      PAIR ;
+                      DIG 3 ;
+                      SWAP ;
+                      EXEC ;
+                      DUG 2 ;
+                      DUP ;
+                      DUG 3 ;
+                      CDR ;
+                      DUP 4 ;
+                      CDR ;
+                      MUL ;
+                      ADD ;
+                      EDIV ;
+                      IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                      CAR ;
+                      SWAP ;
+                      CAR ;
+                      PAIR ;
+                      PUSH bool True ;
+                      PAIR }
+                    { SWAP ; DIG 2 ; DIG 3 ; DIG 4 ; DROP 4 ; PUSH bool False ; PAIR } } ;
+             SWAP ;
+             APPLY ;
+             SWAP ;
+             PUSH bool True ;
+             LOOP { DIP { DUP } ; EXEC ; UNPAIR } ;
+             SWAP ;
+             DROP ;
+             CDR } ;
+         SWAP ;
+         APPLY ;
+         DIG 2 ;
+         UNPAIR ;
+         PUSH string "not-launched" ;
+         DUP 3 ;
+         CAR ;
+         GET 13 ;
+         DUP 3 ;
+         CAR ;
+         GET ;
+         IF_NONE { FAILWITH } { SWAP ; DROP } ;
+         DUP ;
+         GET 5 ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
+         GET 7 ;
+         PAIR ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
+         CAR ;
+         DUP 3 ;
+         GET 3 ;
+         DIG 2 ;
+         UNPAIR ;
+         DUP ;
+         NOW ;
+         COMPARE ;
+         LT ;
+         IF { PUSH string "timestamp-error" ;
+              DUP 4 ;
+              NOW ;
+              SUB ;
+              ISNAT ;
+              PAIR ;
+              DUP 10 ;
+              SWAP ;
+              EXEC ;
+              PUSH string "timestamp-error" ;
+              DIG 4 ;
+              DIG 3 ;
+              SUB ;
+              ISNAT ;
+              PAIR ;
+              DUP 9 ;
+              SWAP ;
+              EXEC ;
+              DUP 4 ;
+              DUP 4 ;
+              COMPARE ;
+              GT ;
+              IF { SWAP ;
+                   DUP 4 ;
+                   DIG 3 ;
+                   SUB ;
+                   ABS ;
+                   MUL ;
+                   EDIV ;
+                   IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                   CAR ;
+                   ADD }
+                 { SWAP ;
+                   DIG 2 ;
+                   DUP 4 ;
+                   SUB ;
+                   ABS ;
+                   MUL ;
+                   EDIV ;
+                   IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                   CAR ;
+                   SWAP ;
+                   SUB ;
+                   ABS } }
+            { DIG 2 ; DIG 3 ; DROP 3 } ;
+         PUSH string "no-fee-view" ;
+         DIG 4 ;
+         CAR ;
+         GET 26 ;
+         UNIT ;
+         VIEW "dev_fee" nat ;
+         PAIR ;
+         DUP 6 ;
+         SWAP ;
+         EXEC ;
+         DIG 2 ;
+         SWAP ;
+         DUP 4 ;
+         GET 4 ;
+         PAIR ;
+         DIG 3 ;
+         GET 3 ;
+         DIG 3 ;
+         DIG 2 ;
+         UNPAIR ;
+         DUP 5 ;
+         GET 9 ;
+         MAP { CDR ;
+               PUSH nat 1000000000000000000 ;
+               SWAP ;
+               DUP ;
+               DUG 2 ;
+               GET 4 ;
+               DIG 2 ;
+               CAR ;
+               MUL ;
+               EDIV ;
+               IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+               CAR } ;
+         DUP 4 ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
+         PUSH nat 0 ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
+         ITER { CDR ; ADD } ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
+         SIZE ;
+         DUP ;
+         DIG 4 ;
+         MUL ;
+         PUSH nat 0 ;
+         DUP 4 ;
+         PAIR ;
+         DUP 13 ;
+         DIG 5 ;
+         DIG 5 ;
+         DIG 5 ;
+         DIG 5 ;
+         PAIR 5 ;
+         LAMBDA
+           (pair (pair nat (pair nat (pair nat (pair (map nat nat) (lambda (pair (option nat) string) nat)))))
+                 (pair nat nat))
+           (pair bool (pair nat nat))
+           { UNPAIR ;
+             UNPAIR 5 ;
+             DIG 5 ;
+             PUSH nat 1 ;
+             SWAP ;
+             DUP ;
+             DUG 2 ;
+             CDR ;
+             DUP 3 ;
+             CAR ;
+             SUB ;
+             ABS ;
+             COMPARE ;
+             GT ;
+             IF { DUP ;
+                  CAR ;
+                  DIG 5 ;
+                  ITER { SWAP ;
+                         DUP 5 ;
+                         DIG 2 ;
+                         CDR ;
+                         MUL ;
+                         DUP 3 ;
+                         CAR ;
+                         DIG 2 ;
+                         MUL ;
+                         EDIV ;
+                         IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                         CAR } ;
+                  SWAP ;
+                  DUP ;
+                  CAR ;
+                  UPDATE 2 ;
+                  DUP ;
+                  DUP 3 ;
+                  PUSH nat 1 ;
+                  DUP 7 ;
+                  ADD ;
+                  MUL ;
+                  PUSH nat 100 ;
+                  DUP 4 ;
+                  CAR ;
+                  PUSH string "wrong-precision" ;
+                  PUSH nat 100 ;
+                  DUP 9 ;
+                  SUB ;
+                  ISNAT ;
+                  PAIR ;
+                  DIG 10 ;
+                  SWAP ;
+                  EXEC ;
+                  MUL ;
+                  EDIV ;
+                  IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                  CAR ;
+                  ADD ;
+                  DIG 2 ;
+                  CAR ;
+                  DIG 5 ;
+                  DIG 4 ;
+                  MUL ;
+                  PUSH nat 100 ;
+                  DIG 6 ;
+                  DIG 6 ;
+                  MUL ;
+                  EDIV ;
+                  IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                  CAR ;
+                  ADD ;
+                  MUL ;
+                  EDIV ;
+                  IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                  CAR ;
+                  UPDATE 1 ;
+                  PUSH bool True ;
+                  PAIR }
+                { SWAP ; DIG 2 ; DIG 3 ; DIG 4 ; DIG 5 ; DROP 5 ; PUSH bool False ; PAIR } } ;
+         SWAP ;
+         APPLY ;
+         SWAP ;
+         PUSH bool True ;
+         LOOP { DIP { DUP } ; EXEC ; UNPAIR } ;
+         SWAP ;
+         DROP ;
+         CAR ;
+         PUSH string "value-not-natural" ;
+         DUP 8 ;
+         GET 14 ;
+         DUP 3 ;
+         DUP 9 ;
+         MUL ;
+         EDIV ;
+         IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+         CAR ;
+         DUP 3 ;
+         SUB ;
+         ISNAT ;
+         PAIR ;
+         DUP 10 ;
+         SWAP ;
+         EXEC ;
+         DUP 8 ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
+         DUP 5 ;
+         PAIR ;
+         DUP 6 ;
+         DUP 9 ;
+         PAIR ;
+         PAIR ;
+         PAIR ;
+         DUP 10 ;
+         SWAP ;
+         EXEC ;
+         DIG 5 ;
+         DUP 9 ;
+         GET 11 ;
+         DUP ;
+         DUG 2 ;
+         DUP ;
+         DUG 2 ;
+         GET 4 ;
+         DIG 2 ;
+         GET 3 ;
+         ADD ;
+         ADD ;
+         SWAP ;
+         CAR ;
+         ADD ;
+         DUP 5 ;
+         MAP { UNPAIR ;
+               DUP 8 ;
+               SWAP ;
+               COMPARE ;
+               EQ ;
+               IF { PUSH string "value-not-natural" ;
+                    DUP 4 ;
+                    DUP 7 ;
+                    DUP 7 ;
+                    DUP 5 ;
+                    MUL ;
+                    EDIV ;
+                    IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                    CAR ;
+                    SUB ;
+                    ISNAT ;
+                    PAIR ;
+                    DUP 13 ;
+                    SWAP ;
+                    EXEC }
+                  { PUSH string "value-not-natural" ;
+                    DUP 6 ;
+                    DUP 6 ;
+                    DUP 4 ;
+                    MUL ;
+                    EDIV ;
+                    IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                    CAR ;
+                    DUP 3 ;
+                    SUB ;
+                    ISNAT ;
+                    PAIR ;
+                    DUP 13 ;
+                    SWAP ;
+                    EXEC } ;
+               PUSH string "value-not-natural" ;
+               PUSH nat 10000000000 ;
+               DUP 13 ;
+               GET 9 ;
+               SIZE ;
+               DUP 6 ;
+               PUSH string "wrong-tokens-count" ;
+               PUSH nat 1 ;
+               DUP 4 ;
+               SUB ;
+               ISNAT ;
+               PAIR ;
+               DUP 18 ;
+               SWAP ;
+               EXEC ;
+               PUSH nat 4 ;
+               MUL ;
+               DUG 2 ;
+               MUL ;
+               EDIV ;
+               IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+               CAR ;
+               DIG 3 ;
+               MUL ;
+               EDIV ;
+               IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+               CAR ;
+               DIG 2 ;
+               SUB ;
+               ISNAT ;
+               PAIR ;
+               DUP 12 ;
+               SWAP ;
+               EXEC } ;
+         SWAP ;
+         DIG 4 ;
+         DROP 2 ;
+         PUSH string "wrong-index" ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
+         DUP 7 ;
+         GET ;
+         PAIR ;
+         DUP 11 ;
+         SWAP ;
+         EXEC ;
+         PUSH string "value-not-natural" ;
+         DUP 10 ;
+         DIG 5 ;
+         DIG 4 ;
+         PAIR ;
+         DUP 7 ;
+         DIG 8 ;
+         PAIR ;
+         PAIR ;
+         PAIR ;
+         DIG 8 ;
+         SWAP ;
+         EXEC ;
+         DIG 2 ;
+         SUB ;
+         ISNAT ;
+         PAIR ;
+         DUP 7 ;
+         SWAP ;
+         EXEC ;
+         PUSH string "wrong-index" ;
+         DUP 7 ;
+         GET 9 ;
+         DUP 6 ;
+         GET ;
+         IF_NONE { FAILWITH } { SWAP ; DROP } ;
+         GET 3 ;
+         PUSH string "wrong-index" ;
+         DIG 4 ;
+         DIG 5 ;
+         GET ;
+         PAIR ;
+         DUP 7 ;
+         SWAP ;
+         EXEC ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
+         PUSH string "value-not-natural" ;
+         PUSH int 1 ;
+         DIG 5 ;
+         SUB ;
+         ISNAT ;
+         PAIR ;
+         DUP 8 ;
+         SWAP ;
+         EXEC ;
+         EDIV ;
+         IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+         CAR ;
+         DIG 2 ;
+         PUSH string "value-not-natural" ;
+         DIG 4 ;
+         DIG 4 ;
+         SUB ;
+         ISNAT ;
+         PAIR ;
+         DUP 6 ;
+         SWAP ;
+         EXEC ;
+         EDIV ;
+         IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+         CAR ;
+         PUSH string "low-total-supply" ;
+         DIG 3 ;
+         DIG 4 ;
+         GET 14 ;
+         SUB ;
+         ISNAT ;
+         PAIR ;
+         DUP 4 ;
+         SWAP ;
+         EXEC ;
+         PUSH string "value-not-natural" ;
+         DUP 4 ;
+         DIG 3 ;
+         SUB ;
+         ISNAT ;
+         PAIR ;
+         DIG 3 ;
+         SWAP ;
+         EXEC ;
+         DIG 2 ;
+         PAIR 3 ;
+         CAR } ;
+  view "get_tok_per_share"
+       nat
+       (map nat nat)
+       { UNPAIR ;
+         PUSH string "not-launched" ;
+         DIG 2 ;
+         CAR ;
+         GET 13 ;
+         DIG 2 ;
+         GET ;
+         IF_NONE { FAILWITH } { SWAP ; DROP } ;
+         DUP ;
+         GET 9 ;
+         MAP { CDR ;
+               SWAP ;
+               DUP ;
+               DUG 2 ;
+               GET 14 ;
+               PUSH nat 1000000000000000000 ;
+               DIG 2 ;
+               GET 4 ;
+               MUL ;
+               EDIV ;
+               IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+               CAR } ;
+         SWAP ;
+         DROP } ;
+  view "get_token_map"
+       nat
+       (map nat (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+       { UNPAIR ;
+         PUSH string "not-launched" ;
+         DIG 2 ;
+         CAR ;
+         GET 9 ;
+         DIG 2 ;
+         GET ;
+         IF_NONE { FAILWITH } { SWAP ; DROP } } ;
+  view "get_reserves"
+       nat
+       (map nat nat)
+       { UNPAIR ;
+         PUSH string "not-launched" ;
+         DIG 2 ;
+         CAR ;
+         GET 13 ;
+         DIG 2 ;
+         GET ;
+         IF_NONE { FAILWITH } { SWAP ; DROP } ;
+         GET 9 ;
+         MAP { CDR ; GET 4 } } }
+
