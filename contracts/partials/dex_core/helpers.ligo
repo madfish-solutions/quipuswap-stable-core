@@ -1,8 +1,3 @@
-const default_tmp_tokens: tmp_tkns_map_t = record [
-    tokens = (map[]: tkns_map_t);
-    index  = 0n;
-];
-
 (* Helper for sum fees that separated from reserves  *)
 [@inline] function sum_wo_lp_fee(
   const fee             : fees_storage_t;
@@ -33,16 +28,6 @@ function sum_all_fee(
   const tokens_count    : nat)
                         : nat is
   fee * tokens_count / (4n * nat_or_error(tokens_count - 1n, Errors.Dex.wrong_tokens_count));
-
-(* Get token from map tokens of pool by inner index *)
-function get_token_by_id(
-  const token_id        : tkn_pool_idx_t;
-  const map_entry       : option(tkns_map_t))
-                        : token_t is
-  block {
-    const tokens = unwrap(map_entry, Errors.Dex.pool_not_listed);
-    const token = unwrap(tokens[token_id], Errors.Dex.wrong_index);
-  } with token;
 
 (* Slice fees from calculated `dy` and returns new dy and sliced fees *)
 function perform_fee_slice(

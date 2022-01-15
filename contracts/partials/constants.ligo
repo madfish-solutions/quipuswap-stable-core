@@ -40,3 +40,7 @@ const max_a_change: nat         = 10n;
 const min_ramp_time: int        = 86400;
 
 const permit_expiry_limit: nat  = 2592000n; (* 30 days *)
+
+const burn_rate_precision: nat  = 100_0000n;
+
+const burn_address: address     = ("tz1ZZZZZZZZZZZZZZZZZZZZZZZZZZZZNkiRg" : address);

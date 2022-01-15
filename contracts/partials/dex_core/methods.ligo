@@ -35,24 +35,3 @@ based on the argument type.
     const result: return_t = func(p, s.storage);
     s.storage := result.1;
 } with (result.0, s)
-
-(* Lambda setter (only for admin usage in init setup) *)
-[@inline] function set_function(
-  const f_type          : func_entry_t;
-  const params          : set_lambda_func_t;
-  var   s               : full_storage_t)
-                        : full_storage_t is
-  block {
-    check_admin(s.storage.admin);
-    case f_type of
-    | FAdmin  -> s.admin_lambdas := set_func_or_fail(params, Constants.admin_func_count,  s.admin_lambdas)
-    | FPermit -> s.permit_lambdas := set_func_or_fail(params, Constants.permit_func_count, s.permit_lambdas)
-    | FDex    -> s.dex_lambdas := set_func_or_fail(params, Constants.dex_func_count, s.dex_lambdas)
-    | FToken  -> s.token_lambdas := set_func_or_fail(params, Constants.token_func_count,  s.token_lambdas)
-#if FACTORY
-    | _ -> skip
-#else
-    | FDev   -> s.storage.dev_store.dev_lambdas := set_func_or_fail(params, Constants.dev_func_count,  s.storage.dev_store.dev_lambdas)
-#endif
-    end
-  } with s

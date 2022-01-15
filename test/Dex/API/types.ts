@@ -1,25 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import BigNumber from "bignumber.js";
 import { MichelsonMap } from "@taquito/taquito";
-import { TezosAddress } from "../../../scripts/helpers/utils";
-
-export declare type LambdaFunctionType = {
-  index: number;
-  name: string;
-};
-
-export declare type BytesString = string;
-export declare type FA2 = { token_address: TezosAddress; token_id: BigNumber };
-export declare type FA12 = TezosAddress;
-export declare type FA2TokenType = {
-  fa2: FA2;
-};
-
-export declare type FA12TokenType = {
-  fa12: FA12;
-};
-
-export declare type TokenType = FA12 | FA2;
+import {
+  BytesString,
+  DevStorage,
+  FA12TokenType,
+  FA2,
+  FA2TokenType,
+  TezosAddress,
+} from "../../../scripts/helpers/utils";
 
 export declare type AccountDataType = {
   allowances: MichelsonMap<string, Array<string>>;
@@ -81,11 +70,7 @@ export declare type DexMainStorage = {
     },
     StakerInfo
   >;
-  dev_store?: {
-    dev_address: TezosAddress;
-    dev_fee: BigNumber;
-    dev_lambdas: MichelsonMap<string, BytesString>;
-  };
+  dev_store?: DevStorage;
   factory_address?: TezosAddress;
 };
 

@@ -3,13 +3,6 @@ type account_rwrd_t     is [@layout:comb] record [
   former                  : nat; (* previous amount of rewards minted for user *)
 ]
 
-type tkns_map_t         is map(nat, token_t); (* NOTE: maximum 4 tokens from 0 to 3 *)
-
-type tmp_tkns_map_t     is [@layout:comb] record [
-  tokens                  : tkns_map_t;
-  index                   : nat;
-];
-
 type stkr_info_t        is [@layout:comb] record [
   balance                 : nat;
   earnings                : map(tkn_pool_idx_t, account_rwrd_t);

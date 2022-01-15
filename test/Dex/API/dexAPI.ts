@@ -6,15 +6,13 @@ import {
 } from "@taquito/taquito";
 import { TransactionOperation } from "@taquito/taquito/dist/types/operations/transaction-operation";
 import { BigNumber } from "bignumber.js";
+import { DexStorage, FeeType, TokenInfo } from "./types";
 import {
-  DexStorage,
   FA12TokenType,
   FA2TokenType,
-  FeeType,
-  LambdaFunctionType,
-  TokenInfo,
-} from "./types";
-import { getLigo } from "../../../scripts/helpers/utils";
+  getLigo,
+  setFunctionBatchCompilled,
+} from "../../../scripts/helpers/utils";
 import { execSync } from "child_process";
 import { confirmOperation } from "../../../scripts/helpers/confirmation";
 import { dexLambdas, tokenLambdas } from "../../storage/Functions";
@@ -42,9 +40,27 @@ export class Dex extends TokenFA2 {
     const dex = new Dex(tezos, await tezos.contract.at(dexAddress));
     // await dex.setFunctionBatchCompilled("Admin", 4, admin_lambdas_comp);
     // await dex.setFunctionBatchCompilled("Dev", 2, token_lambdas_comp);
-    await dex.setFunctionBatchCompilled("Permit", 2, permit_lambdas_comp);
-    await dex.setFunctionBatchCompilled("Token", 5, token_lambdas_comp);
-    await dex.setFunctionBatchCompilled("Dex", 4, dex_lambdas_comp);
+    await setFunctionBatchCompilled(
+      tezos,
+      dexAddress,
+      "Permit",
+      2,
+      permit_lambdas_comp
+    );
+    await setFunctionBatchCompilled(
+      tezos,
+      dexAddress,
+      "Token",
+      5,
+      token_lambdas_comp
+    );
+    await setFunctionBatchCompilled(
+      tezos,
+      dexAddress,
+      "Dex",
+      4,
+      dex_lambdas_comp
+    );
     return dex;
   }
 
@@ -367,141 +383,5 @@ export class Dex extends TokenFA2 {
     const operation = await token.methods.approve(address, tokenAmount).send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;
-  }
-
-  async setDexFunction(index: number, lambdaName: string): Promise<void> {
-    const ligo = getLigo(true);
-    const stdout = execSync(
-      `${ligo} compile expression pascaligo 'Set_dex_function(record [index =${index}n; func = Bytes.pack(${lambdaName})])' --michelson-format json --init-file $PWD/contracts/main/Dex.ligo`,
-      { maxBuffer: 1024 * 500 }
-    );
-    const operation = await this.Tezos.contract.transfer({
-      to: this.contract.address,
-      amount: 0,
-      parameter: {
-        entrypoint: "set_dex_function",
-        value: JSON.parse(stdout.toString()).args[0].args[0].args[0].args[0],
-      },
-    });
-    await confirmOperation(this.Tezos, operation.hash);
-  }
-
-  async setDexFunctionBatch(
-    funcs_map: LambdaFunctionType[] = dexLambdas
-  ): Promise<void> {
-    let batch = this.Tezos.contract.batch();
-    const ligo = getLigo(true);
-    for (const lambdaFunction of funcs_map) {
-      console.debug(
-        `[BATCH:DEX:SETFUNCTION] ${lambdaFunction.index}\t${lambdaFunction.name}`
-      );
-      const stdout = execSync(
-        `${ligo} compile expression pascaligo 'Set_dex_function(record [index =${lambdaFunction.index}n; func = Bytes.pack(${lambdaFunction.name})])' --michelson-format json --init-file $PWD/contracts/main/Dex.ligo`,
-        { maxBuffer: 1024 * 500 }
-      );
-      batch = batch.withTransfer({
-        to: this.contract.address,
-        amount: 0,
-        parameter: {
-          entrypoint: "set_dex_function",
-          value: JSON.parse(stdout.toString()).args[0].args[0].args[0].args[0],
-        },
-      });
-    }
-    const batchOp = await batch.send();
-    await confirmOperation(this.Tezos, batchOp.hash);
-  }
-  async setFunctionBatchCompilled(
-    type: "Dex" | "Token" | "Permit" | "Admin",
-    batchBy: number,
-    comp_funcs_map
-  ): Promise<Dex> {
-    let batch = this.Tezos.contract.batch();
-    let idx = 0;
-    for (const lambdaFunction of comp_funcs_map) {
-      batch = batch.withTransfer({
-        to: this.contract.address,
-        amount: 0,
-        parameter: {
-          entrypoint: `set_${type.toLowerCase()}_function`,
-          value: lambdaFunction,
-        },
-      });
-      idx = idx + 1;
-      if (idx % batchBy == 0 || idx == comp_funcs_map.length) {
-        const batchOp = await batch.send();
-        await confirmOperation(this.Tezos, batchOp.hash);
-        console.debug(
-          `[BATCH:${type.toUpperCase()}:SETFUNCTION] ${idx}/${
-            comp_funcs_map.length
-          }`,
-          batchOp.hash
-        );
-        if (idx < comp_funcs_map.length) batch = this.Tezos.contract.batch();
-      }
-    }
-    return this;
-  }
-
-  async setFunctionCompilled(
-    type: "Dex" | "Token" | "Permit" | "Admin",
-    comp_funcs_map
-  ): Promise<void> {
-    let idx = 0;
-    for (const lambdaFunction of comp_funcs_map) {
-      const op = await this.Tezos.contract.transfer({
-        to: this.contract.address,
-        amount: 0,
-        parameter: {
-          entrypoint: `set_${type.toLowerCase()}_function`,
-          value: lambdaFunction,
-        },
-      });
-      idx = idx + 1;
-      await confirmOperation(this.Tezos, op.hash);
-    }
-  }
-
-  async setTokenFunction(index: number, lambdaName: string): Promise<void> {
-    const ligo = getLigo(true);
-    const stdout = execSync(
-      `${ligo} compile expression pascaligo 'Set_token_function(record [index =${index}n; func = Bytes.pack(${lambdaName})])' --michelson-format json --init-file $PWD/contracts/main/Dex.ligo`,
-      { maxBuffer: 1024 * 500 }
-    );
-    const operation = await this.Tezos.contract.transfer({
-      to: this.contract.address,
-      amount: 0,
-      parameter: {
-        entrypoint: "set_token_function",
-        value: JSON.parse(stdout.toString()).args[0].args[0].args[0].args[0],
-      },
-    });
-    await confirmOperation(this.Tezos, operation.hash);
-  }
-
-  async setTokenFunctionBatch(
-    funcs_map: LambdaFunctionType[] = tokenLambdas
-  ): Promise<void> {
-    let batch = this.Tezos.contract.batch();
-    const ligo = getLigo(true);
-    for (const lambdaFunction of funcs_map) {
-      console.debug(
-        `[BATCH:TOKEN:SETFUNCTION] ${lambdaFunction.index}\t${lambdaFunction.name}`
-      );
-      const stdout = execSync(
-        `${ligo} compile expression pascaligo 'Set_token_function(record [index =${lambdaFunction.index}n; func = Bytes.pack(${lambdaFunction.name})])' --michelson-format json --init-file $PWD/contracts/main/Dex.ligo`,
-        { maxBuffer: 1024 * 500 }
-      );
-      batch = batch.withTransfer({
-        to: this.contract.address,
-        amount: 0,
-        parameter: {
-          entrypoint: "set_token_function",
-          value: JSON.parse(stdout.toString()).args[0].args[0].args[0].args[0],
-        },
-      });
-    }
-    const batchOp = await batch.send();
-    await confirmOperation(this.Tezos, batchOp.hash);
   }
 }

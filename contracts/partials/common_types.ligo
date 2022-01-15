@@ -19,3 +19,15 @@ type set_lambda_func_t  is [@layout:comb] record [
   func                    : bytes; (* code of the function *)
   index                   : nat; (* the key in functions map *)
 ]
+
+type tkns_map_t         is map(nat, token_t); (* NOTE: maximum 4 tokens from 0 to 3 *)
+
+type tmp_tkns_map_t     is [@layout:comb] record [
+  tokens                  : tkns_map_t;
+  index                   : nat;
+];
+
+const default_tmp_tokens: tmp_tkns_map_t = record [
+    tokens = (map[]: tkns_map_t);
+    index  = 0n;
+];

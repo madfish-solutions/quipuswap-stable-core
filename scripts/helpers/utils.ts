@@ -6,7 +6,7 @@ const accounts = config.networks.sandbox.accounts;
 import { confirmOperation } from "./confirmation";
 import { MichelsonMap, TezosToolkit } from "@taquito/taquito";
 import { IndexMap, TokensMap } from "../../test/Dex/types";
-import { FA12TokenType, FA2TokenType } from "../../test/Dex/API/types";
+import BigNumber from "bignumber.js";
 export const tezPrecision = 1e6;
 
 function stringLiteralArray<T extends string>(a: T[]) {
@@ -20,6 +20,30 @@ const nw: string[] = stringLiteralArray(Object.keys(config.networks));
 export declare type NetworkLiteral = typeof nw[number];
 
 export declare type TezosAddress = string;
+
+export declare type LambdaFunctionType = {
+  index: number;
+  name: string;
+};
+
+export declare type BytesString = string;
+export declare type FA2 = { token_address: TezosAddress; token_id: BigNumber };
+export declare type FA12 = TezosAddress;
+export declare type FA2TokenType = {
+  fa2: FA2;
+};
+
+export declare type FA12TokenType = {
+  fa12: FA12;
+};
+
+export declare type TokenType = FA12 | FA2;
+
+export declare type DevStorage = {
+  dev_address: TezosAddress;
+  dev_fee: BigNumber;
+  dev_lambdas: MichelsonMap<string, BytesString>;
+};
 
 const rpcNode = `http://${config.networks.sandbox.host}:${config.networks.sandbox.port}`;
 export const Tezos = new TezosToolkit(rpcNode);
@@ -132,13 +156,68 @@ export function destructObj(obj: any) {
 export async function setupLambdasToStorage(
   lambdas_comp: { prim: string; args: { [key: string]: string | number }[] }[]
 ) {
-  const lambda_func_storage = new MichelsonMap<string, string>();
+  const lambda_func_storage = new MichelsonMap<string, BytesString>();
   for (const lambda of lambdas_comp) {
-    const key: string = lambda.args[1].int as string;
-    const bytes: string = lambda.args[0].bytes as string;
-    lambda_func_storage.set(key, bytes);
+    const key: BigNumber = new BigNumber(lambda.args[1].int);
+    const bytes: BytesString = lambda.args[0].bytes as BytesString;
+    lambda_func_storage.set(key.toString(), bytes);
   }
   return lambda_func_storage;
+}
+
+export async function setFunctionBatchCompilled(
+  tezos: TezosToolkit,
+  contract: TezosAddress,
+  type: "Dex" | "Token" | "Permit" | "Admin" | "Dev",
+  batchBy: number,
+  comp_funcs_map
+) {
+  let batch = tezos.contract.batch();
+  let idx = 0;
+  for (const lambdaFunction of comp_funcs_map) {
+    batch = batch.withTransfer({
+      to: contract,
+      amount: 0,
+      parameter: {
+        entrypoint: `set_${type.toLowerCase()}_function`,
+        value: lambdaFunction,
+      },
+    });
+    idx = idx + 1;
+    if (idx % batchBy == 0 || idx == comp_funcs_map.length) {
+      const batchOp = await batch.send();
+      await confirmOperation(tezos, batchOp.hash);
+      console.debug(
+        `[BATCH:${type.toUpperCase()}:SETFUNCTION] ${idx}/${
+          comp_funcs_map.length
+        }`,
+        batchOp.hash
+      );
+      if (idx < comp_funcs_map.length) batch = tezos.contract.batch();
+    }
+  }
+  return true;
+}
+
+export async function setFunctionCompilled(
+  tezos: TezosToolkit,
+  contract: TezosAddress,
+  type: "Dex" | "Token" | "Permit" | "Admin" | "Dev",
+  comp_funcs_map
+) {
+  let idx = 0;
+  for (const lambdaFunction of comp_funcs_map) {
+    const op = await tezos.contract.transfer({
+      to: contract,
+      amount: 0,
+      parameter: {
+        entrypoint: `set_${type.toLowerCase()}_function`,
+        value: lambdaFunction,
+      },
+    });
+    idx = idx + 1;
+    await confirmOperation(tezos, op.hash);
+  }
 }
 
 export function mapTokensToIdx(

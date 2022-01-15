@@ -163,6 +163,8 @@ type full_action_t      is
 | Use_dex                 of action_t
 | Use_permit              of permit_action_t
 | Use_token               of token_action_t
+#if !FACTORY
+| Use_dev                 of dev_action_t
 | Set_admin_function      of set_lambda_func_t
 (*  sets the admin specific function, is used before the whole system is launched *)
 | Set_dex_function          of set_lambda_func_t
@@ -171,9 +173,7 @@ type full_action_t      is
 (*  sets the FA function, is used before the whole system is launched *)
 | Set_permit_function       of set_lambda_func_t
 (*  sets the permit (TZIP-17) function, is used before the whole system is launched *)
-#if !FACTORY
 | Set_dev_function        of set_lambda_func_t
-| Use_dev                 of dev_action_t
 #else
 #endif
 

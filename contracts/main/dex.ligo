@@ -55,10 +55,6 @@ function main(
   block {
     var operations := Constants.no_operations;
     case p of
-    | Set_admin_function(params)  -> s := set_function(FAdmin, params, s)
-    | Set_dex_function(params)    -> s := set_function(FDex, params, s)
-    | Set_permit_function(params) -> s := set_function(FPermit, params, s)
-    | Set_token_function(params)  -> s := set_function(FToken, params, s)
     | Use_admin(params)           -> s := call_admin(params, s)
     | Use_dex(params)             -> {
       const run = call_dex(params, s);
@@ -72,6 +68,10 @@ function main(
       s := run.1;
     }
 #if !FACTORY
+    | Set_admin_function(params)  -> s := set_function(FAdmin, params, s)
+    | Set_dex_function(params)    -> s := set_function(FDex, params, s)
+    | Set_permit_function(params) -> s := set_function(FPermit, params, s)
+    | Set_token_function(params)  -> s := set_function(FToken, params, s)
     | Set_dev_function(params)    -> s := set_function(FDev, params, s)
     | Use_dev(params)             -> s.storage.dev_store := call_dev(params, s.storage.dev_store)
 #else

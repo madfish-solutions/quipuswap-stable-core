@@ -1,7 +1,7 @@
 import { MichelsonMap } from "@taquito/michelson-encoder";
-import { DexStorage, FA2 } from "./types";
+import { DexStorage } from "./types";
 import { BigNumber } from "bignumber.js";
-import { TezosAddress } from "../../../scripts/helpers/utils";
+import { FA2, TezosAddress } from "../../../scripts/helpers/utils";
 
 const dex_storage: DexStorage = {
   storage: {

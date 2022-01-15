@@ -14,7 +14,8 @@ function check_pool(
                         : unit is
   case pool_map[t_bytes] of
   | None -> unit
-  | Some -> failwith(Errors.Factory.pool_exists)
+  | Some(_address) -> failwith(Errors.Dex.pool_listed)
+  end
 
 
 function call_add_liq(
@@ -22,7 +23,7 @@ function call_add_liq(
   const receiver        : address)
                         : operation is
   Tezos.transaction(
-    Invest(params),
+    params,
     0mutez,
     unwrap(
       (Tezos.get_entrypoint_opt("%invest", receiver): option(contract(invest_prm_t))),
