@@ -142,7 +142,6 @@ type un_stake_prm_t     is [@layout:comb] record [
 
 type action_t           is
 (* Base actions *)
-| Add_pool                of init_prm_t          (* sets initial liquidity *)
 | Swap                    of swap_prm_t          (* exchanges token to another token and sends them to receiver *)
 | Invest                  of invest_prm_t        (* mints min shares after investing tokens *)
 | Divest                  of divest_prm_t        (* burns shares and sends tokens to the owner *)
@@ -157,6 +156,9 @@ type action_t           is
 | Set_default_referral    of address
 | Stake                   of un_stake_prm_t
 | Unstake                 of un_stake_prm_t
+#if !FACTORY
+| Add_pool                of init_prm_t          (* sets initial liquidity *)
+#endif
 
 type full_action_t      is
 | Use_admin               of admin_action_t
@@ -167,14 +169,13 @@ type full_action_t      is
 | Use_dev                 of dev_action_t
 | Set_admin_function      of set_lambda_func_t
 (*  sets the admin specific function, is used before the whole system is launched *)
-| Set_dex_function          of set_lambda_func_t
+| Set_dex_function        of set_lambda_func_t
 (*  sets the dex specific function, is used before the whole system is launched *)
-| Set_token_function        of set_lambda_func_t
+| Set_token_function      of set_lambda_func_t
 (*  sets the FA function, is used before the whole system is launched *)
-| Set_permit_function       of set_lambda_func_t
+| Set_permit_function     of set_lambda_func_t
 (*  sets the permit (TZIP-17) function, is used before the whole system is launched *)
 | Set_dev_function        of set_lambda_func_t
-#else
 #endif
 
 type admin_func_t       is (admin_action_t * storage_t) -> storage_t

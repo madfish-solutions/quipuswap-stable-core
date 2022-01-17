@@ -1,4 +1,4 @@
-import { getLigo } from "../../helpers/utils";
+import { getLigo } from "../../../utils/helpers";
 import config from "../../../config";
 import fs from "fs";
 import path from "path";
@@ -7,7 +7,7 @@ import { execSync, spawn } from "child_process";
 const _compileFile = async (
   contractFileName: string,
   ligoVersion: string,
-  format: "tz" | "json"
+  format: "tz" | "json" = "json"
 ): Promise<void> => {
   return new Promise((resolve, reject) => {
     console.log(`🚀 Compiling contract "${contractFileName}"...`);
@@ -39,19 +39,24 @@ const _compileFile = async (
         }/${contractFileName}.${format}`
       )
     ) {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const oldBuildFile = require(`${process.cwd()}/${
-        format === "json"
-          ? config.outputDirectory
-          : config.contractsDirectory + "/../" + "compiled"
-      }/${contractFileName}.${format}`);
+      if (format === "json") {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const oldBuildFile = require(`${process.cwd()}/${
+          config.outputDirectory
+        }/${contractFileName}.${format}`);
 
-      if (oldBuildFile.sourcePath !== sourcePath) {
-        console.error(
-          `There is a compiled version of a contract with the same name which code is located at:\n\n${oldBuildFile.sourcePath}`
+        if (oldBuildFile.sourcePath !== sourcePath) {
+          console.error(
+            `There is a compiled version of a contract with the same name which code is located at:\n\n${oldBuildFile.sourcePath}`
+          );
+          return;
+        }
+      } else
+        fs.rmSync(
+          `${
+            config.contractsDirectory + "/../" + "compiled"
+          }/${contractFileName}.${format}`
         );
-        return;
-      }
     }
 
     const built = {
@@ -215,6 +220,37 @@ export const compileLambdas = async (
       test_path ? "test/" + file_name : file_name
     }`;
     fs.writeFileSync(save_path, JSON.stringify(res));
+    console.log(`Saved to ${save_path}`);
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+export const compileFactoryLambda = (lambda: string) => {
+  console.log(`Compiling Factory contract lambda ${lambda}...\n`);
+  const ligo = `docker run -v $PWD:$PWD --rm -i -w $PWD ligolang/ligo:${config.ligoVersion}`;
+  const pwd = execSync("echo $PWD").toString();
+  const res = [];
+  const old_cli = Number(config.ligoVersion.split(".")[2]) > 25;
+  let ligo_command: string;
+  if (old_cli) {
+    ligo_command = "compile-expression";
+  } else {
+    ligo_command = "compile expression";
+  }
+  const init_file = `$PWD/${config.contractsDirectory}/factory.ligo`;
+  try {
+    const func = `Bytes.pack(${lambda})`;
+    const params = `'${func}' --michelson-format json --init-file ${init_file} --protocol hangzhou`;
+    const command = `${ligo} ${ligo_command} ${config.preferredLigoFlavor} ${params}`;
+    const michelson = execSync(command, { maxBuffer: 1024 * 500 }).toString();
+    console.log(lambda + " successfully compiled.");
+    if (!fs.existsSync(`${config.outputDirectory}/lambdas/factory`)) {
+      fs.mkdirSync(`${config.outputDirectory}/lambdas/factory`);
+    }
+    const file_name = lambda;
+    const save_path = `${config.outputDirectory}/lambdas/factory/${file_name}.txt`;
+    fs.writeFileSync(save_path, JSON.parse(michelson).bytes);
     console.log(`Saved to ${save_path}`);
   } catch (e) {
     console.error(e);

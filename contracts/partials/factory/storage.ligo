@@ -35,6 +35,7 @@ type full_storage_t     is [@layout:comb] record [
   dex_lambdas             : big_map(nat, bytes); (* map with exchange-related functions code *)
   token_lambdas           : big_map(nat, bytes); (* map with token-related functions code *)
   permit_lambdas          : big_map(nat, bytes); (* map with permit-related functions code *)
+  init_func               : option(bytes);
 ]
 
 type use_factory_t      is
@@ -46,6 +47,7 @@ type use_factory_t      is
 
 
 type fact_action_t      is
+| Set_init_function       of bytes
 | Set_dev_function        of set_lambda_func_t
 | Set_admin_function      of set_lambda_func_t
 (*  sets the admin specific function, is used before the whole system is launched *)
@@ -62,3 +64,5 @@ type fact_action_t      is
 
 
 type fact_return_t      is list(operation) * full_storage_t
+
+type init_func_t        is (pool_init_prm_t * full_storage_t) -> fact_return_t

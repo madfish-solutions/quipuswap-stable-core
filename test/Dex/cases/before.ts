@@ -1,22 +1,22 @@
 import { TezosToolkit, VIEW_LAMBDA } from "@taquito/taquito";
-import { confirmOperation } from "../../scripts/helpers/confirmation";
+import { confirmOperation } from "../../../utils/confirmation";
 import {
   prepareProviderOptions,
   setupLambdasToStorage,
-} from "../../scripts/helpers/utils";
+} from "../../../utils/helpers";
 import { BigNumber } from "bignumber.js";
-import dex_contract from "../../build/dex_test.json";
-import dev_lambdas_comp from "../../build/lambdas/test/Dev_lambdas.json";
-import dex_lambdas_comp from "../../build/lambdas/test/Dex_lambdas.json";
-import token_lambdas_comp from "../../build/lambdas/test/Token_lambdas.json";
-import admin_lambdas_comp from "../../build/lambdas/test/Admin_lambdas.json";
-import permit_lambdas_comp from "../../build/lambdas/test/Permit_lambdas.json";
+import dex_contract from "../../../build/dex_test.json";
+import dev_lambdas_comp from "../../../build/lambdas/test/Dev_lambdas.json";
+import dex_lambdas_comp from "../../../build/lambdas/test/Dex_lambdas.json";
+import token_lambdas_comp from "../../../build/lambdas/test/Token_lambdas.json";
+import admin_lambdas_comp from "../../../build/lambdas/test/Admin_lambdas.json";
+import permit_lambdas_comp from "../../../build/lambdas/test/Permit_lambdas.json";
 
-import { accounts } from "./constants";
-import { DexAPI as Dex, defaultDexStorage as storage } from "./API";
-import { setupQuipuGovToken, setupTrioTokens } from "./tokensSetups";
-import { TokensMap } from "./types";
-import { defaultTokenId, TokenFA2 } from "../Token";
+import { accounts } from "../../../utils/constants";
+import { DexAPI as Dex, defaultDexStorage as storage } from "../API";
+import { setupQuipuGovToken, setupTrioTokens } from "../../utils/tokensSetups";
+import { TokensMap } from "../../utils/types";
+import { defaultTokenId, TokenFA2 } from "../../Token";
 
 export async function setupDexEnvironment(Tezos: TezosToolkit): Promise<{
   dex: Dex;

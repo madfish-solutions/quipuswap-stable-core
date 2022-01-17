@@ -3,16 +3,15 @@ import BigNumber from "bignumber.js";
 import {
   AccountsLiteral,
   prepareProviderOptions,
-} from "../../../../scripts/helpers/utils";
+} from "../../../../utils/helpers";
 import Dex from "../../API";
-import { DexStorage, FeeType } from "../../types";
+import { DexStorage, FeeType } from "../../API/types";
 
 export const fees: FeeType = {
   lp_fee: new BigNumber("2000000"),
   stakers_fee: new BigNumber("2000000"),
   ref_fee: new BigNumber("500000"),
 };
-export const dev_fee = new BigNumber("500000");
 export async function setFeesSuccessCase(
   dex: Dex,
   sender: AccountsLiteral,

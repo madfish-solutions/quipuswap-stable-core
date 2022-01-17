@@ -1,20 +1,20 @@
 import { TezosToolkit } from "@taquito/taquito";
 import BigNumber from "bignumber.js";
-import { confirmOperation } from "../../../scripts/helpers/confirmation";
-import Dex from "../API";
+import { confirmOperation } from "../../../../utils/confirmation";
+import Dex from "../../API";
 import {
   AccountsLiteral,
   mapTokensToIdx,
   prepareProviderOptions,
-} from "../../../scripts/helpers/utils";
-import { accounts, decimals, swap_routes } from "../constants";
-import { setupTokenAmounts } from "../tokensSetups";
-import { AmountsMap, IndexMap, TokensMap } from "../types";
+} from "../../../../utils/helpers";
+import { accounts, decimals, swap_routes } from "../../../../utils/constants";
+import { setupTokenAmounts } from "../../../utils/tokensSetups";
+import { AmountsMap, IndexMap, TokensMap } from "../../../utils/types";
 import {
   MichelsonV1ExpressionBase,
   MichelsonV1ExpressionExtended,
 } from "@taquito/rpc";
-import { TokenFA12 } from "../../Token";
+import { TokenFA12 } from "../../../Token";
 
 export async function setupTokenMapping(
   dex: Dex,

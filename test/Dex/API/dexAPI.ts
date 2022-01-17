@@ -12,9 +12,9 @@ import {
   FA2TokenType,
   getLigo,
   setFunctionBatchCompilled,
-} from "../../../scripts/helpers/utils";
+} from "../../../utils/helpers";
 import { execSync } from "child_process";
-import { confirmOperation } from "../../../scripts/helpers/confirmation";
+import { confirmOperation } from "../../../utils/confirmation";
 import { dexLambdas, tokenLambdas } from "../../storage/Functions";
 import admin_lambdas_comp from "../../../build/lambdas/test/Admin_lambdas.json";
 import permit_lambdas_comp from "../../../build/lambdas/test/Permit_lambdas.json";

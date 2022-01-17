@@ -1,5 +1,4 @@
 import BigNumber from "bignumber.js";
-export * from "./API/types";
 import { TokenFA12, TokenFA2 } from "../Token";
 
 export declare type TokensMap = {

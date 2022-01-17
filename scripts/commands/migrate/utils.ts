@@ -2,9 +2,9 @@ import fs from "fs";
 import config from "../../../config";
 import { OriginationOperation, TezosToolkit } from "@taquito/taquito";
 import { InMemorySigner } from "@taquito/signer";
-import { accounts } from "../../../test/Dex/constants";
-import { confirmOperation } from "../../helpers/confirmation";
-import { NetworkLiteral, TezosAddress } from "../../helpers/utils";
+import { accounts } from "../../../utils/constants";
+import { confirmOperation } from "../../../utils/confirmation";
+import { NetworkLiteral, TezosAddress } from "../../../utils/helpers";
 
 export const getMigrationsList = () => {
   if (!fs.existsSync(config.migrationsDir)) fs.mkdirSync(config.migrationsDir);

@@ -1,11 +1,12 @@
 import BigNumber from "bignumber.js";
 import { TezosToolkit } from "@taquito/taquito";
-import { confirmOperation } from "../../../scripts/helpers/confirmation";
-import Dex from "../API";
-import { prepareProviderOptions } from "../../../scripts/helpers/utils";
-import { decimals } from "../constants";
-import { DexStorage, TokensMap } from "../types";
-import { defaultTokenId } from "../../Token";
+import { confirmOperation } from "../../../../utils/confirmation";
+import Dex from "../../API";
+import { prepareProviderOptions } from "../../../../utils/helpers";
+import { decimals } from "../../../../utils/constants";
+import { TokensMap } from "../../../utils/types";
+import { defaultTokenId } from "../../../Token";
+import { DexStorage } from "../../API/types";
 
 export async function getDeveloperRewardsSuccessCase(
   dex: Dex,

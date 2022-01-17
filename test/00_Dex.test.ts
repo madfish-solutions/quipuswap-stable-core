@@ -1,27 +1,25 @@
 import BigNumber from "bignumber.js";
 
 import {
+  FA12TokenType,
+  FA2TokenType,
   failCase,
   mapTokensToIdx,
   prepareProviderOptions,
   Tezos,
   TezosAddress,
-} from "../scripts/helpers/utils";
+} from "../utils/helpers";
 
-import { API, cases as DexTests, constants, TokenSetups } from "./Dex";
-import { dev_fee } from "./Dex/pool_part/admin/fees";
-const { decimals, a_const, accounts, zero_amount, swap_routes } = constants;
-import {
-  AmountsMap,
-  FA12TokenType,
-  FA2TokenType,
-  IndexMap,
-  TokensMap,
-} from "./Dex/types";
+import { API, cases as DexTests } from "./Dex";
+import * as constants from "../utils/constants";
+import * as TokenSetups from "./utils/tokensSetups";
+const { decimals, a_const, accounts, zero_amount, swap_routes, dev_fee } =
+  constants;
+import { AmountsMap, IndexMap, TokensMap } from "./utils/types";
 import { TokenFA12, TokenFA2 } from "./Token";
 import { defaultTokenId } from "./Token/token";
 
-describe("dex", () => {
+describe("00. Standalone Dex", () => {
   const aliceAddress: TezosAddress = accounts.alice.pkh;
   const bobAddress: TezosAddress = accounts.bob.pkh;
   const eveAddress: TezosAddress = accounts.eve.pkh;

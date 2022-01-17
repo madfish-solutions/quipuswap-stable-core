@@ -1,8 +1,8 @@
 import { TezosToolkit } from "@taquito/taquito";
 import BigNumber from "bignumber.js";
-import { confirmOperation } from "../../../scripts/helpers/confirmation";
-import Dex from "../API";
-import { DexStorage } from "../types";
+import { confirmOperation } from "../../../../utils/confirmation";
+import Dex from "../../API";
+import { DexStorage } from "../../API/types";
 
 export async function stakeToPoolSuccessCase(
   dex: Dex,

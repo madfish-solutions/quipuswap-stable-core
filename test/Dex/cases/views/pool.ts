@@ -1,18 +1,14 @@
 import BigNumber from "bignumber.js";
-import Dex from "../API";
-import { accounts, decimals } from "../constants";
+import Dex from "../../API";
+import { accounts, decimals } from "../../../../utils/constants";
+import { IndexMap, TokensMap } from "../../../utils/types";
+import { MichelsonMap } from "@taquito/taquito";
 import {
   FA12TokenType,
   FA2TokenType,
-  FeeType,
-  IndexMap,
-  TokensMap,
-  PairInfo,
-  DexStorage,
-  RewardsType,
-} from "../types";
-import { MichelsonMap } from "@taquito/taquito";
-import { TezosAddress } from "../../../scripts/helpers/utils";
+  TezosAddress,
+} from "../../../../utils/helpers";
+import { DexStorage, FeeType, PairInfo, RewardsType } from "../../API/types";
 
 export async function getReservesSuccessCase(dex: Dex, pool_id: BigNumber) {
   await dex.updateStorage({ pools: [pool_id.toString()] });

@@ -3,7 +3,7 @@ import {
   DevStorage,
   FA2,
   TezosAddress,
-} from "../../../scripts/helpers/utils";
+} from "../../../utils/helpers";
 import BigNumber from "bignumber.js";
 import { MichelsonMap } from "@taquito/taquito";
 
@@ -15,6 +15,7 @@ export declare type InnerFactoryStore = {
   pool_to_address: MichelsonMap<BytesString, TezosAddress>;
   quipu_token: FA2;
   quipu_rewards: BigNumber;
+  whitelist: TezosAddress[];
 };
 
 export declare type FactoryStorage = {

@@ -1,8 +1,8 @@
 import { TezosToolkit } from "@taquito/taquito";
 import BigNumber from "bignumber.js";
-import Dex from "../API";
-import { prepareProviderOptions } from "../../../scripts/helpers/utils";
-import { accounts } from "../constants";
+import Dex from "../../API";
+import { prepareProviderOptions } from "../../../../utils/helpers";
+import { accounts } from "../../../../utils/constants";
 
 export async function investLiquiditySuccessCase(
   dex: Dex,

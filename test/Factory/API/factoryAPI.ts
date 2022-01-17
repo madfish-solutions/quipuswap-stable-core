@@ -12,17 +12,21 @@ import {
   setFunctionBatchCompilled,
   Tezos,
   TezosAddress,
-} from "../../../scripts/helpers/utils";
+} from "../../../utils/helpers";
 import { FactoryStorage } from "./types";
 import admin_lambdas_comp from "../../../build/lambdas/test/Admin_lambdas.json";
 import permit_lambdas_comp from "../../../build/lambdas/test/Permit_lambdas.json";
 import dex_lambdas_comp from "../../../build/lambdas/test/Dex_lambdas.json";
 import dev_lambdas_comp from "../../../build/lambdas/test/Dev_lambdas.json";
 import token_lambdas_comp from "../../../build/lambdas/test/Token_lambdas.json";
-import { confirmOperation } from "../../../scripts/helpers/confirmation";
+import { confirmOperation } from "../../../utils/confirmation";
 import BigNumber from "bignumber.js";
 import { defaultTokenId, TokenFA12, TokenFA2 } from "../../Token";
-import { TokenInfo } from "../../Dex/types";
+import { TokenInfo } from "../../Dex/API/types";
+import fs from "fs";
+const init_func_bytes = fs
+  .readFileSync("./build/lambdas/factory/initialize_exchange.txt")
+  .toString();
 
 export class DexFactory {
   public contract: ContractAbstraction<ContractProvider>;
@@ -36,6 +40,10 @@ export class DexFactory {
     factoryAddress: string
   ): Promise<DexFactory> {
     const factory = new DexFactory(await tezos.contract.at(factoryAddress));
+    const op = await factory.contract.methods
+      .set_init_function(init_func_bytes)
+      .send();
+    await confirmOperation(tezos, op.hash);
     await setFunctionBatchCompilled(
       tezos,
       factoryAddress,
@@ -69,7 +77,9 @@ export class DexFactory {
       factoryAddress,
       "Dex",
       4,
-      dex_lambdas_comp
+      dex_lambdas_comp.filter((value) =>
+        value.args.filter((val) => val.int !== "0")
+      )
     );
     await factory.updateStorage();
     return factory;
@@ -197,10 +207,10 @@ export class DexFactory {
       precision_multiplier: BigNumber;
     }[],
     default_referral: TezosAddress,
-    managers: TezosAddress[],
+    managers: TezosAddress[] = [],
     metadata: MichelsonMap<string, BytesString> = new MichelsonMap(),
     token_metadata: MichelsonMap<string, BytesString> = new MichelsonMap(),
-    permit_def_expiry: BigNumber,
+    permit_def_expiry: BigNumber = new BigNumber("2592000"),
     approve = true,
     tezos: TezosToolkit
   ): Promise<TransactionOperation> {

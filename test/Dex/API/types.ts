@@ -8,7 +8,7 @@ import {
   FA2,
   FA2TokenType,
   TezosAddress,
-} from "../../../scripts/helpers/utils";
+} from "../../../utils/helpers";
 
 export declare type AccountDataType = {
   allowances: MichelsonMap<string, Array<string>>;

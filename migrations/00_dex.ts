@@ -6,7 +6,7 @@ import {
   NetworkLiteral,
   setupLambdasToStorage,
   TezosAddress,
-} from "../scripts/helpers/utils";
+} from "../utils/helpers";
 import { DexStorage, FA2 } from "../test/Dex/API/types";
 import dex_lambdas_comp from "../build/lambdas/Dex_lambdas.json";
 import token_lambdas_comp from "../build/lambdas/Token_lambdas.json";

@@ -7,8 +7,8 @@ import { TransactionOperation } from "@taquito/taquito/dist/types/operations/tra
 import { Token } from "./token";
 import { TokenStorage } from "./types";
 import BigNumber from "bignumber.js";
-import { prepareProviderOptions } from "../../scripts/helpers/utils";
-import { confirmOperation } from "../../scripts/helpers/confirmation";
+import { prepareProviderOptions } from "../../utils/helpers";
+import { confirmOperation } from "../../utils/confirmation";
 
 export class TokenFA12 implements Token {
   public contract: ContractAbstraction<ContractProvider>;

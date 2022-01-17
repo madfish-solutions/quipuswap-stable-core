@@ -1,11 +1,15 @@
 import BigNumber from "bignumber.js";
-import { prepareProviderOptions } from "../../scripts/helpers/utils";
-import { AmountsMap, FA12TokenType, FA2TokenType, TokensMap } from "./types";
+import { AmountsMap, TokensMap } from "./types";
 import { TezosToolkit } from "@taquito/taquito";
-import { confirmOperation } from "../../scripts/helpers/confirmation";
-import Dex from "./API";
-import { accounts } from "./constants";
+import { confirmOperation } from "../../utils/confirmation";
+import Dex from "../Dex/API";
+import { accounts } from "../../utils/constants";
 import { TokenFA12, TokenFA2, TokenInitValues } from "../Token";
+import {
+  FA12TokenType,
+  FA2TokenType,
+  prepareProviderOptions,
+} from "../../utils/helpers";
 
 async function originateTokens(Tezos: TezosToolkit): Promise<TokensMap> {
   const kUSD = await Tezos.contract.originate(TokenInitValues.kUSD);

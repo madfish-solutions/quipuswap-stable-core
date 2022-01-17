@@ -1,4 +1,4 @@
-export * as PoolAdmin from "./admin";
+export * as PoolAdmin from "../admin/index";
 export * as AddPool from "./add";
 export * as PoolInvest from "./invest";
 export * as PoolSwap from "./swap";

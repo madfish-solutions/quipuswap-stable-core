@@ -4,11 +4,11 @@ import {
   AccountsLiteral,
   mapTokensToIdx,
   prepareProviderOptions,
-} from "../../../scripts/helpers/utils";
-import Dex from "../API";
-import { accounts } from "../constants";
-import { AmountsMap, IndexMap, TokensMap } from "../types";
-import { setupTokenAmounts } from "../tokensSetups";
+} from "../../../../utils/helpers";
+import Dex from "../../API";
+import { accounts } from "../../../../utils/constants";
+import { AmountsMap, IndexMap, TokensMap } from "../../../utils/types";
+import { setupTokenAmounts } from "../../../utils/tokensSetups";
 
 export async function setupMinTokenMapping(
   dex: Dex,

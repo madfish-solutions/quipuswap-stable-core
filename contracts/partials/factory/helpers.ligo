@@ -30,3 +30,24 @@ function call_add_liq(
       "not_dex"
     )
   )
+
+function set_init_function(
+  const params          : bytes;
+  var s                 : full_storage_t)
+                        : option(bytes) is
+  block {
+    check_dev(s.storage.dev_store.dev_address);
+    case s.init_func of
+    | Some(_) -> failwith(Errors.Dex.func_set)
+    | None -> skip
+    end
+  } with Some(params)
+
+function run_init_func(
+  const params          : pool_init_prm_t;
+  const s               : full_storage_t)
+                        : fact_return_t is
+  block{
+    const lambda: bytes = unwrap(s.init_func, Errors.Dex.unknown_func);
+    const func: init_func_t = unwrap((Bytes.unpack(lambda) : option(init_func_t)), Errors.Dex.wrong_use_function);
+  } with func(params, s)

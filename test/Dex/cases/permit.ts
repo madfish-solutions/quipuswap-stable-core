@@ -2,19 +2,19 @@
 import { Schema } from "@taquito/michelson-encoder";
 import { Contract, TezosToolkit } from "@taquito/taquito";
 import { MichelsonV1Expression } from "@taquito/rpc";
-import Dex from "./API";
+import Dex from "../API";
 import {
   AccountsLiteral,
   initTezos,
   prepareProviderOptions,
-} from "../../scripts/helpers/utils";
-import { accounts } from "./constants";
-import { confirmOperation } from "../../scripts/helpers/confirmation";
+} from "../../../utils/helpers";
+import { accounts } from "../../../utils/constants";
+import { confirmOperation } from "../../../utils/confirmation";
 import blake from "blakejs";
 import { MichelsonMap } from "@taquito/taquito";
 
 import { hex2buf } from "@taquito/utils";
-import { DexStorage } from "./types";
+import { DexStorage } from "../API/types";
 
 const permitSchemaType: MichelsonV1Expression = {
   prim: "pair",

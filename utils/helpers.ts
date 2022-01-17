@@ -1,11 +1,11 @@
 import { execSync } from "child_process";
 import { InMemorySigner } from "@taquito/signer";
 import { TransactionOperation } from "@taquito/taquito/dist/types/operations/transaction-operation";
-import config from "../../config";
+import config from "../config";
 const accounts = config.networks.sandbox.accounts;
 import { confirmOperation } from "./confirmation";
 import { MichelsonMap, TezosToolkit } from "@taquito/taquito";
-import { IndexMap, TokensMap } from "../../test/Dex/types";
+import { IndexMap, TokensMap } from "../test/utils/types";
 import BigNumber from "bignumber.js";
 export const tezPrecision = 1e6;
 

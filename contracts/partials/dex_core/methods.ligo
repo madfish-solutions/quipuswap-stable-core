@@ -11,7 +11,6 @@ based on the argument type.
   block {
     const idx : nat = case p of
     (* Base actions *)
-    | Add_pool(_)             -> 0n
     | Swap(_)                 -> 1n
     | Invest(_)               -> 2n
     | Divest(_)               -> 3n
@@ -28,6 +27,9 @@ based on the argument type.
     (* QUIPU stakers *)
     | Stake(_)                -> 12n
     | Unstake(_)              -> 13n
+#if !FACTORY
+    | Add_pool(_)             -> 0n
+#endif
     end;
 
     const lambda_bytes : bytes = unwrap(s.dex_lambdas[idx], Errors.Dex.unknown_func);

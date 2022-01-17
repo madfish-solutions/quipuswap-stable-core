@@ -1,8 +1,8 @@
 import BigNumber from "bignumber.js";
-import { confirmOperation } from "../../../../scripts/helpers/confirmation";
-import { Tezos } from "../../../../scripts/helpers/utils";
+import { confirmOperation } from "../../../../utils/confirmation";
+import { Tezos } from "../../../../utils/helpers";
 import { Dex } from "../../API/dexAPI";
-import { PairInfo } from "../../types";
+import { PairInfo } from "../../API/types";
 export const future_a_const: BigNumber = new BigNumber("10000") //A const *
   .multipliedBy(new BigNumber(3).pow(3 - 1));                  // n^(n-1)
 export const future_a_time: BigNumber = new BigNumber("20");

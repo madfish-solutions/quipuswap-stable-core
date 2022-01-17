@@ -1,12 +1,12 @@
 import { TezosToolkit } from "@taquito/taquito";
-import { DexAPI as Dex } from "./API";
+import { DexAPI as Dex } from "../API";
 import {
   AccountsLiteral,
   prepareProviderOptions,
-} from "../../scripts/helpers/utils";
-import { DexStorage } from "./types";
+} from "../../../utils/helpers";
 import BigNumber from "bignumber.js";
-import { dev_fee } from "./pool_part/admin/fees";
+import { DexStorage } from "../API/types";
+import { dev_fee } from "../../../utils/constants";
 
 export async function setAdminSuccessCase(
   dex: Dex,

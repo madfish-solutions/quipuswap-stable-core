@@ -3,12 +3,13 @@ import { TezosToolkit } from "@taquito/taquito";
 import {
   AccountsLiteral,
   prepareProviderOptions,
-} from "../../../scripts/helpers/utils";
-import Dex from "../API";
-import { accounts, decimals } from "../constants";
-import { DexStorage, TokensMap } from "../types";
-import { confirmOperation } from "../../../scripts/helpers/confirmation";
-import { defaultTokenId } from "../../Token";
+} from "../../../../utils/helpers";
+import Dex from "../../API";
+import { accounts, decimals } from "../../../../utils/constants";
+import { TokensMap } from "../../../utils/types";
+import { confirmOperation } from "../../../../utils/confirmation";
+import { defaultTokenId } from "../../../Token";
+import { DexStorage } from "../../API/types";
 
 export async function getReferralRewardsSuccessCase(
   dex: Dex,
