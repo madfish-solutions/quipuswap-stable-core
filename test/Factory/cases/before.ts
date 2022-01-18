@@ -58,7 +58,7 @@ export async function setupFactoryEnvironment(
   // storage.admin_lambdas = await setupLambdasToStorage(admin_lambdas_comp);
   // storage.storage.dev_store.dev_address = accounts.eve.pkh;
   const fact_op = await Tezos.contract.originate({
-    code: JSON.parse(factory_contract.michelson),
+    code: factory_contract.michelson,
     storage: storage,
   });
   console.debug(fact_op.results);

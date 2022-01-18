@@ -48,7 +48,7 @@ export async function setupDexEnvironment(Tezos: TezosToolkit): Promise<{
     dev_lambdas_comp
   );
   const dex_op = await Tezos.contract.originate({
-    code: JSON.parse(dex_contract.michelson),
+    code: dex_contract.michelson,
     storage: storage,
   });
   console.debug(dex_op.results);
