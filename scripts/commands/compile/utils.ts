@@ -77,6 +77,7 @@ const _compileFile = async (
 
     ligo.on("close", async () => {
       console.log("\t\t✅ Done.");
+      built.michelson = JSON.parse(built.michelson);
 
       const outFile = `${config.outputDirectory}/${contractFileName}.json`;
 
