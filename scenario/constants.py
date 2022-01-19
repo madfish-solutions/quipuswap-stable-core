@@ -1,4 +1,5 @@
 PRECISION = 1_000_000
+A_CONST = 1_000_000
 
 token_a_address = "KT18amZmM5W7qDWVt2pH6uj7sCEd3kbzLrHT"
 token_b_address = "KT1AxaBxkFLCUi3f8rdDAAxBKHfzY8LfKDRA"

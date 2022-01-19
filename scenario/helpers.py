@@ -169,7 +169,7 @@ def calc_out_per_hundred(chain, dex):
 
 def get_shares(res, pool, user):
     storage = res.storage["storage"]
-    return storage.ledger[(user, pool)]
+    return storage["ledger"][(user, pool)]
 
 def form_pool_rates(reserves_a, reserves_b):
     return  {
