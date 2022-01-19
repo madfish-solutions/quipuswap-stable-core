@@ -30,7 +30,7 @@ export async function setFeesSuccessCase(
     expect(initFee[key].toNumber()).not.toStrictEqual(fees[key].toNumber());
   }
 
-  await dex.setFees(pool_id, fees);
+  await dex.setFees(pool_id, fees, Tezos);
 
   await dex.updateStorage({ pools: [pool_id.toString()] });
   const updStorage: DexStorage = await dex.contract.storage();

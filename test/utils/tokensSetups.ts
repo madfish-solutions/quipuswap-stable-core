@@ -1,5 +1,5 @@
 import BigNumber from "bignumber.js";
-import { AmountsMap, TokensMap } from "./types";
+import { AmountsMap, Contract, TokensMap } from "./types";
 import { TezosToolkit } from "@taquito/taquito";
 import { confirmOperation } from "../../utils/confirmation";
 import Dex from "../Dex/API";
@@ -29,7 +29,7 @@ async function originateTokens(Tezos: TezosToolkit): Promise<TokensMap> {
 }
 
 async function approveAllTokens(
-  dex: Dex,
+  contr: Contract,
   tokens: TokensMap,
   Tezos: TezosToolkit
 ): Promise<boolean> {
@@ -38,7 +38,7 @@ async function approveAllTokens(
     const config = await prepareProviderOptions(spender);
     Tezos.setProvider(config);
     for (const token in tokens) {
-      await tokens[token].approve(dex.contract.address, approveAmount);
+      await tokens[token].approve(contr.contract.address, approveAmount);
       console.debug(spender, token, "approve");
     }
   }
@@ -46,14 +46,14 @@ async function approveAllTokens(
 }
 
 export async function setupTrioTokens(
-  dex: Dex,
+  contr: Contract,
   Tezos: TezosToolkit,
   approveAll = false
 ): Promise<TokensMap> {
   console.debug("Setting up tokens");
   const tokens = await originateTokens(Tezos);
   if (approveAll) {
-    await approveAllTokens(dex, tokens, Tezos);
+    await approveAllTokens(contr, tokens, Tezos);
   }
   return tokens as TokensMap;
 }

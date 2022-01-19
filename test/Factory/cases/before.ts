@@ -3,7 +3,6 @@ import { confirmOperation } from "../../../utils/confirmation";
 import {
   AccountsLiteral,
   BytesString,
-  DevStorage,
   prepareProviderOptions,
   setupLambdasToStorage,
 } from "../../../utils/helpers";
@@ -22,6 +21,7 @@ import {
 } from "../API";
 import BigNumber from "bignumber.js";
 import { MichelsonMap } from "@taquito/michelson-encoder";
+import { DevStorage } from "../../Developer/API/storage";
 
 export async function setupFactoryEnvironment(
   Tezos: TezosToolkit,
@@ -43,19 +43,19 @@ export async function setupFactoryEnvironment(
   const lambdaContractAddress = op.contractAddress;
   storage.storage.dev_store = {
     dev_address: accounts[developer].pkh,
-    dev_fee,
-    dev_lambdas: new MichelsonMap(), //await setupLambdasToStorage(dev_lambdas_comp)
+    dev_fee: new BigNumber(0),
+    dev_lambdas: await setupLambdasToStorage(dev_lambdas_comp),
   } as DevStorage;
-  storage.storage.init_price = new BigNumber("0");
+  storage.storage.init_price = new BigNumber("100");
   storage.storage.burn_rate = new BigNumber("0"); // Rate precision
   storage.storage.quipu_token = {
     token_address: quipuToken.contract.address,
     token_id: new BigNumber(defaultTokenId),
   };
   // storage.dex_lambdas = await setupLambdasToStorage(dex_lambdas_comp);
-  // storage.token_lambdas = await setupLambdasToStorage(token_lambdas_comp);
-  // storage.permit_lambdas = await setupLambdasToStorage(permit_lambdas_comp);
-  // storage.admin_lambdas = await setupLambdasToStorage(admin_lambdas_comp);
+  storage.token_lambdas = await setupLambdasToStorage(token_lambdas_comp);
+  storage.permit_lambdas = await setupLambdasToStorage(permit_lambdas_comp);
+  storage.admin_lambdas = await setupLambdasToStorage(admin_lambdas_comp);
   // storage.storage.dev_store.dev_address = accounts.eve.pkh;
   const fact_op = await Tezos.contract.originate({
     code: factory_contract.michelson,

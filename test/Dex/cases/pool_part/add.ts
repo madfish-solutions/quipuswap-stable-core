@@ -78,7 +78,7 @@ export async function addNewPair(
   const initPairCount = new BigNumber(dex.storage.storage.pools_count);
 
   expect(sender_addr).toStrictEqual(dex.storage.storage.admin);
-  await dex.initializeExchange(a_const, inputs, approve);
+  await dex.initializeExchange(a_const, inputs, approve, Tezos);
 
   await dex.updateStorage({});
   await dex.updateStorage({

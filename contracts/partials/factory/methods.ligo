@@ -1,22 +1,35 @@
-function init_callback(
-  const params          : callback_prm_t)
-                        : list(operation) is
+function start_dex_func(
+  const params          : start_dex_prm_t;
+  const s               : full_storage_t
+): fact_return_t is
   block {
-    assert(Tezos.sender = Tezos.self_address);
-    var operations := list[
-      call_add_liq(params.inv_prm, params.pool_address)
+    const amnts = Map.map(function(const _i : nat; const v : input_t_v_t): nat is v.value, params);
+    const tokens = Map.map(function(const _i : nat; const v : input_t_v_t): token_t is v.token, params);
+    const pool_address = unwrap(s.storage.pool_to_address[Bytes.pack(tokens)], Errors.Factory.pool_not_listed);
+    const deployer = unwrap(s.storage.deployers[pool_address], Errors.Factory.pool_not_listed);
+    assert_with_error(deployer = Tezos.sender, Errors.Factory.not_deployer);
+    // const prm = record [
+    //     pool_id    = 0n;
+    //     shares     = 0n;
+    //     in_amounts = amnts;
+    //     time_expiration = Tezos.now + 300;
+    //     receiver = Some(Tezos.sender);
+    //     referral = (None: option(address));
+    //   ];
+    var operations: list(operation) := list[
+      // call_add_liq(prm, pool_address)
     ];
     function transfer_and_approve(
       var operations    : list(operation);
       const input       : nat * nat)
                         : list(operation) is
       block {
-        const token = get_token_by_id(input.0, Some(params.tokens));
+        const token = get_token_by_id(input.0, Some(tokens));
         case token of
         | Fa2(_) -> operations := concat_lists(operations, list[
           typed_approve(
             Tezos.self_address,
-            params.pool_address,
+            pool_address,
             0n,
             token
           )
@@ -27,12 +40,12 @@ function init_callback(
         then {
           operations := typed_approve(
             Tezos.self_address,
-            params.pool_address,
+            pool_address,
             input.1,
             token
           ) # operations;
           operations := typed_transfer(
-            params.sender,
+            Tezos.sender,
             Tezos.self_address,
             input.1,
             token
@@ -40,8 +53,9 @@ function init_callback(
         }
         else skip;
       } with operations;
-    operations := Map.fold(transfer_and_approve, params.inv_prm.in_amounts, operations);
-  } with operations
+    operations := Map.fold(transfer_and_approve, amnts, operations);
+    operations := set_lambd_dex(s.dex_lambdas, pool_address) # operations;
+  } with (operations, s)
 
 function claim_quipu(
   var s                 : full_storage_t)

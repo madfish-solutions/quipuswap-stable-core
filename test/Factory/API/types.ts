@@ -16,6 +16,7 @@ export declare type InnerFactoryStore = {
   quipu_token: FA2;
   quipu_rewards: BigNumber;
   whitelist: TezosAddress[];
+  deployers: MichelsonMap<TezosAddress, TezosAddress>;
 };
 
 export declare type FactoryStorage = {
@@ -24,4 +25,5 @@ export declare type FactoryStorage = {
   permit_lambdas: MichelsonMap<string, BytesString>;
   dex_lambdas: MichelsonMap<string, BytesString>;
   token_lambdas: MichelsonMap<string, BytesString>;
+  init_func?: BytesString;
 };

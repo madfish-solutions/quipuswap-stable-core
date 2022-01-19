@@ -3,12 +3,12 @@ import BigNumber from "bignumber.js";
 import { MichelsonMap } from "@taquito/taquito";
 import {
   BytesString,
-  DevStorage,
   FA12TokenType,
   FA2,
   FA2TokenType,
   TezosAddress,
 } from "../../../utils/helpers";
+import { DevStorage } from "../../Developer/API/storage";
 
 export declare type AccountDataType = {
   allowances: MichelsonMap<string, Array<string>>;

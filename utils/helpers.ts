@@ -39,12 +39,6 @@ export declare type FA12TokenType = {
 
 export declare type TokenType = FA12 | FA2;
 
-export declare type DevStorage = {
-  dev_address: TezosAddress;
-  dev_fee: BigNumber;
-  dev_lambdas: MichelsonMap<string, BytesString>;
-};
-
 const rpcNode = `http://${config.networks.sandbox.host}:${config.networks.sandbox.port}`;
 export const Tezos = new TezosToolkit(rpcNode);
 
@@ -186,6 +180,7 @@ export async function setFunctionBatchCompilled(
     idx = idx + 1;
     if (idx % batchBy == 0 || idx == comp_funcs_map.length) {
       const batchOp = await batch.send();
+      console.log(batchOp.storageLimit);
       await confirmOperation(tezos, batchOp.hash);
       console.debug(
         `[BATCH:${type.toUpperCase()}:SETFUNCTION] ${idx}/${

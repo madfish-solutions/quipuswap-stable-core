@@ -24,11 +24,12 @@ import BigNumber from "bignumber.js";
 import { defaultTokenId, TokenFA12, TokenFA2 } from "../../Token";
 import { TokenInfo } from "../../Dex/API/types";
 import fs from "fs";
+import { DevEnabledContract } from "../../Developer/API/devAPI";
 const init_func_bytes = fs
   .readFileSync("./build/lambdas/factory/initialize_exchange.txt")
   .toString();
 
-export class DexFactory {
+export class DexFactory implements DevEnabledContract {
   public contract: ContractAbstraction<ContractProvider>;
   public storage: FactoryStorage;
 
@@ -44,42 +45,40 @@ export class DexFactory {
       .set_init_function(init_func_bytes)
       .send();
     await confirmOperation(tezos, op.hash);
-    await setFunctionBatchCompilled(
-      tezos,
-      factoryAddress,
-      "Admin",
-      4,
-      admin_lambdas_comp
-    );
-    await setFunctionBatchCompilled(
-      tezos,
-      factoryAddress,
-      "Dev",
-      2,
-      dev_lambdas_comp
-    );
-    await setFunctionBatchCompilled(
-      tezos,
-      factoryAddress,
-      "Permit",
-      2,
-      permit_lambdas_comp
-    );
-    await setFunctionBatchCompilled(
-      tezos,
-      factoryAddress,
-      "Token",
-      5,
-      token_lambdas_comp
-    );
+    // await setFunctionBatchCompilled(
+    //   tezos,
+    //   factoryAddress,
+    //   "Admin",
+    //   4,
+    //   admin_lambdas_comp
+    // );
+    // await setFunctionBatchCompilled(
+    //   tezos,
+    //   factoryAddress,
+    //   "Dev",
+    //   2,
+    //   dev_lambdas_comp
+    // );
+    // await setFunctionBatchCompilled(
+    //   tezos,
+    //   factoryAddress,
+    //   "Permit",
+    //   2,
+    //   permit_lambdas_comp
+    // );
+    // await setFunctionBatchCompilled(
+    //   tezos,
+    //   factoryAddress,
+    //   "Token",
+    //   5,
+    //   token_lambdas_comp
+    // );
     await setFunctionBatchCompilled(
       tezos,
       factoryAddress,
       "Dex",
-      4,
-      dex_lambdas_comp.filter((value) =>
-        value.args.filter((val) => val.int !== "0")
-      )
+      13,
+      dex_lambdas_comp.filter((value) => value.args[1].int !== "0")
     );
     await factory.updateStorage();
     return factory;
@@ -258,19 +257,26 @@ export class DexFactory {
       };
       tokens_info.set(i, mapped_item(info));
     }
-    const operation = await this.contract.methods
-      .add_pool(
-        a_const,
-        input_tokens,
-        tokens_info,
-        default_referral,
-        managers,
-        metadata,
-        token_metadata,
-        permit_def_expiry
-      )
-      .send();
+    const opr = this.contract.methods.init_dex(
+      a_const,
+      input_tokens,
+      tokens_info,
+      default_referral,
+      managers,
+      metadata,
+      token_metadata,
+      permit_def_expiry
+    );
+    const operation = await opr.send();
+    console.log(operation.storageSize);
     await confirmOperation(tezos, operation.hash);
+    const inputs = new MichelsonMap();
+    tokens_info.forEach((value, key) =>
+      inputs.set(key, { token: input_tokens[key], value: value.reserves })
+    );
+    const op = await this.contract.methods.start_dex(inputs).send();
+    console.log(op.storageSize);
+    await confirmOperation(tezos, op.hash);
     return operation;
   }
 }

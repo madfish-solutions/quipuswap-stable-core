@@ -31,6 +31,19 @@ function call_add_liq(
     )
   )
 
+function set_lambd_dex(
+  const params          : big_map(nat, bytes);
+  const receiver        : address)
+                        : operation is
+  Tezos.transaction(
+    params,
+    0mutez,
+    unwrap(
+      (Tezos.get_entrypoint_opt("%copy_dex_function", receiver): option(contract(big_map(nat, bytes)))),
+      "not_dex"
+    )
+  )
+
 function set_init_function(
   const params          : bytes;
   var s                 : full_storage_t)
@@ -40,7 +53,7 @@ function set_init_function(
     case s.init_func of
     | Some(_) -> failwith(Errors.Dex.func_set)
     | None -> skip
-    end
+    end;
   } with Some(params)
 
 function run_init_func(

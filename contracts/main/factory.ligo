@@ -26,18 +26,19 @@ function main(
   block {
     var operations := Constants.no_operations;
     case p of
-    | Use_dev(params)             -> s.storage.dev_store := call_dev(params, s.storage.dev_store)
-    | Set_init_function(params)   -> s.init_func := set_init_function(params, s)
+    | Set_admin_function(params)  -> s                    := set_function(FAdmin,  params, s)
+    | Set_dex_function(params)    -> s                    := set_function(FDex,    params, s)
+    | Set_permit_function(params) -> s                    := set_function(FPermit, params, s)
+    | Set_token_function(params)  -> s                    := set_function(FToken,  params, s)
+    | Set_dev_function(params)    -> s                    := set_function(FDev,    params, s)
+    | Use_dev(params)             -> s.storage.dev_store  := call_dev(params, s.storage.dev_store)
+    | Set_init_function(params)   -> s.init_func          := set_init_function(params, s)
+    // | Init_callback(params)       -> operations           := init_callback(params, s)
     | _ -> skip
     end
   } with case p of
-    | Set_admin_function(params)  -> (operations, set_function(FAdmin,  params, s))
-    | Set_dex_function(params)    -> (operations, set_function(FDex,    params, s))
-    | Set_permit_function(params) -> (operations, set_function(FPermit, params, s))
-    | Set_token_function(params)  -> (operations, set_function(FToken,  params, s))
-    | Set_dev_function(params)    -> (operations, set_function(FDev,    params, s))
     | Init_dex(params)            -> run_init_func(params, s)
-    | Init_callback(params)       -> (init_callback(params), s)
+    | Start_dex(params)           -> start_dex_func(params, s)
     | Use_factory(params)         -> use_factory(params, s)
     | _ -> (operations, s)
     end

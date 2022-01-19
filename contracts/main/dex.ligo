@@ -56,17 +56,7 @@ function main(
     var operations := Constants.no_operations;
     case p of
     | Use_admin(params)           -> s := call_admin(params, s)
-    | Use_dex(params)             -> {
-      const run = call_dex(params, s);
-      operations := run.0;
-      s := run.1;
-    }
     | Use_permit(params)          -> s := call_permit(params, s, p)
-    | Use_token(params)           -> {
-      const run = call_token(params, s, p);
-      operations := run.0;
-      s := run.1;
-    }
 #if !FACTORY
     | Set_admin_function(params)  -> s := set_function(FAdmin, params, s)
     | Set_dex_function(params)    -> s := set_function(FDex, params, s)
@@ -75,6 +65,17 @@ function main(
     | Set_dev_function(params)    -> s := set_function(FDev, params, s)
     | Use_dev(params)             -> s.storage.dev_store := call_dev(params, s.storage.dev_store)
 #else
+    | Copy_dex_function(params)   -> {
+      assert(Tezos.sender = s.storage.factory_address);
+      if not Big_map.mem(1n, s.dex_lambdas)
+      then s.dex_lambdas := params
+      else failwith(Errors.Dex.func_set);
+    }
 #endif
+    | _ -> skip
     end;
-  } with (operations, s)
+  } with case p of
+    | Use_dex(params)   -> call_dex(params, s)
+    | Use_token(params) -> call_token(params, s, p)
+    | _ -> (operations, s)
+    end

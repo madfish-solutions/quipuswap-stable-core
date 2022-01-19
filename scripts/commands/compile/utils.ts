@@ -94,7 +94,8 @@ const _compileFile = async (
 
     ligo.on("close", async () => {
       console.log("\t\t✅ Done.");
-      built.michelson = JSON.parse(built.michelson);
+      built.michelson =
+        format === "json" ? JSON.parse(built.michelson) : built.michelson;
 
       const outFile = `${
         format === "json"
@@ -244,7 +245,7 @@ export const compileFactoryLambda = (lambda: string) => {
     const func = `Bytes.pack(${lambda})`;
     const params = `'${func}' --michelson-format json --init-file ${init_file} --protocol hangzhou`;
     const command = `${ligo} ${ligo_command} ${config.preferredLigoFlavor} ${params}`;
-    const michelson = execSync(command, { maxBuffer: 1024 * 500 }).toString();
+    const michelson = execSync(command, { maxBuffer: 1024 * 1000 }).toString();
     console.log(lambda + " successfully compiled.");
     if (!fs.existsSync(`${config.outputDirectory}/lambdas/factory`)) {
       fs.mkdirSync(`${config.outputDirectory}/lambdas/factory`);

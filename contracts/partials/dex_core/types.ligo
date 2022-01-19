@@ -176,6 +176,8 @@ type full_action_t      is
 | Set_permit_function     of set_lambda_func_t
 (*  sets the permit (TZIP-17) function, is used before the whole system is launched *)
 | Set_dev_function        of set_lambda_func_t
+#else
+| Copy_dex_function       of big_map(nat, bytes)
 #endif
 
 type admin_func_t       is (admin_action_t * storage_t) -> storage_t

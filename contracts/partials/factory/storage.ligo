@@ -1,11 +1,18 @@
 type pool_f_storage_t   is full_storage_t
 
 type callback_prm_t     is [@layout:comb] record [
-  inv_prm                 : invest_prm_t;
+  in_amounts              : map(nat, nat);
   pool_address            : address;
   tokens                  : tkns_map_t;
   sender                  : address;
 ]
+
+type input_t_v_t        is [@layout:comb] record [
+  token                   : token_t;
+  value                   : nat;
+]
+
+type start_dex_prm_t    is map(nat, input_t_v_t);
 
 type pool_init_prm_t    is [@layout:comb] record [
   a_constant              : nat;
@@ -27,6 +34,7 @@ type inner_store_t      is [@layout:comb] record[
   quipu_token             : fa2_token_t;
   quipu_rewards           : nat;
   whitelist               : set(address);
+  deployers               : big_map(address, address);
 ]
 
 type full_storage_t     is [@layout:comb] record [
@@ -60,7 +68,8 @@ type fact_action_t      is
 | Use_dev                 of dev_action_t
 | Use_factory             of use_factory_t
 | Init_dex                of pool_init_prm_t
-| Init_callback           of callback_prm_t
+| Start_dex               of start_dex_prm_t
+// | Init_callback           of callback_prm_t
 
 
 type fact_return_t      is list(operation) * full_storage_t

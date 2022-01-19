@@ -103,7 +103,8 @@ export async function swapSuccessCase(
     min_out,
     exp,
     accounts[sender].pkh,
-    referral
+    referral,
+    Tezos
   );
   await dex.updateStorage({ pools: [pool_id.toString()] });
   const upd_reserves =

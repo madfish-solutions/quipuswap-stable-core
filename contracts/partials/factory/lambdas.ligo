@@ -82,7 +82,7 @@ function initialize_exchange(
       metadata = params.metadata;
       token_metadata = params.token_metadata;
       admin_lambdas = s.admin_lambdas;
-      dex_lambdas = s.dex_lambdas;
+      dex_lambdas = (big_map[]: big_map(nat, bytes));//s.dex_lambdas;
       token_lambdas = s.token_lambdas;
       permit_lambdas = s.permit_lambdas;
       permits = (big_map[]: permits_t);
@@ -98,27 +98,21 @@ function initialize_exchange(
     const pool_address = deploy.1;
     s.storage.pool_to_address[token_bytes] := pool_address;
     s.storage.pools_count := s.storage.pools_count + 1n;
-    const cb_prm: callback_prm_t = record[
-      inv_prm = record [
-        pool_id    = token_id;
-        shares     = 0n;
-        in_amounts = inputs;
-        time_expiration = Tezos.now + 300;
-        receiver = Some(Tezos.sender);
-        referral = (None: option(address));
-      ];
-      pool_address = pool_address;
-      tokens = tokens;
-      sender = Tezos.sender;
-    ];
-    operations := Tezos.transaction(
-      cb_prm,
-      0mutez,
-      unwrap(
-        (Tezos.get_entrypoint_opt("%init_callback", Tezos.self_address): option(contract(callback_prm_t))),
-        Errors.Dex.unknown_func
-      )
-    ) # operations;
+    s.storage.deployers[pool_address] := Tezos.sender;
+    // const cb_prm: callback_prm_t = record[
+    //   in_amounts = inputs;
+    //   pool_address = pool_address;
+    //   tokens = tokens;
+    //   sender = Tezos.sender;
+    // ];
+    // operations := Tezos.transaction(
+    //   cb_prm,
+    //   0mutez,
+    //   unwrap(
+    //     (Tezos.get_entrypoint_opt("%init_callback", Tezos.self_address): option(contract(callback_prm_t))),
+    //     Errors.Dex.unknown_func
+    //   )
+    // ) # operations;
     operations := deploy.0 # operations;
     if not (s.storage.whitelist contains Tezos.sender)
     then {

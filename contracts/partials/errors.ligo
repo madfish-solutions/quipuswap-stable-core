@@ -52,4 +52,6 @@ module Math is {
 module Factory is {
   const no_fee                    : string = "no-fee-view";
   const no_address                : string = "no-address";
+  const pool_not_listed           : string = "not-listed-pool";
+  const not_deployer              : string = "not-deployer-of-pool";
 }

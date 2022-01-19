@@ -1,7 +1,8 @@
 import { MichelsonMap } from "@taquito/taquito";
-import { DevStorage, FA2, TezosAddress } from "../../../utils/helpers";
+import { FA2, TezosAddress } from "../../../utils/helpers";
 import BigNumber from "bignumber.js";
 import { FactoryStorage, InnerFactoryStore } from "./types";
+import { DevStorage } from "../../Developer/API/storage";
 
 export const factory_storage: FactoryStorage = {
   storage: {
@@ -17,6 +18,7 @@ export const factory_storage: FactoryStorage = {
     quipu_token: null as FA2,
     quipu_rewards: new BigNumber(0),
     whitelist: [] as TezosAddress[],
+    deployers: new MichelsonMap(),
   } as InnerFactoryStore,
   admin_lambdas: new MichelsonMap(),
   dex_lambdas: new MichelsonMap(),

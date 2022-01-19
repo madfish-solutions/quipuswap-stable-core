@@ -61,7 +61,7 @@ describe("00. Standalone Dex", () => {
         async () =>
           await failCase(
             "bob",
-            async () => await dex.setAdmin(new_admin),
+            async () => await dex.setAdmin(new_admin, Tezos),
             "not-contract-admin"
           ),
         10000
@@ -81,7 +81,7 @@ describe("00. Standalone Dex", () => {
         async () =>
           await failCase(
             "bob",
-            async () => dex.setDevAddress(new_dev),
+            async () => dex.setDevAddress(new_dev, Tezos),
             "not-developer"
           ),
         10000
@@ -92,7 +92,7 @@ describe("00. Standalone Dex", () => {
         async () =>
           await failCase(
             "bob",
-            async () => await dex.setDevFee(dev_fee),
+            async () => await dex.setDevFee(dev_fee, Tezos),
             "not-developer"
           ),
         20000
@@ -107,8 +107,7 @@ describe("00. Standalone Dex", () => {
 
       it(
         "should change dev fee",
-        async () =>
-          await TMng.setDevFeesSuccessCase(dex, "bob", dev_fee, Tezos),
+        async () => await TMng.setDevFeeSuccessCase(dex, "bob", dev_fee, Tezos),
         20000
       );
     });
@@ -119,7 +118,7 @@ describe("00. Standalone Dex", () => {
         async () =>
           await failCase(
             "bob",
-            async () => dex.addRemManager(true, manager),
+            async () => dex.addRemManager(true, manager, Tezos),
             "not-contract-admin"
           ),
         10000
@@ -158,7 +157,7 @@ describe("00. Standalone Dex", () => {
         async () =>
           await failCase(
             "bob",
-            async () => dex.setDefaultReferral(aliceAddress),
+            async () => dex.setDefaultReferral(aliceAddress, Tezos),
             "not-contract-admin"
           ),
         10000
@@ -188,7 +187,8 @@ describe("00. Standalone Dex", () => {
         async () =>
           await failCase(
             "alice",
-            async () => await dex.initializeExchange(a_const, inputs, false),
+            async () =>
+              await dex.initializeExchange(a_const, inputs, false, Tezos),
             "not-contract-admin"
           ),
         10000
@@ -277,7 +277,8 @@ describe("00. Standalone Dex", () => {
           async () =>
             await failCase(
               "bob",
-              async () => await dex.setFees(pool_id, TPool.PoolAdmin.Fee.fees),
+              async () =>
+                await dex.setFees(pool_id, TPool.PoolAdmin.Fee.fees, Tezos),
               "not-contract-admin"
             ),
           10000
@@ -368,7 +369,9 @@ describe("00. Standalone Dex", () => {
                 zero_amounts,
                 min_shares,
                 new Date(Date.now() + 1000 * 60 * 60 * 24),
-                referral
+                null,
+                referral,
+                Tezos
               ),
             "zero-amount-in"
           ),
@@ -386,7 +389,9 @@ describe("00. Standalone Dex", () => {
                 amounts,
                 min_shares,
                 new Date(0),
-                referral
+                null,
+                referral,
+                Tezos
               ),
             "time-expired"
           ),
@@ -404,7 +409,9 @@ describe("00. Standalone Dex", () => {
                 wrong_idx_amounts,
                 min_shares,
                 new Date(Date.now() + 1000 * 60 * 60 * 24),
-                referral
+                null,
+                referral,
+                Tezos
               ),
             "zero-amount-in"
           ),
@@ -499,7 +506,8 @@ describe("00. Standalone Dex", () => {
                 new BigNumber(0),
                 new Date(0),
                 bobAddress,
-                referral
+                referral,
+                Tezos
               ),
             "time-expired"
           ),
@@ -520,7 +528,8 @@ describe("00. Standalone Dex", () => {
                 new BigNumber(0),
                 new Date(Date.now() + 1000 * 60 * 60 * 24),
                 bobAddress,
-                referral
+                referral,
+                Tezos
               ),
             "zero-amount-in"
           ),
@@ -594,7 +603,9 @@ describe("00. Standalone Dex", () => {
                 pool_id,
                 min_amounts,
                 new BigNumber("0"),
-                new Date(Date.now() + 1000 * 60 * 60 * 24)
+                new Date(Date.now() + 1000 * 60 * 60 * 24),
+                null,
+                Tezos
               ),
             "zero-amount-in"
           ),
@@ -611,7 +622,9 @@ describe("00. Standalone Dex", () => {
                 pool_id,
                 min_amounts,
                 amount_in,
-                new Date(0)
+                new Date(0),
+                null,
+                Tezos
               ),
             "time-expired"
           ),

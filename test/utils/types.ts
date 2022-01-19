@@ -1,3 +1,4 @@
+import { ContractAbstraction, ContractProvider } from "@taquito/taquito";
 import BigNumber from "bignumber.js";
 import { TokenFA12, TokenFA2 } from "../Token";
 
@@ -18,3 +19,9 @@ export declare type IndexMap = {
   USDtz: string;
   uUSD: string;
 };
+
+export declare interface Contract {
+  contract: ContractAbstraction<ContractProvider>;
+  storage: unknown;
+  updateStorage(args: any): Promise<void>;
+}
