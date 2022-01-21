@@ -74,6 +74,7 @@ function initialize_exchange(
       stakers_balance = (big_map[]: big_map((address * pool_id_t), stkr_info_t));
       quipu_token = s.storage.quipu_token;
       factory_address = Tezos.self_address;
+      started = False;
     ];
 
 
@@ -82,7 +83,7 @@ function initialize_exchange(
       metadata = params.metadata;
       token_metadata = params.token_metadata;
       admin_lambdas = s.admin_lambdas;
-      dex_lambdas = (big_map[]: big_map(nat, bytes));//s.dex_lambdas;
+      dex_lambdas = (big_map[]: big_map(nat, bytes));//s.dex_lambdas;//
       token_lambdas = s.token_lambdas;
       permit_lambdas = s.permit_lambdas;
       permits = (big_map[]: permits_t);
@@ -98,6 +99,7 @@ function initialize_exchange(
     const pool_address = deploy.1;
     s.storage.pool_to_address[token_bytes] := pool_address;
     s.storage.pools_count := s.storage.pools_count + 1n;
+
     s.storage.deployers[pool_address] := Tezos.sender;
     // const cb_prm: callback_prm_t = record[
     //   in_amounts = inputs;

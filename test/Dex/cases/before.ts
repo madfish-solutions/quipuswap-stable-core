@@ -51,7 +51,6 @@ export async function setupDexEnvironment(Tezos: TezosToolkit): Promise<{
     code: dex_contract.michelson,
     storage: storage,
   });
-  console.debug(dex_op.results);
   await confirmOperation(Tezos, dex_op.hash);
   console.debug("[ORIGINATION] DEX", dex_op.contractAddress);
   const dex = await Dex.init(Tezos, dex_op.contractAddress);

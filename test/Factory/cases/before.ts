@@ -61,7 +61,6 @@ export async function setupFactoryEnvironment(
     code: factory_contract.michelson,
     storage: storage,
   });
-  console.debug(fact_op.results);
   await confirmOperation(Tezos, fact_op.hash);
   console.debug("[ORIGINATION] FACTORY 4 DEX", fact_op.contractAddress);
   const factory = await DexFactory.init(Tezos, fact_op.contractAddress);

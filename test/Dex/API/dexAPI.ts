@@ -241,7 +241,7 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
         poolId,
         minShares,
         in_amounts,
-        new BigNumber(expiration.getTime()),
+        new BigNumber(expiration.getTime()).dividedToIntegerBy(1000),
         receiver,
         refferal
       )
@@ -267,7 +267,7 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
         poolId,
         amts,
         sharesBurned,
-        new BigNumber(expiration.getTime()),
+        new BigNumber(expiration.getTime()).dividedToIntegerBy(1000),
         receiver
       )
       .send();
@@ -294,7 +294,7 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
         poolId,
         amts,
         maxSharesBurned,
-        new BigNumber(expiration.getTime()),
+        new BigNumber(expiration.getTime()).dividedToIntegerBy(1000),
         receiver,
         referral
       )
@@ -319,7 +319,7 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
         sharesBurned,
         tokenIdx,
         mintokenAmount,
-        new BigNumber(expiration.getTime()),
+        new BigNumber(expiration.getTime()).dividedToIntegerBy(1000),
         receiver,
         referral
       )

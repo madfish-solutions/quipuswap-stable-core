@@ -1,5 +1,5 @@
 { parameter
-    (or (or (or (big_map %copy_dex_function nat bytes)
+    (or (or (or (pair %copy_dex_function (bytes %func) (nat %index))
                 (or %use_admin
                    (pair %add_rem_managers (bool %add) (address %candidate))
                    (address %set_admin)))
@@ -100,7 +100,7 @@
                                                                                   (pair address nat)
                                                                                   (pair (nat %balance) (map %earnings nat (pair (nat %reward) (nat %former)))))
                                                                                (pair (pair %quipu_token (address %token_address) (nat %token_id))
-                                                                                     (address %factory_address))))))))))))))
+                                                                                     (pair (address %factory_address) (bool %started)))))))))))))))
           (pair (big_map %metadata string bytes)
                 (pair (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
                       (pair (big_map %admin_lambdas nat bytes)
@@ -127,20 +127,53 @@
                { IF_LEFT
                    { DUP 4 ;
                      CAR ;
-                     GET 26 ;
+                     GET 27 ;
                      SENDER ;
                      COMPARE ;
                      EQ ;
                      IF {} { PUSH string "failed assertion" ; FAILWITH } ;
-                     DUP 4 ;
+                     DIG 3 ;
+                     DUP ;
                      GET 9 ;
-                     PUSH nat 1 ;
+                     PUSH nat 14 ;
+                     DIG 3 ;
+                     PUSH string "wrong-index" ;
+                     DUG 2 ;
+                     DUP ;
+                     DUG 3 ;
+                     CDR ;
+                     COMPARE ;
+                     LT ;
+                     IF { DROP } { FAILWITH } ;
+                     PUSH string "function-set" ;
+                     DUP 3 ;
+                     DUP 3 ;
+                     CDR ;
                      MEM ;
                      NOT ;
-                     IF { DIG 3 ; SWAP ; UPDATE 9 }
-                        { DROP ; PUSH string "function-set" ; FAILWITH } }
+                     IF { DROP } { FAILWITH } ;
+                     DUP ;
+                     DUG 2 ;
+                     CAR ;
+                     DIG 2 ;
+                     CDR ;
+                     SWAP ;
+                     SOME ;
+                     SWAP ;
+                     UPDATE ;
+                     UPDATE 9 ;
+                     DUP ;
+                     CAR ;
+                     PUSH bool True ;
+                     UPDATE 28 ;
+                     UPDATE 1 }
                    { DIG 3 ;
                      SWAP ;
+                     PUSH string "not-started" ;
+                     DUP 3 ;
+                     CAR ;
+                     GET 28 ;
+                     IF { DROP } { FAILWITH } ;
                      PUSH string "not-contract-admin" ;
                      DUP 3 ;
                      CAR ;
@@ -197,7 +230,7 @@
                                                                                                            (pair address nat)
                                                                                                            (pair (nat %balance) (map %earnings nat (pair (nat %reward) (nat %former)))))
                                                                                                         (pair (pair %quipu_token (address %token_address) (nat %token_id))
-                                                                                                              (address %factory_address)))))))))))))))
+                                                                                                              (pair (address %factory_address) (bool %started))))))))))))))))
                           (pair (address %admin)
                                 (pair (address %default_referral)
                                       (pair (set %managers address)
@@ -231,7 +264,7 @@
                                                                                                      (pair address nat)
                                                                                                      (pair (nat %balance) (map %earnings nat (pair (nat %reward) (nat %former)))))
                                                                                                   (pair (pair %quipu_token (address %token_address) (nat %token_id))
-                                                                                                        (address %factory_address))))))))))))))) ;
+                                                                                                        (pair (address %factory_address) (bool %started)))))))))))))))) ;
                      IF_NONE { FAILWITH } { SWAP ; DROP } ;
                      DIG 2 ;
                      DUP ;
@@ -247,6 +280,11 @@
                    { DUP 3 ;
                      DIG 4 ;
                      DIG 2 ;
+                     PUSH string "not-started" ;
+                     DUP 3 ;
+                     CAR ;
+                     GET 28 ;
+                     IF { DROP } { FAILWITH } ;
                      PUSH string "function-not-set" ;
                      DUP 3 ;
                      GET 13 ;
@@ -297,7 +335,7 @@
                                                                                                                     (pair address nat)
                                                                                                                     (pair (nat %balance) (map %earnings nat (pair (nat %reward) (nat %former)))))
                                                                                                                  (pair (pair %quipu_token (address %token_address) (nat %token_id))
-                                                                                                                       (address %factory_address))))))))))))))
+                                                                                                                       (pair (address %factory_address) (bool %started)))))))))))))))
                                             (pair (big_map %metadata string bytes)
                                                   (pair (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
                                                         (pair (big_map %admin_lambdas nat bytes)
@@ -309,7 +347,7 @@
                                                                                          (pair (map %permits bytes (pair (timestamp %created_at) (option %expiry nat)))
                                                                                                (option %expiry nat)))
                                                                                       (pair (nat %permits_counter) (nat %default_expiry)))))))))))
-                                (or (or (or (big_map %copy_dex_function nat bytes)
+                                (or (or (or (pair %copy_dex_function (bytes %func) (nat %index))
                                             (or %use_admin
                                                (pair %add_rem_managers (bool %add) (address %candidate))
                                                (address %set_admin)))
@@ -409,7 +447,7 @@
                                                                                                         (pair address nat)
                                                                                                         (pair (nat %balance) (map %earnings nat (pair (nat %reward) (nat %former)))))
                                                                                                      (pair (pair %quipu_token (address %token_address) (nat %token_id))
-                                                                                                           (address %factory_address))))))))))))))
+                                                                                                           (pair (address %factory_address) (bool %started)))))))))))))))
                                 (pair (big_map %metadata string bytes)
                                       (pair (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
                                             (pair (big_map %admin_lambdas nat bytes)
@@ -438,6 +476,11 @@
                { IF_LEFT
                    { DIG 2 ;
                      DROP ;
+                     PUSH string "not-started" ;
+                     DUP 3 ;
+                     CAR ;
+                     GET 28 ;
+                     IF { DROP } { FAILWITH } ;
                      PUSH string "function-not-set" ;
                      DUP 3 ;
                      GET 9 ;
@@ -542,7 +585,7 @@
                                                                                                            (pair address nat)
                                                                                                            (pair (nat %balance) (map %earnings nat (pair (nat %reward) (nat %former)))))
                                                                                                         (pair (pair %quipu_token (address %token_address) (nat %token_id))
-                                                                                                              (address %factory_address)))))))))))))))
+                                                                                                              (pair (address %factory_address) (bool %started))))))))))))))))
                           (pair (list operation)
                                 (pair (address %admin)
                                       (pair (address %default_referral)
@@ -577,7 +620,7 @@
                                                                                                            (pair address nat)
                                                                                                            (pair (nat %balance) (map %earnings nat (pair (nat %reward) (nat %former)))))
                                                                                                         (pair (pair %quipu_token (address %token_address) (nat %token_id))
-                                                                                                              (address %factory_address)))))))))))))))) ;
+                                                                                                              (pair (address %factory_address) (bool %started))))))))))))))))) ;
                      IF_NONE { FAILWITH } { SWAP ; DROP } ;
                      DUP 3 ;
                      CAR ;
@@ -594,6 +637,11 @@
                    { DIG 3 ; DROP 2 ; SWAP ; PAIR } } }
            { DIG 2 ;
              DROP ;
+             PUSH string "not-started" ;
+             DUP 3 ;
+             CAR ;
+             GET 28 ;
+             IF { DROP } { FAILWITH } ;
              PUSH string "function-not-set" ;
              DUP 3 ;
              GET 11 ;
@@ -658,7 +706,7 @@
                                                                                                             (pair address nat)
                                                                                                             (pair (nat %balance) (map %earnings nat (pair (nat %reward) (nat %former)))))
                                                                                                          (pair (pair %quipu_token (address %token_address) (nat %token_id))
-                                                                                                               (address %factory_address))))))))))))))
+                                                                                                               (pair (address %factory_address) (bool %started)))))))))))))))
                                     (pair (big_map %metadata string bytes)
                                           (pair (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
                                                 (pair (big_map %admin_lambdas nat bytes)
@@ -670,7 +718,7 @@
                                                                                  (pair (map %permits bytes (pair (timestamp %created_at) (option %expiry nat)))
                                                                                        (option %expiry nat)))
                                                                               (pair (nat %permits_counter) (nat %default_expiry)))))))))))
-                        (or (or (or (big_map %copy_dex_function nat bytes)
+                        (or (or (or (pair %copy_dex_function (bytes %func) (nat %index))
                                     (or %use_admin
                                        (pair %add_rem_managers (bool %add) (address %candidate))
                                        (address %set_admin)))
@@ -771,7 +819,7 @@
                                                                                                       (pair address nat)
                                                                                                       (pair (nat %balance) (map %earnings nat (pair (nat %reward) (nat %former)))))
                                                                                                    (pair (pair %quipu_token (address %token_address) (nat %token_id))
-                                                                                                         (address %factory_address))))))))))))))
+                                                                                                         (pair (address %factory_address) (bool %started)))))))))))))))
                               (pair (big_map %metadata string bytes)
                                     (pair (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
                                           (pair (big_map %admin_lambdas nat bytes)
@@ -1463,7 +1511,7 @@
          PUSH string "no-fee-view" ;
          DIG 5 ;
          CAR ;
-         GET 26 ;
+         GET 27 ;
          UNIT ;
          VIEW "dev_fee" nat ;
          PAIR ;
@@ -1756,7 +1804,7 @@
          PUSH string "no-fee-view" ;
          DIG 4 ;
          CAR ;
-         GET 26 ;
+         GET 27 ;
          UNIT ;
          VIEW "dev_fee" nat ;
          PAIR ;

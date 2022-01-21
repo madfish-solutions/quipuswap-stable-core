@@ -28,6 +28,7 @@ module Dex is {
   const time_expired              : string = "time-expired";
   const timestamp_error           : string = "timestamp-error";
   const not_developer             : string = "not-developer";
+  const not_started               : string = "not-started";
 }
 
 module Permit is {

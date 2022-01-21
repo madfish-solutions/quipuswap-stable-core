@@ -14,11 +14,11 @@ import {
   TezosAddress,
 } from "../../../utils/helpers";
 import { FactoryStorage } from "./types";
-import admin_lambdas_comp from "../../../build/lambdas/test/Admin_lambdas.json";
-import permit_lambdas_comp from "../../../build/lambdas/test/Permit_lambdas.json";
-import dex_lambdas_comp from "../../../build/lambdas/test/Dex_lambdas.json";
+import admin_lambdas_comp from "../../../build/lambdas/factory/Admin_lambdas.json";
+import permit_lambdas_comp from "../../../build/lambdas/factory/Permit_lambdas.json";
+import dex_lambdas_comp from "../../../build/lambdas/factory/Dex_lambdas.json";
 import dev_lambdas_comp from "../../../build/lambdas/test/Dev_lambdas.json";
-import token_lambdas_comp from "../../../build/lambdas/test/Token_lambdas.json";
+import token_lambdas_comp from "../../../build/lambdas/factory/Token_lambdas.json";
 import { confirmOperation } from "../../../utils/confirmation";
 import BigNumber from "bignumber.js";
 import { defaultTokenId, TokenFA12, TokenFA2 } from "../../Token";
@@ -268,14 +268,12 @@ export class DexFactory implements DevEnabledContract {
       permit_def_expiry
     );
     const operation = await opr.send();
-    console.log(operation.storageSize);
     await confirmOperation(tezos, operation.hash);
     const inputs = new MichelsonMap();
     tokens_info.forEach((value, key) =>
       inputs.set(key, { token: input_tokens[key], value: value.reserves })
     );
     const op = await this.contract.methods.start_dex(inputs).send();
-    console.log(op.storageSize);
     await confirmOperation(tezos, op.hash);
     return operation;
   }

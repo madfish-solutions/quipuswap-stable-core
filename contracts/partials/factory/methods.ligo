@@ -1,23 +1,37 @@
 function start_dex_func(
   const params          : start_dex_prm_t;
-  const s               : full_storage_t
-): fact_return_t is
+  const s               : full_storage_t)
+                        : fact_return_t is
   block {
-    const amnts = Map.map(function(const _i : nat; const v : input_t_v_t): nat is v.value, params);
-    const tokens = Map.map(function(const _i : nat; const v : input_t_v_t): token_t is v.token, params);
+    function unwrap_params(
+      var accumulator   : map(nat, nat) * map(nat, token_t);
+      const entry       : nat * input_t_v_t)
+                        : map(nat, nat) * map(nat, token_t) is
+      block {
+        accumulator.0[entry.0] := entry.1.value;
+        accumulator.1[entry.0] := entry.1.token;
+      } with accumulator;
+    const (amounts, tokens) = Map.fold(
+      unwrap_params,
+      params,
+      (
+        (map[]: map(nat, nat)),
+        (map[]: map(nat, token_t))
+      )
+    );
     const pool_address = unwrap(s.storage.pool_to_address[Bytes.pack(tokens)], Errors.Factory.pool_not_listed);
     const deployer = unwrap(s.storage.deployers[pool_address], Errors.Factory.pool_not_listed);
     assert_with_error(deployer = Tezos.sender, Errors.Factory.not_deployer);
-    // const prm = record [
-    //     pool_id    = 0n;
-    //     shares     = 0n;
-    //     in_amounts = amnts;
-    //     time_expiration = Tezos.now + 300;
-    //     receiver = Some(Tezos.sender);
-    //     referral = (None: option(address));
-    //   ];
+    const prm = record [
+        pool_id    = 0n;
+        shares     = 0n;
+        in_amounts = amounts;
+        time_expiration = Tezos.now + 300;
+        receiver = Some(Tezos.sender);
+        referral = (None: option(address));
+      ];
     var operations: list(operation) := list[
-      // call_add_liq(prm, pool_address)
+      call_add_liq(prm, pool_address)
     ];
     function transfer_and_approve(
       var operations    : list(operation);
@@ -53,8 +67,8 @@ function start_dex_func(
         }
         else skip;
       } with operations;
-    operations := Map.fold(transfer_and_approve, amnts, operations);
-    operations := set_lambd_dex(s.dex_lambdas, pool_address) # operations;
+    operations := Map.fold(transfer_and_approve, amounts, operations);
+    operations := add_dex_lambdas(operations, pool_address, s.dex_lambdas);
   } with (operations, s)
 
 function claim_quipu(
@@ -72,7 +86,7 @@ function claim_quipu(
     s.storage.quipu_rewards := 0n;
   } with (operations, s)
 
-function add_rem_candidate(
+[@inline] function add_rem_candidate(
   const params          : set_man_prm_t;
   var   whitelist       : set(address))
                         : set(address) is

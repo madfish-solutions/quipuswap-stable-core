@@ -10,6 +10,9 @@ based on the provided index.
   const action          : full_action_t)
                         : full_storage_t is
   block {
+#if FACTORY
+    assert_with_error(s.storage.started, Errors.Dex.not_started);
+#endif
     const idx : nat = case p of
     | Permit(_)     -> 0n
     | Set_expiry(_) -> 1n

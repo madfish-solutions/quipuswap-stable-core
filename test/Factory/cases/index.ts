@@ -4,9 +4,8 @@ import {
   setDevFeeSuccessCase,
 } from "../../Developer/cases";
 import { initializeExchangeSuccessCase } from "./init_pool";
-// import * as rates from "./rates";
-import { claimRewardsSuccessCase } from "./rewards";
-// import * as views from "./views";
+import { setBurnRateSuccessCase, setInitPriceSuccessCase } from "./rates";
+import { claimRewardsSuccessCase, getDeveloperRewardsDexSuccessCase } from "./rewards";
 import { updateWhitelistSuccessCase } from "./whitelist";
 export const cases = {
   before: {
@@ -24,8 +23,11 @@ export const cases = {
   },
   rewards: {
     claimRewardsSuccessCase,
+    getDeveloperRewardsDexSuccessCase,
   },
-  // rates,
-  // views,
+  rates: {
+    setBurnRateSuccessCase,
+    setInitPriceSuccessCase,
+  },
 };
 export default cases;

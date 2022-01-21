@@ -12,7 +12,7 @@ type input_t_v_t        is [@layout:comb] record [
   value                   : nat;
 ]
 
-type start_dex_prm_t    is map(nat, input_t_v_t);
+type start_dex_prm_t    is map(nat, input_t_v_t)
 
 type pool_init_prm_t    is [@layout:comb] record [
   a_constant              : nat;

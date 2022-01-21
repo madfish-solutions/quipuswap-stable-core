@@ -81,6 +81,7 @@ type storage_t          is [@layout:comb] record [
   (* dev storage params *)
 #if FACTORY
   factory_address         : address;
+  started                 : bool;
 #else
   dev_store               : dev_storage_t;
 #endif

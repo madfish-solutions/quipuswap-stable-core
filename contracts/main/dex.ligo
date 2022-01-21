@@ -67,9 +67,11 @@ function main(
 #else
     | Copy_dex_function(params)   -> {
       assert(Tezos.sender = s.storage.factory_address);
-      if not Big_map.mem(1n, s.dex_lambdas)
-      then s.dex_lambdas := params
-      else failwith(Errors.Dex.func_set);
+      s.dex_lambdas := set_func_or_fail(params, Constants.dex_func_count, s.dex_lambdas);
+    }
+    | Freeze -> {
+      assert(Tezos.sender = s.storage.factory_address);
+      s.storage.started := not s.storage.started
     }
 #endif
     | _ -> skip

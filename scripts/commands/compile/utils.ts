@@ -174,6 +174,7 @@ export const compileLambdas = async (
   console.log(`Compiling ${contract} contract lambdas of ${type} type...\n`);
 
   const test_path = contract.toLowerCase().includes("test");
+  const factory_path = contract.toLowerCase().includes("factory");
   const ligo = `docker run -v $PWD:$PWD --rm -i -w $PWD ligolang/ligo:${config.ligoVersion}`;
   const pwd = execSync("echo $PWD").toString();
   const lambdas = JSON.parse(
@@ -190,14 +191,31 @@ export const compileLambdas = async (
   const init_file = `$PWD/${contract}`;
   try {
     for (const lambda of lambdas) {
-      const func = `Set_${type.toLowerCase()}_function(record [index=${
-        lambda.index
-      }n; func=Bytes.pack(${lambda.name})])`;
+      let func;
+      if (factory_path) {
+        if (lambda.name == "initialize_exchange" && factory_path) continue;
+        func = `Bytes.pack(${lambda.name})`;
+      } else {
+        func = `Set_${type.toLowerCase()}_function(record [index=${
+          lambda.index
+        }n; func=Bytes.pack(${lambda.name})])`;
+      }
+      console.log(factory_path, func);
       const params = `'${func}' --michelson-format json --init-file ${init_file} --protocol hangzhou`;
       const command = `${ligo} ${ligo_command} ${config.preferredLigoFlavor} ${params}`;
       const michelson = execSync(command, { maxBuffer: 1024 * 500 }).toString();
 
-      res.push(JSON.parse(michelson).args[0].args[0].args[0].args[0]);
+      const bytes = factory_path
+        ? {
+            prim: "Pair",
+            args: [
+              { bytes: JSON.parse(michelson).bytes },
+              { int: lambda.index.toString() },
+            ],
+          }
+        : JSON.parse(michelson).args[0].args[0].args[0].args[0];
+      res.push(bytes);
+
       console.log(
         lambda.index +
           1 +
@@ -208,19 +226,19 @@ export const compileLambdas = async (
           " successfully compiled."
       );
     }
-    if (!fs.existsSync(`${config.outputDirectory}/lambdas`)) {
-      fs.mkdirSync(`${config.outputDirectory}/lambdas`);
-    }
+    let out_path = "/lambdas";
     if (test_path) {
-      if (!fs.existsSync(`${config.outputDirectory}/lambdas/test`)) {
-        fs.mkdirSync(`${config.outputDirectory}/lambdas/test`);
-      }
+      out_path += "/test";
+    }
+    if (factory_path) {
+      out_path += "/factory";
+    }
+    if (!fs.existsSync(`${config.outputDirectory + out_path}`)) {
+      fs.mkdirSync(`${config.outputDirectory + out_path}`);
     }
     const json_file_path = json.split("/");
     const file_name = json_file_path[json_file_path.length - 1];
-    const save_path = `${config.outputDirectory}/lambdas/${
-      test_path ? "test/" + file_name : file_name
-    }`;
+    const save_path = `${config.outputDirectory + out_path}/${file_name}`;
     fs.writeFileSync(save_path, JSON.stringify(res));
     console.log(`Saved to ${save_path}`);
   } catch (e) {

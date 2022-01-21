@@ -9,12 +9,22 @@ import {
   Tezos,
   TezosAddress,
 } from "../utils/helpers";
-import { accounts, a_const, dev_fee } from "../utils/constants";
+import {
+  accounts,
+  a_const,
+  decimals,
+  dev_fee,
+  swap_routes,
+} from "../utils/constants";
 import { DexFactoryAPI as DexFactory } from "./Factory/API";
 import { defaultTokenId, TokenFA12, TokenFA2 } from "./Token";
 import { cases } from "./Factory";
-import { TokensMap } from "./utils/types";
-import { setupTrioTokens } from "./utils/tokensSetups";
+import { AmountsMap, IndexMap, TokensMap } from "./utils/types";
+import {
+  approveAllTokens,
+  setupTokenAmounts,
+  setupTrioTokens,
+} from "./utils/tokensSetups";
 import { manageInputs } from "./Dex/cases/pool_part/add";
 import { MichelsonMap } from "@taquito/taquito";
 import { DexAPI as Dex } from "./Dex/API";
@@ -43,7 +53,7 @@ describe("01. Dex Factory", () => {
       async () =>
         await failCase(
           "bob",
-          async () => factory.setDevFee(dev_fee, tezos),
+          async () => await factory.setDevFee(dev_fee, tezos),
           "not-developer"
         ),
       10000
@@ -54,7 +64,8 @@ describe("01. Dex Factory", () => {
       async () =>
         await failCase(
           developer_name,
-          async () => factory.setDevFee(new BigNumber("100000000000"), tezos),
+          async () =>
+            await factory.setDevFee(new BigNumber("100000000000"), tezos),
           "fee-overflow"
         ),
       10000
@@ -75,6 +86,7 @@ describe("01. Dex Factory", () => {
     let inputs;
     let dex: Dex;
     const pool_id = new BigNumber("0");
+    const normalized = new BigNumber(10).pow(3);
 
     beforeAll(async () => {
       tokens = await setupTrioTokens(factory, tezos, false);
@@ -118,8 +130,17 @@ describe("01. Dex Factory", () => {
       expect(dex.contract.address).toStrictEqual(dex_address);
     });
 
+    it("should add manager", async () =>
+      await dex_case.admin.updateManagersSuccessCase(
+        dex,
+        "bob",
+        accounts.eve.pkh,
+        true,
+        tezos
+      ));
+
     it("pool admin should change fees", async () =>
-      dex_case.pools.PoolAdmin.Fee.setFeesSuccessCase(
+      await dex_case.pools.PoolAdmin.Fee.setFeesSuccessCase(
         dex,
         "bob",
         pool_id,
@@ -127,47 +148,132 @@ describe("01. Dex Factory", () => {
         Tezos
       ));
 
-    it("pool admin should ramp A", async () =>
-      await prepareProviderOptions("bob").then((config) => {
-        expect(dex).not.toBeNull();
-        Tezos.setProvider(config);
-        return dex_case.pools.PoolAdmin.Ramp_A.rampASuccessCase(
-          dex,
-          pool_id,
-          dex_case.pools.PoolAdmin.Ramp_A.future_a_const,
-          dex_case.pools.PoolAdmin.Ramp_A.future_a_time
+    describe("pool use", () => {
+      beforeAll(async () => {
+        await approveAllTokens(dex, tokens, Tezos);
+      });
+
+      describe("invest", () => {
+        let amounts: Map<string, BigNumber>;
+        const inputs_amounts: AmountsMap = {
+          kUSD: decimals.kUSD.multipliedBy(normalized),
+          uUSD: decimals.uUSD.multipliedBy(normalized),
+          USDtz: decimals.USDtz.multipliedBy(normalized),
+        };
+
+        beforeAll(async () => {
+          const res = await setupTokenAmounts(dex, tokens, inputs_amounts);
+          amounts = res.amounts;
+        });
+
+        it("should invest", async () =>
+          await dex_case.pools.PoolInvest.investLiquiditySuccessCase(
+            dex,
+            "eve",
+            pool_id,
+            accounts.bob.pkh,
+            new BigNumber(1),
+            amounts,
+            new Date(Date.now() + 1000 * 60 * 60 * 24),
+            Tezos
+          ));
+      });
+
+      describe("swap", () => {
+        let amounts: Map<string, BigNumber>;
+        const norm_in = new BigNumber(10).pow(2);
+        let idx_map: IndexMap;
+        const inputs_amounts: AmountsMap = {
+          kUSD: decimals.kUSD.multipliedBy(norm_in),
+          uUSD: decimals.uUSD.multipliedBy(norm_in),
+          USDtz: decimals.USDtz.multipliedBy(norm_in),
+        };
+
+        beforeAll(async () => {
+          const res = await dex_case.pools.PoolSwap.setupTokenMapping(
+            dex,
+            tokens,
+            inputs_amounts
+          );
+          amounts = res.amounts;
+          idx_map = res.idx_map;
+        });
+
+        it.each(swap_routes)(
+          `should swap %s ~> %s`,
+          async (t_in, t_to) =>
+            await dex_case.pools.PoolSwap.swapSuccessCase(
+              dex,
+              tokens,
+              "eve",
+              pool_id,
+              t_in,
+              t_to,
+              new Date(Date.now() + 1000 * 60 * 60 * 24),
+              null,
+              idx_map,
+              new BigNumber(10).pow(2),
+              amounts,
+              lambda,
+              Tezos
+            ),
+          40000
         );
-      }));
+      });
 
-    it("pool admin should stop ramp A", async () =>
-      await prepareProviderOptions("bob").then((config) => {
-        expect(dex).not.toBeNull();
-        Tezos.setProvider(config);
-        return dex_case.pools.PoolAdmin.Ramp_A.stopRampASuccessCase(
-          dex,
-          pool_id
-        );
-      }));
+      describe("divest", () => {
+        const outputs: AmountsMap = {
+          kUSD: decimals.kUSD.multipliedBy(normalized),
+          uUSD: decimals.uUSD.multipliedBy(normalized),
+          USDtz: decimals.USDtz.multipliedBy(normalized),
+        };
+        const amount_in = new BigNumber(10)
+          .pow(18)
+          .multipliedBy(normalized)
+          .multipliedBy(3); // 3K LP tokens
+        let min_amounts;
 
-    it.todo("should swap");
+        beforeAll(async () => {
+          const res = await dex_case.pools.PoolDivest.setupMinTokenMapping(
+            dex,
+            tokens,
+            outputs
+          );
+          min_amounts = res.min_amounts;
+        });
 
-    it.todo("should invest");
+        it("should divest", async () =>
+          await dex_case.pools.PoolDivest.divestLiquiditySuccessCase(
+            dex,
+            "eve",
+            pool_id,
+            amount_in,
+            min_amounts,
+            new Date(Date.now() + 1000 * 60 * 60 * 24),
+            Tezos
+          ));
+      });
+    });
 
-    it.todo("should divest");
+    it("should change default referral", async () =>
+      await dex_case.admin.setDefaultRefSuccessCase(
+        dex,
+        "bob",
+        accounts.eve.pkh,
+        tezos
+      ));
 
-    it("should claim dev rewards from pool", async () =>
-      await prepareProviderOptions("bob").then((config) => {
-        Tezos.setProvider(config);
-        return dex_case.rewards.developer.getDeveloperRewardsSuccessCase(
+    describe("claim", () => {
+      it("should claim dev rewards from pool", async () =>
+        await cases.rewards.getDeveloperRewardsDexSuccessCase(
           dex,
           tokens,
           pool_id,
-          5,
-          developer_address,
+          developer_name,
           lambda,
           Tezos
-        );
-      }));
+        ));
+    });
   });
 
   describe("3. Rewards", () => {
@@ -176,7 +282,7 @@ describe("01. Dex Factory", () => {
       async () =>
         await failCase(
           "bob",
-          async () => factory.claimRewards(tezos),
+          async () => await factory.claimRewards(tezos),
           "not-developer"
         ),
       10000
@@ -205,7 +311,8 @@ describe("01. Dex Factory", () => {
       async () =>
         await failCase(
           "bob",
-          async () => factory.addRemWhitelist(true, accounts["bob"].pkh, tezos),
+          async () =>
+            await factory.addRemWhitelist(true, accounts["bob"].pkh, tezos),
           "not-developer"
         ),
       10000
@@ -263,26 +370,35 @@ describe("01. Dex Factory", () => {
 
   describe("5. Init price", () => {
     const initial_price = new BigNumber("100000");
+    const norm_input = new BigNumber(10).pow(6);
+    let tokens: TokensMap;
+    let inputs;
+
+    beforeAll(async () => {
+      tokens = await setupTrioTokens(factory, tezos, false);
+      inputs = await manageInputs(norm_input, tokens);
+    });
 
     it(
       "should fail if not dev try to set init price",
       async () =>
         await failCase(
           "bob",
-          async () => factory.setInitPrice(initial_price, tezos),
+          async () => await factory.setInitPrice(initial_price, tezos),
           "not-developer"
         ),
       10000
     );
 
-    it.todo("should set other price");
+    it("should set other price", async () =>
+      await cases.rates.setInitPriceSuccessCase(
+        factory,
+        developer_name,
+        initial_price,
+        tezos
+      ));
 
-    // eslint-disable-next-line jest/prefer-expect-assertions
-    it.todo("should deploy with other price", async () => {
-      const init_balance: BigNumber = await quipuToken.contract.views
-        .balance_of([{ owner: accounts.eve.pkh, token_id: "0" }])
-        .read(lambda);
-
+    it("should deploy with other price", async () =>
       await cases.initPool.initializeExchangeSuccessCase(
         factory,
         "eve",
@@ -298,36 +414,58 @@ describe("01. Dex Factory", () => {
         quipuToken,
         tezos,
         lambda
-      );
-
-      const upd_balance: BigNumber = await quipuToken.contract.views
-        .balance_of([{ owner: accounts.eve.pkh, token_id: "0" }])
-        .read(lambda);
-      expect(init_balance[0].balance.toNumber()).toStrictEqual(
-        upd_balance[0].balance.toNumber()
-      );
-    });
+      ));
   });
 
   describe("5. Burn rate", () => {
     const burn_rate = new BigNumber("10")
       .div("100") // 10%
       .multipliedBy("1000000");
+    const norm_input = new BigNumber(10).pow(6);
+    let tokens: TokensMap;
+    let inputs;
+
+    beforeAll(async () => {
+      tokens = await setupTrioTokens(factory, tezos, false);
+      inputs = await manageInputs(norm_input, tokens);
+    });
 
     it(
       "should fail if not dev try to set burn rate",
       async () =>
         await failCase(
           "bob",
-          async () => factory.setBurnRate(burn_rate, tezos),
+          async () => await factory.setBurnRate(burn_rate, tezos),
           "not-developer"
         ),
       10000
     );
 
-    it.todo("should set different burn rate");
+    it("should set different burn rate", async () =>
+      await cases.rates.setBurnRateSuccessCase(
+        factory,
+        developer_name,
+        burn_rate,
+        tezos
+      ));
 
-    it.todo("should deploy with different burn rate");
+    it("should deploy with different burn rate", async () =>
+      await cases.initPool.initializeExchangeSuccessCase(
+        factory,
+        "eve",
+        a_const,
+        norm_input,
+        inputs,
+        accounts.bob.pkh,
+        [],
+        new MichelsonMap(),
+        new MichelsonMap(),
+        new BigNumber("2592000"),
+        true,
+        quipuToken,
+        tezos,
+        lambda
+      ));
   });
 
   describe("7. Change developer", () => {
@@ -339,7 +477,7 @@ describe("01. Dex Factory", () => {
       async () =>
         await failCase(
           "bob",
-          async () => factory.setDevAddress(accounts["bob"].pkh, tezos),
+          async () => await factory.setDevAddress(accounts["bob"].pkh, tezos),
           "not-developer"
         ),
       10000

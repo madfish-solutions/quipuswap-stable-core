@@ -42,7 +42,6 @@ export async function getDeveloperRewardsSuccessCase(
   const USDtzRewards = await dev_stor.get({
     fa12: tokens.USDtz.contract.address,
   });
-  console.debug(USDtzRewards.dividedBy(decimals.USDtz).toFormat());
   expect(USDtzRewards.dividedBy(decimals.USDtz).toNumber()).toBeCloseTo(
     expectedRewardNormalized.plus(26.6).toNumber(), // approx. from invests / divests and swaps before
     1
@@ -50,7 +49,6 @@ export async function getDeveloperRewardsSuccessCase(
   const kUSDRewards = await dev_stor.get({
     fa12: tokens.kUSD.contract.address,
   });
-  console.debug(kUSDRewards.dividedBy(decimals.kUSD).toFormat());
   expect(kUSDRewards.dividedBy(decimals.kUSD).toNumber()).toBeCloseTo(
     expectedRewardNormalized
       .plus(13.35) // approx. from invests / divests and swaps before
@@ -63,7 +61,6 @@ export async function getDeveloperRewardsSuccessCase(
       token_id: new BigNumber(defaultTokenId),
     },
   });
-  console.debug(uUSDRewards.dividedBy(decimals.uUSD).toFormat());
   expect(uUSDRewards.dividedBy(decimals.uUSD).toNumber()).toBeCloseTo(
     expectedRewardNormalized
       .plus(13.33) // approx. from invests / divests and swaps before

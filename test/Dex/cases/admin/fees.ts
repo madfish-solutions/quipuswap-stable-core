@@ -36,7 +36,6 @@ export async function setFeesSuccessCase(
   const updStorage: DexStorage = await dex.contract.storage();
   const updatedFees = (await updStorage.storage.pools.get(pool_id.toString()))
     .fee as FeeType;
-  console.log(updatedFees);
   for (const key in updatedFees) {
     expect(updatedFees[key].toNumber()).toStrictEqual(fees[key].toNumber());
   }

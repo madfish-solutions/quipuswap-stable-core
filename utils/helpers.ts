@@ -180,7 +180,6 @@ export async function setFunctionBatchCompilled(
     idx = idx + 1;
     if (idx % batchBy == 0 || idx == comp_funcs_map.length) {
       const batchOp = await batch.send();
-      console.log(batchOp.storageLimit);
       await confirmOperation(tezos, batchOp.hash);
       console.debug(
         `[BATCH:${type.toUpperCase()}:SETFUNCTION] ${idx}/${

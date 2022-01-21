@@ -10,6 +10,7 @@ import {
   FA2TokenType,
   prepareProviderOptions,
 } from "../../utils/helpers";
+import { DexStorage } from "../Dex/API/types";
 
 async function originateTokens(Tezos: TezosToolkit): Promise<TokensMap> {
   const kUSD = await Tezos.contract.originate(TokenInitValues.kUSD);
@@ -28,7 +29,7 @@ async function originateTokens(Tezos: TezosToolkit): Promise<TokensMap> {
   };
 }
 
-async function approveAllTokens(
+export async function approveAllTokens(
   contr: Contract,
   tokens: TokensMap,
   Tezos: TezosToolkit
@@ -39,7 +40,6 @@ async function approveAllTokens(
     Tezos.setProvider(config);
     for (const token in tokens) {
       await tokens[token].approve(contr.contract.address, approveAmount);
-      console.debug(spender, token, "approve");
     }
   }
   return true;

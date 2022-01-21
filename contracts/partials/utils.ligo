@@ -194,7 +194,6 @@ function get_token_by_id(
     const token = unwrap(tokens[token_id], Errors.Dex.wrong_index);
   } with token;
 
-#if !FOUR
 (* Lambda setter (only for admin usage in init setup) *)
 [@inline] function set_function(
   const f_type          : func_entry_t;
@@ -204,7 +203,9 @@ function get_token_by_id(
   block {
 
 #if FACTORY
+#if !FOUR
     check_dev(s.storage.dev_store.dev_address);
+#endif
 #else
     check_admin(s.storage.admin);
 #endif
@@ -213,8 +214,11 @@ function get_token_by_id(
     | FPermit -> s.permit_lambdas := set_func_or_fail(params, Constants.permit_func_count, s.permit_lambdas)
     | FDex    -> s.dex_lambdas := set_func_or_fail(params, Constants.dex_func_count, s.dex_lambdas)
     | FToken  -> s.token_lambdas := set_func_or_fail(params, Constants.token_func_count,  s.token_lambdas)
+#if !FOUR
     | FDev    -> s.storage.dev_store.dev_lambdas := set_func_or_fail(params, Constants.dev_func_count,  s.storage.dev_store.dev_lambdas)
+#else
+    | _ -> skip
+#endif
     end
   } with s
-#endif
 

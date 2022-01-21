@@ -4,6 +4,9 @@
   var s                 : full_storage_t)
                         : full_storage_t is
   block {
+#if FACTORY
+    assert_with_error(s.storage.started, Errors.Dex.not_started);
+#endif
 
     check_admin(s.storage.admin);
 

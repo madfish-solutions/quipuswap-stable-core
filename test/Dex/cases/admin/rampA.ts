@@ -25,7 +25,6 @@ export async function rampASuccessCase(
   ft_time = new BigNumber(Date.now())
     .plus(ft_time.multipliedBy(1000))
     .dividedToIntegerBy(1000);
-  console.log(ft_time.toNumber());
   const op = await dex.contract.methods.ramp_A(pool_id, ft_a, ft_time).send();
   await confirmOperation(Tezos, op.hash);
   await dex.updateStorage({ pools: [pool_id.toString()] });
@@ -36,10 +35,6 @@ export async function rampASuccessCase(
     initial_A: upd_in_A,
     initial_A_time: upd_in_A_t,
   } = upd;
-  console.log(init_in_A_t, upd_in_A_t);
-  console.log(init_ft_A_t, upd_ft_A_t);
-  console.log(init_in_A.toNumber(), upd_in_A.toNumber());
-  console.log(init_ft_A.toNumber(), upd_ft_A.toNumber());
   expect(init_ft_A.toNumber()).not.toStrictEqual(upd_ft_A.toNumber());
   expect(init_ft_A_t).not.toStrictEqual(upd_ft_A_t);
 }
@@ -68,10 +63,6 @@ export async function stopRampASuccessCase(dex: Dex, pool_id: BigNumber) {
   } = upd;
   expect(upd_ft_A.toNumber()).toStrictEqual(upd_in_A.toNumber());
   expect(upd_ft_A_t).toStrictEqual(upd_in_A_t);
-  console.log(init_in_A_t, upd_in_A_t);
-  console.log(init_ft_A_t, upd_ft_A_t);
-  console.log(init_in_A.toNumber(), upd_in_A.toNumber());
-  console.log(init_ft_A.toNumber(), upd_ft_A.toNumber());
   expect(init_ft_A_t).not.toStrictEqual(upd_ft_A_t);
   expect(init_ft_A.toNumber()).not.toStrictEqual(upd_ft_A.toNumber());
   expect(init_in_A_t).not.toStrictEqual(upd_in_A_t);

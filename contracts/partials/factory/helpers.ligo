@@ -8,7 +8,7 @@ function get_tokens_from_param(
       }
       with result;
 
-function check_pool(
+[@inline] function check_pool(
   const t_bytes         : bytes;
   const pool_map        : big_map(bytes, address))
                         : unit is
@@ -18,7 +18,7 @@ function check_pool(
   end
 
 
-function call_add_liq(
+[@inline] function call_add_liq(
   const params          : invest_prm_t;
   const receiver        : address)
                         : operation is
@@ -31,20 +31,20 @@ function call_add_liq(
     )
   )
 
-function set_lambd_dex(
-  const params          : big_map(nat, bytes);
+[@inline] function set_lambd_dex(
+  const params          : set_lambda_func_t;
   const receiver        : address)
                         : operation is
   Tezos.transaction(
     params,
     0mutez,
     unwrap(
-      (Tezos.get_entrypoint_opt("%copy_dex_function", receiver): option(contract(big_map(nat, bytes)))),
+      (Tezos.get_entrypoint_opt("%copy_dex_function", receiver): option(contract(set_lambda_func_t))),
       "not_dex"
     )
   )
 
-function set_init_function(
+[@inline] function set_init_function(
   const params          : bytes;
   var s                 : full_storage_t)
                         : option(bytes) is
@@ -56,7 +56,7 @@ function set_init_function(
     end;
   } with Some(params)
 
-function run_init_func(
+[@inline] function run_init_func(
   const params          : pool_init_prm_t;
   const s               : full_storage_t)
                         : fact_return_t is

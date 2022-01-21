@@ -11,6 +11,7 @@ import { TokenFA12, TokenFA2 } from "../../Token";
 import { TezosToolkit, MichelsonMap } from "@taquito/taquito";
 import { defaultTokenId } from "../../Token/token";
 import { Dex } from "../../Dex/API/dexAPI";
+import { DexStorage } from "../../Dex/API/types";
 export async function initializeExchangeSuccessCase(
   factory: DexFactory,
   sender: AccountsLiteral,
@@ -42,7 +43,7 @@ export async function initializeExchangeSuccessCase(
 
   await factory.updateStorage({});
   const init_rew: BigNumber = factory.storage.storage.quipu_rewards;
-  let price = factory.storage.storage.whitelist.includes(sender_addr)
+  const price = factory.storage.storage.whitelist.includes(sender_addr)
     ? new BigNumber(0)
     : factory.storage.storage.init_price;
   const initPairCount = new BigNumber(factory.storage.storage.pools_count);
@@ -110,15 +111,14 @@ export async function initializeExchangeSuccessCase(
   expect(initPairCount.toNumber() + 1).toStrictEqual(
     updatedPairCount.toNumber()
   );
-  // const updatedSenderBalance: BigNumber =
-  //   dex.storage.storage.ledger[sender_addr];
-  // console.log(dex.storage.storage.ledger, updatedSenderBalance);
-  // expect(updatedSenderBalance.toNumber()).toStrictEqual(
-  //   new BigNumber(10)
-  //     .pow(18)
-  //     .multipliedBy(exp_input)
-  //     .multipliedBy(inputs.length)
-  //     .toNumber()
-  // );
+  const updatedSenderBalance: BigNumber =
+    dex.storage.storage.ledger[sender_addr];
+  expect(updatedSenderBalance.toNumber()).toStrictEqual(
+    new BigNumber(10)
+      .pow(18)
+      .multipliedBy(exp_input)
+      .multipliedBy(inputs.length)
+      .toNumber()
+  );
   return dex;
 }

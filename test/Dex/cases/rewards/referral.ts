@@ -55,12 +55,10 @@ export async function getReferralRewardsSuccessCase(
       expectedRewardNormalized.toNumber(),
       1
     );
-    console.debug(USDtzRewards.dividedBy(decimals.USDtz).toFormat());
     const kUSDRewards = await ref_stor.get({
       0: ref_address,
       1: { fa12: tokens.kUSD.contract.address },
     });
-    console.debug(kUSDRewards.dividedBy(decimals.kUSD).toFormat());
     expect(kUSDRewards.dividedBy(decimals.kUSD).toNumber()).toBeCloseTo(
       expectedRewardNormalized.toNumber(),
       1
@@ -74,7 +72,6 @@ export async function getReferralRewardsSuccessCase(
         },
       },
     });
-    console.debug(uUSDRewards.dividedBy(decimals.uUSD).toFormat());
     expect(uUSDRewards.dividedBy(decimals.uUSD).toNumber()).toBeCloseTo(
       expectedRewardNormalized.toNumber(),
       1
