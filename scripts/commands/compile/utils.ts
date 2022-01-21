@@ -199,7 +199,6 @@ export const compileLambdas = async (
           lambda.index
         }n; func=Bytes.pack(${lambda.name})])`;
       }
-      console.log(factory_path, func);
       const params = `'${func}' --michelson-format json --init-file ${init_file} --protocol hangzhou`;
       const command = `${ligo} ${ligo_command} ${config.preferredLigoFlavor} ${params}`;
       const michelson = execSync(command, { maxBuffer: 1024 * 500 }).toString();
