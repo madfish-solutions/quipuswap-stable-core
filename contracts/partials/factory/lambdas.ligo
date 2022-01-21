@@ -101,20 +101,7 @@ function initialize_exchange(
     s.storage.pools_count := s.storage.pools_count + 1n;
 
     s.storage.deployers[pool_address] := Tezos.sender;
-    // const cb_prm: callback_prm_t = record[
-    //   in_amounts = inputs;
-    //   pool_address = pool_address;
-    //   tokens = tokens;
-    //   sender = Tezos.sender;
-    // ];
-    // operations := Tezos.transaction(
-    //   cb_prm,
-    //   0mutez,
-    //   unwrap(
-    //     (Tezos.get_entrypoint_opt("%init_callback", Tezos.self_address): option(contract(callback_prm_t))),
-    //     Errors.Dex.unknown_func
-    //   )
-    // ) # operations;
+
     operations := deploy.0 # operations;
     if not (s.storage.whitelist contains Tezos.sender)
     then {
