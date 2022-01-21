@@ -96,7 +96,6 @@ const _compileFile = async (
       console.log("\t\t✅ Done.");
       built.michelson =
         format === "json" ? JSON.parse(built.michelson) : built.michelson;
-
       const outFile = `${
         format === "json"
           ? config.outputDirectory
