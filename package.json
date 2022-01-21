@@ -38,7 +38,7 @@
     "compile-lambda-token": " yarn -s compile-lambda-standalone -T Token -J ./test/lambdas/Token_lambdas.json",
     "compile-lambda-permit": "yarn -s compile-lambda-standalone -T Permit -J ./test/lambdas/Permit_lambdas.json",
     "compile-lambda-admin": "yarn -s compile-lambda-standalone -T Admin -J ./test/lambdas/Admin_lambdas.json",
-    "compile-factory": "yarn cli compile -F tz -c dex4factory && yarn compile-lambda-all-factory && yarn compile-contract -c factory && yarn cli compile-factory-lambda -F initialize_exchange",
+    "compile-factory": "yarn setup-pre-compiled && yarn compile-lambda-all-factory && yarn compile-contract -c factory && yarn cli compile-factory-lambda -F initialize_exchange",
     "compile-lambda-all-factory": "yarn compile-lambda-admin-factory && yarn compile-lambda-dex-factory && yarn compile-lambda-permit-factory && yarn compile-lambda-token-factory",
     "compile-dex-lambda-factory": "yarn -s compile-lambda -C ./contracts/main/dex4factory.ligo",
     "compile-lambda-dex-factory": "yarn -s compile-dex-lambda-factory -T Dex -J ./test/lambdas/Dex_lambdas.json",
