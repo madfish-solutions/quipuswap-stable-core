@@ -150,7 +150,7 @@ export const compile = async (options) => {
     console.log(
       `Creating output directory "${outputDirectory}" since it was not present.`
     );
-    fs.mkdirSync(outputDirectory);
+    fs.mkdirSync(outputDirectory, { recursive: true });
   }
 
   if (options.contract) {
@@ -232,7 +232,7 @@ export const compileLambdas = async (
       out_path += "/factory";
     }
     if (!fs.existsSync(`${config.outputDirectory + out_path}`)) {
-      fs.mkdirSync(`${config.outputDirectory + out_path}`);
+      fs.mkdirSync(`${config.outputDirectory + out_path}`, { recursive: true });
     }
     const json_file_path = json.split("/");
     const file_name = json_file_path[json_file_path.length - 1];
@@ -264,7 +264,9 @@ export const compileFactoryLambda = (lambda: string) => {
     const michelson = execSync(command, { maxBuffer: 1024 * 1000 }).toString();
     console.log(lambda + " successfully compiled.");
     if (!fs.existsSync(`${config.outputDirectory}/lambdas/factory`)) {
-      fs.mkdirSync(`${config.outputDirectory}/lambdas/factory`);
+      fs.mkdirSync(`${config.outputDirectory}/lambdas/factory`, {
+        recursive: true,
+      });
     }
     const file_name = lambda;
     const save_path = `${config.outputDirectory}/lambdas/factory/${file_name}.txt`;

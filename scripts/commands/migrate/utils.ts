@@ -7,7 +7,8 @@ import { confirmOperation } from "../../../utils/confirmation";
 import { NetworkLiteral, TezosAddress } from "../../../utils/helpers";
 
 export const getMigrationsList = () => {
-  if (!fs.existsSync(config.migrationsDir)) fs.mkdirSync(config.migrationsDir);
+  if (!fs.existsSync(config.migrationsDir))
+    fs.mkdirSync(config.migrationsDir, { recursive: true });
   return fs
     .readdirSync(config.migrationsDir)
     .filter((file) => file.endsWith(".ts"))
