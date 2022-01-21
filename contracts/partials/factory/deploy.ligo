@@ -23,7 +23,7 @@ const deploy_dex : deploy_dex_t =
       Unit,
       0mutez,
       unwrap(
-        (Tezos.get_entrypoint_opt("%freeze", receiver): option(contract(unit))),
+        (Tezos.get_entrypoint_opt("%freeze", pool_address): option(contract(unit))),
         "not_dex"
       )
     ) # operations;
