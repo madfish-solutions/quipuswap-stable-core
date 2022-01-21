@@ -36,13 +36,6 @@ const deploy_dex : deploy_dex_t =
     ) # operations;
     operations := set_lambd_dex(
       record[
-        func = unwrap(lambdas[1n], Errors.Dex.unknown_func);
-        index = 1n;
-      ],
-      pool_address
-    ) # operations;
-    operations := set_lambd_dex(
-      record[
         func = unwrap(lambdas[2n], Errors.Dex.unknown_func);
         index = 2n;
       ],
