@@ -32,14 +32,14 @@ function get_tokens_from_param(
   )
 
 [@inline] function set_lambd_dex(
-  const params          : set_lambda_func_t;
+  const params          : bytes;
   const receiver        : address)
                         : operation is
   Tezos.transaction(
     params,
     0mutez,
     unwrap(
-      (Tezos.get_entrypoint_opt("%copy_dex_function", receiver): option(contract(set_lambda_func_t))),
+      (Tezos.get_entrypoint_opt("%copy_dex_function", receiver): option(contract(bytes))),
       "not_dex"
     )
   )

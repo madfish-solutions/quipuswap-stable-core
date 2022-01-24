@@ -65,9 +65,10 @@ function main(
     | Set_dev_function(params)    -> s := set_function(FDev, params, s)
     | Use_dev(params)             -> s.storage.dev_store := call_dev(params, s.storage.dev_store)
 #else
-    | Copy_dex_function(params)   -> {
+    | Copy_dex_function(lambda)   -> {
       assert(Tezos.sender = s.storage.factory_address);
-      s.dex_lambdas := set_func_or_fail(params, Constants.dex_func_count, s.dex_lambdas);
+      const func = unwrap((Bytes.unpack(lambda): option(lambda_setter_t)), Errors.Dex.wrong_use_function);
+      s.dex_lambdas := func(Unit);
     }
     | Freeze -> {
       assert(Tezos.sender = s.storage.factory_address);

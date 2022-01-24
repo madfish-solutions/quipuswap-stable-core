@@ -177,7 +177,7 @@ type full_action_t      is
 (*  sets the permit (TZIP-17) function, is used before the whole system is launched *)
 | Set_dev_function        of set_lambda_func_t
 #else
-| Copy_dex_function       of set_lambda_func_t
+| Copy_dex_function       of bytes
 | Freeze                  of unit
 #endif
 

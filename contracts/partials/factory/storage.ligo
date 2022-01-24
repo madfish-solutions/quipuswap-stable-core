@@ -7,6 +7,8 @@ type callback_param_t     is [@layout:comb] record [
   sender                  : address;
 ]
 
+type key_to_pack_t      is tokens_map_t * address
+
 type input_t_v_t        is [@layout:comb] record [
   token                   : token_t;
   value                   : nat;
@@ -39,7 +41,7 @@ type inner_store_t      is [@layout:comb] record[
   quipu_token             : fa2_token_t;
   quipu_rewards           : nat;
   whitelist               : set(address);
-  deployers               : big_map(address, address);
+  // deployers               : big_map(address, address);
 ]
 
 type full_storage_t     is [@layout:comb] record [
