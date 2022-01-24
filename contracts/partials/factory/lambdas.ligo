@@ -1,8 +1,8 @@
 (* Initial exchange setup
  * note: tokens should be approved before the operation
  *)
-function initialize_exchange(
-  const params          : pool_init_prm_t;
+function add_pool(
+  const params          : pool_init_param_t;
   var s                 : full_storage_t)
                         : fact_return_t is
   block {
@@ -16,30 +16,26 @@ function initialize_exchange(
       and n_tokens = Map.size(params.tokens_info),
       Errors.Dex.wrong_tokens_count
     );
-    const result: tmp_tkns_map_t = Set.fold(get_tokens_from_param, params.input_tokens, default_tmp_tokens);
-    const tokens : tkns_map_t = result.tokens;
+    const result: tmp_tokens_map_t = Set.fold(get_tokens_from_param, params.input_tokens, default_tmp_tokens);
+    const tokens : tokens_map_t = result.tokens;
     const token_bytes : bytes = Bytes.pack(tokens);
     check_pool(token_bytes, s.storage.pool_to_address);
 
+    function set_reserves(
+      var _key          : token_pool_idx_t;
+      const value       : token_prec_info_t)
+                        : token_info_t is
+      (record [
+        rate = value.rate;
+        precision_multiplier = value.precision_multiplier;
+        reserves = 0n;
+      ] : token_info_t);
+
+    const tokens_info = Map.map(set_reserves, params.tokens_info);
 
     const token_id = 0n;
 
     assert_with_error(Constants.max_a >= params.a_constant, Errors.Dex.a_limit);
-
-    function separate_inputs(
-      var acc         : map(tkn_pool_idx_t, tkn_inf_t) * map(tkn_pool_idx_t, nat);
-      const entry     : tkn_pool_idx_t * tkn_inf_t)
-                      : map(tkn_pool_idx_t, tkn_inf_t) * map(tkn_pool_idx_t, nat) is
-      block {
-        acc.1[entry.0] := entry.1.reserves;
-        acc.0[entry.0] := entry.1 with record [ reserves = 0n; ]
-      } with acc;
-
-    const (tokens_info, inputs) = Map.fold(
-      separate_inputs,
-      params.tokens_info,
-      (params.tokens_info, (map[]:map(tkn_pool_idx_t, nat)))
-    );
 
     const pool = record [
       initial_A       = params.a_constant * Constants.a_precision;
@@ -48,12 +44,12 @@ function initialize_exchange(
       future_A_time   = Tezos.now;
       tokens_info     = tokens_info;
       fee             = record [
-        lp_fee          = 0n;
-        ref_fee         = 0n;
-        stakers_fee     = 0n;
+        lp          = 0n;
+        ref         = 0n;
+        stakers     = 0n;
       ];
       staker_accumulator  = record [
-        accumulator         = (map []: map(tkn_pool_idx_t, nat));
+        accumulator         = (map []: map(token_pool_idx_t, nat));
         total_staked        = 0n;
       ];
       total_supply        = 0n;
@@ -71,7 +67,7 @@ function initialize_exchange(
       account_data = (big_map[]: big_map((address * nat), account_data_t));
       dev_rewards = (big_map[]: big_map(token_t, nat));
       referral_rewards = (big_map[]: big_map((address * token_t), nat));
-      stakers_balance = (big_map[]: big_map((address * pool_id_t), stkr_info_t));
+      stakers_balance = (big_map[]: big_map((address * pool_id_t), staker_info_t));
       quipu_token = s.storage.quipu_token;
       factory_address = Tezos.self_address;
       started = False;
@@ -103,23 +99,15 @@ function initialize_exchange(
     s.storage.deployers[pool_address] := Tezos.sender;
 
     operations := deploy.0 # operations;
-    if not (s.storage.whitelist contains Tezos.sender)
-    then {
-      const to_burn = s.storage.init_price * s.storage.burn_rate / Constants.burn_rate_precision;
-      const to_factory = abs(s.storage.init_price - to_burn);
-      operations := typed_transfer(
-        Tezos.sender,
-        Tezos.self_address,
-        to_factory,
-        Fa2(s.storage.quipu_token)
-      ) # operations;
-      operations := typed_transfer(
-        Tezos.sender,
-        Constants.burn_address,
-        to_burn,
-        Fa2(s.storage.quipu_token)
-      ) # operations;
-      s.storage.quipu_rewards := s.storage.quipu_rewards + to_factory;
-    }
-    else skip;
+    const charges = manage_startup_charges(
+      s.storage.whitelist,
+      s.storage.init_price,
+      s.storage.burn_rate,
+      s.storage.quipu_token,
+      operations,
+      s.storage.quipu_rewards
+    );
+
+    operations := charges.ops;
+    s.storage.quipu_rewards := charges.rewards;
   } with (operations, s)

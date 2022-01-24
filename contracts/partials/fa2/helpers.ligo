@@ -29,7 +29,7 @@
 (* Perform transfers from one owner *)
 [@inline] function iterate_transfer(
   var s                 : full_storage_t;
-  const user_trx_params : trsfr_fa2_prm_t)
+  const user_trx_params : trsfr_fa2_param_t)
                         : full_storage_t is
   block {
     function make_transfer(
@@ -52,11 +52,11 @@
 (* Perform single operator update *)
 [@inline] function iterate_update_operator(
   var s                 : full_storage_t;
-  const params          : upd_operator_prm_t
+  const params          : upd_operator_param_t
 )                       : full_storage_t is
   block {
     [@inline] function upd_operator(
-      const param       : operator_fa2_prm_t;
+      const param       : operator_fa2_param_t;
       const add         : bool;
       var account_s     : big_map((address * pool_id_t), account_data_t))
                         : big_map((address * pool_id_t), account_data_t) is block {

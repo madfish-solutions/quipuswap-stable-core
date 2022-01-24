@@ -26,7 +26,7 @@ import { TokenInfo } from "../../Dex/API/types";
 import fs from "fs";
 import { DevEnabledContract } from "../../Developer/API/devAPI";
 const init_func_bytes = fs
-  .readFileSync("./build/lambdas/factory/initialize_exchange.txt")
+  .readFileSync("./build/lambdas/factory/add_pool.txt")
   .toString();
 
 export class DexFactory implements DevEnabledContract {
@@ -197,7 +197,7 @@ export class DexFactory implements DevEnabledContract {
     await confirmOperation(tezos, operation.hash);
     return operation;
   }
-  async initializeExchange(
+  async addPool(
     a_const: BigNumber = new BigNumber("100000"),
     token_info: {
       asset: TokenFA12 | TokenFA2;
@@ -257,7 +257,7 @@ export class DexFactory implements DevEnabledContract {
       };
       tokens_info.set(i, mapped_item(info));
     }
-    const opr = this.contract.methods.init_dex(
+    const opr = this.contract.methods.add_pool(
       a_const,
       input_tokens,
       tokens_info,

@@ -21,7 +21,7 @@ const proxy_limit: nat          = 100_000_000n; (* 100% of liquidity *)
 
 (* Fee constants *)
 
-const acc_precision: nat        = 10_000_000_000n;
+const accum_precision: nat      = 10_000_000_000n;
 
 const fee_denominator: nat      = 10_000_000_000n;
 

@@ -134,7 +134,7 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
     }
   }
 
-  async initializeExchange(
+  async addPool(
     a_const: BigNumber = new BigNumber("100000"),
     token_info: {
       asset: TokenFA12 | TokenFA2;
@@ -365,7 +365,7 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
     tezos: TezosToolkit
   ): Promise<TransactionOperation> {
     const operation = await this.contract.methods
-      .set_fees(pool_id, fees.lp_fee, fees.stakers_fee, fees.ref_fee)
+      .set_fees(pool_id, fees.lp, fees.stakers, fees.ref)
       .send();
 
     await confirmOperation(tezos, operation.hash);

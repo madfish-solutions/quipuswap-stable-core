@@ -61,7 +61,7 @@ export async function getLPValueSuccessCase(
   const one_LP = new BigNumber(10).pow(18);
   dex.updateStorage({ pools: [pool_id.toString()] });
   const pool_info: PairInfo = dex.storage.storage.pools[pool_id.toString()];
-  const tkns_info = pool_info.tokens_info;
+  const tokens_info = pool_info.tokens_info;
   const view_result = (await dex.contract.contractViews
     .get_tok_per_share(pool_id)
     .executeView({ viewCaller: accounts["alice"].pkh })) as MichelsonMap<
@@ -74,8 +74,8 @@ export async function getLPValueSuccessCase(
     uUSD: null,
   };
   view_result.forEach((value, key) => {
-    const tkn_info = tkns_info.get(key);
-    const expected = tkn_info.reserves
+    const token_info = tokens_info.get(key);
+    const expected = token_info.reserves
       .multipliedBy(one_LP)
       .dividedToIntegerBy(pool_info.total_supply);
     expect(value.toNumber()).toStrictEqual(expected.toNumber());

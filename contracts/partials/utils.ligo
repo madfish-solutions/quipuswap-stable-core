@@ -1,4 +1,4 @@
-function get_token_address(
+[@inline] function get_token_address(
   const token           : token_t)
                         : address is
   case token of
@@ -6,7 +6,7 @@ function get_token_address(
   | Fa12(addr) -> addr
   end
 
-function unwrap_or(
+[@inline] function unwrap_or(
   const param           : option(_a);
   const default         : _a)
                         : _a is
@@ -15,7 +15,7 @@ function unwrap_or(
   | None -> default
   end;
 
-function unwrap(
+[@inline] function unwrap(
   const param           : option(_a);
   const error           : string)
                         : _a is
@@ -31,7 +31,7 @@ function unwrap(
   unwrap(is_nat(value), err);
 
 (* Helper function to get fa2 token contract *)
-function get_fa2_token_transfer_contract(
+[@inline] function get_fa2_token_transfer_contract(
   const token_address   : address)
                         : contract(entry_fa2_t) is
   unwrap(
@@ -40,7 +40,7 @@ function get_fa2_token_transfer_contract(
   );
 
 (* Helper function to get fa1.2 token contract *)
-function get_fa12_token_transfer_contract(
+[@inline] function get_fa12_token_transfer_contract(
   const token_address   : address)
                         : contract(entry_fa12_t) is
   unwrap(
@@ -49,7 +49,7 @@ function get_fa12_token_transfer_contract(
   );
 
 (* Helper function to get fa2 token contract *)
-function get_fa2_token_approve_contract(
+[@inline] function get_fa2_token_approve_contract(
   const token_address   : address)
                         : contract(approve_fa2_t) is
   unwrap(
@@ -58,7 +58,7 @@ function get_fa2_token_approve_contract(
   );
 
 (* Helper function to get fa1.2 token contract *)
-function get_fa12_token_approve_contract(
+[@inline] function get_fa12_token_approve_contract(
   const token_address   : address)
                         : contract(approve_fa12_t) is
   unwrap(
@@ -68,7 +68,7 @@ function get_fa12_token_approve_contract(
 
 
 (* Helper function to transfer the asset based on its standard *)
-function typed_transfer(
+[@inline] function typed_transfer(
   const owner           : address;
   const receiver        : address;
   const amount_         : nat;
@@ -94,7 +94,7 @@ function typed_transfer(
       )
     end;
 
-function typed_approve(
+[@inline] function typed_approve(
   const owner           : address;
   const spender         : address;
   const amount_         : nat;
@@ -127,7 +127,7 @@ function typed_approve(
       )
     end;
 
-[@inline] function div_ceil(
+[@inline] function ceil_div(
   const numerator       : nat;
   const denominator     : nat)
                         : nat is
@@ -139,18 +139,18 @@ function typed_approve(
   end;
 
 (* Contract admin check *)
-function check_admin(
+[@inline] function check_admin(
   const admin           : address)
                         : unit is
   assert_with_error(Tezos.sender = admin, Errors.Dex.not_contract_admin);
 
 (* Contract admin or dev check *)
-function check_dev(
+[@inline] function check_dev(
   const dev             : address)
                         : unit is
   assert_with_error(Tezos.sender = dev, Errors.Dex.not_developer);
 
-function check_time_expiration(
+[@inline] function check_time_expiration(
   const exp             : timestamp)
                         : unit is
   assert_with_error(exp >= Tezos.now, Errors.Dex.time_expired);
@@ -169,7 +169,7 @@ function set_func_or_fail(
 (*
  * Helper function that merges two list`s.
  *)
-function concat_lists(
+[@inline] function concat_lists(
   const fst             : list(_a);
   const snd             : list(_a))
                         : list(_a) is
@@ -186,8 +186,8 @@ function concat_lists(
 
 (* Get token from map tokens of pool by inner index *)
 function get_token_by_id(
-  const token_id        : tkn_pool_idx_t;
-  const map_entry       : option(tkns_map_t))
+  const token_id        : token_pool_idx_t;
+  const map_entry       : option(tokens_map_t))
                         : token_t is
   block {
     const tokens = unwrap(map_entry, Errors.Dex.pool_not_listed);

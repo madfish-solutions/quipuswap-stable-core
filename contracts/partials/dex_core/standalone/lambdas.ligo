@@ -1,7 +1,7 @@
 (* Initial exchange setup
  * note: tokens should be approved before the operation
  *)
-function initialize_exchange(
+function add_pool(
   const p               : action_t;
   var s                 : storage_t)
                         : return_t is
@@ -22,18 +22,18 @@ function initialize_exchange(
       );
 
       function get_tokens_from_param(
-        var result      : tmp_tkns_map_t;
+        var result      : tmp_tokens_map_t;
         const value     : token_t)
-                        : tmp_tkns_map_t is
+                        : tmp_tokens_map_t is
         block {
           result.tokens[result.index] := value;
           result.index := result.index + 1n;
         }
         with result;
 
-      const result: tmp_tkns_map_t = Set.fold(get_tokens_from_param, params.input_tokens, default_tmp_tokens);
+      const result: tmp_tokens_map_t = Set.fold(get_tokens_from_param, params.input_tokens, default_tmp_tokens);
 
-      const tokens : tkns_map_t = result.tokens;
+      const tokens : tokens_map_t = result.tokens;
       const token_bytes : bytes = Bytes.pack(tokens);
       var (pool_i, token_id) := get_pool_info(token_bytes, s.pools_count, s.pool_to_id, s.pools);
 
@@ -51,18 +51,18 @@ function initialize_exchange(
       assert_with_error(Constants.max_a >= params.a_constant, Errors.Dex.a_limit);
 
       function separate_inputs(
-        var acc         : map(tkn_pool_idx_t, tkn_inf_t) * map(tkn_pool_idx_t, nat);
-        const entry     : tkn_pool_idx_t * tkn_inf_t)
-                        : map(tkn_pool_idx_t, tkn_inf_t) * map(tkn_pool_idx_t, nat) is
+        var accum       : map(token_pool_idx_t, token_info_t) * map(token_pool_idx_t, nat);
+        const entry     : token_pool_idx_t * token_info_t)
+                        : map(token_pool_idx_t, token_info_t) * map(token_pool_idx_t, nat) is
         block {
-          acc.1[entry.0] := entry.1.reserves;
-          acc.0[entry.0] := entry.1 with record [ reserves = 0n; ]
-        } with acc;
+          accum.1[entry.0] := entry.1.reserves;
+          accum.0[entry.0] := entry.1 with record [ reserves = 0n; ]
+        } with accum;
 
       const (tokens_info, inputs) = Map.fold(
         separate_inputs,
         params.tokens_info,
-        (params.tokens_info, (map[]:map(tkn_pool_idx_t, nat)))
+        (params.tokens_info, (map[]:map(token_pool_idx_t, nat)))
       );
 
       const pool = pool_i with record [

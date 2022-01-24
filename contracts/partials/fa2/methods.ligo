@@ -21,5 +21,5 @@ based on the provided index.
     | Total_supply(_)     -> 4n
     end;
     const lambda_bytes : bytes = unwrap(s.token_lambdas[idx], Errors.Dex.unknown_func);
-    const func: tkn_func_t = unwrap((Bytes.unpack(lambda_bytes) : option(tkn_func_t)), Errors.Dex.wrong_use_function);
+    const func: token_func_t = unwrap((Bytes.unpack(lambda_bytes) : option(token_func_t)), Errors.Dex.wrong_use_function);
   } with func(p, s, action);

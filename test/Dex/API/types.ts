@@ -15,9 +15,9 @@ export declare type AccountDataType = {
 };
 
 export declare type FeeType = {
-  lp_fee: BigNumber;
-  stakers_fee: BigNumber;
-  ref_fee: BigNumber;
+  lp: BigNumber;
+  stakers: BigNumber;
+  ref: BigNumber;
 };
 
 export declare type TokenInfo = {

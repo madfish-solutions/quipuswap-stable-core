@@ -15,5 +15,5 @@
   const s               : full_storage_t)
                         : option(address) is
   block {
-    const result: tmp_tkns_map_t = Set.fold(get_tokens_from_param, t_set, default_tmp_tokens);
+    const result: tmp_tokens_map_t = Set.fold(get_tokens_from_param, t_set, default_tmp_tokens);
   } with s.storage.pool_to_address[Bytes.pack(result.tokens)]

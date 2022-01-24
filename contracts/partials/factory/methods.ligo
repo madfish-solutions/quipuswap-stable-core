@@ -1,5 +1,5 @@
 function start_dex_func(
-  const params          : start_dex_prm_t;
+  const params          : start_dex_param_t;
   const s               : full_storage_t)
                         : fact_return_t is
   block {
@@ -22,7 +22,7 @@ function start_dex_func(
     const pool_address = unwrap(s.storage.pool_to_address[Bytes.pack(tokens)], Errors.Factory.pool_not_listed);
     const deployer = unwrap(s.storage.deployers[pool_address], Errors.Factory.pool_not_listed);
     assert_with_error(deployer = Tezos.sender, Errors.Factory.not_deployer);
-    const prm = record [
+    const param = record [
         pool_id    = 0n;
         shares     = 0n;
         in_amounts = amounts;
@@ -31,7 +31,7 @@ function start_dex_func(
         referral = (None: option(address));
       ];
     var operations: list(operation) := list[
-      call_add_liq(prm, pool_address)
+      call_add_liq(param, pool_address)
     ];
     function transfer_and_approve(
       var operations    : list(operation);
@@ -87,7 +87,7 @@ function claim_quipu(
   } with (operations, s)
 
 [@inline] function add_rem_candidate(
-  const params          : set_man_prm_t;
+  const params          : set_man_param_t;
   var   whitelist       : set(address))
                         : set(address) is
   Set.update(params.candidate, params.add, whitelist)

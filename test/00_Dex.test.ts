@@ -188,7 +188,7 @@ describe("00. Standalone Dex", () => {
           await failCase(
             "alice",
             async () =>
-              await dex.initializeExchange(a_const, inputs, false, Tezos),
+              await dex.addPool(a_const, inputs, false, Tezos),
             "not-contract-admin"
           ),
         10000

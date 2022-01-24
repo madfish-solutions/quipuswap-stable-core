@@ -8,9 +8,9 @@ import Dex from "../../API";
 import { DexStorage, FeeType } from "../../API/types";
 
 export const fees: FeeType = {
-  lp_fee: new BigNumber("2000000"),
-  stakers_fee: new BigNumber("2000000"),
-  ref_fee: new BigNumber("500000"),
+  lp: new BigNumber("2000000"),
+  stakers: new BigNumber("2000000"),
+  ref: new BigNumber("500000"),
 };
 export async function setFeesSuccessCase(
   dex: Dex,

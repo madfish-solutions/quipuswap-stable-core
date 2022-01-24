@@ -1,9 +1,9 @@
 type pool_f_storage_t   is full_storage_t
 
-type callback_prm_t     is [@layout:comb] record [
+type callback_param_t     is [@layout:comb] record [
   in_amounts              : map(nat, nat);
   pool_address            : address;
-  tokens                  : tkns_map_t;
+  tokens                  : tokens_map_t;
   sender                  : address;
 ]
 
@@ -12,16 +12,21 @@ type input_t_v_t        is [@layout:comb] record [
   value                   : nat;
 ]
 
-type start_dex_prm_t    is map(nat, input_t_v_t)
+type start_dex_param_t    is map(nat, input_t_v_t)
 
-type pool_init_prm_t    is [@layout:comb] record [
+type token_prec_info_t is [@layout:comb] record [
+  rate                    : nat;
+  precision_multiplier    : nat;
+]
+
+type pool_init_param_t    is [@layout:comb] record [
   a_constant              : nat;
   input_tokens            : set(token_t);
-  tokens_info             : map(tkn_pool_idx_t, tkn_inf_t);
+  tokens_info             : map(token_pool_idx_t, token_prec_info_t);
   default_referral        : address;
   managers                : set(address);
   metadata                : big_map(string, bytes);
-  token_metadata          : big_map(token_id_t, tkn_meta_info_t);
+  token_metadata          : big_map(token_id_t, token_meta_info_t);
   permit_def_expiry       : nat;
 ]
 
@@ -47,7 +52,7 @@ type full_storage_t     is [@layout:comb] record [
 ]
 
 type use_factory_t      is
-| Set_whitelist           of set_man_prm_t
+| Set_whitelist           of set_man_param_t
 | Set_burn_rate           of nat
 | Set_price               of nat
 | Claim_rewards           of unit
@@ -67,11 +72,11 @@ type fact_action_t      is
 (*  sets the permit (TZIP-17) function, is used before the whole system is launched *)
 | Use_dev                 of dev_action_t
 | Use_factory             of use_factory_t
-| Init_dex                of pool_init_prm_t
-| Start_dex               of start_dex_prm_t
-// | Init_callback           of callback_prm_t
+| Add_pool                of pool_init_param_t
+| Start_dex               of start_dex_param_t
+// | Init_callback           of callback_param_t
 
 
 type fact_return_t      is list(operation) * full_storage_t
 
-type init_func_t        is (pool_init_prm_t * full_storage_t) -> fact_return_t
+type init_func_t        is (pool_init_param_t * full_storage_t) -> fact_return_t

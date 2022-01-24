@@ -58,7 +58,7 @@ export async function initializeExchangeSuccessCase(
       factory.storage.storage.init_price
     );
 
-  await factory.initializeExchange(
+  await factory.addPool(
     a_const,
     inputs,
     default_referral,

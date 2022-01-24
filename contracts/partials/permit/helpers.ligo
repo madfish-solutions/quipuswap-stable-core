@@ -147,7 +147,7 @@ function set_permit_expiry(
   else (failwith(Errors.Permit.expiration_overflow) : permits_t)
 
 function transfer_sender_check(
-  const params          : transfer_prm_t;
+  const params          : transfer_param_t;
   const action          : full_action_t;
   const s               : full_storage_t)
                         : full_storage_t is
@@ -169,15 +169,15 @@ function transfer_sender_check(
 
     [@inline] function check_operator_for_transfer(
       const approved    : bool;
-      const param       : trsfr_fa2_prm_t)
+      const param       : trsfr_fa2_param_t)
                         : bool is
       block {
-        var acc : is_tx_operator_t := record [
+        var accum : is_tx_operator_t := record [
           owner    = param.from_;
           approved = True;
         ];
-        acc := List.fold(check_operator_for_tx, param.txs, acc);
-      } with approved and acc.approved;
+        accum := List.fold(check_operator_for_tx, param.txs, accum);
+      } with approved and accum.approved;
 
     const is_approved_for_all_transfers : bool = List.fold(check_operator_for_transfer, params, True);
   } with
@@ -189,7 +189,7 @@ function transfer_sender_check(
             const from_ : address = first_param.from_;
             const updated_s : full_storage_t = sender_check(from_, s, action, Errors.FA2.not_operator);
 
-            function check(const param : trsfr_fa2_prm_t): unit is
+            function check(const param : trsfr_fa2_param_t): unit is
               assert_with_error(param.from_ = from_, Errors.FA2.not_operator);
             List.iter(check, rest);
 

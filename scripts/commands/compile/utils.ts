@@ -192,7 +192,7 @@ export const compileLambdas = async (
     for (const lambda of lambdas) {
       let func;
       if (factory_path) {
-        if (lambda.name == "initialize_exchange" && factory_path) continue;
+        if (lambda.name == "add_pool" && factory_path) continue;
         func = `Bytes.pack(${lambda.name})`;
       } else {
         func = `Set_${type.toLowerCase()}_function(record [index=${

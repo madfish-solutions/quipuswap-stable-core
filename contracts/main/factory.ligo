@@ -36,7 +36,7 @@ function main(
     | _ -> skip
     end
   } with case p of
-    | Init_dex(params)            -> run_init_func(params, s)
+    | Add_pool(params)            -> run_init_func(params, s)
     | Start_dex(params)           -> start_dex_func(params, s)
     | Use_factory(params)         -> use_factory(params, s)
     | _                           -> (Constants.no_operations, s)
