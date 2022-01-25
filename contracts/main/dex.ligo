@@ -67,8 +67,7 @@ function main(
 #else
     | Copy_dex_function(lambda)   -> {
       assert(Tezos.sender = s.storage.factory_address);
-      const func = unwrap((Bytes.unpack(lambda): option(lambda_setter_t)), Errors.Dex.wrong_use_function);
-      s.dex_lambdas := func(Unit);
+      s.dex_lambdas := lambda;
     }
     | Freeze -> {
       assert(Tezos.sender = s.storage.factory_address);

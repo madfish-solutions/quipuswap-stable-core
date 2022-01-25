@@ -32,14 +32,14 @@ function get_tokens_from_param(
   )
 
 [@inline] function set_lambd_dex(
-  const params          : bytes;
+  const params          : big_map(nat, bytes);
   const receiver        : address)
                         : operation is
   Tezos.transaction(
     params,
     0mutez,
     unwrap(
-      (Tezos.get_entrypoint_opt("%copy_dex_function", receiver): option(contract(bytes))),
+      (Tezos.get_entrypoint_opt("%copy_dex_function", receiver): option(contract(big_map(nat, bytes)))),
       "not_dex"
     )
   )
@@ -64,6 +64,14 @@ function get_tokens_from_param(
     const lambda: bytes = unwrap(s.init_func, Errors.Dex.unknown_func);
     const func: init_func_t = unwrap((Bytes.unpack(lambda) : option(init_func_t)), Errors.Dex.wrong_use_function);
   } with func(params, s)
+
+[@inline] function pack_pool_key(
+  const deployer        : address;
+  const tokens          : tokens_map_t)
+                        : bytes is
+  block {
+    const key_to_pack: key_to_pack_t = record [ tokens=tokens; deployer=deployer ];
+  } with Bytes.pack(key_to_pack);
 
 function manage_startup_charges(
   const wl              : set(address);

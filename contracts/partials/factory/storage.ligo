@@ -7,7 +7,10 @@ type callback_param_t     is [@layout:comb] record [
   sender                  : address;
 ]
 
-type key_to_pack_t      is tokens_map_t * address
+type key_to_pack_t      is [@layout:comb] record [
+  tokens                : tokens_map_t;
+  deployer              : address;
+]
 
 type input_t_v_t        is [@layout:comb] record [
   token                   : token_t;

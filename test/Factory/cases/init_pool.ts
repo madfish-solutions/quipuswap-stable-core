@@ -99,7 +99,7 @@ export async function initializeExchangeSuccessCase(
         } as FA2TokenType)
   );
   const dex_address: TezosAddress = await factory.contract.contractViews
-    .get_pool(tokens)
+    .get_pool({ tokens: tokens, deployer: sender_addr })
     .executeView({ viewCaller: sender_addr });
   console.log(`DEX is ONLINE: ${dex_address}`);
   const dex = await Dex.init(tezos, dex_address, true);

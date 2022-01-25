@@ -27,9 +27,8 @@ const deploy_dex : deploy_dex_t =
         "not_dex"
       )
     ) # operations;
-    const func: lambda_setter_t = function(const _: unit): big_map(nat, bytes) is lambdas;
     operations := set_lambd_dex(
-      Bytes.pack(func),
+      lambdas,
       pool_address
     ) # operations;
   } with operations;

@@ -19,9 +19,10 @@ function start_dex_func(
         (map[]: map(nat, token_t))
       )
     );
-    const key_to_pack: key_to_pack_t = (tokens, Tezos.sender);
-    const pool_dep_key = Bytes.pack(key_to_pack);
-    const pool_address = unwrap(s.storage.pool_to_address[Bytes.pack(pool_dep_key)], Errors.Factory.pool_not_listed);
+    const pool_address = unwrap(
+      s.storage.pool_to_address[pack_pool_key(Tezos.sender, tokens)],
+      Errors.Factory.pool_not_listed
+    );
     const param = record [
         pool_id    = 0n;
         shares     = 0n;

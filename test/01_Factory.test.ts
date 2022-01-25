@@ -125,7 +125,7 @@ describe("01. Dex Factory", () => {
             } as FA2TokenType)
       );
       const dex_address: TezosAddress = await factory.contract.contractViews
-        .get_pool(tokens)
+        .get_pool({ tokens: tokens, deployer: accounts.bob.pkh })
         .executeView({ viewCaller: developer_address });
       expect(dex.contract.address).toStrictEqual(dex_address);
     });

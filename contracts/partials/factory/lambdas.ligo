@@ -93,9 +93,7 @@ function add_pool(
       pool_f_store
     );
     const pool_address = deploy.1;
-    const key_to_pack: key_to_pack_t = (tokens, Tezos.sender);
-    const pool_dep_key = Bytes.pack(key_to_pack);
-    s.storage.pool_to_address[pool_dep_key] := pool_address;
+    s.storage.pool_to_address[pack_pool_key(Tezos.sender, tokens)] := pool_address;
     s.storage.pools_count := s.storage.pools_count + 1n;
 
     // s.storage.deployers[pool_address] := Tezos.sender;
