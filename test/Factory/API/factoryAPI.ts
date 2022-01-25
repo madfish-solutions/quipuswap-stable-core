@@ -45,13 +45,13 @@ export class DexFactory implements DevEnabledContract {
       .set_init_function(init_func_bytes)
       .send();
     await confirmOperation(tezos, op.hash);
-    // await setFunctionBatchCompilled(
-    //   tezos,
-    //   factoryAddress,
-    //   "Admin",
-    //   4,
-    //   admin_lambdas_comp
-    // );
+    await setFunctionBatchCompilled(
+      tezos,
+      factoryAddress,
+      "Admin",
+      7,
+      admin_lambdas_comp.filter((value) => value.args[1].int !== "7")
+    );
     // await setFunctionBatchCompilled(
     //   tezos,
     //   factoryAddress,
@@ -77,8 +77,8 @@ export class DexFactory implements DevEnabledContract {
       tezos,
       factoryAddress,
       "Dex",
-      13,
-      dex_lambdas_comp.filter((value) => value.args[1].int !== "0")
+      8,
+      dex_lambdas_comp
     );
     await factory.updateStorage();
     return factory;

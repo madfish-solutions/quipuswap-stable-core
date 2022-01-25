@@ -232,7 +232,7 @@ function get_pool_info(
   } with (pool, token_id)
 
 (* Helper function to get pool info *)
-function get_token_info(
+[@inline] function get_token_info(
   const key             : token_pool_idx_t;
   const tokens_info     : map(token_pool_idx_t, token_info_t))
                         : token_info_t is

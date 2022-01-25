@@ -2,15 +2,13 @@
  * note: tokens should be approved before the operation
  *)
 function add_pool(
-  const p               : action_t;
+  const p               : admin_action_t;
   var s                 : storage_t)
                         : return_t is
   block {
     var operations: list(operation) := Constants.no_operations;
     case p of
     | Add_pool(params) -> {
-      check_admin(s.admin);
-
       (* Params check *)
       const n_tokens = Set.size(params.input_tokens);
 

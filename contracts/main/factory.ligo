@@ -2,11 +2,11 @@
 #import "../partials/constants.ligo" "Constants"
 #include "../partials/common_types.ligo"
 #define FACTORY
-#include "../partials/admin/types.ligo"
 #include "../partials/fa12/types.ligo"
 #include "../partials/fa2/types.ligo"
 #include "../partials/permit/types.ligo"
 #include "../partials/dex_core/storage.ligo"
+#include "../partials/admin/types.ligo"
 #include "../partials/dex_core/types.ligo"
 #include "../partials/dev/types.ligo"
 #include "../partials/factory/storage.ligo"

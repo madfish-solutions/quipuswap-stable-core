@@ -72,7 +72,7 @@ function insert_permit(
 function sender_check(
   const expected_user   : address;
   const s               : full_storage_t;
-  const action          : token_action_t;
+  const action          : permittable_action_t;
   const err_message     : string)
                         : full_storage_t is
   if Tezos.sender = expected_user
@@ -148,7 +148,7 @@ function set_permit_expiry(
 
 function transfer_sender_check(
   const params          : transfer_param_t;
-  const action          : token_action_t;
+  const action          : permittable_action_t;
   const s               : full_storage_t)
                         : full_storage_t is
   block {

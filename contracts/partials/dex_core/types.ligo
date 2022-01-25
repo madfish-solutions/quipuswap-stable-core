@@ -54,12 +54,6 @@ type info_ops_accum_t     is record [
   operations              : list(operation);
 ]
 
-type init_param_t       is [@layout:comb] record [
-  a_constant              : nat;
-  input_tokens            : set(token_t);
-  tokens_info             : map(token_pool_idx_t, token_info_t);
-]
-
 type invest_param_t     is [@layout:comb] record [
   pool_id                 : nat; (* pool identifier *)
   shares                  : nat; (* the amount of shares to receive *)
@@ -109,20 +103,9 @@ type get_dy_v_param_t   is [@layout:comb] record [
   dx                      : nat;
 ]
 
-type ramp_a_param_t     is [@layout:comb] record [
-  pool_id                 : nat; (* pool identifier *)
-  future_A                : nat;
-  future_time             : timestamp; (* response receiver *)
-]
-
 type get_a_v_param_t    is [@layout:comb] record [
   pool_id                 : nat; (* pool identifier *)
   receiver                : contract(nat);
-]
-
-type set_fee_param_t    is [@layout:comb] record [
-  pool_id                 : pool_id_t;
-  fee                     : fees_storage_t;
 ]
 
 type get_fee_v_param_t  is [@layout:comb] record [
@@ -130,17 +113,12 @@ type get_fee_v_param_t  is [@layout:comb] record [
   receiver                : contract(fees_storage_t);
 ]
 
-type claim_by_token_param_t is [@layout:comb] record [
-  token                   : token_t;
-  amount                  : nat;
-]
-
 type un_stake_param_t   is [@layout:comb] record [
   pool_id                 : pool_id_t;
   amount                  : nat;
 ]
 
-type action_t           is
+type dex_action_t           is
 (* Base actions *)
 | Swap                    of swap_param_t          (* exchanges token to another token and sends them to receiver *)
 | Invest                  of invest_param_t        (* mints min shares after investing tokens *)
@@ -148,25 +126,18 @@ type action_t           is
 (* Custom actions *)
 | Divest_imbalanced       of divest_imb_param_t
 | Divest_one_coin         of divest_one_c_param_t
-| Claim_developer         of claim_by_token_param_t
 | Claim_referral          of claim_by_token_param_t
-| Ramp_A                  of ramp_a_param_t
-| Stop_ramp_A             of nat
-| Set_fees                of set_fee_param_t
-| Set_default_referral    of address
 | Stake                   of un_stake_param_t
 | Unstake                 of un_stake_param_t
-#if !FACTORY
-| Add_pool                of init_param_t          (* sets initial liquidity *)
-#endif
+
+type permittable_action_t   is
+| Use_dex                 of dex_action_t
+| Use_token               of token_action_t
+| Use_permit              of permit_action_t
 
 type full_action_t      is
 | Use_admin               of admin_action_t
-
-| Use_dex                 of action_t
-| Use_token               of token_action_t
-
-| Use_permit              of permit_action_t
+| Permittable_action      of permittable_action_t
 #if !FACTORY
 | Use_dev                 of dev_action_t
 | Set_admin_function      of set_lambda_func_t
@@ -183,13 +154,13 @@ type full_action_t      is
 | Freeze                  of unit
 #endif
 
-type admin_func_t       is (admin_action_t * storage_t) -> storage_t
+type admin_func_t       is (admin_action_t * storage_t) -> return_t
 
-type dex_func_t         is (action_t * storage_t) -> return_t
+type dex_func_t         is (dex_action_t * storage_t) -> return_t
 
 type permit_func_t      is (permit_action_t * full_storage_t) -> full_storage_t
 
-type token_func_t       is (token_action_t * full_storage_t * full_action_t) -> full_return_t
+type token_func_t       is (token_action_t * full_storage_t) -> full_return_t
 
 type add_liq_param_t    is record [
   referral                : option(address);

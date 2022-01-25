@@ -2,7 +2,7 @@
  * note: tokens should be approved before the operation
  *)
 function swap(
-  const p               : action_t;
+  const p               : dex_action_t;
   var s                 : storage_t)
                         : return_t is
   block {
@@ -73,7 +73,7 @@ function swap(
  * note: tokens should be approved before the operation
  *)
 function invest_liquidity(
-  const p               : action_t;
+  const p               : dex_action_t;
   var s                 : storage_t)
                         : return_t is
   block {
@@ -101,7 +101,7 @@ function invest_liquidity(
 
 (* Remove liquidity (balanced) from the pool by burning shares *)
 function divest_liquidity(
-  const p               : action_t;
+  const p               : dex_action_t;
   var s                 : storage_t)
                         : return_t is
   block {
@@ -158,7 +158,7 @@ function divest_liquidity(
 
 (* Divest imbalanced *)
 function divest_imbalanced(
-  const p               : action_t;
+  const p               : dex_action_t;
   var s                 : storage_t)
                         : return_t is
   block {
@@ -269,7 +269,7 @@ function divest_imbalanced(
 
 (* Divest one coin *)
 function divest_one_coin(
-  const p               : action_t;
+  const p               : dex_action_t;
   var s                 : storage_t)
                         : return_t is
   block {
@@ -349,147 +349,9 @@ function divest_one_coin(
     end;
   } with (operations, s)
 
-(* DEX admin methods *)
-
-(* ramping A constant *)
-function ramp_A(
-  const p               : action_t;
-  var s                 : storage_t)
-                        : return_t is
-  block {
-    var operations: list(operation) := Constants.no_operations;
-    case p of
-    | Ramp_A(params) -> {
-        check_admin(s.admin);
-
-        var pool : pool_t := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
-
-        assert_with_error(Tezos.now >= pool.initial_A_time + Constants.min_ramp_time, Errors.Dex.timestamp_error);
-        assert_with_error(params.future_time >= Tezos.now + Constants.min_ramp_time, Errors.Dex.timestamp_error); // dev: insufficient time
-
-        const initial_A: nat = get_A(
-          pool.initial_A_time,
-          pool.initial_A,
-          pool.future_A_time,
-          pool.future_A
-        );
-        const future_A_p: nat = params.future_A * Constants.a_precision;
-
-        assert((params.future_A > 0n) and (params.future_A <= Constants.max_a));
-
-        if future_A_p >= initial_A
-        then assert_with_error(future_A_p <= initial_A * Constants.max_a_change, Errors.Dex.a_limit)
-        else assert_with_error(future_A_p * Constants.max_a_change >= initial_A, Errors.Dex.a_limit);
-
-        pool.initial_A := initial_A;
-        pool.future_A := future_A_p;
-        pool.initial_A_time := Tezos.now;
-        pool.future_A_time := params.future_time;
-        s.pools[params.pool_id] := pool;
-      }
-    | _ -> skip
-    end
-  } with (operations, s)
-
-(* stop ramping A constant *)
-function stop_ramp_A(
-  const p               : action_t;
-  var s                 : storage_t)
-                        : return_t is
-  block {
-    var operations: list(operation) := Constants.no_operations;
-    case p of
-    | Stop_ramp_A(pool_id) -> {
-      check_admin(s.admin);
-
-      var pool : pool_t := unwrap(s.pools[pool_id], Errors.Dex.pool_not_listed);
-      const current_A: nat = get_A(
-        pool.initial_A_time,
-        pool.initial_A,
-        pool.future_A_time,
-        pool.future_A
-      );
-
-      pool.initial_A := current_A;
-      pool.future_A := current_A;
-      pool.initial_A_time := Tezos.now;
-      pool.future_A_time := Tezos.now;
-      s.pools[pool_id] := pool;
-    }
-    | _ -> skip
-    end
-  } with (operations, s)
-
-(* updates fees percents *)
-function set_fees(
-  const p               : action_t;
-  var s                 : storage_t)
-                        : return_t is
-  block {
-    var operations: list(operation) := Constants.no_operations;
-    case p of
-    | Set_fees(params) -> {
-      check_admin(s.admin);
-
-      var pool := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
-      assert_with_error(sum_all_fee(params.fee, get_dev_fee(s)) <= Constants.fee_denominator, Errors.Dex.fee_overflow);
-      pool.fee := params.fee;
-      s.pools[params.pool_id] := pool;
-    }
-    | _ -> skip
-    end
-  } with (operations, s)
-
-(* set default referral *)
-function set_default_referral(
-  const p               : action_t;
-  var s                 : storage_t)
-                        : return_t is
-  block {
-    var operations: list(operation) := Constants.no_operations;
-    case p of
-    | Set_default_referral(params) -> {
-      check_admin(s.admin);
-
-      s.default_referral := params;
-    }
-    | _ -> skip
-    end
-  } with (operations, s)
-
-(* Claimers of rewards *)
-
-(* Developer *)
-function claim_dev(
-  const p               : action_t;
-  var s                 : storage_t)
-                        : return_t is
-  block {
-    var operations: list(operation) := Constants.no_operations;
-    case p of
-    | Claim_developer(params) -> {
-      check_dev(get_dev_address(s));
-
-      const bal = unwrap_or(s.dev_rewards[params.token], 0n);
-
-      s.dev_rewards[params.token] := nat_or_error(bal - params.amount, Errors.Dex.balance_overflow);
-
-      assert_with_error(params.amount > 0n, Errors.Dex.zero_in);
-
-      operations := typed_transfer(
-        Tezos.self_address,
-        get_dev_address(s),
-        params.amount,
-        params.token
-      ) # operations;
-    }
-    | _ -> skip
-    end;
-  } with (operations, s)
-
 (* Referral *)
 function claim_ref(
-  const p               : action_t;
+  const p               : dex_action_t;
   var s                 : storage_t)
                         : return_t is
   block {
@@ -518,7 +380,7 @@ function claim_ref(
 (* QuipuToken Stakers *)
 (* Stake *)
 function stake_staker(
-  const p               : action_t;
+  const p               : dex_action_t;
   var s                 : storage_t)
                         : return_t is
   case p of
@@ -528,7 +390,7 @@ function stake_staker(
 
 (* Unstake/harvest *)
 function unstake_staker(
-  const p               : action_t;
+  const p               : dex_action_t;
   var s                 : storage_t)
                         : return_t is
   case p of

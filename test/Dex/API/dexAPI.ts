@@ -48,6 +48,13 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
       await setFunctionBatchCompilled(
         tezos,
         dexAddress,
+        "Admin",
+        8,
+        admin_lambdas_comp
+      );
+      await setFunctionBatchCompilled(
+        tezos,
+        dexAddress,
         "Permit",
         2,
         permit_lambdas_comp
@@ -63,7 +70,7 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
         tezos,
         dexAddress,
         "Dex",
-        4,
+        8,
         dex_lambdas_comp
       );
     }

@@ -38,8 +38,7 @@ function set_expiry(
       const new_expiry : seconds_t = param.expiry;
       const specific_permit_or_default : option(blake2b_hash_t) = param.permit_hash;
 
-      // s := sender_check(owner, s, token_param, Errors.Permit.not_issuer);
-      assert(Tezos.sender = owner);
+      s := sender_check(owner, s, Use_permit(p), Errors.Permit.not_issuer);
 
       const updated_permits : permits_t = case specific_permit_or_default of
       | None       -> set_user_default_expiry(owner, new_expiry, s.permits)

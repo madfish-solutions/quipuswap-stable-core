@@ -6,8 +6,7 @@ based on the provided index.
 *)
 [@inline] function call_token(
   const p               : token_action_t;
-  var s                 : full_storage_t;
-  const action          : full_action_t)
+  var s                 : full_storage_t)
                         : full_return_t is
   block {
 #if FACTORY
@@ -22,4 +21,4 @@ based on the provided index.
     end;
     const lambda_bytes : bytes = unwrap(s.token_lambdas[idx], Errors.Dex.unknown_func);
     const func: token_func_t = unwrap((Bytes.unpack(lambda_bytes) : option(token_func_t)), Errors.Dex.wrong_use_function);
-  } with func(p, s, action);
+  } with func(p, s);

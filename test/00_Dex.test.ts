@@ -312,7 +312,7 @@ describe("00. Standalone Dex", () => {
       }, 80000);
 
       it(
-        `Should stake ${input.dividedBy(decimals.QUIPU)} QUIPU to pool`,
+        `should stake ${input.dividedBy(decimals.QUIPU)} QUIPU to pool`,
         async () =>
           await TPool.stake.stakeToPoolSuccessCase(
             dex,
@@ -537,7 +537,7 @@ describe("00. Standalone Dex", () => {
       );
 
       it.each(swap_routes)(
-        `Should swap [${normalized.toString()} %s, ~ ${normalized.toString()} %s]`,
+        `should swap [${normalized.toString()} %s, ~ ${normalized.toString()} %s]`,
         async (t_in, t_to) =>
           await TPool.PoolSwap.swapSuccessCase(
             dex,

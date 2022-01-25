@@ -5,7 +5,7 @@ based on the argument type.
 
 *)
 [@inline] function call_dex(
-  const p               : action_t;
+  const p               : dex_action_t;
   var s                 : full_storage_t)
                         : full_return_t is
   block {
@@ -14,29 +14,38 @@ based on the argument type.
 #endif
     const idx : nat = case p of
     (* Base actions *)
-    | Swap(_)                 -> 1n
-    | Invest(_)               -> 2n
-    | Divest(_)               -> 3n
+    | Swap(_)                 -> 0n
+    | Invest(_)               -> 1n
+    | Divest(_)               -> 2n
     (* Custom actions *)
-    | Divest_imbalanced(_)    -> 4n
-    | Divest_one_coin(_)      -> 5n
-    | Claim_developer(_)      -> 6n
-    | Claim_referral(_)       -> 7n
-    (* Admin actions *)
-    | Ramp_A(_)               -> 8n
-    | Stop_ramp_A(_)          -> 9n
-    | Set_fees(_)             -> 10n
-    | Set_default_referral(_) -> 11n
+    | Divest_imbalanced(_)    -> 3n
+    | Divest_one_coin(_)      -> 4n
+    | Claim_referral(_)       -> 5n
     (* QUIPU stakers *)
-    | Stake(_)                -> 12n
-    | Unstake(_)              -> 13n
-#if !FACTORY
-    | Add_pool(_)             -> 0n
-#endif
+    | Stake(_)                -> 6n
+    | Unstake(_)              -> 7n
     end;
 
     const lambda_bytes : bytes = unwrap(s.dex_lambdas[idx], Errors.Dex.unknown_func);
     const func: dex_func_t = unwrap((Bytes.unpack(lambda_bytes) : option(dex_func_t)), Errors.Dex.wrong_use_function);
     const result: return_t = func(p, s.storage);
     s.storage := result.1;
+    s := sender_check(Tezos.sender, s, Use_dex(p), Errors.Permit.not_permitted)
 } with (result.0, s)
+
+
+[@inline] function call_permittable_action(
+  const p               : permittable_action_t;
+  var s                 : full_storage_t)
+                        : full_return_t is
+  block {
+    var operations: list(operation) := Constants.no_operations;
+    case p of
+    | Use_permit(params) -> s := call_permit(params, s)
+    | _ -> skip
+    end
+  } with case p of
+    | Use_dex(params)   -> call_dex(params, s)
+    | Use_token(params) -> call_token(params, s)
+    | _ -> (operations, s)
+    end

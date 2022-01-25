@@ -20,6 +20,11 @@ type set_lambda_func_t  is [@layout:comb] record [
   index                   : nat; (* the key in functions map *)
 ]
 
+type claim_by_token_param_t is [@layout:comb] record [
+  token                   : token_t;
+  amount                  : nat;
+]
+
 type lambda_setter_t    is unit -> big_map(nat, bytes)
 
 type tokens_map_t       is map(nat, token_t); (* NOTE: maximum 4 tokens from 0 to 3 *)

@@ -7,7 +7,6 @@
 #endif
 (* Types *)
 #include "../partials/common_types.ligo"
-#include "../partials/admin/types.ligo"
 #include "../partials/fa12/types.ligo"
 #include "../partials/fa2/types.ligo"
 #include "../partials/permit/types.ligo"
@@ -16,6 +15,7 @@
 #else
 #endif
 #include "../partials/dex_core/storage.ligo"
+#include "../partials/admin/types.ligo"
 #include "../partials/dex_core/types.ligo"
 (* Helpers and functions *)
 #include "../partials/utils.ligo"
@@ -23,7 +23,6 @@
 #include "../partials/dex_core/factory/helpers.ligo"
 #else
 #include "../partials/dex_core/standalone/helpers.ligo"
-#include "../partials/dev/lambdas.ligo"
 #endif
 #include "../partials/dex_core/helpers.ligo"
 #include "../partials/fa2/helpers.ligo"
@@ -33,13 +32,14 @@
 #include "../partials/admin/lambdas.ligo"
 #include "../partials/fa2/lambdas.ligo"
 #include "../partials/permit/lambdas.ligo"
+#include "../partials/dex_core/lambdas.ligo"
 #if !FACTORY
-#include "../partials/dex_core/standalone/lambdas.ligo"
+#include "../partials/dev/lambdas.ligo"
+#include "../partials/admin/standalone/lambdas.ligo"
+(* Call methods *)
 #include "../partials/dev/methods.ligo"
 #else
 #endif
-#include "../partials/dex_core/lambdas.ligo"
-(* Call methods *)
 #include "../partials/admin/methods.ligo"
 #include "../partials/fa2/methods.ligo"
 #include "../partials/permit/methods.ligo"
@@ -55,8 +55,6 @@ function main(
   block {
     var operations := Constants.no_operations;
     case p of
-    | Use_admin(params)           -> s := call_admin(params, s)
-    | Use_permit(params)          -> s := call_permit(params, s)
 #if !FACTORY
     | Set_dex_function(params)    -> s := set_function(FDex, params, s)
     | Set_admin_function(params)  -> s := set_function(FAdmin, params, s)
@@ -77,7 +75,7 @@ function main(
     | _ -> skip
     end;
   } with case p of
-    | Use_dex(params)   -> call_dex(params, s)
-    | Use_token(params) -> call_token(params, s, p)
+    | Permittable_action(params) -> call_permittable_action(params, s)
+    | Use_admin(params) -> call_admin(params, s)
     | _ -> (operations, s)
     end

@@ -37,6 +37,7 @@ module Permit is {
   const permit_dupl               : string = "DUP_PERMIT";
   const permit_expired            : string = "EXPIRED_PERMIT";
   const expiration_overflow       : string = "EXPIRY_TOO_BIG";
+  const not_permitted             : string = "action-not-permitted";
 }
 
 module FA2 is {
