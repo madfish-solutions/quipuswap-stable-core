@@ -7,7 +7,7 @@ function transfer_ep(
   block {
     var operations := Constants.no_operations;
     s := case p of
-    | Transfer(params)  -> List.fold(iterate_transfer, params, transfer_sender_check(params, action, s))
+    | Transfer(params)  -> List.fold(iterate_transfer, params, transfer_sender_check(params, p, s))
     | _                 -> s
     end
   } with (operations, s)
@@ -24,7 +24,7 @@ function update_operators(
     | Update_operators(params) -> List.fold(
       iterate_update_operator,
       params,
-      sender_check(Tezos.sender, s, action, Errors.FA2.not_owner)
+      sender_check(Tezos.sender, s, p, Errors.FA2.not_owner)
     )
     | _ -> s
     end

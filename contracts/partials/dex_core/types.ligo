@@ -162,9 +162,11 @@ type action_t           is
 
 type full_action_t      is
 | Use_admin               of admin_action_t
+
 | Use_dex                 of action_t
-| Use_permit              of permit_action_t
 | Use_token               of token_action_t
+
+| Use_permit              of permit_action_t
 #if !FACTORY
 | Use_dev                 of dev_action_t
 | Set_admin_function      of set_lambda_func_t
@@ -185,7 +187,7 @@ type admin_func_t       is (admin_action_t * storage_t) -> storage_t
 
 type dex_func_t         is (action_t * storage_t) -> return_t
 
-type permit_func_t      is (permit_action_t * full_storage_t * full_action_t) -> full_storage_t
+type permit_func_t      is (permit_action_t * full_storage_t) -> full_storage_t
 
 type token_func_t       is (token_action_t * full_storage_t * full_action_t) -> full_return_t
 

@@ -56,10 +56,10 @@ function main(
     var operations := Constants.no_operations;
     case p of
     | Use_admin(params)           -> s := call_admin(params, s)
-    | Use_permit(params)          -> s := call_permit(params, s, p)
+    | Use_permit(params)          -> s := call_permit(params, s)
 #if !FACTORY
-    | Set_admin_function(params)  -> s := set_function(FAdmin, params, s)
     | Set_dex_function(params)    -> s := set_function(FDex, params, s)
+    | Set_admin_function(params)  -> s := set_function(FAdmin, params, s)
     | Set_permit_function(params) -> s := set_function(FPermit, params, s)
     | Set_token_function(params)  -> s := set_function(FToken, params, s)
     | Set_dev_function(params)    -> s := set_function(FDev, params, s)

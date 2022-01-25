@@ -6,8 +6,7 @@ based on the provided index.
 *)
 [@inline] function call_permit(
   const p               : permit_action_t;
-  var s                 : full_storage_t;
-  const action          : full_action_t)
+  var s                 : full_storage_t)
                         : full_storage_t is
   block {
 #if FACTORY
@@ -20,4 +19,4 @@ based on the provided index.
 
     const lambda_bytes : bytes = unwrap(s.permit_lambdas[idx], Errors.Dex.unknown_func);
     const func: permit_func_t = unwrap((Bytes.unpack(lambda_bytes) : option(permit_func_t)), Errors.Dex.wrong_use_function);
-  } with func(p, s, action)
+  } with func(p, s)

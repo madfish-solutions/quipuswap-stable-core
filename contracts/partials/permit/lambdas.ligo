@@ -1,7 +1,6 @@
 function permit(
   const p               : permit_action_t;
-  var s                 : full_storage_t;
-  const _action         : full_action_t)
+  var s                 : full_storage_t)
                         : full_storage_t is
   block {
     case p of
@@ -30,8 +29,7 @@ function permit(
 
 function set_expiry(
   const p               : permit_action_t;
-  var s                 : full_storage_t;
-  const full_param      : full_action_t)
+  var s                 : full_storage_t)
                         : full_storage_t is
   block {
     case p of
@@ -40,7 +38,8 @@ function set_expiry(
       const new_expiry : seconds_t = param.expiry;
       const specific_permit_or_default : option(blake2b_hash_t) = param.permit_hash;
 
-      s := sender_check(owner, s, full_param, Errors.Permit.not_issuer);
+      // s := sender_check(owner, s, token_param, Errors.Permit.not_issuer);
+      assert(Tezos.sender = owner);
 
       const updated_permits : permits_t = case specific_permit_or_default of
       | None       -> set_user_default_expiry(owner, new_expiry, s.permits)
