@@ -39,6 +39,11 @@
       block {
         const sender_key =  (user_trx_params.from_, transfer.token_id);
         var sender_balance := unwrap_or(s.storage.ledger[sender_key], 0n);
+        var sender_allowance: set(address) := case s.storage.account_data[sender_key] of
+            Some(data) -> data.allowances
+          | None -> (set[]: set(address))
+          end;
+        check_permissions(user_trx_params.from_, sender_allowance);
         sender_balance := nat_or_error(sender_balance - transfer.amount, Errors.FA2.insufficient_balance);
         s.storage.ledger[sender_key] := sender_balance;
 

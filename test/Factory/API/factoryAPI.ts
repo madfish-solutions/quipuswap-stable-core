@@ -15,7 +15,6 @@ import {
 } from "../../../utils/helpers";
 import { FactoryStorage } from "./types";
 import admin_lambdas_comp from "../../../build/lambdas/factory/Admin_lambdas.json";
-import permit_lambdas_comp from "../../../build/lambdas/factory/Permit_lambdas.json";
 import dex_lambdas_comp from "../../../build/lambdas/factory/Dex_lambdas.json";
 import dev_lambdas_comp from "../../../build/lambdas/test/Dev_lambdas.json";
 import token_lambdas_comp from "../../../build/lambdas/factory/Token_lambdas.json";
@@ -62,13 +61,6 @@ export class DexFactory implements DevEnabledContract {
     // await setFunctionBatchCompilled(
     //   tezos,
     //   factoryAddress,
-    //   "Permit",
-    //   2,
-    //   permit_lambdas_comp
-    // );
-    // await setFunctionBatchCompilled(
-    //   tezos,
-    //   factoryAddress,
     //   "Token",
     //   5,
     //   token_lambdas_comp
@@ -97,7 +89,6 @@ export class DexFactory implements DevEnabledContract {
           // "dev_lambdas",
           "token_lambdas",
           "admin_lambdas",
-          "permit_lambdas",
         ].includes(key)
       )
         continue;
@@ -125,7 +116,6 @@ export class DexFactory implements DevEnabledContract {
           // "dev_lambdas",
           "token_lambdas",
           "admin_lambdas",
-          "permit_lambdas",
         ].includes(key)
       )
         continue;
@@ -209,7 +199,6 @@ export class DexFactory implements DevEnabledContract {
     managers: TezosAddress[] = [],
     metadata: MichelsonMap<string, BytesString> = new MichelsonMap(),
     token_metadata: MichelsonMap<string, BytesString> = new MichelsonMap(),
-    permit_def_expiry: BigNumber = new BigNumber("2592000"),
     approve = true,
     tezos: TezosToolkit
   ): Promise<TransactionOperation> {
@@ -264,8 +253,7 @@ export class DexFactory implements DevEnabledContract {
       default_referral,
       managers,
       metadata,
-      token_metadata,
-      permit_def_expiry
+      token_metadata
     );
     const operation = await opr.send();
     await confirmOperation(tezos, operation.hash);

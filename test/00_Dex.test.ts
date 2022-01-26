@@ -41,7 +41,6 @@ describe("00. Standalone Dex", () => {
     admin: TMng,
     pools: TPool,
     rewards: TReward,
-    permit: TPermit,
     views: TView,
   } = DexTests;
 
@@ -982,78 +981,6 @@ describe("00. Standalone Dex", () => {
           dev_address,
           lambdaContractAddress,
           Tezos
-        ));
-    });
-  });
-
-  describe("7. Permits", () => {
-    const signer = "bob";
-    const receiver = "alice";
-    const sender = "eve";
-
-    const signer_account = accounts[signer];
-    const receiver_account = accounts[receiver];
-    const permitTransferParams = [
-      {
-        from_: signer_account.pkh,
-        txs: [{ to_: receiver_account.pkh, token_id: 0, amount: 10 }],
-      },
-    ];
-    const transferParamsTimeExpiry = [
-      {
-        from_: signer_account.pkh,
-        txs: [{ to_: receiver_account.pkh, token_id: 0, amount: 15 }],
-      },
-    ];
-    let paramHash: string;
-
-    describe("7.1 Standart Permit", () => {
-      it(`${signer} generates permit payload, ${receiver} submits test to contract`, async () =>
-        (paramHash = await TPermit.addPermitFromSignerByReceiverSuccessCase(
-          dex,
-          signer,
-          receiver,
-          permitTransferParams
-        )));
-
-      it(`${sender} calls contract entrypoint on ${signer}'s behalf`, async () =>
-        await TPermit.usePermit(
-          Tezos,
-          dex,
-          signer,
-          sender,
-          receiver,
-          paramHash
-        ));
-
-      it(`${sender} can't use bob's transfer anymore`, async () =>
-        await failCase(
-          sender,
-          async () =>
-            await dex.contract.methods.transfer(permitTransferParams).send(),
-          "FA2_NOT_OPERATOR"
-        ));
-    });
-
-    describe("7.2 Timeout Permit", () => {
-      it(`${signer} generates permit, ${receiver} submits test, ${signer} sets expiry`, async () =>
-        await TPermit.setWithExpiry(
-          dex,
-          signer,
-          sender,
-          transferParamsTimeExpiry
-        ));
-
-      it(`${sender} calls entrypoint on ${signer}'s behalf, but its too late`, async () =>
-        await new Promise((r) => setTimeout(r, 60000)).then(() =>
-          failCase(
-            sender,
-            async () =>
-              await dex.contract.methods
-                .transfer(transferParamsTimeExpiry)
-                .send(),
-            "EXPIRED_PERMIT"
-          )
         ));
     });
   });

@@ -9,7 +9,6 @@
 #include "../partials/common_types.ligo"
 #include "../partials/fa12/types.ligo"
 #include "../partials/fa2/types.ligo"
-#include "../partials/permit/types.ligo"
 #if !FACTORY
 #include "../partials/dev/types.ligo"
 #else
@@ -26,12 +25,10 @@
 #endif
 #include "../partials/dex_core/helpers.ligo"
 #include "../partials/fa2/helpers.ligo"
-#include "../partials/permit/helpers.ligo"
 #include "../partials/dex_core/math.ligo"
 (* Lambda entrypoints *)
 #include "../partials/admin/lambdas.ligo"
 #include "../partials/fa2/lambdas.ligo"
-#include "../partials/permit/lambdas.ligo"
 #include "../partials/dex_core/lambdas.ligo"
 #if !FACTORY
 #include "../partials/dev/lambdas.ligo"
@@ -42,7 +39,6 @@
 #endif
 #include "../partials/admin/methods.ligo"
 #include "../partials/fa2/methods.ligo"
-#include "../partials/permit/methods.ligo"
 #include "../partials/dex_core/methods.ligo"
 (* View methods *)
 #include "../partials/fa2/views.ligo"
@@ -58,7 +54,6 @@ function main(
 #if !FACTORY
     | Set_dex_function(params)    -> s := set_function(FDex, params, s)
     | Set_admin_function(params)  -> s := set_function(FAdmin, params, s)
-    | Set_permit_function(params) -> s := set_function(FPermit, params, s)
     | Set_token_function(params)  -> s := set_function(FToken, params, s)
     | Set_dev_function(params)    -> s := set_function(FDev, params, s)
     | Use_dev(params)             -> s.storage.dev_store := call_dev(params, s.storage.dev_store)
@@ -75,7 +70,7 @@ function main(
     | _ -> skip
     end;
   } with case p of
-    | Permittable_action(params) -> call_permittable_action(params, s)
+    | User_action(params) -> call_user_action(params, s)
     | Use_admin(params) -> call_admin(params, s)
     | _ -> (operations, s)
     end

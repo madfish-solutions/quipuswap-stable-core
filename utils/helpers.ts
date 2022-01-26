@@ -162,7 +162,7 @@ export async function setupLambdasToStorage(
 export async function setFunctionBatchCompilled(
   tezos: TezosToolkit,
   contract: TezosAddress,
-  type: "Dex" | "Token" | "Permit" | "Admin" | "Dev",
+  type: "Dex" | "Token" | "Admin" | "Dev",
   batchBy: number,
   comp_funcs_map
 ) {
@@ -196,7 +196,7 @@ export async function setFunctionBatchCompilled(
 export async function setFunctionCompilled(
   tezos: TezosToolkit,
   contract: TezosAddress,
-  type: "Dex" | "Token" | "Permit" | "Admin" | "Dev",
+  type: "Dex" | "Token" | "Admin" | "Dev",
   comp_funcs_map
 ) {
   let idx = 0;

@@ -97,12 +97,6 @@ type full_storage_t     is [@layout:comb] record [
   admin_lambdas           : big_map(nat, bytes); (* map with admin-related functions code *)
   dex_lambdas             : big_map(nat, bytes); (* map with exchange-related functions code *)
   token_lambdas           : big_map(nat, bytes); (* map with token-related functions code *)
-  permit_lambdas          : big_map(nat, bytes); (* map with permit-related functions code *)
-
-  (* Permits *)
-  permits                 : permits_t;
-  permits_counter         : nat;
-  default_expiry          : nat;
 ]
 
 type return_t           is list(operation) * storage_t

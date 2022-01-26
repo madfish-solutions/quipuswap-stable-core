@@ -30,22 +30,14 @@ based on the argument type.
     const func: dex_func_t = unwrap((Bytes.unpack(lambda_bytes) : option(dex_func_t)), Errors.Dex.wrong_use_function);
     const result: return_t = func(p, s.storage);
     s.storage := result.1;
-    s := sender_check(Tezos.sender, s, Use_dex(p), Errors.Permit.not_permitted)
 } with (result.0, s)
 
 
-[@inline] function call_permittable_action(
-  const p               : permittable_action_t;
+[@inline] function call_user_action(
+  const p               : user_action_t;
   var s                 : full_storage_t)
                         : full_return_t is
-  block {
-    var operations: list(operation) := Constants.no_operations;
-    case p of
-    | Use_permit(params) -> s := call_permit(params, s)
-    | _ -> skip
-    end
-  } with case p of
-    | Use_dex(params)   -> call_dex(params, s)
-    | Use_token(params) -> call_token(params, s)
-    | _ -> (operations, s)
-    end
+  case p of
+  | Use_dex(params)   -> call_dex(params, s)
+  | Use_token(params) -> call_token(params, s)
+  end

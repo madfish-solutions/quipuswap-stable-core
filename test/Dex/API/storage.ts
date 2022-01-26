@@ -31,9 +31,5 @@ const dex_storage: DexStorage = {
   admin_lambdas: new MichelsonMap(),
   dex_lambdas: new MichelsonMap(),
   token_lambdas: new MichelsonMap(),
-  permit_lambdas: new MichelsonMap(),
-  permits: new MichelsonMap(),
-  permits_counter: new BigNumber("0"),
-  default_expiry: new BigNumber("2592000"),
 };
 export default dex_storage;

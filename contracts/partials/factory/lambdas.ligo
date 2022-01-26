@@ -81,10 +81,6 @@ function add_pool(
       admin_lambdas = s.admin_lambdas;
       dex_lambdas = (big_map[]: big_map(nat, bytes));//s.dex_lambdas;//
       token_lambdas = s.token_lambdas;
-      permit_lambdas = s.permit_lambdas;
-      permits = (big_map[]: permits_t);
-      permits_counter = 0n;
-      default_expiry = params.permit_def_expiry
     ];
 
     const deploy = deploy_dex(

@@ -79,13 +79,8 @@ export declare type DexStorage = {
   metadata: MichelsonMap<string, BytesString>;
   token_metadata: MichelsonMap<string, any>;
   admin_lambdas: MichelsonMap<string, BytesString>;
-  permit_lambdas: MichelsonMap<string, BytesString>;
   dex_lambdas: MichelsonMap<string, BytesString>;
   token_lambdas: MichelsonMap<string, BytesString>;
-
-  permits: MichelsonMap<TezosAddress, any>;
-  permits_counter: BigNumber;
-  default_expiry: BigNumber;
 };
 
 export declare type RewardsType = {

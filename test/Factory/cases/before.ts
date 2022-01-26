@@ -11,7 +11,6 @@ import dev_lambdas_comp from "../../../build/lambdas/test/Dev_lambdas.json";
 import dex_lambdas_comp from "../../../build/lambdas/test/Dex_lambdas.json";
 import token_lambdas_comp from "../../../build/lambdas/test/Token_lambdas.json";
 import admin_lambdas_comp from "../../../build/lambdas/test/Admin_lambdas.json";
-import permit_lambdas_comp from "../../../build/lambdas/test/Permit_lambdas.json";
 import { defaultTokenId, TokenFA2 } from "../../Token";
 import { setupQuipuGovToken } from "../../utils/tokensSetups";
 import { accounts, dev_fee } from "../../../utils/constants";
@@ -54,7 +53,6 @@ export async function setupFactoryEnvironment(
   };
   // storage.dex_lambdas = await setupLambdasToStorage(dex_lambdas_comp);
   storage.token_lambdas = await setupLambdasToStorage(token_lambdas_comp);
-  storage.permit_lambdas = await setupLambdasToStorage(permit_lambdas_comp);
   // storage.admin_lambdas = await setupLambdasToStorage(admin_lambdas_comp);
   // storage.storage.dev_store.dev_address = accounts.eve.pkh;
   const fact_op = await Tezos.contract.originate({

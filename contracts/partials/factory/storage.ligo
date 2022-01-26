@@ -32,7 +32,6 @@ type pool_init_param_t    is [@layout:comb] record [
   managers                : set(address);
   metadata                : big_map(string, bytes);
   token_metadata          : big_map(token_id_t, token_meta_info_t);
-  permit_def_expiry       : nat;
 ]
 
 type inner_store_t      is [@layout:comb] record[
@@ -52,7 +51,6 @@ type full_storage_t     is [@layout:comb] record [
   admin_lambdas           : big_map(nat, bytes); (* map with admin-related functions code *)
   dex_lambdas             : big_map(nat, bytes); (* map with exchange-related functions code *)
   token_lambdas           : big_map(nat, bytes); (* map with token-related functions code *)
-  permit_lambdas          : big_map(nat, bytes); (* map with permit-related functions code *)
   init_func               : option(bytes);
 ]
 
@@ -73,8 +71,6 @@ type fact_action_t      is
 (*  sets the dex specific function, is used before the whole system is launched *)
 | Set_token_function      of set_lambda_func_t
 (*  sets the FA function, is used before the whole system is launched *)
-| Set_permit_function     of set_lambda_func_t
-(*  sets the permit (TZIP-17) function, is used before the whole system is launched *)
 | Use_dev                 of dev_action_t
 | Use_factory             of use_factory_t
 | Add_pool                of pool_init_param_t

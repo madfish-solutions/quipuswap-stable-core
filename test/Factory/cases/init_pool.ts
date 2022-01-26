@@ -27,7 +27,6 @@ export async function initializeExchangeSuccessCase(
   managers = [],
   metadata: MichelsonMap<string, string> = new MichelsonMap(),
   token_metadata: MichelsonMap<string, string> = new MichelsonMap(),
-  default_expiry: BigNumber = new BigNumber("2592000"),
   approve = false,
   quipuToken: TokenFA2,
   tezos: TezosToolkit,
@@ -65,7 +64,6 @@ export async function initializeExchangeSuccessCase(
     managers,
     metadata,
     token_metadata,
-    default_expiry,
     approve,
     tezos
   );

@@ -18,13 +18,11 @@ import { execSync } from "child_process";
 import { confirmOperation } from "../../../utils/confirmation";
 import { dexLambdas, tokenLambdas } from "../../storage/Functions";
 import admin_lambdas_comp from "../../../build/lambdas/test/Admin_lambdas.json";
-import permit_lambdas_comp from "../../../build/lambdas/test/Permit_lambdas.json";
 import dex_lambdas_comp from "../../../build/lambdas/test/Dex_lambdas.json";
 import dev_lambdas_comp from "../../../build/lambdas/test/Dev_lambdas.json";
 import token_lambdas_comp from "../../../build/lambdas/test/Token_lambdas.json";
 import { defaultTokenId, TokenFA12, TokenFA2 } from "../../Token";
 import { DevEnabledContract } from "../../Developer/API/devAPI";
-import { createPermitPayload, permitParamHash } from "../cases/permit";
 
 export class Dex extends TokenFA2 implements DevEnabledContract {
   public contract: ContractAbstraction<ContractProvider>;
@@ -56,13 +54,6 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
       await setFunctionBatchCompilled(
         tezos,
         dexAddress,
-        "Permit",
-        2,
-        permit_lambdas_comp
-      );
-      await setFunctionBatchCompilled(
-        tezos,
-        dexAddress,
         "Token",
         5,
         token_lambdas_comp
@@ -90,14 +81,7 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
   ): Promise<void> {
     this.storage = (await this.contract.storage()) as DexStorage;
     for (const key in maps) {
-      if (
-        [
-          "dex_lambdas",
-          "token_lambdas",
-          "admin_lambdas",
-          "permit_lambdas",
-        ].includes(key)
-      )
+      if (["dex_lambdas", "token_lambdas", "admin_lambdas"].includes(key))
         continue;
       this.storage.storage[key] = await maps[key].reduce(
         async (prev, current) => {
@@ -118,14 +102,7 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
       );
     }
     for (const key in maps) {
-      if (
-        ![
-          "dex_lambdas",
-          "token_lambdas",
-          "admin_lambdas",
-          "permit_lambdas",
-        ].includes(key)
-      )
+      if (!["dex_lambdas", "token_lambdas", "admin_lambdas"].includes(key))
         continue;
       this.storage[key] = await maps[key].reduce(async (prev, current) => {
         try {
@@ -254,17 +231,6 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
         referral
       )
       .send();
-    await permitParamHash(
-      tezos,
-      this.contract,
-      "invest",
-      poolId,
-      minShares,
-      in_amounts,
-      new BigNumber(expiration.getTime()).dividedToIntegerBy(1000),
-      receiver,
-      referral
-    ); // TODO: remove this when permits would be released
     await confirmOperation(tezos, operation.hash);
     return operation;
   }

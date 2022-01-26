@@ -31,15 +31,6 @@ module Dex is {
   const not_started               : string = "not-started";
 }
 
-module Permit is {
-  const missigned                 : string = "MISSIGNED";
-  const not_issuer                : string = "NOT_PERMIT_ISSUER";
-  const permit_dupl               : string = "DUP_PERMIT";
-  const permit_expired            : string = "EXPIRED_PERMIT";
-  const expiration_overflow       : string = "EXPIRY_TOO_BIG";
-  const not_permitted             : string = "action-not-permitted";
-}
-
 module FA2 is {
   const not_operator              : string = "FA2_NOT_OPERATOR";
   const not_owner                 : string = "FA2_NOT_OWNER";

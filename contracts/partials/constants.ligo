@@ -4,7 +4,6 @@
 const dex_func_count: nat       = 8n;
 const dev_func_count: nat       = 2n;
 const token_func_count: nat     = 5n;
-const permit_func_count: nat    = 2n;
 #if !FACTORY
 const admin_func_count: nat     = 8n;
 #else
@@ -42,8 +41,6 @@ const max_a_change: nat         = 10n;
 (* Timings *)
 
 const min_ramp_time: int        = 86400;
-
-const permit_expiry_limit: nat  = 2592000n; (* 30 days *)
 
 const burn_rate_precision: nat  = 100_0000n;
 

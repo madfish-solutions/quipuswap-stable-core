@@ -22,7 +22,6 @@ export declare type InnerFactoryStore = {
 export declare type FactoryStorage = {
   storage: InnerFactoryStore;
   admin_lambdas: MichelsonMap<string, BytesString>;
-  permit_lambdas: MichelsonMap<string, BytesString>;
   dex_lambdas: MichelsonMap<string, BytesString>;
   token_lambdas: MichelsonMap<string, BytesString>;
   init_func?: BytesString;

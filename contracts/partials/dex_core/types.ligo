@@ -1,6 +1,6 @@
 type should_unstake_fl  is Add | Remove
 
-type func_entry_t       is FAdmin | FPermit | FDex | FToken | FDev
+type func_entry_t       is FAdmin | FDex | FToken | FDev
 
 type staker_info_req_t    is [@layout:comb] record [
   user                    : address;
@@ -130,14 +130,13 @@ type dex_action_t           is
 | Stake                   of un_stake_param_t
 | Unstake                 of un_stake_param_t
 
-type permittable_action_t   is
+type user_action_t   is
 | Use_dex                 of dex_action_t
 | Use_token               of token_action_t
-| Use_permit              of permit_action_t
 
 type full_action_t      is
 | Use_admin               of admin_action_t
-| Permittable_action      of permittable_action_t
+| User_action             of user_action_t
 #if !FACTORY
 | Use_dev                 of dev_action_t
 | Set_admin_function      of set_lambda_func_t
@@ -146,8 +145,6 @@ type full_action_t      is
 (*  sets the dex specific function, is used before the whole system is launched *)
 | Set_token_function      of set_lambda_func_t
 (*  sets the FA function, is used before the whole system is launched *)
-| Set_permit_function     of set_lambda_func_t
-(*  sets the permit (TZIP-17) function, is used before the whole system is launched *)
 | Set_dev_function        of set_lambda_func_t
 #else
 | Copy_dex_function       of big_map(nat, bytes)
@@ -157,8 +154,6 @@ type full_action_t      is
 type admin_func_t       is (admin_action_t * storage_t) -> return_t
 
 type dex_func_t         is (dex_action_t * storage_t) -> return_t
-
-type permit_func_t      is (permit_action_t * full_storage_t) -> full_storage_t
 
 type token_func_t       is (token_action_t * full_storage_t) -> full_return_t
 

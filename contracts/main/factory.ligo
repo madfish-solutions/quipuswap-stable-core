@@ -4,7 +4,6 @@
 #define FACTORY
 #include "../partials/fa12/types.ligo"
 #include "../partials/fa2/types.ligo"
-#include "../partials/permit/types.ligo"
 #include "../partials/dex_core/storage.ligo"
 #include "../partials/admin/types.ligo"
 #include "../partials/dex_core/types.ligo"
@@ -30,7 +29,6 @@ function main(
     | Set_admin_function(params)  -> s                    := set_function(FAdmin,  params, s)
     | Set_dex_function(params)    -> s                    := set_function(FDex,    params, s)
     | Set_token_function(params)  -> s                    := set_function(FToken,  params, s)
-    | Set_permit_function(params) -> s                    := set_function(FPermit, params, s)
     | Use_dev(params)             -> s.storage.dev_store  := call_dev(params, s.storage.dev_store)
     // | Init_callback(params)       -> operations           := init_callback(params, s)
     | _ -> skip

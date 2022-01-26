@@ -10,7 +10,6 @@ import dev_lambdas_comp from "../../../build/lambdas/test/Dev_lambdas.json";
 import dex_lambdas_comp from "../../../build/lambdas/test/Dex_lambdas.json";
 import token_lambdas_comp from "../../../build/lambdas/test/Token_lambdas.json";
 import admin_lambdas_comp from "../../../build/lambdas/test/Admin_lambdas.json";
-import permit_lambdas_comp from "../../../build/lambdas/test/Permit_lambdas.json";
 
 import { accounts } from "../../../utils/constants";
 import { DexAPI as Dex, defaultDexStorage as storage } from "../API";
@@ -41,7 +40,6 @@ export async function setupDexEnvironment(Tezos: TezosToolkit): Promise<{
   };
   // storage.dex_lambdas = await setupLambdasToStorage(dex_lambdas_comp);
   // storage.token_lambdas = await setupLambdasToStorage(token_lambdas_comp);
-  // storage.permit_lambdas = await setupLambdasToStorage(permit_lambdas_comp);
   // storage.admin_lambdas = await setupLambdasToStorage(admin_lambdas_comp);
   storage.storage.dev_store.dev_address = accounts.eve.pkh;
   storage.storage.dev_store.dev_lambdas = await setupLambdasToStorage(

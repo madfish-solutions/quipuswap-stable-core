@@ -5,7 +5,10 @@ import {
 } from "../../Developer/cases";
 import { initializeExchangeSuccessCase } from "./init_pool";
 import { setBurnRateSuccessCase, setInitPriceSuccessCase } from "./rates";
-import { claimRewardsSuccessCase, getDeveloperRewardsDexSuccessCase } from "./rewards";
+import {
+  claimRewardsSuccessCase,
+  getDeveloperRewardsDexSuccessCase,
+} from "./rewards";
 import { updateWhitelistSuccessCase } from "./whitelist";
 export const cases = {
   before: {
