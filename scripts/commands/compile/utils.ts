@@ -211,7 +211,7 @@ export const compileLambdas = async (
               { int: lambda.index.toString() },
             ],
           }
-        : JSON.parse(michelson).args[0].args[0].args[0].args[0];
+        : JSON.parse(michelson).args[0].args[0].args[0];
       res.push(bytes);
 
       console.log(
