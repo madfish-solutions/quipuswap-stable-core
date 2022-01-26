@@ -38,12 +38,20 @@ export async function permitParamHash(
   tz: TezosToolkit,
   contract,
   entrypoint,
-  parameter
+  ...parameter: any[]
 ): Promise<string> {
   const raw_packed = await tz.rpc.packData({
-    data: contract.parameterSchema.Encode(entrypoint, parameter),
-    type: contract.parameterSchema.root.typeWithoutAnnotations(),
+    data: contract.parameterSchema.Encode(entrypoint, ...parameter).args[0]
+      .args[0].args[0],
+    type: contract.parameterSchema.root.typeWithoutAnnotations().args[0].args[0]
+      .args[0],
   });
+  console.debug(
+    JSON.stringify(contract.parameterSchema.root.typeWithoutAnnotations())
+  );
+  console.debug(
+    JSON.stringify(contract.parameterSchema.Encode(entrypoint, ...parameter))
+  );
   return blake.blake2bHex(hex2buf(raw_packed.packed), null, 32);
 }
 
@@ -51,13 +59,13 @@ export async function createPermitPayload(
   tz: TezosToolkit,
   contract: Contract,
   entrypoint: string,
-  params: any
+  ...params: any[]
 ): Promise<[string, string, string]> {
   const signer_key = await tz.signer.publicKey();
   const permit_counter = await contract
     .storage()
     .then((storage: DexStorage) => storage.permits_counter.toNumber());
-  const param_hash = await permitParamHash(tz, contract, entrypoint, params);
+  const param_hash = await permitParamHash(tz, contract, entrypoint, ...params);
   const chain_id = await tz.rpc.getChainId();
   const bytesToSign = await tz.rpc.packData({
     data: permitSchema.Encode({
@@ -76,7 +84,7 @@ export async function addPermitFromSignerByReceiverSuccessCase(
   dex: Dex,
   signer: AccountsLiteral,
   sender: AccountsLiteral,
-  params: any
+  ...params: any[]
 ) {
   const signer_account = accounts[signer];
   const tzSigner = await initTezos(signer);
@@ -86,7 +94,7 @@ export async function addPermitFromSignerByReceiverSuccessCase(
     tzSigner,
     dex.contract,
     "transfer",
-    params
+    ...params
   );
   const op = await permitContractSender.methods
     .permit(bobsKey, bobsSig, permitHash)

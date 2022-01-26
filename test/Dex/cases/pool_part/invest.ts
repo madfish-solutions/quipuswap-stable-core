@@ -3,6 +3,7 @@ import BigNumber from "bignumber.js";
 import Dex from "../../API";
 import { prepareProviderOptions } from "../../../../utils/helpers";
 import { accounts } from "../../../../utils/constants";
+import { createPermitPayload } from "../permit";
 
 export async function investLiquiditySuccessCase(
   dex: Dex,

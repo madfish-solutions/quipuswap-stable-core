@@ -5,7 +5,7 @@ import { Dex } from "../../API/dexAPI";
 import { PairInfo } from "../../API/types";
 export const future_a_const: BigNumber = new BigNumber("10000") //A const *
   .multipliedBy(new BigNumber(3).pow(3 - 1));                  // n^(n-1)
-export const future_a_time: BigNumber = new BigNumber("2000");
+export const future_a_time: BigNumber = new BigNumber("50");
 
 export async function rampASuccessCase(
   dex: Dex,

@@ -24,6 +24,7 @@ import dev_lambdas_comp from "../../../build/lambdas/test/Dev_lambdas.json";
 import token_lambdas_comp from "../../../build/lambdas/test/Token_lambdas.json";
 import { defaultTokenId, TokenFA12, TokenFA2 } from "../../Token";
 import { DevEnabledContract } from "../../Developer/API/devAPI";
+import { createPermitPayload, permitParamHash } from "../cases/permit";
 
 export class Dex extends TokenFA2 implements DevEnabledContract {
   public contract: ContractAbstraction<ContractProvider>;
@@ -236,12 +237,12 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
     minShares: BigNumber,
     expiration: Date,
     receiver: TezosAddress = null,
-    refferal: TezosAddress = null,
+    referral: TezosAddress = null,
     tezos: TezosToolkit
   ): Promise<TransactionOperation> {
     const in_amounts = new MichelsonMap();
     tokenAmounts.forEach((value, key) => {
-      in_amounts.set(key, value);
+      in_amounts.set(key, value.toNumber());
     });
     const operation = await this.contract.methods
       .invest(
@@ -250,9 +251,20 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
         in_amounts,
         new BigNumber(expiration.getTime()).dividedToIntegerBy(1000),
         receiver,
-        refferal
+        referral
       )
       .send();
+    await permitParamHash(
+      tezos,
+      this.contract,
+      "invest",
+      poolId,
+      minShares,
+      in_amounts,
+      new BigNumber(expiration.getTime()).dividedToIntegerBy(1000),
+      receiver,
+      referral
+    ); // TODO: remove this when permits would be released
     await confirmOperation(tezos, operation.hash);
     return operation;
   }
