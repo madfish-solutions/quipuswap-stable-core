@@ -48,7 +48,7 @@ export class DexFactory implements DevEnabledContract {
       tezos,
       factoryAddress,
       "Admin",
-      7,
+      8,
       admin_lambdas_comp.filter((value) => value.args[1].int !== "7")
     );
     // await setFunctionBatchCompilled(
