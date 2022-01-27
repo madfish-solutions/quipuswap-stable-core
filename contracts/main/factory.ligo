@@ -30,7 +30,6 @@ function main(
     | Set_dex_function(params)    -> s                    := set_function(FDex,    params, s)
     | Set_token_function(params)  -> s                    := set_function(FToken,  params, s)
     | Use_dev(params)             -> s.storage.dev_store  := call_dev(params, s.storage.dev_store)
-    // | Init_callback(params)       -> operations           := init_callback(params, s)
     | _ -> skip
     end
   } with case p of

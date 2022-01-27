@@ -127,6 +127,12 @@
       )
     end;
 
+[@inline] function add_rem_candidate(
+  const params          : set_man_param_t;
+  var   whitelist       : set(address))
+                        : set(address) is
+  Set.update(params.candidate, params.add, whitelist)
+
 [@inline] function ceil_div(
   const numerator       : nat;
   const denominator     : nat)

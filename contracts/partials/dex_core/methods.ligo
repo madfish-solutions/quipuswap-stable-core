@@ -41,3 +41,17 @@ based on the argument type.
   | Use_dex(params)   -> call_dex(params, s)
   | Use_token(params) -> call_token(params, s)
   end
+
+#if FACTORY
+[@inline] function factory_action(
+  const p               : factory_action_t;
+  var s                 : full_storage_t)
+                        : full_storage_t is
+  block {
+    assert(Tezos.sender = s.storage.factory_address);
+    case p of
+    | Copy_dex_function(lambda)   -> s.dex_lambdas := lambda
+    | Freeze -> s.storage.started := not s.storage.started
+    end
+  } with s
+#endif

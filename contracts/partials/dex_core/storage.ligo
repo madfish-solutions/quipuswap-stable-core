@@ -1,14 +1,14 @@
-type account_reward_t     is [@layout:comb] record [
+type account_reward_t   is [@layout:comb] record [
   reward                  : nat; (* amount of rewards to be minted for user *)
   former                  : nat; (* previous amount of rewards minted for user *)
 ]
 
-type staker_info_t        is [@layout:comb] record [
+type staker_info_t      is [@layout:comb] record [
   balance                 : nat;
   earnings                : map(token_pool_idx_t, account_reward_t);
 ]
 
-type staker_accum_t         is [@layout:comb] record [
+type staker_accum_t     is [@layout:comb] record [
   accumulator             : map(token_pool_idx_t, nat);
   total_staked            : nat;
 ]
@@ -18,13 +18,13 @@ type account_data_t     is [@layout:comb] record [
 ]
 
 type fees_storage_t     is [@layout:comb] record [
-  lp                  : nat;
-  stakers             : nat;
-  ref                 : nat;
+  lp                      : nat;
+  stakers                 : nat;
+  ref                     : nat;
 ]
 
 
-type token_info_t          is  [@layout:comb] record [
+type token_info_t       is  [@layout:comb] record [
   rate                    : nat;
   (*  value = 10eN
       where N is the number of decimal places to normalize to 10e18.

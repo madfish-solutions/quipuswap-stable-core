@@ -1,6 +1,6 @@
 type pool_f_storage_t   is full_storage_t
 
-type callback_param_t     is [@layout:comb] record [
+type callback_param_t   is [@layout:comb] record [
   in_amounts              : map(nat, nat);
   pool_address            : address;
   tokens                  : tokens_map_t;
@@ -17,14 +17,14 @@ type input_t_v_t        is [@layout:comb] record [
   value                   : nat;
 ]
 
-type start_dex_param_t    is map(nat, input_t_v_t)
+type start_dex_param_t  is map(nat, input_t_v_t)
 
-type token_prec_info_t is [@layout:comb] record [
+type token_prec_info_t  is [@layout:comb] record [
   rate                    : nat;
   precision_multiplier    : nat;
 ]
 
-type pool_init_param_t    is [@layout:comb] record [
+type pool_init_param_t  is [@layout:comb] record [
   a_constant              : nat;
   input_tokens            : set(token_t);
   tokens_info             : map(token_pool_idx_t, token_prec_info_t);

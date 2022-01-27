@@ -15,7 +15,6 @@ function set_dev_fee(
   block {
     case p of
     | Set_dev_fee(fee) -> {
-      check_dev(s.dev_address);
       assert_with_error(fee < Constants.fee_denominator / 2n, Errors.Dex.fee_overflow);
       s.dev_fee := fee;
     }

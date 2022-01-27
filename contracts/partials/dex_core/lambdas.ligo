@@ -117,16 +117,15 @@ function divest_liquidity(
       const total_supply  : nat = pool.total_supply;
 
       function divest_reserves(
-        var accum     : record [ tok_inf: map(token_pool_idx_t, token_info_t); op: list(operation) ];
-        const entry   : (token_pool_idx_t * token_t))
-                      : record [ tok_inf: map(token_pool_idx_t, token_info_t); op: list(operation) ] is
+        var accum       : record [ tok_inf: map(token_pool_idx_t, token_info_t); op: list(operation) ];
+        const entry     : (token_pool_idx_t * token_t))
+                        : record [ tok_inf: map(token_pool_idx_t, token_info_t); op: list(operation) ] is
         block {
           var token_info := unwrap(accum.tok_inf[entry.0], Errors.Dex.no_token_info);
           const min_amount_out = unwrap_or(params.min_amounts_out[entry.0], 1n);
           const value = token_info.reserves * params.shares / total_supply;
           assert_with_error(value >= min_amount_out, Errors.Dex.high_min_out);
           assert_with_error(value =/= 0n, Errors.Dex.dust_out);
-          token_info.reserves := nat_or_error(token_info.reserves - value, Errors.Dex.no_liquidity);
           accum.op := typed_transfer(
             Tezos.self_address,
             receiver,

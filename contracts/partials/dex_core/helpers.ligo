@@ -20,7 +20,9 @@ function sum_all_fee(
   const dev_fee         : nat;
   const token_info      : token_info_t)
                         : token_info_t is
-  token_info with record [ reserves = nat_or_error(token_info.reserves - sum_wo_lp_fee(fees, dev_fee), Errors.Dex.low_reserves); ]
+  token_info with record [
+    reserves = nat_or_error(token_info.reserves - sum_wo_lp_fee(fees, dev_fee), Errors.Dex.low_reserves);
+  ]
 
 (* Helper for separating fee when request is imbalanced *)
 [@inline] function divide_fee_for_balance(
@@ -108,9 +110,8 @@ function update_former_and_transfer(
   const shares          : nat;
   const staker_accum    : staker_info_t;
   const pool_stake_accum: staker_accum_t;
-  const quipu_token     : fa2_token_t;
-  const operations      : list(operation))
-                        : record [ account: staker_info_t; staker_accumulator: staker_accum_t; ops: list(operation); ] is
+  const quipu_token     : fa2_token_t)
+                        : record [ account: staker_info_t; staker_accumulator: staker_accum_t; op: operation; ] is
   block {
     const (
       new_balance,
@@ -151,12 +152,12 @@ function update_former_and_transfer(
     staker_accumulator = pool_stake_accum with record [
       total_staked = total_staked
     ];
-    ops = typed_transfer(
+    op = typed_transfer(
       forwarder,
       receiver,
       shares,
       Fa2(quipu_token)
-    ) # operations;
+    );
   ]
 
 (* Harvest staked rewards and stakes/unstakes QUIPU tokens if amount > 0n *)
@@ -191,12 +192,11 @@ function perform_un_stake(
         params.amount,
         staker_accum,
         pool.staker_accumulator,
-        s.quipu_token,
-        operations
+        s.quipu_token
       );
       staker_accum := after_updates.account;
       pool.staker_accumulator := after_updates.staker_accumulator;
-      operations := after_updates.ops;
+      operations := after_updates.op # operations;
     }
     else skip;
     s.pools[params.pool_id] := pool;

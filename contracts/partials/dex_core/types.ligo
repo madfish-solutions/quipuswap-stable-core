@@ -2,17 +2,17 @@ type should_unstake_fl  is Add | Remove
 
 type func_entry_t       is FAdmin | FDex | FToken | FDev
 
-type staker_info_req_t    is [@layout:comb] record [
+type staker_info_req_t  is [@layout:comb] record [
   user                    : address;
   pool_id                 : pool_id_t;
 ]
 
-type staker_res           is [@layout:comb] record [
+type staker_res         is [@layout:comb] record [
   balance                 : nat;
   rewards                 : map(token_pool_idx_t, nat);
 ]
 
-type staker_info_res_t    is [@layout:comb] record [
+type staker_info_res_t  is [@layout:comb] record [
   request                 : staker_info_req_t;
   info                    : staker_res;
 ]
@@ -49,7 +49,7 @@ type tmp_get_d_t        is [@layout:comb] record [
   prev_d                  : nat;
 ]
 
-type info_ops_accum_t     is record [
+type info_ops_accum_t   is record [
   tokens_info             : map(token_pool_idx_t, token_info_t);
   operations              : list(operation);
 ]
@@ -118,7 +118,7 @@ type un_stake_param_t   is [@layout:comb] record [
   amount                  : nat;
 ]
 
-type dex_action_t           is
+type dex_action_t       is
 (* Base actions *)
 | Swap                    of swap_param_t          (* exchanges token to another token and sends them to receiver *)
 | Invest                  of invest_param_t        (* mints min shares after investing tokens *)
@@ -130,9 +130,15 @@ type dex_action_t           is
 | Stake                   of un_stake_param_t
 | Unstake                 of un_stake_param_t
 
-type user_action_t   is
+type user_action_t      is
 | Use_dex                 of dex_action_t
 | Use_token               of token_action_t
+
+#if FACTORY
+type factory_action_t   is
+| Copy_dex_function       of big_map(nat, bytes)
+| Freeze                  of unit
+#endif
 
 type full_action_t      is
 | Use_admin               of admin_action_t
@@ -147,8 +153,7 @@ type full_action_t      is
 (*  sets the FA function, is used before the whole system is launched *)
 | Set_dev_function        of set_lambda_func_t
 #else
-| Copy_dex_function       of big_map(nat, bytes)
-| Freeze                  of unit
+| Factory_action          of factory_action_t
 #endif
 
 type admin_func_t       is (admin_action_t * storage_t) -> return_t
@@ -166,7 +171,7 @@ type add_liq_param_t    is record [
   receiver                : option(address);
 ]
 
-type balancing_accum_t    is record [
+type balancing_accum_t  is record [
   dev_rewards             : big_map(token_t, nat);
   referral_rewards        : big_map((address * token_t), nat);
   staker_accumulator      : staker_accum_t;

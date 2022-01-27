@@ -32,6 +32,8 @@ function start_dex_func(
         referral = (None: option(address));
       ];
     var operations: list(operation) := list[
+      set_lambd_dex(s.dex_lambdas, pool_address);
+      unfreeze_dex(pool_address);
       call_add_liq(param, pool_address)
     ];
     function transfer_and_approve(
@@ -69,7 +71,6 @@ function start_dex_func(
         else skip;
       } with operations;
     operations := Map.fold(transfer_and_approve, amounts, operations);
-    operations := add_dex_lambdas(operations, pool_address, s.dex_lambdas);
   } with (operations, s)
 
 function claim_quipu(
@@ -86,12 +87,6 @@ function claim_quipu(
     ];
     s.storage.quipu_rewards := 0n;
   } with (operations, s)
-
-[@inline] function add_rem_candidate(
-  const params          : set_man_param_t;
-  var   whitelist       : set(address))
-                        : set(address) is
-  Set.update(params.candidate, params.add, whitelist)
 
 function use_factory(
   const params          : use_factory_t;

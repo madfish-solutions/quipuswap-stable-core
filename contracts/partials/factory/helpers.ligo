@@ -27,7 +27,7 @@ function get_tokens_from_param(
     0mutez,
     unwrap(
       (Tezos.get_entrypoint_opt("%invest", receiver): option(contract(invest_param_t))),
-      "not_dex"
+      Errors.Factory.not_dex
     )
   )
 
@@ -40,7 +40,19 @@ function get_tokens_from_param(
     0mutez,
     unwrap(
       (Tezos.get_entrypoint_opt("%copy_dex_function", receiver): option(contract(big_map(nat, bytes)))),
-      "not_dex"
+      Errors.Factory.not_dex
+    )
+  )
+
+[@inline] function unfreeze_dex(
+  const receiver        : address)
+                        : operation is
+  Tezos.transaction(
+    Unit,
+    0mutez,
+    unwrap(
+      (Tezos.get_entrypoint_opt("%freeze", receiver): option(contract(unit))),
+      Errors.Factory.not_dex
     )
   )
 

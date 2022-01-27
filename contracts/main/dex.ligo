@@ -58,14 +58,7 @@ function main(
     | Set_dev_function(params)    -> s := set_function(FDev, params, s)
     | Use_dev(params)             -> s.storage.dev_store := call_dev(params, s.storage.dev_store)
 #else
-    | Copy_dex_function(lambda)   -> {
-      assert(Tezos.sender = s.storage.factory_address);
-      s.dex_lambdas := lambda;
-    }
-    | Freeze -> {
-      assert(Tezos.sender = s.storage.factory_address);
-      s.storage.started := not s.storage.started
-    }
+    | Factory_action(params)      -> s := factory_action(params, s)
 #endif
     | _ -> skip
     end;

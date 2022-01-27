@@ -6,7 +6,7 @@ function add_rem_managers(
   case p of
   | Add_rem_managers(params) -> (
     Constants.no_operations,
-    s with record [ managers = Set.update(params.candidate, params.add, s.managers) ]
+    s with record [ managers = add_rem_candidate(params, s.managers) ]
   )
   | _ -> (Constants.no_operations, s)
   end
@@ -60,11 +60,12 @@ function ramp_A(
         then assert_with_error(future_A_p <= initial_A * Constants.max_a_change, Errors.Dex.a_limit)
         else assert_with_error(future_A_p * Constants.max_a_change >= initial_A, Errors.Dex.a_limit);
 
-        pool.initial_A := initial_A;
-        pool.future_A := future_A_p;
-        pool.initial_A_time := Tezos.now;
-        pool.future_A_time := params.future_time;
-        s.pools[params.pool_id] := pool;
+        s.pools[params.pool_id] := pool with record [
+        initial_A = initial_A;
+        future_A = future_A_p;
+        initial_A_time = Tezos.now;
+        future_A_time = params.future_time;
+      ];
       }
     | _ -> skip
     end
@@ -85,12 +86,12 @@ function stop_ramp_A(
         pool.future_A_time,
         pool.future_A
       );
-
-      pool.initial_A := current_A;
-      pool.future_A := current_A;
-      pool.initial_A_time := Tezos.now;
-      pool.future_A_time := Tezos.now;
-      s.pools[pool_id] := pool;
+      s.pools[pool_id] := pool with record [
+        initial_A = current_A;
+        future_A = current_A;
+        initial_A_time = Tezos.now;
+        future_A_time = Tezos.now;
+      ];
     }
     | _ -> skip
     end
@@ -104,10 +105,9 @@ function set_fees(
   block {
     case p of
     | Set_fees(params) -> {
-      var pool := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
       assert_with_error(sum_all_fee(params.fee, get_dev_fee(s)) <= Constants.fee_denominator, Errors.Dex.fee_overflow);
-      pool.fee := params.fee;
-      s.pools[params.pool_id] := pool;
+      var pool := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
+      s.pools[params.pool_id] := pool with record[ fee = params.fee ];
     }
     | _ -> skip
     end

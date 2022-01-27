@@ -1,4 +1,4 @@
-type set_man_param_t      is [@layout:comb] record [
+type set_man_param_t    is [@layout:comb] record [
   add                     : bool;
   candidate               : address;
 ]
