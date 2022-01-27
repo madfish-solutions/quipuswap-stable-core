@@ -72,7 +72,6 @@ class StableSwapTest(TestCase):
             "referral" : None,
         }))
 
-        print("")
         trxs = parse_transfers(res)
         pprint(trxs)
 
@@ -244,42 +243,47 @@ class StableSwapTest(TestCase):
             self.assertEqual(transfers[0]["amount"], int(300 * ratio))
             self.assertEqual(transfers[1]["amount"], 300)
 
-    #TODO
     def test_divest_big_a_small_b(self):
         me = self.dex.context.get_sender()
         chain = LocalChain(storage=self.init_storage)
         res = chain.execute(self.dex.add_pool(A_CONST, [token_a_alt, token_b_alt], form_pool_rates(100_000_000, 50)), sender=admin)
-        
-        with self.assertRaises(MichelsonRuntimeError):
-            invest = self.dex.invest(pool_id=0, shares=1, in_amounts={0: 2_000_000 - 1, 1: 1}, time_expiration=1, receiver=None, referral=None)
-            chain.execute(invest) 
 
         invest = self.dex.invest(pool_id=0, shares=1, in_amounts={0: 3_600_000, 1: 1}, time_expiration=1, receiver=None, referral=None)
+        res = chain.execute(invest)
         transfers = parse_transfers(res)
         self.assertEqual(transfers[0]["amount"], 1)
-        self.assertEqual(transfers[1]["amount"], 2_000_000)
+        self.assertEqual(transfers[1]["amount"], 3_600_000)
 
-        all_shares = res.storage["storage"]["ledger"][(me,0)]["balance"]
-        res = chain.execute(self.dex.divest(0, 1, 1, all_shares, 100))
+        all_shares = res.storage["storage"]["ledger"][(me,0)]
+        res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=all_shares, time_expiration=1, receiver=None))
+
         transfers = parse_transfers(res)
         self.assertEqual(transfers[0]["amount"], 1)
-        self.assertEqual(transfers[1]["amount"], 2_000_000)
+        self.assertEqual(transfers[1]["amount"], 3_600_000)
 
     # TODO
     def test_reinitialize(self):
         chain = LocalChain(storage=self.init_storage)
-        chain.execute(self.dex.add_pool(A_CONST, [token_a_alt, token_b_alt], form_pool_rates(100_000_000, 50)), sender=admin)
+        res = chain.execute(self.dex.add_pool(A_CONST, [token_a_alt, token_b_alt], form_pool_rates(10, 10)), sender=admin)
 
-        chain.execute(self.dex.divest(0, 1, 1, 10, 100))
+        # pprint(res.storage)
+        # json.dump()
+        # return
 
-        # following fails since pair is considered uninitialized
+        all_shares = res.storage["storage"]["ledger"][(admin,0)]
+        print("all shares", all_shares)
+        res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=all_shares, time_expiration=1, receiver=None), sender=admin)
+
+        # following fails since pair is considered uninitialized¡
         with self.assertRaises(MichelsonRuntimeError):
-            chain.execute(self.dex.invest(0, 10, 10, 1, 100))
+            invest = self.dex.invest(pool_id=0, shares=1, in_amounts={0: 10, 1: 10}, time_expiration=1, receiver=None, referral=None)
+            chain.execute(invest)
 
-        chain.execute(self.dex.addPair(pair, 10, 10))
+        res = chain.execute(self.dex.add_pool(A_CONST, [token_a_alt, token_b_alt], form_pool_rates(10, 10)), sender=admin)
 
-        # now you can invest normally
-        chain.execute(self.dex.invest(pair_id=0, token_a_in=10, token_b_in=10, shares=10, deadline=100))
+        # # now you can invest normally
+        res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=all_shares//2, time_expiration=1, receiver=None), sender=admin)
+
 
     def test_divest_smallest(self):
         chain = LocalChain(storage=self.init_storage)
