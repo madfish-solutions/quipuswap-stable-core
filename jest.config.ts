@@ -15,6 +15,7 @@ const config = {
   preset: "ts-jest/presets/js-with-ts",
   testEnvironment: "node",
   testRunner: "jest-circus/runner",
+  verbose: true,
 };
 
 /** @type {import('ts-jest/dist/types').InitialOptionsTsJest} */

@@ -1,7 +1,7 @@
 import { Command } from "commander";
-import { NetworkLiteral } from "../../helpers/utils";
+import { NetworkLiteral } from "../../../utils/helpers";
 import { getMigrationsList, runMigrations } from "./utils";
-import { accounts } from "../../../test/Dex/constants";
+import { accounts } from "../../../utils/constants";
 
 export const addMigrateCommand = (program: Command) => {
   const migrations = getMigrationsList();

@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 /* eslint-disable jest/require-hook */
 import { Command } from "commander";
-import { addCompileCommand, addCompileLambdaCommand } from "./commands/compile";
+import {
+  addCompileCommand,
+  addCompileFactoryLambda,
+  addCompileLambdaCommand,
+} from "./commands/compile";
 import { addMigrateCommand } from "./commands/migrate";
 import { addSandboxCommand } from "./commands/sandbox";
 
@@ -25,5 +29,6 @@ addCompileCommand(program);
 addCompileLambdaCommand(program);
 addSandboxCommand(program);
 addMigrateCommand(program);
+addCompileFactoryLambda(program);
 
 program.parse(process.argv);

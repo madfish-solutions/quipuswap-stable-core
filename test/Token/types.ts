@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 import { MichelsonMap } from "@taquito/taquito";
-import { TezosAddress } from "../../scripts/helpers/utils";
+import { TezosAddress } from "../../utils/helpers";
 export declare type AccountTokenInfo = {
   balance: BigNumber;
   allowances: MichelsonMap<TezosAddress, BigNumber>;

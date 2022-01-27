@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { compile, compileLambdas } from "./utils";
+import { compile, compileFactoryLambda, compileLambdas } from "./utils";
 
 export const addCompileCommand = (program: Command) => {
   program
@@ -13,6 +13,11 @@ export const addCompileCommand = (program: Command) => {
       "-l, --ligo-version <version>",
       `Choose a specific LIGO version in format exmpl: 0.31.0 or "next". Default is "next".`,
       "next"
+    )
+    .option(
+      "-F, --format <format>",
+      `Choose a specific LIGO format: tz or json. Default is "json".`,
+      "json"
     )
     .action((options) => {
       compile(options);
@@ -35,5 +40,16 @@ export const addCompileLambdaCommand = (program: Command) => {
     .showHelpAfterError(true)
     .action(async (argv) => {
       compileLambdas(argv.json, argv.contract, argv.type);
+    });
+};
+
+export const addCompileFactoryLambda = (program: Command) => {
+  program
+    .command("compile-factory-lambda")
+    .description("Compile initialize exchange function for factory.")
+    .requiredOption("-F, --lambda <lambda>", "Lambda function name")
+    .showHelpAfterError(true)
+    .action(async (argv) => {
+      compileFactoryLambda(argv.lambda);
     });
 };

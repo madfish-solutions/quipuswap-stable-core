@@ -1,40 +1,27 @@
 (* 0n *)
 function transfer_ep(
     const p             : token_action_t;
-    var s               : full_storage_t;
-    const action        : full_action_t)
+    var s               : full_storage_t)
                         : full_return_t is
-  block {
-    var operations := Constants.no_operations;
-    s := case p of
-    | Transfer(params)  -> List.fold(iterate_transfer, params, transfer_sender_check(params, action, s))
-    | _                 -> s
-    end
-  } with (operations, s)
+  case p of
+  | Transfer(params)  -> (Constants.no_operations, List.fold(iterate_transfer, params, s))
+  | _                 -> (Constants.no_operations, s)
+  end
 
 (* 2n *)
 function update_operators(
   const p               : token_action_t;
-  var   s               : full_storage_t;
-  const action          : full_action_t)
+  var   s               : full_storage_t)
                         : full_return_t is
-  block {
-    var operations := Constants.no_operations;
-    s := case p of
-    | Update_operators(params) -> List.fold(
-      iterate_update_operator,
-      params,
-      sender_check(Tezos.sender, s, action, Errors.FA2.not_owner)
-    )
-    | _ -> s
-    end
-  } with (operations, s)
+  case p of
+  | Update_operators(params) -> (Constants.no_operations, List.fold(iterate_update_operator, params, s))
+  | _ -> (Constants.no_operations, s)
+  end
 
 (* 3n *)
 function update_token_metadata(
     const p             : token_action_t;
-    var   s             : full_storage_t;
-    const _action       : full_action_t)
+    var   s             : full_storage_t)
                         : full_return_t is
   block {
     var operations := Constants.no_operations;
