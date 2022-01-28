@@ -22,6 +22,13 @@ me = "tz1Ke2h7sDdakHJQh8WX4Z372du1KChsksyU"
 
 deadline = 100_000
 
+def format_number(data_value, indx):
+    if data_value >= 1_000_000:
+        formatter = '{:1.1f}M'.format(data_value*0.000_001)
+    else:
+        formatter = '{:1.0f}K'.format(data_value*0.001)
+    return formatter
+
 def print_pool_stats(res):
     print("\n")
     print("token_pool:", res.storage["storage"]["token_pool"])
