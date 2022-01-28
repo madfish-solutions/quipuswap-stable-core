@@ -7,6 +7,7 @@ import { execSync, spawn } from "child_process";
 const _compileFile = async (
   contractFileName: string,
   ligoVersion: string,
+  isDockerizedLigo = config.dockerizedLigo,
   format: "tz" | "json" = "json"
 ): Promise<void> => {
   return new Promise((resolve, reject) => {
@@ -71,26 +72,43 @@ const _compileFile = async (
       michelson: "",
     };
 
-    const args = [
-      "run",
-      "--rm",
-      "-v",
-      `${cwd}:${cwd}`,
-      "-w",
-      `${cwd}`,
-      `ligolang/ligo:${ligoVersion}`,
+    const { ligo_executable, args } = isDockerizedLigo
+      ? {
+          ligo_executable: "docker",
+          args: [
+            "run",
+            "--rm",
+            "-v",
+            `${cwd}:${cwd}`,
+            "-w",
+            `${cwd}`,
+            `ligolang/ligo:${ligoVersion}`,
+            "compile",
+            "contract",
+            `${sourcePath}`,
+            "-e",
+            "main",
+            "--protocol",
+            "hangzhou",
+          ],
+        }
+      : {
+          ligo_executable: config.ligoLocalPath,
+          args: [],
+        };
+    args.push(
       "compile",
       "contract",
       `${sourcePath}`,
       "-e",
       "main",
       "--protocol",
-      "hangzhou",
-    ];
+      "hangzhou"
+    );
     if (format === "json") args.push("--michelson-format", "json");
 
     console.debug(`\t🔥 Compiling with LIGO (${ligoVersion})...`);
-    const ligo = spawn("docker", args, {});
+    const ligo = spawn(ligo_executable, args, {});
 
     ligo.on("close", async () => {
       console.log("\t\t✅ Done.");
@@ -154,12 +172,22 @@ export const compile = async (options) => {
   }
 
   if (options.contract) {
-    await _compileFile(options.contract, config.ligoVersion, options.format);
+    await _compileFile(
+      options.contract,
+      config.ligoVersion,
+      options.docker,
+      options.format
+    );
   } else {
     const contracts = getContractsList();
 
     for (const contract of contracts) {
-      await _compileFile(contract, config.ligoVersion, options.format);
+      await _compileFile(
+        contract,
+        config.ligoVersion,
+        options.docker,
+        options.format
+      );
     }
   }
 };
@@ -168,13 +196,16 @@ export const compile = async (options) => {
 export const compileLambdas = async (
   json: string,
   contract: string,
+  isDockerizedLigo = config.dockerizedLigo,
   type: "Dex" | "Token" | "Permit" | "Admin" | "Dev"
 ) => {
   console.log(`Compiling ${contract} contract lambdas of ${type} type...\n`);
 
   const test_path = contract.toLowerCase().includes("test");
   const factory_path = contract.toLowerCase().includes("factory");
-  const ligo = `docker run -v $PWD:$PWD --rm -i -w $PWD ligolang/ligo:${config.ligoVersion}`;
+  const ligo = isDockerizedLigo
+    ? `docker run -v $PWD:$PWD --rm -i -w $PWD ligolang/ligo:${config.ligoVersion}`
+    : config.ligoLocalPath;
   const pwd = execSync("echo $PWD").toString();
   const lambdas = JSON.parse(
     fs.readFileSync(`${pwd.slice(0, pwd.length - 1)}/${json}`).toString()
@@ -244,11 +275,14 @@ export const compileLambdas = async (
   }
 };
 
-export const compileFactoryLambda = (lambda: string) => {
+export const compileFactoryLambda = (
+  lambda: string,
+  isDockerizedLigo: boolean = config.dockerizedLigo
+) => {
   console.log(`Compiling Factory contract lambda ${lambda}...\n`);
-  const ligo = `docker run -v $PWD:$PWD --rm -i -w $PWD ligolang/ligo:${config.ligoVersion}`;
-  const pwd = execSync("echo $PWD").toString();
-  const res = [];
+  const ligo = isDockerizedLigo
+    ? `docker run -v $PWD:$PWD --rm -i -w $PWD ligolang/ligo:${config.ligoVersion}`
+    : config.ligoLocalPath;
   const old_cli = Number(config.ligoVersion.split(".")[2]) > 25;
   let ligo_command: string;
   if (old_cli) {

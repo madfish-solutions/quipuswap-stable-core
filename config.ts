@@ -41,6 +41,8 @@ export const config = {
   contractsDirectory: "contracts/main",
   outputDirectory: "build",
   migrationsDir: "migrations",
+  dockerizedLigo: true,
+  ligoLocalPath: "./ligo",
 };
 
 export default config;

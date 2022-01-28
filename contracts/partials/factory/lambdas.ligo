@@ -25,11 +25,14 @@ function add_pool(
       var _key          : token_pool_idx_t;
       const value       : token_prec_info_t)
                         : token_info_t is
-      (record [
+      block {
+        const is_correct_rate: bool = (value.rate / value.precision_multiplier = Constants.precision);
+        assert_with_error(is_correct_rate, Errors.Dex.wrong_precision);
+      } with record [
         rate = value.rate;
         precision_multiplier = value.precision_multiplier;
         reserves = 0n;
-      ] : token_info_t);
+      ];
 
     const tokens_info = Map.map(set_reserves, params.tokens_info);
 
