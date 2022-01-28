@@ -21,6 +21,11 @@ export const addCompileCommand = (program: Command) => {
       "json"
     )
     .option("-d, --docker", "Run compiler in Docker", config.dockerizedLigo)
+    .option(
+      "--no-docker",
+      `Run compiler with local Ligo exec file (${config.ligoLocalPath})`,
+      !config.dockerizedLigo
+    )
     .action((options) => {
       compile(options);
     });
@@ -40,6 +45,11 @@ export const addCompileLambdaCommand = (program: Command) => {
       "input file realtive path (with lambdas Ligo code)"
     )
     .option("-d, --docker", "Run compiler in Docker", config.dockerizedLigo)
+    .option(
+      "--no-docker",
+      `Run compiler with local Ligo exec file (${config.ligoLocalPath})`,
+      !config.dockerizedLigo
+    )
     .showHelpAfterError(true)
     .action(async (argv) => {
       compileLambdas(argv.json, argv.contract, argv.docker, argv.type);
@@ -52,6 +62,11 @@ export const addCompileFactoryLambda = (program: Command) => {
     .description("Compile initialize exchange function for factory.")
     .requiredOption("-F, --lambda <lambda>", "Lambda function name")
     .option("-d, --docker", "Run compiler in Docker", config.dockerizedLigo)
+    .option(
+      "--no-docker",
+      `Run compiler with local Ligo exec file (${config.ligoLocalPath})`,
+      !config.dockerizedLigo
+    )
     .showHelpAfterError(true)
     .action(async (argv) => {
       compileFactoryLambda(argv.lambda, argv.docker);
