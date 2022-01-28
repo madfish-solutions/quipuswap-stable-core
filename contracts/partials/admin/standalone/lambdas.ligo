@@ -24,6 +24,8 @@ function add_pool(
         const value     : token_t)
                         : tmp_tokens_map_t is
         block {
+          const is_correct_rate: bool = (value.rate / value.precision_multiplier = Constants.precision);
+          assert_with_error(is_correct_rate, Errors.Dex.wrong_precision)
           result.tokens[result.index] := value;
           result.index := result.index + 1n;
         }
