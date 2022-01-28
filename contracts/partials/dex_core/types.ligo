@@ -39,7 +39,7 @@ type swap_param_t       is [@layout:comb] record [
   idx_to                  : token_pool_idx_t;
   amount                  : nat;
   min_amount_out          : nat;
-  time_expiration         : timestamp;
+  deadline                : timestamp;
   receiver                : option(address);
   referral                : option(address);
 ]
@@ -57,8 +57,8 @@ type info_ops_accum_t   is record [
 type invest_param_t     is [@layout:comb] record [
   pool_id                 : nat; (* pool identifier *)
   shares                  : nat; (* the amount of shares to receive *)
-  in_amounts              : map(nat, nat); (* amount of tokens, where `index of value` == `index of token` to be invested *)
-  time_expiration         : timestamp;
+  in_amounts              : map(token_pool_idx_t, nat); (* amount of tokens, where `index of value` == `index of token` to be invested *)
+  deadline                : timestamp;
   receiver                : option(address);
   referral                : option(address);
 ]
@@ -67,7 +67,7 @@ type divest_param_t     is [@layout:comb] record [
   pool_id                 : nat; (* pool identifier *)
   min_amounts_out         : map(token_pool_idx_t, nat); (* min amount of tokens, where `index of value` == `index of token` to be received to accept the divestment *)
   shares                  : nat; (* amount of shares to be burnt *)
-  time_expiration         : timestamp;
+  deadline                : timestamp;
   receiver                : option(address);
 ]
 
@@ -75,7 +75,7 @@ type divest_imb_param_t is [@layout:comb] record [
   pool_id                 : nat; (* pool identifier *)
   amounts_out             : map(token_pool_idx_t, nat); (* amounts of tokens, where `index of value` == `index of token` to be received to accept the divestment *)
   max_shares              : nat; (* amount of shares to be burnt *)
-  time_expiration         : timestamp;
+  deadline                : timestamp;
   receiver                : option(address);
   referral                : option(address);
 ]
@@ -85,7 +85,7 @@ type divest_one_c_param_t is [@layout:comb] record [
   shares                  : nat; (* amount of shares to be burnt *)
   token_index             : token_pool_idx_t;
   min_amount_out          : nat;
-  time_expiration         : timestamp;
+  deadline                : timestamp;
   receiver                : option(address);
   referral                : option(address);
 ]

@@ -18,25 +18,25 @@
                       (pair %divest
                          (nat %pool_id)
                          (pair (map %min_amounts_out nat nat)
-                               (pair (nat %shares) (pair (timestamp %time_expiration) (option %receiver address))))))
+                               (pair (nat %shares) (pair (timestamp %deadline) (option %receiver address))))))
                   (or (pair %divest_imbalanced
                          (nat %pool_id)
                          (pair (map %amounts_out nat nat)
                                (pair (nat %max_shares)
-                                     (pair (timestamp %time_expiration)
+                                     (pair (timestamp %deadline)
                                            (pair (option %receiver address) (option %referral address))))))
                       (pair %divest_one_coin
                          (nat %pool_id)
                          (pair (nat %shares)
                                (pair (nat %token_index)
                                      (pair (nat %min_amount_out)
-                                           (pair (timestamp %time_expiration)
+                                           (pair (timestamp %deadline)
                                                  (pair (option %receiver address) (option %referral address)))))))))
               (or (or (pair %invest
                          (nat %pool_id)
                          (pair (nat %shares)
                                (pair (map %in_amounts nat nat)
-                                     (pair (timestamp %time_expiration)
+                                     (pair (timestamp %deadline)
                                            (pair (option %receiver address) (option %referral address))))))
                       (pair %stake (nat %pool_id) (nat %amount)))
                   (or (pair %swap
@@ -45,7 +45,7 @@
                                (pair (nat %idx_to)
                                      (pair (nat %amount)
                                            (pair (nat %min_amount_out)
-                                                 (pair (timestamp %time_expiration)
+                                                 (pair (timestamp %deadline)
                                                        (pair (option %receiver address) (option %referral address))))))))
                       (pair %unstake (nat %pool_id) (nat %amount)))))
            (or %use_token
@@ -342,25 +342,25 @@
                                         (pair %divest
                                            (nat %pool_id)
                                            (pair (map %min_amounts_out nat nat)
-                                                 (pair (nat %shares) (pair (timestamp %time_expiration) (option %receiver address))))))
+                                                 (pair (nat %shares) (pair (timestamp %deadline) (option %receiver address))))))
                                     (or (pair %divest_imbalanced
                                            (nat %pool_id)
                                            (pair (map %amounts_out nat nat)
                                                  (pair (nat %max_shares)
-                                                       (pair (timestamp %time_expiration)
+                                                       (pair (timestamp %deadline)
                                                              (pair (option %receiver address) (option %referral address))))))
                                         (pair %divest_one_coin
                                            (nat %pool_id)
                                            (pair (nat %shares)
                                                  (pair (nat %token_index)
                                                        (pair (nat %min_amount_out)
-                                                             (pair (timestamp %time_expiration)
+                                                             (pair (timestamp %deadline)
                                                                    (pair (option %receiver address) (option %referral address)))))))))
                                 (or (or (pair %invest
                                            (nat %pool_id)
                                            (pair (nat %shares)
                                                  (pair (map %in_amounts nat nat)
-                                                       (pair (timestamp %time_expiration)
+                                                       (pair (timestamp %deadline)
                                                              (pair (option %receiver address) (option %referral address))))))
                                         (pair %stake (nat %pool_id) (nat %amount)))
                                     (or (pair %swap
@@ -369,7 +369,7 @@
                                                  (pair (nat %idx_to)
                                                        (pair (nat %amount)
                                                              (pair (nat %min_amount_out)
-                                                                   (pair (timestamp %time_expiration)
+                                                                   (pair (timestamp %deadline)
                                                                          (pair (option %receiver address) (option %referral address))))))))
                                         (pair %unstake (nat %pool_id) (nat %amount)))))
                             (pair (address %admin)

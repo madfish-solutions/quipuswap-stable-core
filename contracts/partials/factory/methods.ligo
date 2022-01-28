@@ -27,7 +27,7 @@ function start_dex_func(
         pool_id    = 0n;
         shares     = 0n;
         in_amounts = amounts;
-        time_expiration = Tezos.now + 300;
+        deadline = Tezos.now + 300;
         receiver = Some(Tezos.sender);
         referral = (None: option(address));
       ];

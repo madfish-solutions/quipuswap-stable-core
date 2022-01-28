@@ -9,7 +9,7 @@ function swap(
     var operations: list(operation) := Constants.no_operations;
     case p of
     | Swap(params) -> {
-      check_time_expiration(params.time_expiration);
+      check_deadline(params.deadline);
       const dx = params.amount;
       assert_with_error(dx =/= 0n, Errors.Dex.zero_in);
       const receiver = unwrap_or(params.receiver, Tezos.sender);
@@ -80,7 +80,7 @@ function invest_liquidity(
     var operations: list(operation) := Constants.no_operations;
     case p of
     | Invest(params) -> {
-      check_time_expiration(params.time_expiration);
+      check_deadline(params.deadline);
 
       const result = add_liq(record [
         referral        = params.referral;
@@ -108,7 +108,7 @@ function divest_liquidity(
     var operations: list(operation) := Constants.no_operations;
     case p of
     | Divest(params) -> {
-      check_time_expiration(params.time_expiration);
+      check_deadline(params.deadline);
       assert_with_error(s.pools_count > params.pool_id, Errors.Dex.pool_not_listed);
       assert_with_error(params.shares =/= 0n, Errors.Dex.zero_in);
 
@@ -164,7 +164,7 @@ function divest_imbalanced(
     var operations: list(operation) := Constants.no_operations;
     case p of
     | Divest_imbalanced(params) -> {
-      check_time_expiration(params.time_expiration);
+      check_deadline(params.deadline);
 
       const receiver = unwrap_or(params.receiver, Tezos.sender);
       const key = (Tezos.sender, params.pool_id);
@@ -275,7 +275,7 @@ function divest_one_coin(
     var operations: list(operation) := Constants.no_operations;
     case p of
     | Divest_one_coin(params) -> {
-      check_time_expiration(params.time_expiration);
+      check_deadline(params.deadline);
 
       var pool := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
       const sender_key = (Tezos.sender, params.pool_id);
