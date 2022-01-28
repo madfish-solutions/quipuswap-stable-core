@@ -156,7 +156,7 @@
                         : unit is
   assert_with_error(Tezos.sender = dev, Errors.Dex.not_developer);
 
-[@inline] function check_time_expiration(
+[@inline] function check_deadline(
   const exp             : timestamp)
                         : unit is
   assert_with_error(exp >= Tezos.now, Errors.Dex.time_expired);

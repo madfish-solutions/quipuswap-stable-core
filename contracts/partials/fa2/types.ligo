@@ -1,15 +1,15 @@
-type trsfr_fa2_dst_t    is [@layout:comb] record [
+type transfer_fa2_dst_t    is [@layout:comb] record [
   to_                     : address;
   token_id                : token_id_t;
   amount                  : nat;
 ]
 
-type trsfr_fa2_param_t    is [@layout:comb] record [
+type transfer_fa2_param_t    is [@layout:comb] record [
   from_                   : address;
-  txs                     : list(trsfr_fa2_dst_t);
+  txs                     : list(transfer_fa2_dst_t);
 ]
 
-type transfer_param_t     is list(trsfr_fa2_param_t)
+type transfer_param_t     is list(transfer_fa2_param_t)
 
 type operator_fa2_param_t is [@layout:comb] record [
   owner                   : address;
@@ -50,9 +50,9 @@ type bal_fa2_param_t      is [@layout:comb] record [
   callback                : contract(list(balc_of_fa2_res_t));
 ]
 
-type trsfr_fa2_t        is list(trsfr_fa2_param_t)
+type transfer_fa2_t        is list(transfer_fa2_param_t)
 
-type entry_fa2_t        is TransferTypeFA2 of trsfr_fa2_t
+type entry_fa2_t        is TransferTypeFA2 of transfer_fa2_t
 
 type balance_fa2_t      is BalanceOfTypeFA2 of bal_fa2_param_t
 

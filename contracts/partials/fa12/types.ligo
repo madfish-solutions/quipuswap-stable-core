@@ -1,6 +1,6 @@
-type trsfr_fa12_t       is michelson_pair(address, "from", michelson_pair(address, "to", nat, "value"), "")
+type transfer_fa12_t       is michelson_pair(address, "from", michelson_pair(address, "to", nat, "value"), "")
 
-type entry_fa12_t       is TransferTypeFA12 of trsfr_fa12_t
+type entry_fa12_t       is TransferTypeFA12 of transfer_fa12_t
 
 type bal_fa12_param_t   is address * contract(nat)
 

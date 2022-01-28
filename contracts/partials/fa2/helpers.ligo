@@ -29,12 +29,12 @@
 (* Perform transfers from one owner *)
 [@inline] function iterate_transfer(
   var s                 : full_storage_t;
-  const user_trx_params : trsfr_fa2_param_t)
+  const user_trx_params : transfer_fa2_param_t)
                         : full_storage_t is
   block {
     function make_transfer(
       var s             : full_storage_t;
-      const transfer    : trsfr_fa2_dst_t)
+      const transfer    : transfer_fa2_dst_t)
                         : full_storage_t is
       block {
         const sender_key =  (user_trx_params.from_, transfer.token_id);
@@ -57,23 +57,19 @@
 (* Perform single operator update *)
 [@inline] function iterate_update_operator(
   var s                 : full_storage_t;
-  const params          : upd_operator_param_t
-)                       : full_storage_t is
+  const params          : upd_operator_param_t)
+                        : full_storage_t is
   block {
-    [@inline] function upd_operator(
-      const param       : operator_fa2_param_t;
-      const add         : bool;
-      var account_s     : big_map((address * pool_id_t), account_data_t))
-                        : big_map((address * pool_id_t), account_data_t) is block {
-        validate_owner(param.owner);
-        const owner_key = (param.owner, param.token_id);
-        var account := get_account_data(owner_key, account_s);
-        account.allowances := Set.update(param.operator, add, account.allowances);
-        account_s[owner_key] := account;
-    } with account_s;
+    const (param, should_add) = case params of
+    | Add_operator(param)    -> (param, True)
+    | Remove_operator(param) -> (param, False)
+    end;
 
-    s.storage.account_data := case params of
-    | Add_operator(param) -> upd_operator(param, True, s.storage.account_data)
-    | Remove_operator(param) -> upd_operator(param, False, s.storage.account_data)
-    end
+    validate_owner(param.owner);
+    assert_with_error(param.token_id < s.storage.pools_count, Errors.Dex.pool_not_listed);
+
+    const owner_key = (param.owner, param.token_id);
+    var account := get_account_data(owner_key, s.storage.account_data);
+    account.allowances := Set.update(param.operator, should_add, account.allowances);
+    s.storage.account_data[owner_key] := account;
   } with s
