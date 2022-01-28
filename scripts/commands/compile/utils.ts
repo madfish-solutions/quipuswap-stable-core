@@ -83,13 +83,6 @@ const _compileFile = async (
             "-w",
             `${cwd}`,
             `ligolang/ligo:${ligoVersion}`,
-            "compile",
-            "contract",
-            `${sourcePath}`,
-            "-e",
-            "main",
-            "--protocol",
-            "hangzhou",
           ],
         }
       : {
