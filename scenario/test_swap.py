@@ -47,7 +47,6 @@ class StableSwapTest(TestCase):
         storage = cls.dex.storage.dummy()
         storage["token_lambdas"] = token_lambdas
         storage["dex_lambdas"] = dex_lambdas
-        storage["permit_lambdas"] = permit_lambdas
         storage["admin_lambdas"] = admin_lambdas
         storage["storage"]["admin"] = admin
         cls.init_storage = storage
