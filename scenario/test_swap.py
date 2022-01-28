@@ -7,7 +7,7 @@ from constants import A_CONST
 from helpers import *
 
 from pytezos import ContractInterface, pytezos, MichelsonRuntimeError
-from initial_storage import admin_lambdas, dex_lambdas, permit_lambdas, token_lambdas
+from initial_storage import admin_lambdas, dex_lambdas, token_lambdas
 
 token_a = {
     "fa2": {
