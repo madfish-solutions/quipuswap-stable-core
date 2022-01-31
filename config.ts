@@ -1,5 +1,6 @@
 import { TezosProtocols } from "./scripts/commands/sandbox/types";
 import * as dotenv from "dotenv";
+
 dotenv.config();
 
 export const config = {
@@ -8,7 +9,7 @@ export const config = {
   preferredLigoFlavor: "pascaligo",
   networks: {
     sandbox: {
-      host: "localhost",
+      host: "http://localhost",
       port: 20000,
       protocol: TezosProtocols.HANGZHOU,
       genesisBlockHash: "random",
