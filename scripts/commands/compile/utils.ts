@@ -204,7 +204,10 @@ export const compileLambdas = async (
     fs.readFileSync(`${pwd.slice(0, pwd.length - 1)}/${json}`).toString()
   );
   const res = [];
-  const old_cli = Number(config.ligoVersion.split(".")[2]) > 25;
+  const version = !isDockerizedLigo
+    ? execSync(`${ligo} version -version`).toString()
+    : config.ligoVersion;
+  const old_cli = version ? Number(version.split(".")[2]) > 25 : false;
   let ligo_command: string;
   if (old_cli) {
     ligo_command = "compile-expression";
@@ -276,7 +279,10 @@ export const compileFactoryLambda = (
   const ligo = isDockerizedLigo
     ? `docker run -v $PWD:$PWD --rm -i -w $PWD ligolang/ligo:${config.ligoVersion}`
     : config.ligoLocalPath;
-  const old_cli = Number(config.ligoVersion.split(".")[2]) > 25;
+  const version = !isDockerizedLigo
+    ? execSync(`${ligo} version -version`).toString()
+    : config.ligoVersion;
+  const old_cli = version ? Number(version.split(".")[2]) > 25 : false;
   let ligo_command: string;
   if (old_cli) {
     ligo_command = "compile-expression";

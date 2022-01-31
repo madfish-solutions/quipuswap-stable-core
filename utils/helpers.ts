@@ -39,7 +39,7 @@ export declare type FA12TokenType = {
 
 export declare type TokenType = FA12 | FA2;
 
-const rpcNode = `http://${config.networks.sandbox.host}:${config.networks.sandbox.port}`;
+const rpcNode = `${config.networks.sandbox.host}:${config.networks.sandbox.port}`;
 export const Tezos = new TezosToolkit(rpcNode);
 
 export async function initTezos(
@@ -249,4 +249,18 @@ export async function failCase(
     message: errorMsg,
   });
   return true;
+}
+
+export function validateValue(validationFunc, value) {
+  const valid = validationFunc(value);
+  if (valid == 3) return value;
+  else {
+    const error_values = [
+      "NO_PREFIX_MATCHED",
+      "INVALID_CHECKSUM",
+      "INVALID_LENGTH",
+      "VALID",
+    ];
+    throw new Error("Dev address must be valid, got " + error_values[valid]);
+  }
 }
