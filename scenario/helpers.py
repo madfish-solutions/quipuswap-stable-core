@@ -186,7 +186,7 @@ def form_pool_rates(reserves_a, reserves_b):
                     "reserves": reserves_a,
                 },
                 1: {
-                    "rate": pow(10,18),
+                    "rate": pow(10,22),
                     "precision_multiplier": 10_000,
                     "reserves": reserves_b,
                 }

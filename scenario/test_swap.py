@@ -37,11 +37,7 @@ class StableSwapTest(TestCase):
         cls.maxDiff = None
 
         text = open("./build/dex.json").read()
-        # text = text.replace("\\n", "")
-        # text = text.replace("\\", "")
         code = json.loads(text)
-
-        # michelson = json.loads(code["michelson"])
 
         cls.dex = ContractInterface.from_micheline(code["michelson"])
 
@@ -67,7 +63,7 @@ class StableSwapTest(TestCase):
             "idx_to" : 1,
             "amount" : 1_000,
             "min_amount_out" : 1,
-            "time_expiration" : 0,
+            "deadline" : 0,
             "receiver" : None,
             "referral" : None,
         }))
@@ -82,7 +78,7 @@ class StableSwapTest(TestCase):
         add_pool = self.dex.add_pool(A_CONST, [token_a_alt, token_b_alt], form_pool_rates(100_000, 100_000))
         res = chain.execute(add_pool, sender=admin)
 
-        res = chain.execute(self.dex.invest(pool_id=0, shares=1, in_amounts={0: 100_000, 1: 100_000}, time_expiration=1, receiver=None, referral=None))
+        res = chain.execute(self.dex.invest(pool_id=0, shares=1, in_amounts={0: 100_000, 1: 100_000}, deadline=1, receiver=None, referral=None))
         
         res = chain.execute(self.dex.swap(0, 0, 1, 10_000, 1, 0, None, None))
         trxs = parse_transfers(res)
@@ -91,16 +87,19 @@ class StableSwapTest(TestCase):
 
         res = chain.execute(self.dex.swap(0, 1, 0, amount_bought, 1, 0, None, None))
 
-        with self.assertRaises(MichelsonRuntimeError):
-            res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=200_001, time_expiration=1, receiver=None))
 
-        res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=200_000, time_expiration=1, receiver=None))
+
+        with self.assertRaises(MichelsonRuntimeError):
+            res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=200_001, deadline=1, receiver=None))
+
+        res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=200_000, deadline=1, receiver=None))
         
         transfers = parse_transfers(res)
+        # TODO in isn't precise enough
         self.assertGreaterEqual(transfers[0]["amount"], 100_000) 
         self.assertGreaterEqual(transfers[1]["amount"], 100_000)
 
-        res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=200_000, time_expiration=1, receiver=None), sender=admin)
+        res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=200_000, deadline=1, receiver=None), sender=admin)
 
         with self.assertRaises(MichelsonRuntimeError):
             res = chain.execute(self.dex.swap(0, 0, 1, 100, 1, 0, None, None))
@@ -121,11 +120,11 @@ class StableSwapTest(TestCase):
         add_pool = self.dex.add_pool(A_CONST, [token_a_alt, token_b_alt], form_pool_rates(100_000, 100_000))
         res = chain.execute(add_pool, sender=admin)
         
-        res = chain.execute(self.dex.swap(pool_id=0, idx_from=0, idx_to=1, amount=100, min_amount_out=1, time_expiration=0, receiver=None, referral=None))
+        res = chain.execute(self.dex.swap(pool_id=0, idx_from=0, idx_to=1, amount=100, min_amount_out=1, deadline=0, receiver=None, referral=None))
         trxs = parse_transfers(res)
         self.assertAlmostEqual(trxs[0]["amount"], trxs[1]["amount"], delta=1)
         
-        res = chain.execute(self.dex.swap(pool_id=0, idx_from=1, idx_to=0, amount=100, min_amount_out=1, time_expiration=0, receiver=None, referral=None))
+        res = chain.execute(self.dex.swap(pool_id=0, idx_from=1, idx_to=0, amount=100, min_amount_out=1, deadline=0, receiver=None, referral=None))
         trxs = parse_transfers(res)
         self.assertAlmostEqual(trxs[0]["amount"], trxs[1]["amount"], delta=1)
 
@@ -137,15 +136,15 @@ class StableSwapTest(TestCase):
         add_pool = self.dex.add_pool(A_CONST, [token_a_alt, token_c], form_pool_rates(10_000, 100_000))
         res = chain.execute(add_pool, sender=admin)
 
-        key_swap = self.dex.swap(pool_id=0, idx_from=1, idx_to=0, amount=100, min_amount_out=1, time_expiration=0, receiver=None, referral=None)
+        key_swap = self.dex.swap(pool_id=0, idx_from=1, idx_to=0, amount=100, min_amount_out=1, deadline=0, receiver=None, referral=None)
         res = chain.interpret(key_swap)
         trxs = parse_transfers(res)
         token_a_out_before = trxs[0]["amount"]
         token_b_out_before = trxs[1]["amount"]
 
         # perform a swap on the second pair
-        res = chain.execute(self.dex.swap(pool_id=1, idx_from=1, idx_to=0, amount=100, min_amount_out=1, time_expiration=0, receiver=None, referral=None))
-        res = chain.execute(self.dex.swap(pool_id=1, idx_from=0, idx_to=1, amount=1, min_amount_out=1, time_expiration=0, receiver=None, referral=None))
+        res = chain.execute(self.dex.swap(pool_id=1, idx_from=1, idx_to=0, amount=100, min_amount_out=1, deadline=0, receiver=None, referral=None))
+        res = chain.execute(self.dex.swap(pool_id=1, idx_from=0, idx_to=1, amount=1, min_amount_out=1, deadline=0, receiver=None, referral=None))
 
         # ensure first token price in unscathed
         res = chain.interpret(key_swap)
@@ -161,24 +160,24 @@ class StableSwapTest(TestCase):
         res = chain.execute(self.dex.add_pool(A_CONST, [token_a_alt, token_b_alt], form_pool_rates(100_000_000, 100_000)), sender=admin)
 
         # invest equally by Alice and Bob
-        invest = self.dex.invest(pool_id=0, shares=1, in_amounts={0: 100_000, 1: 100_000}, time_expiration=1, receiver=None, referral=None)
+        invest = self.dex.invest(pool_id=0, shares=1, in_amounts={0: 100_000, 1: 100_000}, deadline=1, receiver=None, referral=None)
         res = chain.execute(invest, sender=alice)
         res = chain.execute(invest, sender=bob)
 
         # perform a few back and forth swaps
         for i in range(0, 5):
-            res = chain.execute(self.dex.swap(pool_id=0, idx_from=1, idx_to=0, amount=10_000, min_amount_out=1, time_expiration=0, receiver=None, referral=None))
+            res = chain.execute(self.dex.swap(pool_id=0, idx_from=1, idx_to=0, amount=10_000, min_amount_out=1, deadline=0, receiver=None, referral=None))
             transfers = parse_transfers(res)
             amount_bought = transfers[1]["amount"]
-            res = chain.execute(self.dex.swap(pool_id=0, idx_from=0, idx_to=1, amount=amount_bought, min_amount_out=1, time_expiration=0, receiver=None, referral=None))
+            res = chain.execute(self.dex.swap(pool_id=0, idx_from=0, idx_to=1, amount=amount_bought, min_amount_out=1, deadline=0, receiver=None, referral=None))
 
         # divest alice's shares
-        res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=200_000, time_expiration=1, receiver=None), sender=alice)
+        res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=200_000, deadline=1, receiver=None), sender=alice)
         alice_trxs = parse_transfers(res)
         alice_profit = alice_trxs[1]["amount"] - 100_000
     
         # divest bob's shares
-        res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=200_000, time_expiration=1, receiver=None), sender=bob)
+        res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=200_000, deadline=1, receiver=None), sender=bob)
         bob_trxs = parse_transfers(res)
         bob_profit = alice_trxs[1]["amount"] - 100_000
 
@@ -189,18 +188,18 @@ class StableSwapTest(TestCase):
         chain = LocalChain(storage=self.init_storage)
         res = chain.execute(self.dex.add_pool(A_CONST, [token_a_alt, token_b_alt], form_pool_rates(100_000_000, 100_000)), sender=admin)
 
-        invest = self.dex.invest(pool_id=0, shares=1, in_amounts={0: 100, 1: 100_000}, time_expiration=1, receiver=None, referral=None)
+        invest = self.dex.invest(pool_id=0, shares=1, in_amounts={0: 100, 1: 100_000}, deadline=1, receiver=None, referral=None)
         chain.execute(invest, sender=alice)
         
         # should fail due to alice not owning any shares 
         with self.assertRaises(MichelsonRuntimeError):
-            chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=100, time_expiration=1, receiver=None), sender=alice)
+            chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=100, deadline=1, receiver=None), sender=alice)
 
     def test_small_amounts(self):
         chain = LocalChain(storage=self.init_storage)
         res = chain.execute(self.dex.add_pool(A_CONST, [token_a_alt, token_b_alt], form_pool_rates(10, 10)), sender=admin)
 
-        res = chain.execute(self.dex.swap(pool_id=0, idx_from=0, idx_to=1, amount=2, min_amount_out=1, time_expiration=0, receiver=None, referral=None))
+        res = chain.execute(self.dex.swap(pool_id=0, idx_from=0, idx_to=1, amount=2, min_amount_out=1, deadline=0, receiver=None, referral=None))
 
         transfers = parse_transfers(res)
         token_out = next(v for v in transfers if v["destination"] == me)
@@ -209,14 +208,14 @@ class StableSwapTest(TestCase):
     def test_multiple_singular_invests(self):
         chain = LocalChain(storage=self.init_storage)
         res = chain.execute(self.dex.add_pool(A_CONST, [token_a_alt, token_b_alt], form_pool_rates(10, 10)), sender=admin)
-        invest = self.dex.invest(pool_id=0, shares=1, in_amounts={0: 1, 1: 1}, time_expiration=1, receiver=None, referral=None)
+        invest = self.dex.invest(pool_id=0, shares=1, in_amounts={0: 1, 1: 1}, deadline=1, receiver=None, referral=None)
         chain.execute(invest, sender=alice)
         chain.execute(invest, sender=alice)
         chain.execute(invest, sender=alice)
         
-        res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=6, time_expiration=1, receiver=None), sender=alice)
+        res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=6, deadline=1, receiver=None), sender=alice)
         with self.assertRaises(MichelsonRuntimeError):
-            chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=1, time_expiration=1, receiver=None), sender=alice)
+            chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=1, deadline=1, receiver=None), sender=alice)
 
         transfers = parse_transfers(res)
         self.assertEqual(transfers[0]["amount"], 3)
@@ -229,7 +228,7 @@ class StableSwapTest(TestCase):
             token_b_amount = int(100 * ratio)
             chain = LocalChain(storage=self.init_storage)
             res = chain.execute(self.dex.add_pool(A_CONST, [token_a_alt, token_b_alt], form_pool_rates(100, token_b_amount)), sender=admin)
-            invest = self.dex.invest(pool_id=0, shares=1, in_amounts={0: 100, 1: token_b_amount}, time_expiration=1, receiver=None, referral=None)
+            invest = self.dex.invest(pool_id=0, shares=1, in_amounts={0: 100, 1: token_b_amount}, deadline=1, receiver=None, referral=None)
 
             for i in range(3):
                 res = chain.execute(invest)            
@@ -237,7 +236,7 @@ class StableSwapTest(TestCase):
             all_shares = get_shares(res, 0, me)
             print("all shares", all_shares)
 
-            res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=all_shares - 1, time_expiration=1, receiver=None))
+            res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=all_shares - 1, deadline=1, receiver=None))
     
             transfers = parse_transfers(res)
             self.assertAlmostEqual(transfers[0]["amount"], int(300 * ratio), delta=1)
@@ -250,7 +249,7 @@ class StableSwapTest(TestCase):
         # perform a set of identical operations on two separate chains
         add_pool = self.dex.add_pool(A_CONST, [token_a_alt, token_b_alt], form_pool_rates(10_000, 10_000))
         swap = self.dex.swap(0, 0, 1, 1_000, 1, 0, None, None)
-        divest = self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=20_000, time_expiration=1, receiver=None)
+        divest = self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=20_000, deadline=1, receiver=None)
 
         res = invest_chain.execute(add_pool, sender=admin)
         res = invest_chain.execute(swap, sender=admin)
@@ -260,7 +259,7 @@ class StableSwapTest(TestCase):
         res = add_pool_chain.execute(divest, sender=admin)
 
         # now in one chain try to invest
-        invest = self.dex.invest(pool_id=0, shares=1, in_amounts={0: 10_000, 1: 10_000}, time_expiration=1, receiver=None, referral=None)
+        invest = self.dex.invest(pool_id=0, shares=1, in_amounts={0: 10_000, 1: 10_000}, deadline=1, receiver=None, referral=None)
         res = invest_chain.execute(invest, sender=admin)
         invest_storage = res.storage["storage"]
 
@@ -275,11 +274,21 @@ class StableSwapTest(TestCase):
         chain = LocalChain(storage=self.init_storage)
         chain.execute(self.dex.add_pool(A_CONST, [token_a_alt, token_b_alt], form_pool_rates(3, 3)), sender=admin)
 
-        res = chain.execute(self.dex.invest(pool_id=0, shares=1, in_amounts={0: 2, 1: 2}, time_expiration=1, receiver=None, referral=None))
+        res = chain.execute(self.dex.invest(pool_id=0, shares=1, in_amounts={0: 2, 1: 2}, deadline=1, receiver=None, referral=None))
 
         res = chain.execute(self.dex.swap(0, 0, 1, 2, 1, 0, None, None))
 
-        res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=4, time_expiration=1, receiver=None))
+        res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=4, deadline=1, receiver=None))
         transfers = parse_transfers(res) 
         self.assertLessEqual(transfers[0]["amount"], 2)
         self.assertLessEqual(transfers[1]["amount"], 2)
+
+    def test_simple_divest_all(self):
+        chain = LocalChain(storage=self.init_storage)
+        res = chain.execute(self.dex.add_pool(A_CONST, [token_a_alt, token_b_alt], form_pool_rates(42, 777_777_777)), sender=admin)
+
+        all_shares = get_shares(res, 0, admin)
+        res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=all_shares, deadline=1, receiver=None), sender=admin)
+        transfers = parse_transfers(res) 
+        self.assertLessEqual(transfers[0]["amount"], 777_777_777)
+        self.assertLessEqual(transfers[1]["amount"], 42)
