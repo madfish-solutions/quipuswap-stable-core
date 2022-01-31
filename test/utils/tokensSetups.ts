@@ -11,17 +11,18 @@ import {
   prepareProviderOptions,
 } from "../../utils/helpers";
 import { DexStorage } from "../Dex/API/types";
+import chalk from "chalk";
 
 async function originateTokens(Tezos: TezosToolkit): Promise<TokensMap> {
   const kUSD = await Tezos.contract.originate(TokenInitValues.kUSD);
   await confirmOperation(Tezos, kUSD.hash);
-  console.debug("[ORIGINATION] kUSD");
+  console.debug(`[${chalk.green("ORIGINATION")}] kUSD`);
   const USDtz = await Tezos.contract.originate(TokenInitValues.USDtz);
   await confirmOperation(Tezos, USDtz.hash);
-  console.debug("[ORIGINATION] USDtz");
+  console.debug(`[${chalk.green("ORIGINATION")}] USDtz`);
   const uUSD = await Tezos.contract.originate(TokenInitValues.uUSD);
   await confirmOperation(Tezos, uUSD.hash);
-  console.debug("[ORIGINATION] uUSD");
+  console.debug(`[${chalk.green("ORIGINATION")}] uUSD`);
   return {
     kUSD: await TokenFA12.init(Tezos, kUSD.contractAddress),
     uUSD: await TokenFA2.init(Tezos, uUSD.contractAddress),

@@ -16,6 +16,7 @@ import { DexAPI as Dex, defaultDexStorage as storage } from "../API";
 import { setupQuipuGovToken, setupTrioTokens } from "../../utils/tokensSetups";
 import { TokensMap } from "../../utils/types";
 import { defaultTokenId, TokenFA2 } from "../../Token";
+import chalk from "chalk";
 
 export async function setupDexEnvironment(Tezos: TezosToolkit): Promise<{
   dex: Dex;
@@ -50,7 +51,10 @@ export async function setupDexEnvironment(Tezos: TezosToolkit): Promise<{
     storage: storage,
   });
   await confirmOperation(Tezos, dex_op.hash);
-  console.debug("[ORIGINATION] DEX", dex_op.contractAddress);
+  console.debug(
+    `[${chalk.green("ORIGINATION")}] DEX`,
+    chalk.bold.underline(dex_op.contractAddress)
+  );
   const dex = await Dex.init(Tezos, dex_op.contractAddress);
   await new Promise((r) => setTimeout(r, 2000));
   const tokens = await setupTrioTokens(dex, Tezos, true);

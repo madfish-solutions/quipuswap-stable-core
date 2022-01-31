@@ -16,7 +16,6 @@ import {
 import { FactoryStorage } from "./types";
 import admin_lambdas_comp from "../../../build/lambdas/factory/Admin_lambdas.json";
 import dex_lambdas_comp from "../../../build/lambdas/factory/Dex_lambdas.json";
-import dev_lambdas_comp from "../../../build/lambdas/test/Dev_lambdas.json";
 import token_lambdas_comp from "../../../build/lambdas/factory/Token_lambdas.json";
 import { confirmOperation } from "../../../utils/confirmation";
 import BigNumber from "bignumber.js";
@@ -58,13 +57,13 @@ export class DexFactory implements DevEnabledContract {
     //   2,
     //   dev_lambdas_comp
     // );
-    // await setFunctionBatchCompilled(
-    //   tezos,
-    //   factoryAddress,
-    //   "Token",
-    //   5,
-    //   token_lambdas_comp
-    // );
+    await setFunctionBatchCompilled(
+      tezos,
+      factoryAddress,
+      "Token",
+      5,
+      token_lambdas_comp
+    );
     await setFunctionBatchCompilled(
       tezos,
       factoryAddress,

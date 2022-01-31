@@ -11,6 +11,7 @@
     "@taquito/signer": "^11.1.0",
     "@taquito/taquito": "^11.1.0",
     "@types/jest": "^27.0.2",
+    "chalk": "<5.0.0",
     "commander": "^8.3.0",
     "date-fns": "^2.25.0",
     "dotenv": "^15.0.0",

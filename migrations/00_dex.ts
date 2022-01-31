@@ -17,6 +17,7 @@ import token_lambdas_comp from "../build/lambdas/Token_lambdas.json";
 import admin_lambdas_comp from "../build/lambdas/Admin_lambdas.json";
 import { Dex } from "../test/Dex/API/dexAPI";
 import { DevStorage } from "../test/Developer/API/storage";
+import chalk from "chalk";
 
 const storage: DexStorage = {
   storage: {
@@ -76,7 +77,9 @@ module.exports = async (tezos: TezosToolkit, network: NetworkLiteral) => {
     storage,
     network
   );
-  console.log(`Dex contract: ${contractAddress}`);
+  console.log(
+    `Dex contract: ${chalk.bgYellow.bold.redBright(contractAddress)}`
+  );
   const dex: Dex = new Dex(tezos, await tezos.contract.at(contractAddress));
   await setFunctionBatchCompilled(
     tezos,
@@ -98,5 +101,10 @@ module.exports = async (tezos: TezosToolkit, network: NetworkLiteral) => {
     "Dex",
     8,
     dex_lambdas_comp
+  );
+  console.log(
+    `DEX (${chalk.bold.bgRed.underline("standalone")}) is ${chalk.green(
+      "online"
+    )} at ${chalk.bgGreenBright.bold.blackBright(dex.contract.address)}`
   );
 };

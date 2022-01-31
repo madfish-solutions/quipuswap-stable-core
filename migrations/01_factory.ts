@@ -11,13 +11,11 @@ import {
   validateValue,
 } from "../utils/helpers";
 import { validateAddress, validateContractAddress } from "@taquito/utils";
-import dex_lambdas_comp from "../build/lambdas/factory/Dex_lambdas.json";
 import dev_lambdas_comp from "../build/lambdas/Dev_lambdas.json";
-import token_lambdas_comp from "../build/lambdas/factory/Token_lambdas.json";
-import admin_lambdas_comp from "../build/lambdas/factory/Admin_lambdas.json";
 import { DexFactoryAPI as DexFactory } from "../test/Factory/API";
 import { FactoryStorage, InnerFactoryStore } from "../test/Factory/API/types";
 import { DevStorage } from "../test/Developer/API/storage";
+import chalk from "chalk";
 
 const storage: FactoryStorage = {
   storage: {
@@ -64,29 +62,13 @@ module.exports = async (tezos: TezosToolkit, network: NetworkLiteral) => {
     storage,
     network
   );
-  console.log(`Factory contract: ${contractAddress}`);
-  const dex_f: DexFactory = new DexFactory(
-    await tezos.contract.at(contractAddress)
+  console.log(
+    `Factory contract: ${chalk.bgYellow.bold.redBright(contractAddress)}`
   );
-  await setFunctionBatchCompilled(
-    tezos,
-    contractAddress,
-    "Admin",
-    8,
-    admin_lambdas_comp.filter((value) => value.args[1].int !== "7")
-  );
-  await setFunctionBatchCompilled(
-    tezos,
-    contractAddress,
-    "Token",
-    5,
-    token_lambdas_comp
-  );
-  await setFunctionBatchCompilled(
-    tezos,
-    contractAddress,
-    "Dex",
-    8,
-    dex_lambdas_comp
+  const dex_f: DexFactory = await DexFactory.init(tezos, contractAddress);
+  console.log(
+    `Factory is ${chalk.green(
+      "online"
+    )} at ${chalk.bgGreenBright.bold.blackBright(dex_f.contract.address)}`
   );
 };

@@ -15,6 +15,7 @@ import {
   MichelsonV1ExpressionExtended,
 } from "@taquito/rpc";
 import { TokenFA12 } from "../../../Token";
+import chalk from "chalk";
 
 export async function setupTokenMapping(
   dex: Dex,
@@ -72,12 +73,12 @@ export async function swapSuccessCase(
     tok_in.contract.views.balance_of || tok_in.contract.views.getBalance;
   const t_out_ep =
     tok_out.contract.views.balance_of || tok_out.contract.views.getBalance;
-  let init_in = await (tok_in instanceof TokenFA12
+  let init_in: BigNumber = await (tok_in instanceof TokenFA12
     ? t_in_ep(accounts[sender].pkh)
     : t_in_ep([{ owner: accounts[sender].pkh, token_id: "0" }])
   ).read(lambdaContractAddress);
 
-  let init_out = await (tok_out instanceof TokenFA12
+  let init_out: BigNumber = await (tok_out instanceof TokenFA12
     ? t_out_ep(accounts[sender].pkh)
     : t_out_ep([{ owner: accounts[sender].pkh, token_id: "0" }])
   ).read(lambdaContractAddress);
@@ -87,7 +88,7 @@ export async function swapSuccessCase(
   min_out = min_out.minus(min_out.multipliedBy(1).div(100));
 
   console.debug(
-    `[SWAP] ${in_amount
+    `[${chalk.bold.bgYellowBright.magenta.inverse("SWAP")}] ${in_amount
       .dividedBy(rates[i])
       .div(new BigNumber(10).pow(18))
       .toFormat()} ${t_in} -> min ${min_out
@@ -137,10 +138,9 @@ export async function swapSuccessCase(
     );
 
   console.debug(
-    `[SWAP] Swapped to ${output
-      .dividedBy(rates[j])
-      .div(new BigNumber(10).pow(18))
-      .toFormat(10)} ${t_to}.`
+    `[${chalk.bold.bgYellowBright.magenta.inverse("SWAP")}] Swapped to ${chalk.bgGreen.black(
+      output.dividedBy(rates[j]).div(new BigNumber(10).pow(18)).toFormat(10)
+    )} ${t_to}.`
   );
   let upd_in = await (tok_in instanceof TokenFA12
     ? t_in_ep(accounts[sender].pkh)
@@ -161,40 +161,74 @@ export async function swapSuccessCase(
       .toNumber()
   );
 
-  init_in = init_in instanceof BigNumber ? init_in : init_in[0].balance;
-  init_out = init_out instanceof BigNumber ? init_out : init_out[0].balance;
-  upd_in = upd_in instanceof BigNumber ? upd_in : upd_in[0].balance;
-  upd_out = upd_out instanceof BigNumber ? upd_out : upd_out[0].balance;
+  init_in =
+    init_in instanceof BigNumber
+      ? init_in
+      : (init_in[0] as any & { balance: BigNumber }).balance;
+  init_out =
+    init_out instanceof BigNumber
+      ? init_out
+      : (init_out[0] as any & { balance: BigNumber }).balance;
+  upd_in =
+    upd_in instanceof BigNumber
+      ? upd_in
+      : (upd_in[0] as any & { balance: BigNumber }).balance;
+  upd_out =
+    upd_out instanceof BigNumber
+      ? upd_out
+      : (upd_out[0] as any & { balance: BigNumber }).balance;
+  const ch = (init: BigNumber, upd: BigNumber) =>
+    init.gt(upd) ? chalk.red : upd.gt(init) ? chalk.green : chalk.yellow;
   console.debug(
-    `[SWAP] Balances\n\t\t${t_in}:\t${init_in
-      .dividedBy(rates[i])
-      .div(new BigNumber(10).pow(18))
-      .toFormat(10)} -> ${upd_in
-      .dividedBy(rates[i])
-      .div(new BigNumber(10).pow(18))
-      .toFormat(10)}\n\t\t${t_to}:\t${init_out
-      .dividedBy(rates[j])
-      .div(new BigNumber(10).pow(18))
-      .toFormat(10)} -> ${upd_out
-      .dividedBy(rates[j])
-      .div(new BigNumber(10).pow(18))
-      .toFormat(10)}\n       Reserves\n\t\t${t_in}:\t${init_reserves
-      .get(i)
-      .reserves.dividedBy(rates[i])
-      .div(new BigNumber(10).pow(18))
-      .toFormat(10)} -> ${upd_reserves
-      .get(i)
-      .reserves.dividedBy(rates[i])
-      .div(new BigNumber(10).pow(18))
-      .toFormat(10)}\n\t\t${t_to}:\t${init_reserves
-      .get(j)
-      .reserves.dividedBy(rates[j])
-      .div(new BigNumber(10).pow(18))
-      .toFormat(10)} -> ${upd_reserves
-      .get(j)
-      .reserves.dividedBy(rates[j])
-      .div(new BigNumber(10).pow(18))
-      .toFormat(10)}`
+    `[${chalk.bold.bgYellowBright.magenta.inverse("SWAP")}] Balances\n\t\t${t_in}:\t${ch(
+      init_in,
+      upd_in
+    )(
+      `${init_in
+        .dividedBy(rates[i])
+        .div(new BigNumber(10).pow(18))
+        .toFormat(10)} -> ${upd_in
+        .dividedBy(rates[i])
+        .div(new BigNumber(10).pow(18))
+        .toFormat(10)}`
+    )}\n\t\t${t_to}:\t${ch(
+      init_out,
+      upd_out
+    )(
+      `${init_out
+        .dividedBy(rates[j])
+        .div(new BigNumber(10).pow(18))
+        .toFormat(10)} -> ${upd_out
+        .dividedBy(rates[j])
+        .div(new BigNumber(10).pow(18))
+        .toFormat(10)}`
+    )}\n       Reserves\n\t\t${t_in}:\t${ch(
+      init_reserves.get(i).reserves,
+      upd_reserves.get(i).reserves
+    )(
+      `${init_reserves
+        .get(i)
+        .reserves.dividedBy(rates[i])
+        .div(new BigNumber(10).pow(18))
+        .toFormat(10)} -> ${upd_reserves
+        .get(i)
+        .reserves.dividedBy(rates[i])
+        .div(new BigNumber(10).pow(18))
+        .toFormat(10)}`
+    )}\n\t\t${t_to}:\t${ch(
+      init_reserves.get(j).reserves,
+      upd_reserves.get(j).reserves
+    )(
+      `${init_reserves
+        .get(j)
+        .reserves.dividedBy(rates[j])
+        .div(new BigNumber(10).pow(18))
+        .toFormat(10)} -> ${upd_reserves
+        .get(j)
+        .reserves.dividedBy(rates[j])
+        .div(new BigNumber(10).pow(18))
+        .toFormat(10)}`
+    )}`
   );
 
   expect(
@@ -258,7 +292,11 @@ export async function batchSwap(
     }
     const op = await batch.send();
     await confirmOperation(Tezos, op.hash);
-    console.debug(`[BATCH:SWAP] ${i + 1}/${times} ${op.hash}`);
+    console.debug(
+      `[${chalk.bold.bgWhite.bgBlueBright("BATCH")}:${chalk.bold.bgYellowBright.magenta.inverse(
+        "SWAP"
+      )}] ${i + 1}/${times} ${chalk.bold.yellow(op.hash)}`
+    );
     await dex.updateStorage({ pools: [poolId.toString()] });
   }
 }

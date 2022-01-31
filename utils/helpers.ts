@@ -7,6 +7,7 @@ import { confirmOperation } from "./confirmation";
 import { MichelsonMap, TezosToolkit } from "@taquito/taquito";
 import { IndexMap, TokensMap } from "../test/utils/types";
 import BigNumber from "bignumber.js";
+import chalk from "chalk";
 export const tezPrecision = 1e6;
 
 function stringLiteralArray<T extends string>(a: T[]) {
@@ -182,10 +183,10 @@ export async function setFunctionBatchCompilled(
       const batchOp = await batch.send();
       await confirmOperation(tezos, batchOp.hash);
       console.debug(
-        `[BATCH:${type.toUpperCase()}:SETFUNCTION] ${idx}/${
-          comp_funcs_map.length
-        }`,
-        batchOp.hash
+        `[${chalk.bold.bgWhite.bgBlueBright(
+          "BATCH"
+        )}:${type.toUpperCase()}:SETFUNCTION] ${idx}/${comp_funcs_map.length}`,
+        chalk.bold.yellow(batchOp.hash)
       );
       if (idx < comp_funcs_map.length) batch = tezos.contract.batch();
     }

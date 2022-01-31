@@ -11,6 +11,7 @@ import { DexStorage } from "../../Dex/API/types";
 import { decimals } from "../../../utils/constants";
 import { defaultTokenId } from "../../Token";
 import { confirmOperation } from "../../../utils/confirmation";
+import chalk from "chalk";
 export async function claimRewardsSuccessCase(
   factory: DexFactoryAPI,
   sender: AccountsLiteral,
@@ -93,7 +94,7 @@ export async function getDeveloperRewardsDexSuccessCase(
     .claim_developer("fa12", tokens.USDtz.contract.address, USDtzRewards)
     .send();
   await confirmOperation(Tezos, op.hash);
-  console.debug("[CLAIM:DEVELOPER] USDtz");
+  console.debug(`[${chalk.bgGreenBright.red("CLAIM")}:DEVELOPER] USDtz`);
   await dex.updateStorage({ pools: [pool_id.toString()] });
   let upd_dev_stor = await dex.contract
     .storage()
@@ -108,7 +109,7 @@ export async function getDeveloperRewardsDexSuccessCase(
     .claim_developer("fa12", tokens.kUSD.contract.address, kUSDRewards)
     .send();
   await confirmOperation(Tezos, op.hash);
-  console.debug("[CLAIM:DEVELOPER] kUSD");
+  console.debug(`[${chalk.bgGreenBright.red("CLAIM")}:DEVELOPER] kUSD`);
   await dex.updateStorage({ pools: [pool_id.toString()] });
   upd_dev_stor = await dex.contract.storage().then((storage: DexStorage) => {
     return storage.storage.dev_rewards;
@@ -126,7 +127,7 @@ export async function getDeveloperRewardsDexSuccessCase(
     )
     .send();
   await confirmOperation(Tezos, op.hash);
-  console.debug("[CLAIM:DEVELOPER] uUSD");
+  console.debug(`[${chalk.bgGreenBright.red("CLAIM")}:DEVELOPER] uUSD`);
   upd_dev_stor = await dex.contract.storage().then((storage: DexStorage) => {
     return storage.storage.dev_rewards;
   });

@@ -10,6 +10,7 @@ import { TokensMap } from "../../../utils/types";
 import { confirmOperation } from "../../../../utils/confirmation";
 import { defaultTokenId } from "../../../Token";
 import { DexStorage } from "../../API/types";
+import chalk from "chalk";
 
 export async function getReferralRewardsSuccessCase(
   dex: Dex,
@@ -85,7 +86,7 @@ export async function getReferralRewardsSuccessCase(
       .claim_referral("fa12", tokens.USDtz.contract.address, USDtzRewards)
       .send();
     await confirmOperation(Tezos, op.hash);
-    console.debug("[CLAIM:REFERRAL] USDtz");
+    console.debug(`[${chalk.bgGreenBright.red("CLAIM")}:REFERRAL] USDtz`);
     await dex.updateStorage({ pools: [pool_id.toString()] });
     let upd_ref_stor = await dex.contract
       .storage()
@@ -101,7 +102,7 @@ export async function getReferralRewardsSuccessCase(
       .claim_referral("fa12", tokens.kUSD.contract.address, kUSDRewards)
       .send();
     await confirmOperation(Tezos, op.hash);
-    console.debug("[CLAIM:REFERRAL] kUSD");
+    console.debug(`[${chalk.bgGreenBright.red("CLAIM")}:REFERRAL] kUSD`);
     await dex.updateStorage({ pools: [pool_id.toString()] });
     upd_ref_stor = await dex.contract.storage().then((storage: DexStorage) => {
       return storage.storage.referral_rewards;
@@ -120,7 +121,7 @@ export async function getReferralRewardsSuccessCase(
       )
       .send();
     await confirmOperation(Tezos, op.hash);
-    console.debug("[CLAIM:REFERRAL] uUSD");
+    console.debug(`[${chalk.bgGreenBright.red("CLAIM")}:REFERRAL] uUSD`);
     upd_ref_stor = await dex.contract.storage().then((storage: DexStorage) => {
       return storage.storage.referral_rewards;
     });
