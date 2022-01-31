@@ -103,8 +103,9 @@
                             (pair (big_map %dex_lambdas nat bytes) (big_map %token_lambdas nat bytes)))))) ;
   code { PUSH string "function-not-set" ;
          PUSH string "cant-unpack-use-lambda" ;
+         PUSH string "not-contract-admin" ;
          PUSH string "not-started" ;
-         DIG 3 ;
+         DIG 4 ;
          UNPAIR ;
          DUP ;
          IF_LEFT
@@ -136,7 +137,7 @@
          SWAP ;
          IF_LEFT
            { IF_LEFT
-               { DIG 2 ; DIG 3 ; DIG 4 ; DROP 4 ; NIL operation ; PAIR }
+               { DIG 2 ; DIG 3 ; DIG 4 ; DIG 5 ; DROP 5 ; NIL operation ; PAIR }
                { DUG 2 ;
                  DUP ;
                  DUG 3 ;
@@ -148,19 +149,21 @@
                    { IF_LEFT
                        { IF_LEFT
                            { DROP ;
-                             PUSH string "not-contract-admin" ;
-                             DUP 3 ;
+                             DUG 2 ;
+                             DUP ;
+                             DUG 3 ;
                              CAR ;
                              CAR ;
                              SENDER ;
                              COMPARE ;
                              EQ ;
                              IF { DROP ; UNIT } { FAILWITH } }
-                           { DROP ; UNIT } }
+                           { DIG 3 ; DROP 2 ; UNIT } }
                        { IF_LEFT
                            { DROP ;
-                             PUSH string "not-contract-admin" ;
-                             DUP 3 ;
+                             DUG 2 ;
+                             DUP ;
+                             DUG 3 ;
                              CAR ;
                              CAR ;
                              SENDER ;
@@ -168,8 +171,9 @@
                              EQ ;
                              IF { DROP ; UNIT } { FAILWITH } }
                            { DROP ;
-                             PUSH string "not-contract-admin" ;
-                             DUP 3 ;
+                             DUG 2 ;
+                             DUP ;
+                             DUG 3 ;
                              CAR ;
                              CAR ;
                              SENDER ;
@@ -179,8 +183,9 @@
                    { IF_LEFT
                        { IF_LEFT
                            { DROP ;
-                             PUSH string "not-contract-admin" ;
-                             DUP 3 ;
+                             DUG 2 ;
+                             DUP ;
+                             DUG 3 ;
                              CAR ;
                              CAR ;
                              SENDER ;
@@ -188,8 +193,9 @@
                              EQ ;
                              IF { DROP ; UNIT } { FAILWITH } }
                            { DROP ;
-                             PUSH string "not-contract-admin" ;
-                             DUP 3 ;
+                             DUG 2 ;
+                             DUP ;
+                             DUG 3 ;
                              CAR ;
                              CAR ;
                              SENDER ;
@@ -197,8 +203,9 @@
                              EQ ;
                              IF { DROP ; UNIT } { FAILWITH } } }
                        { DROP ;
-                         PUSH string "not-contract-admin" ;
-                         DUP 3 ;
+                         DUG 2 ;
+                         DUP ;
+                         DUG 3 ;
                          CAR ;
                          CAR ;
                          SENDER ;
@@ -312,7 +319,9 @@
                  UPDATE 1 ;
                  SWAP ;
                  PAIR } }
-           { IF_LEFT
+           { DIG 3 ;
+             DROP ;
+             IF_LEFT
                { DUG 2 ;
                  DUP ;
                  DUG 3 ;
