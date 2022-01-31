@@ -12,7 +12,7 @@ function add_pool(
       (* Params check *)
       const n_tokens = Set.size(params.input_tokens);
 
-      assert_with_error(
+      require(
         n_tokens < Constants.max_tokens_count
         and n_tokens >= Constants.min_tokens_count
         and n_tokens = Map.size(params.tokens_info),
@@ -37,7 +37,7 @@ function add_pool(
 
       s.tokens[token_id] := tokens;
 
-      assert_with_error(pool_i.total_supply = 0n, Errors.Dex.pool_listed);
+      require(pool_i.total_supply = 0n, Errors.Dex.pool_listed);
 
       if s.pools_count = token_id
       then {
@@ -46,7 +46,7 @@ function add_pool(
       }
       else skip;
 
-      assert_with_error(Constants.max_a >= params.a_constant, Errors.Dex.a_limit);
+      require(Constants.max_a >= params.a_constant, Errors.Dex.a_limit);
 
       function separate_inputs(
         var accum       : map(token_pool_idx_t, token_info_t) * map(token_pool_idx_t, nat);
@@ -54,7 +54,7 @@ function add_pool(
                         : map(token_pool_idx_t, token_info_t) * map(token_pool_idx_t, nat) is
         block {
           const is_correct_rate: bool = (entry.1.rate / entry.1.precision_multiplier = Constants.precision);
-          assert_with_error(is_correct_rate, Errors.Dex.wrong_precision);
+          require(is_correct_rate, Errors.Dex.wrong_precision);
           accum.1[entry.0] := entry.1.reserves;
           accum.0[entry.0] := entry.1 with record [ reserves = 0n; ]
         } with accum;

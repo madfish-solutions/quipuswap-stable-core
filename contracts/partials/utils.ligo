@@ -1,3 +1,9 @@
+[@inline] function require(
+  const param           : bool;
+  const error           : string)
+                        : unit is
+  assert_with_error(param, error)
+
 [@inline] function get_token_address(
   const token           : token_t)
                         : address is
@@ -144,22 +150,10 @@
   | None -> (failwith(Errors.Math.ediv_error): nat)
   end;
 
-(* Contract admin check *)
-[@inline] function check_admin(
-  const admin           : address)
-                        : unit is
-  assert_with_error(Tezos.sender = admin, Errors.Dex.not_contract_admin);
-
-(* Contract admin or dev check *)
-[@inline] function check_dev(
-  const dev             : address)
-                        : unit is
-  assert_with_error(Tezos.sender = dev, Errors.Dex.not_developer);
-
 [@inline] function check_deadline(
   const exp             : timestamp)
                         : unit is
-  assert_with_error(exp >= Tezos.now, Errors.Dex.time_expired);
+  require(exp >= Tezos.now, Errors.Dex.time_expired);
 
 function set_func_or_fail(
   const params          : set_lambda_func_t;
@@ -167,8 +161,8 @@ function set_func_or_fail(
   var lambda_storage    : big_map(nat, bytes))
                         : big_map(nat, bytes) is
   block {
-    assert_with_error(params.index < max_idx, Errors.Dex.wrong_index);
-    assert_with_error(not Big_map.mem(params.index, lambda_storage), Errors.Dex.func_set);
+    require(params.index < max_idx, Errors.Dex.wrong_index);
+    require(not Big_map.mem(params.index, lambda_storage), Errors.Dex.func_set);
     lambda_storage[params.index] := params.func;
   } with lambda_storage
 
@@ -210,10 +204,10 @@ function get_token_by_id(
 
 #if FACTORY
 #if !FOUR
-    check_dev(s.storage.dev_store.dev_address);
+    require(Tezos.sender = s.storage.dev_store.dev_address, Errors.Dex.not_developer);
 #endif
 #else
-    check_admin(s.storage.admin);
+    require(Tezos.sender = s.storage.admin, Errors.Dex.not_contract_admin);
 #endif
     case f_type of
     | FAdmin  -> s.admin_lambdas := set_func_or_fail(params, Constants.admin_func_count,  s.admin_lambdas)
