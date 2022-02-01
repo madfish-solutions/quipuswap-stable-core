@@ -82,7 +82,6 @@ class TokenToTokenTransferTest(TestCase):
     def test_tt_cant_double_transfer(self):
         chain = LocalChain(storage=self.init_storage)
         add_pool = self.dex.add_pool(100_000, [token_a, token_b], form_pool_rates(100_000, 10_000))
-        # res = chain.execute(self.dex.addPair(pair, 100_000, 10_000), sender=alice)
         res = chain.execute(add_pool, sender=admin)
         
         transfer = self.dex.transfer(
@@ -106,5 +105,54 @@ class TokenToTokenTransferTest(TestCase):
 
         self.assertIn("FA2_INSUFFICIENT_BALANCE", error.exception.args[-1])
 
+    def test_transfer_multiple_froms(self):
+        chain = LocalChain(storage=self.init_storage)
+        add_pool = self.dex.add_pool(100_000, [token_a, token_b, token_c], form_pool_rates(100_000_000, 100_000_000, 100_000_000))
+        res = chain.execute(add_pool, sender=admin)
 
+        add_operator = self.dex.update_operators([{
+                "add_operator": {
+                    "owner": bob,
+                    "operator": admin,
+                    "token_id": 0
+                }}])
+        res = chain.execute(add_operator, sender=bob)
 
+        transfer = self.dex.transfer(
+            [
+                {
+                    "from_": alice,
+                        "txs": [{
+                            "amount": 150_000_000,
+                            "to_": bob,
+                            "token_id": 0
+                        }]
+                },
+                {
+                    "from_": bob,
+                        "txs": [{
+                            "amount": 30_000_000,
+                            "to_": carol,
+                            "token_id": 0
+                        }]
+                }
+            ])
+        res = chain.execute(transfer, sender=admin)
+
+        bob_shares = get_shares(res, 0, bob)
+        res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1, 2: 1}, shares=bob_shares, deadline=1, receiver=None), sender=bob)
+        transfers = parse_transfers(res)
+        total = sum(tx["amount"] for tx in transfers)
+        self.assertAlmostEqual(total, 120_000_000, delta=3)
+
+        admin_shares = get_shares(res, 0, admin)
+        res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1, 2: 1}, shares=admin_shares, deadline=1, receiver=None), sender=admin)
+        transfers = parse_transfers(res)
+        total = sum(tx["amount"] for tx in transfers)
+        self.assertAlmostEqual(total, 150_000_000, delta=3)
+
+        carol_shares = get_shares(res, 0, carol)
+        res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1, 2: 1}, shares=carol_shares, deadline=1, receiver=None), sender=carol)
+        transfers = parse_transfers(res)
+        total = sum(tx["amount"] for tx in transfers)
+        self.assertAlmostEqual(total, 30_000_000, delta=3)

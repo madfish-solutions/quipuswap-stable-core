@@ -8,14 +8,14 @@ token_a = ("fa12", token_a_address)
 token_b = ("fa12", token_b_address)
 token_c = ("fa12", token_c_address)
 
-oracle = "KT1LzyPS8rN375tC31WPAVHaQ4HyBvTSLwBu"
+factory = "KT1LzyPS8rN375tC31WPAVHaQ4HyBvTSLwBu"
 price_feed = "KT1Qf46j2x37sAN4t2MKRQRVt9gc4FZ5duMs"
 
 fee_collector = "tz1MDhGTfMQjtMYFXeasKzRWzkQKPtXEkSEw"
 dummy_sig = "sigY3oZknG7z2N9bj5aWVtdZBakTviKnwbSYTecbbT2gwQDrnLRNhP5KDcLroggq71AjXWkx27nSLfS8rodS4DYn14FyueS5"
 
 vr = {
-    f"{oracle}%calculate_fee": int(0.01 * PRECISION)
+    f"{factory}%dev_fee": 500_000
 }
 
 dummy_metadata = {
@@ -23,4 +23,10 @@ dummy_metadata = {
     "name": "0x02",
     "decimals": "0x03",
     "icon": "0x04",
+}
+
+fees = {
+  "lp": 200_000,
+  "stakers": 200_000,
+  "ref": 500_000,
 }

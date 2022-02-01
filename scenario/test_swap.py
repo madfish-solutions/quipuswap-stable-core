@@ -24,7 +24,8 @@ class StableSwapTest(TestCase):
         storage["token_lambdas"] = token_lambdas
         storage["dex_lambdas"] = dex_lambdas
         storage["admin_lambdas"] = admin_lambdas
-        storage["storage"]["admin"] = admin
+        storage["storage"]["admin"] = admin 
+
         cls.init_storage = storage
 
     def test_dex_init(self):
@@ -304,3 +305,26 @@ class StableSwapTest(TestCase):
 
         with self.assertRaises(MichelsonRuntimeError):
             res = chain.execute(self.dex.swap(0, 0, 1, 100, 1, 0, None, None))
+
+    def test_threeway_pool_single_invest(self):
+        chain = LocalChain(storage=self.init_storage)
+
+        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c], form_pool_rates(100_000, 100_000, 100_000))
+        res = chain.execute(add_pool, sender=admin)
+
+        res = chain.execute(self.dex.set_fees(0, fees), sender=admin)
+
+        res = chain.execute(self.dex.invest(pool_id=0, shares=1, in_amounts={0: 200_000, 1: 250_000}, deadline=1, receiver=None, referral=None))
+
+        all_shares = get_shares(res, 0, me)
+
+        res = chain.interpret(self.dex.divest(pool_id=0, min_amounts_out={}, shares=all_shares, deadline=1, receiver=None))
+        
+        transfers = parse_transfers(res)
+        total = sum(tx["amount"] for tx in transfers)
+        # self.assertAlmostEqual(total, 200_000, delta=3)
+
+        res = chain.interpret(self.dex.divest_one_coin(pool_id=0, shares=all_shares, token_index=0, min_amount_out=1, deadline=1, receiver=None, referral=None))
+
+        transfers = parse_transfers(res)
+        pprint(transfers)

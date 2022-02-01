@@ -178,19 +178,26 @@ def get_shares(res, pool, user):
     storage = res.storage["storage"]
     return storage["ledger"][(user, pool)]
 
-def form_pool_rates(reserves_a, reserves_b):
-    return  {
+def form_pool_rates(reserves_a, reserves_b, reserves_c=None):
+    rates = {
                 0: {
                     "rate": pow(10,18),
                     "precision_multiplier": 1,
                     "reserves": reserves_a,
                 },
                 1: {
-                    "rate": pow(10,22),
-                    "precision_multiplier": 10_000,
+                    "rate": pow(10,18),
+                    "precision_multiplier": 1,
                     "reserves": reserves_b,
                 }
             }
+    if reserves_c:
+        rates[2] = {
+                    "rate": pow(10,18),
+                    "precision_multiplier": 1,
+                    "reserves": reserves_c,
+                }
+    return rates
 
 def operator_add(owner, operator, token_id=0):
     return {
