@@ -3,7 +3,7 @@
   const from_account    : address;
   const allowances      : set(address))
                         : unit is
-  assert_with_error(from_account = Tezos.sender or (allowances contains Tezos.sender), Errors.FA2.not_operator);
+  require(from_account = Tezos.sender or (allowances contains Tezos.sender), Errors.FA2.not_operator);
 
 (* Balance check *)
 [@inline] function check_balance(
@@ -13,12 +13,6 @@
   if account_bal < to_spend
     then failwith(Errors.FA2.insufficient_balance)
   else Unit;
-
-(* Owner check *)
-[@inline] function validate_owner(
-  const owner           : address)
-                        : unit is
-  assert_with_error(owner = Tezos.sender, Errors.FA2.not_owner);
 
 [@inline] function get_account_data(
   const key             : address * pool_id_t;
@@ -65,8 +59,8 @@
     | Remove_operator(param) -> (param, False)
     end;
 
-    validate_owner(param.owner);
-    assert_with_error(param.token_id < s.storage.pools_count, Errors.Dex.pool_not_listed);
+    require(Tezos.sender = param.owner, Errors.FA2.not_owner);
+    require(param.token_id < s.storage.pools_count, Errors.Dex.pool_not_listed);
 
     const owner_key = (param.owner, param.token_id);
     var account := get_account_data(owner_key, s.storage.account_data);

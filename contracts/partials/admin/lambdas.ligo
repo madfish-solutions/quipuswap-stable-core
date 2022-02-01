@@ -43,8 +43,8 @@ function ramp_A(
     | Ramp_A(params) -> {
         var pool : pool_t := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
 
-        assert_with_error(Tezos.now >= pool.initial_A_time + Constants.min_ramp_time, Errors.Dex.timestamp_error);
-        assert_with_error(params.future_time >= Tezos.now + Constants.min_ramp_time, Errors.Dex.timestamp_error); // dev: insufficient time
+        require(Tezos.now >= pool.initial_A_time + Constants.min_ramp_time, Errors.Dex.timestamp_error);
+        require(params.future_time >= Tezos.now + Constants.min_ramp_time, Errors.Dex.timestamp_error); // dev: insufficient time
 
         const initial_A: nat = get_A(
           pool.initial_A_time,
@@ -57,8 +57,8 @@ function ramp_A(
         assert((params.future_A > 0n) and (params.future_A <= Constants.max_a));
 
         if future_A_p >= initial_A
-        then assert_with_error(future_A_p <= initial_A * Constants.max_a_change, Errors.Dex.a_limit)
-        else assert_with_error(future_A_p * Constants.max_a_change >= initial_A, Errors.Dex.a_limit);
+        then require(future_A_p <= initial_A * Constants.max_a_change, Errors.Dex.a_limit)
+        else require(future_A_p * Constants.max_a_change >= initial_A, Errors.Dex.a_limit);
 
         s.pools[params.pool_id] := pool with record [
         initial_A = initial_A;
@@ -105,7 +105,7 @@ function set_fees(
   block {
     case p of
     | Set_fees(params) -> {
-      assert_with_error(sum_all_fee(params.fee, get_dev_fee(s)) <= Constants.fee_denominator, Errors.Dex.fee_overflow);
+      require(sum_all_fee(params.fee, get_dev_fee(s)) <= Constants.fee_denominator, Errors.Dex.fee_overflow);
       var pool := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
       s.pools[params.pool_id] := pool with record[ fee = params.fee ];
     }
@@ -124,13 +124,13 @@ function claim_dev(
     var operations: list(operation) := Constants.no_operations;
     case p of
     | Claim_developer(params) -> {
-      check_dev(get_dev_address(s));
+      require(Tezos.sender = get_dev_address(s), Errors.Dex.not_developer);
 
       const bal = unwrap_or(s.dev_rewards[params.token], 0n);
 
       s.dev_rewards[params.token] := nat_or_error(bal - params.amount, Errors.Dex.balance_overflow);
 
-      assert_with_error(params.amount > 0n, Errors.Dex.zero_in);
+      require(params.amount > 0n, Errors.Dex.zero_in);
 
       operations := typed_transfer(
         Tezos.self_address,

@@ -5,12 +5,12 @@
                         : full_return_t is
   block {
 #if FACTORY
-    assert_with_error(s.storage.started, Errors.Dex.not_started);
+    require(s.storage.started, Errors.Dex.not_started);
 #endif
 
     case p of
     | Claim_developer(_) -> skip // Claim_developer has own inner check for developer address
-    | _ -> check_admin(s.storage.admin)
+    | _ -> require(Tezos.sender = s.storage.admin, Errors.Dex.not_contract_admin)
     end;
 
     const idx : nat = case p of

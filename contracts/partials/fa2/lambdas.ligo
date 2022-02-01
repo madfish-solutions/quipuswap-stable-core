@@ -27,7 +27,7 @@ function update_token_metadata(
     var operations := Constants.no_operations;
     case p of
     | Update_metadata(params) -> {
-      assert_with_error(s.storage.managers contains Tezos.sender, Errors.Dex.not_manager);
+      require(s.storage.managers contains Tezos.sender, Errors.Dex.not_manager);
       s.token_metadata[params.token_id] := params
     }
     | _ -> skip

@@ -10,7 +10,7 @@ based on the argument type.
                         : full_return_t is
   block {
 #if FACTORY
-    assert_with_error(s.storage.started, Errors.Dex.not_started);
+    require(s.storage.started, Errors.Dex.not_started);
 #endif
     const idx : nat = case p of
     (* Base actions *)

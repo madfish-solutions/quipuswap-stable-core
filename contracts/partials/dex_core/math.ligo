@@ -172,7 +172,7 @@ function get_y_D(
   block {
     const tokens_count = Map.size(s.tokens_info);
 
-    assert_with_error(i < tokens_count, Errors.Dex.wrong_index);  // dev: i above N_COINS
+    require(i < tokens_count, Errors.Dex.wrong_index);  // dev: i above N_COINS
 
     const a_nn = amp * tokens_count;
 
@@ -339,14 +339,14 @@ function add_liq(
                         : token_info_t is
       block {
         const input = unwrap_or(params.inputs[key], 0n);
-        assert_with_error(token_supply =/= 0n or input > 0n, Errors.Dex.zero_in);
+        require(token_supply =/= 0n or input > 0n, Errors.Dex.zero_in);
         token_info.reserves := token_info.reserves + input;
       } with token_info;
 
     var new_tokens_info := Map.map(add_inputs, init_tokens_info);
     const d1 = get_D_mem(new_tokens_info, amp);
 
-    assert_with_error(d1 > d0, Errors.Dex.zero_in);
+    require(d1 > d0, Errors.Dex.zero_in);
 
     var mint_amount := 0n;
 
@@ -384,7 +384,7 @@ function add_liq(
       mint_amount := d1;
     };
 
-    assert_with_error(mint_amount >= params.min_mint_amount, Errors.Dex.wrong_shares_out);
+    require(mint_amount >= params.min_mint_amount, Errors.Dex.wrong_shares_out);
 
     const tokens = s.tokens;
 

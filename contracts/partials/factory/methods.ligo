@@ -93,7 +93,7 @@ function use_factory(
   var s                 : full_storage_t)
                         : fact_return_t is
   block {
-    check_dev(s.storage.dev_store.dev_address);
+    require(Tezos.sender = s.storage.dev_store.dev_address, Errors.Dex.not_developer);
     case params of
     | Set_burn_rate(rate)   -> s.storage.burn_rate := rate
     | Set_price(price)      -> s.storage.init_price := price

@@ -128,7 +128,7 @@ export const startFlextesa = async (
   const options = Object.assign({}, defaultOptions, _options);
 
   // Localhost is not a valid host for Docker
-  const host = options.host === "localhost" ? "0.0.0.0" : options.host;
+  const host = options.host.includes("localhost") ? "0.0.0.0" : options.host;
   const port = options.port;
 
   // Protocol "validity" checks

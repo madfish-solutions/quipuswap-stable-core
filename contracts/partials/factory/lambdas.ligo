@@ -10,7 +10,7 @@ function add_pool(
     (* Params check *)
     const n_tokens = Set.size(params.input_tokens);
 
-    assert_with_error(
+    require(
       n_tokens < Constants.max_tokens_count
       and n_tokens >= Constants.min_tokens_count
       and n_tokens = Map.size(params.tokens_info),
@@ -27,7 +27,7 @@ function add_pool(
                         : token_info_t is
       block {
         const is_correct_rate: bool = (value.rate / value.precision_multiplier = Constants.precision);
-        assert_with_error(is_correct_rate, Errors.Dex.wrong_precision);
+        require(is_correct_rate, Errors.Dex.wrong_precision);
       } with record [
         rate = value.rate;
         precision_multiplier = value.precision_multiplier;
@@ -38,7 +38,7 @@ function add_pool(
 
     const token_id = 0n;
 
-    assert_with_error(Constants.max_a >= params.a_constant, Errors.Dex.a_limit);
+    require(Constants.max_a >= params.a_constant, Errors.Dex.a_limit);
 
     const pool = record [
       initial_A       = params.a_constant * Constants.a_precision;

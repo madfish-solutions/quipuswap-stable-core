@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { NetworkLiteral } from "../../../utils/helpers";
 import { getMigrationsList, runMigrations } from "./utils";
-import { accounts } from "../../../utils/constants";
+import config from "../../../config";
 
 export const addMigrateCommand = (program: Command) => {
   const migrations = getMigrationsList();
@@ -12,7 +12,7 @@ export const addMigrateCommand = (program: Command) => {
       "-n, --network <network>",
       "network to deploy",
       (value): NetworkLiteral => value.toLowerCase() as NetworkLiteral,
-      "sandbox"
+      config.deployNetwork
     )
     .requiredOption<number>(
       "-s, --from <from>",
@@ -29,10 +29,17 @@ export const addMigrateCommand = (program: Command) => {
     .requiredOption(
       "-k --key <key>",
       "Secret key to sign with",
-      accounts.alice.sk
+      config.deployerSK
     )
     .showHelpAfterError(true)
-    .action(async (argv) => {
-      runMigrations(argv.network, argv.from, argv.to, argv.key, migrations);
-    });
+    .action(
+      async (argv) =>
+        await runMigrations(
+          argv.network,
+          argv.from,
+          argv.to,
+          argv.key,
+          migrations
+        )
+    );
 };

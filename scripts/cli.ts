@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /* eslint-disable jest/require-hook */
+import chalk from "chalk";
 import { Command } from "commander";
 import {
   addCompileCommand,

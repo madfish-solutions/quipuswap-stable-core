@@ -61,7 +61,7 @@ function get_tokens_from_param(
   var s                 : full_storage_t)
                         : option(bytes) is
   block {
-    check_dev(s.storage.dev_store.dev_address);
+    require(Tezos.sender = s.storage.dev_store.dev_address, Errors.Dex.not_developer);
     case s.init_func of
     | Some(_) -> failwith(Errors.Dex.func_set)
     | None -> skip

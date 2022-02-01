@@ -12,6 +12,7 @@ import { TezosToolkit, MichelsonMap } from "@taquito/taquito";
 import { defaultTokenId } from "../../Token/token";
 import { Dex } from "../../Dex/API/dexAPI";
 import { DexStorage } from "../../Dex/API/types";
+import chalk from "chalk";
 export async function initializeExchangeSuccessCase(
   factory: DexFactory,
   sender: AccountsLiteral,
@@ -99,7 +100,7 @@ export async function initializeExchangeSuccessCase(
   const dex_address: TezosAddress = await factory.contract.contractViews
     .get_pool({ tokens: tokens, deployer: sender_addr })
     .executeView({ viewCaller: sender_addr });
-  console.log(`DEX is ONLINE: ${dex_address}`);
+  console.log(`DEX is ${chalk.green("ONLINE")}: ${dex_address}`);
   const dex = await Dex.init(tezos, dex_address, true);
   await dex.updateStorage({
     pools: [(factory.storage.storage.pools_count.toNumber() - 1).toString()],

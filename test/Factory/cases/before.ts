@@ -21,6 +21,7 @@ import {
 import BigNumber from "bignumber.js";
 import { MichelsonMap } from "@taquito/michelson-encoder";
 import { DevStorage } from "../../Developer/API/storage";
+import chalk from "chalk";
 
 export async function setupFactoryEnvironment(
   Tezos: TezosToolkit,
@@ -52,7 +53,7 @@ export async function setupFactoryEnvironment(
     token_id: new BigNumber(defaultTokenId),
   };
   // storage.dex_lambdas = await setupLambdasToStorage(dex_lambdas_comp);
-  storage.token_lambdas = await setupLambdasToStorage(token_lambdas_comp);
+  // storage.token_lambdas = await setupLambdasToStorage(token_lambdas_comp);
   // storage.admin_lambdas = await setupLambdasToStorage(admin_lambdas_comp);
   // storage.storage.dev_store.dev_address = accounts.eve.pkh;
   const fact_op = await Tezos.contract.originate({
@@ -60,7 +61,10 @@ export async function setupFactoryEnvironment(
     storage: storage,
   });
   await confirmOperation(Tezos, fact_op.hash);
-  console.debug("[ORIGINATION] FACTORY 4 DEX", fact_op.contractAddress);
+  console.debug(
+    `[${chalk.green("ORIGINATION")}] FACTORY 4 DEX`,
+    chalk.bold.underline(fact_op.contractAddress)
+  );
   const factory = await DexFactory.init(Tezos, fact_op.contractAddress);
   return { factory, quipuToken, lambdaContractAddress };
 }

@@ -8,19 +8,19 @@ import {
   setFunctionBatchCompilled,
   setupLambdasToStorage,
   TezosAddress,
+  validateValue,
 } from "../utils/helpers";
-import dex_lambdas_comp from "../build/lambdas/factory/Dex_lambdas.json";
+import { validateAddress, validateContractAddress } from "@taquito/utils";
 import dev_lambdas_comp from "../build/lambdas/Dev_lambdas.json";
-import token_lambdas_comp from "../build/lambdas/factory/Token_lambdas.json";
-import admin_lambdas_comp from "../build/lambdas/factory/Admin_lambdas.json";
 import { DexFactoryAPI as DexFactory } from "../test/Factory/API";
 import { FactoryStorage, InnerFactoryStore } from "../test/Factory/API/types";
 import { DevStorage } from "../test/Developer/API/storage";
+import chalk from "chalk";
 
 const storage: FactoryStorage = {
   storage: {
     dev_store: {
-      dev_address: null as TezosAddress,
+      dev_address: null as TezosAddress, // DON'T Touch! Setting from deployer SK
       dev_fee: new BigNumber(0),
       dev_lambdas: new MichelsonMap(),
     } as DevStorage,
@@ -29,8 +29,9 @@ const storage: FactoryStorage = {
     pools_count: new BigNumber("0"),
     pool_to_address: new MichelsonMap(),
     quipu_token: {
-      token_address: null as TezosAddress,
-      token_id: null as BigNumber,
+      token_address: (process.env.QUIPU_TOKEN_ADDRESS || null) as TezosAddress,
+      token_id: (new BigNumber(process.env.QUIPU_TOKEN_ID) ||
+        null) as BigNumber,
     } as FA2,
     quipu_rewards: new BigNumber("0"),
     whitelist: [] as TezosAddress[],
@@ -43,6 +44,14 @@ const storage: FactoryStorage = {
 
 module.exports = async (tezos: TezosToolkit, network: NetworkLiteral) => {
   storage.storage.dev_store.dev_address = await tezos.signer.publicKeyHash();
+  storage.storage.dev_store.dev_address = validateValue(
+    validateAddress,
+    storage.storage.dev_store.dev_address
+  );
+  storage.storage.quipu_token.token_address = validateValue(
+    validateContractAddress,
+    storage.storage.quipu_token.token_address
+  );
   storage.storage.dev_store.dev_lambdas = await setupLambdasToStorage(
     dev_lambdas_comp
   );
@@ -53,29 +62,13 @@ module.exports = async (tezos: TezosToolkit, network: NetworkLiteral) => {
     storage,
     network
   );
-  console.log(`Dex contract: ${contractAddress}`);
-  const dex: DexFactory = new DexFactory(
-    await tezos.contract.at(contractAddress)
+  console.log(
+    `Factory contract: ${chalk.bgYellow.bold.redBright(contractAddress)}`
   );
-  await setFunctionBatchCompilled(
-    tezos,
-    contractAddress,
-    "Admin",
-    8,
-    admin_lambdas_comp.filter((value) => value.args[1].int !== "7")
-  );
-  await setFunctionBatchCompilled(
-    tezos,
-    contractAddress,
-    "Token",
-    5,
-    token_lambdas_comp
-  );
-  await setFunctionBatchCompilled(
-    tezos,
-    contractAddress,
-    "Dex",
-    8,
-    dex_lambdas_comp
+  const dex_f: DexFactory = await DexFactory.init(tezos, contractAddress);
+  console.log(
+    `Factory is ${chalk.green(
+      "online"
+    )} at ${chalk.bgGreenBright.bold.blackBright(dex_f.contract.address)}`
   );
 };
