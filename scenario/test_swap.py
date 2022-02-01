@@ -314,7 +314,7 @@ class StableSwapTest(TestCase):
 
         res = chain.execute(self.dex.set_fees(0, fees), sender=admin)
 
-        res = chain.execute(self.dex.invest(pool_id=0, shares=1, in_amounts={0: 200_000, 1: 250_000}, deadline=1, receiver=None, referral=None))
+        res = chain.execute(self.dex.invest(pool_id=0, shares=1, in_amounts={0: 500_000, 1: 300_000, 2: 100_000}, deadline=1, receiver=None, referral=None))
 
         all_shares = get_shares(res, 0, me)
 
@@ -322,9 +322,35 @@ class StableSwapTest(TestCase):
         
         transfers = parse_transfers(res)
         total = sum(tx["amount"] for tx in transfers)
-        # self.assertAlmostEqual(total, 200_000, delta=3)
+        print("usual divest", transfers)
+        # TODO come up with good assertion
+        # self.assertAlmostEqual(total, 1_000_000, delta=3)
 
         res = chain.interpret(self.dex.divest_one_coin(pool_id=0, shares=all_shares, token_index=0, min_amount_out=1, deadline=1, receiver=None, referral=None))
 
+        print("divest one coin")
+        transfers = parse_transfers(res)
+        # pprint(transfers)
+        self.assertEqual(len(transfers), 1)
+        # self.assertEqual(transfers[0]["source"], contract_self_address)
+        self.assertEqual(transfers[0]["destination"], me)
+        self.assertAlmostEqual(transfers[0]["amount"], 1_000_000, delta=3)
+
+    def test_divest_imbalanced(self):
+        chain = LocalChain(storage=self.init_storage)
+
+        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c], form_pool_rates(100_000, 100_000, 100_000))
+        res = chain.execute(add_pool, sender=admin)
+
+        all_shares = get_shares(res, 0, admin)
+
+        res = chain.interpret(self.dex.divest_imbalanced(pool_id=0, max_shares=all_shares, amounts_out={0: 100_000 - 3, 1: 100_000 - 3}, deadline=1, receiver=None, referral=None), sender=admin)
+
         transfers = parse_transfers(res)
         pprint(transfers)
+        self.assertEqual(len(transfers), 2)
+        self.assertEqual(transfers[0]["destination"], admin)
+        self.assertAlmostEqual(transfers[0]["amount"], 100_000, delta=3)
+
+        self.assertEqual(transfers[1]["destination"], admin)
+        self.assertAlmostEqual(transfers[1]["amount"], 100_000, delta=3)
