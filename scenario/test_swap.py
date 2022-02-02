@@ -344,13 +344,18 @@ class StableSwapTest(TestCase):
 
         all_shares = get_shares(res, 0, admin)
 
-        res = chain.interpret(self.dex.divest_imbalanced(pool_id=0, max_shares=all_shares, amounts_out={0: 100_000 - 3, 1: 100_000 - 3}, deadline=1, receiver=None, referral=None), sender=admin)
+        res = chain.execute(self.dex.divest_imbalanced(pool_id=0, max_shares=all_shares, amounts_out={0: 100_000 - 3, 1: 100_000 - 3}, deadline=1, receiver=None, referral=None), sender=admin)
 
         transfers = parse_transfers(res)
         pprint(transfers)
         self.assertEqual(len(transfers), 2)
         self.assertEqual(transfers[0]["destination"], admin)
         self.assertAlmostEqual(transfers[0]["amount"], 100_000, delta=3)
-
         self.assertEqual(transfers[1]["destination"], admin)
         self.assertAlmostEqual(transfers[1]["amount"], 100_000, delta=3)
+
+        res = chain.execute(self.dex.divest_imbalanced(pool_id=0, max_shares=all_shares, amounts_out={2: 100_000 - 3}, deadline=1, receiver=None, referral=None), sender=admin)
+        transfers = parse_transfers(res)
+        self.assertEqual(len(transfers), 1)
+        self.assertEqual(transfers[0]["destination"], admin)
+        self.assertAlmostEqual(transfers[0]["amount"], 100_000, delta=3)
