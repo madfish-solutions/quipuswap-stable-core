@@ -67,7 +67,7 @@ function add_pool(
       pool_to_id = big_map[Bytes.pack(tokens) -> 0n];
       pools = big_map[0n -> pool];
       ledger = (big_map[]: big_map((address * nat), nat));
-      account_data = (big_map[]: big_map((address * nat), account_data_t));
+      allowances = (big_map[]: big_map((address * nat), allowances_data_t));
       dev_rewards = (big_map[]: big_map(token_t, nat));
       referral_rewards = (big_map[]: big_map((address * token_t), nat));
       stakers_balance = (big_map[]: big_map((address * pool_id_t), staker_info_t));

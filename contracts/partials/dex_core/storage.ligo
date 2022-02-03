@@ -13,9 +13,7 @@ type staker_accum_t     is [@layout:comb] record [
   total_staked            : nat;
 ]
 
-type account_data_t     is [@layout:comb] record [
-  allowances              : set(address);
-]
+type allowances_data_t     is set(address);
 
 type fees_storage_t     is [@layout:comb] record [
   lp                      : nat;
@@ -71,7 +69,7 @@ type storage_t          is [@layout:comb] record [
 
   (* FA2 data *)
   ledger                  : big_map((address * pool_id_t), nat); (* account info per address *)
-  account_data            : big_map((address * pool_id_t), account_data_t); (* account info per each lp provider *)
+  allowances              : big_map((address * pool_id_t), allowances_data_t); (* account info per each lp provider *)
 
   (* Rewards and accumulators *)
   dev_rewards             : big_map(token_t, nat);

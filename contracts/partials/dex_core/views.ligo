@@ -37,7 +37,7 @@
 
 (* Calculate the amount received when withdrawing a single coin *)
 [@view] function calc_divest_one_coin(
-  const params          : clc_w_one_v_param_t;
+  const params          : calc_withdraw_one_param_t;
   const s               : full_storage_t)
                         : nat is
   block {
