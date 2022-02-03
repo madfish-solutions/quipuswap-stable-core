@@ -291,7 +291,10 @@ function divest_one_coin(
       );
       const dev_fee_v = get_dev_fee(s);
       const result = calc_withdraw_one_coin(amp, params.shares, params.token_index, dev_fee_v, pool);
-      const all_fee = sum_all_fee(pool.fee, dev_fee_v);
+      var all_fee = sum_all_fee(pool.fee, dev_fee_v);
+      if (all_fee = 0n) // check for avoid zero division
+      then all_fee = 1n
+      else skip;
       const lp_fee = result.dy_fee * pool.fee.lp / all_fee;
       const dev_fee = result.dy_fee * dev_fee_v / all_fee;
       const ref_fee = result.dy_fee * pool.fee.ref / all_fee;
