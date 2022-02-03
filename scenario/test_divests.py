@@ -51,35 +51,35 @@ class DivestsTest(TestCase):
         self.assertLessEqual(transfers[0]["amount"], 777_777_777)
         self.assertLessEqual(transfers[1]["amount"], 42)
 
-    def test_threeway_pool_single_divest(self):
+    def test_threeway_pool_one_coin_divest(self):
         chain = LocalChain(storage=self.init_storage)
 
         add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c], form_pool_rates(100_000, 100_000, 100_000))
         res = chain.execute(add_pool, sender=admin)
 
         res = chain.execute(self.dex.set_fees(0, fees), sender=admin)
-
-        res = chain.execute(self.dex.invest(pool_id=0, shares=1, in_amounts={0: 500_000, 1: 300_000, 2: 100_000}, deadline=1, receiver=None, referral=None))
-
-        all_shares = get_shares(res, 0, me)
-
-        res = chain.interpret(self.dex.divest(pool_id=0, min_amounts_out={}, shares=all_shares, deadline=1, receiver=None))
         
-        transfers = parse_transfers(res)
-        total = sum(tx["amount"] for tx in transfers)
-        print("usual divest", transfers)
-        # TODO come up with good assertion
-        # self.assertAlmostEqual(total, 1_000_000, delta=3)
+        all_shares = get_shares(res, 0, admin)
+        res = chain.execute(self.dex.divest_one_coin(pool_id=0, shares=all_shares, token_index=0, min_amount_out=1, deadline=1, receiver=None, referral=None), sender=admin)
 
-        res = chain.interpret(self.dex.divest_one_coin(pool_id=0, shares=all_shares, token_index=0, min_amount_out=1, deadline=1, receiver=None, referral=None))
-
-        print("divest one coin")
         transfers = parse_transfers(res)
-        # pprint(transfers)
         self.assertEqual(len(transfers), 1)
-        # self.assertEqual(transfers[0]["source"], contract_self_address)
-        self.assertEqual(transfers[0]["destination"], me)
-        self.assertAlmostEqual(transfers[0]["amount"], 1_000_000, delta=3)
+        self.assertEqual(transfers[0]["destination"], admin)
+        self.assertAlmostEqual(transfers[0]["amount"], 100_000, delta=3)
+
+        all_shares = get_shares(res, 0, admin)
+        self.assertEqual(all_shares, 0)
+
+        # is this standing true?
+        res = chain.execute(self.dex.swap(0, 0, 2, 100, 1, 0, None, None))
+        transfers = parse_transfers(res) 
+        self.assertLessEqual(transfers[0]["amount"], 100)
+        self.assertLessEqual(transfers[1]["amount"], 100)
+
+        invest = self.dex.invest(pool_id=0, shares=1, in_amounts={0: 100, 1: 100, 2: 100}, deadline=1, receiver=None, referral=None)
+        res = chain.execute(invest)
+
+
 
     def test_fail_divest_nonowner(self):
         chain = LocalChain(storage=self.init_storage)
