@@ -1,6 +1,10 @@
 PRECISION = 1_000_000
 A_CONST = 1_000_000
 
+TEZOS_PRECISION = int(1e6)
+BITCOIN_PRECISION = int(1e8)
+ETH_PRECISION = int(1e18)
+
 token_a_address = "KT18amZmM5W7qDWVt2pH6uj7sCEd3kbzLrHT"
 token_b_address = "KT1AxaBxkFLCUi3f8rdDAAxBKHfzY8LfKDRA"
 token_c_address = "KT1XXAavg3tTj12W1ADvd3EEnm1pu6XTmiEF"
