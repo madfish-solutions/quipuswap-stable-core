@@ -1,5 +1,7 @@
+import sys
 from os import urandom
-from pytezos import pytezos 
+from pytezos import pytezos
+
 from pytezos.crypto.encoding import base58_encode
 
 fee_rate = 333
@@ -273,3 +275,22 @@ class LocalChain():
 
     def advance_blocks(self, count=1):
         self.now += count * 60
+
+
+def start_progress(title):
+    global progress_x
+    sys.stdout.write("\n" + title + ": [" + "-"*40 + "]" + chr(8)*41)
+    sys.stdout.flush()
+    progress_x = 0
+
+def progress(x):
+    global progress_x
+    x = int(x * 40 // 100)
+    sys.stdout.write("#" * (x - progress_x))
+    sys.stdout.flush()
+    progress_x = x
+
+def end_progress():
+    sys.stdout.write("#" * (40 - progress_x) + "]\n")
+    print("✅ Done.")
+    sys.stdout.flush()

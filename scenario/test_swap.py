@@ -348,7 +348,7 @@ class StableSwapTest(TestCase):
             0:  {
                     "rate": pow(10,18) * int(1e18 // BITCOIN_PRECISION),
                     "precision_multiplier": int(1e18 // BITCOIN_PRECISION),
-                    "reserves": 100_000 * BITCOIN_PRECISION,
+                    "reserves": 100_000 * BITCOIN_PRECISION * 4,
                 },
             1:  {
                     "rate": pow(10,18) * int(1e18 // TEZOS_PRECISION) * 2,
@@ -358,7 +358,7 @@ class StableSwapTest(TestCase):
             2:  {
                     "rate": pow(10,18) * int(1e18 // ETH_PRECISION) * 4,
                     "precision_multiplier": int(1e18 // ETH_PRECISION),
-                    "reserves": 100_000 * ETH_PRECISION * 4,
+                    "reserves": 100_000 * ETH_PRECISION,
                 },
             }
         )
@@ -366,25 +366,23 @@ class StableSwapTest(TestCase):
         
         res = chain.execute(self.dex.swap(0, 0, 1, 10_000 * BITCOIN_PRECISION, 1, 0, None, None))
         transfers = parse_transfers(res)
+        self.assertAlmostEqual(transfers[1]["amount"], 5_000 * TEZOS_PRECISION, places=-3)          #10k BTC -> 5k XTZ
         res = chain.execute(self.dex.swap(0, 1, 2, 10_000 * TEZOS_PRECISION, 1, 0, None, None))
-        transfers1 = parse_transfers(res)
+        transfers = parse_transfers(res)
+        self.assertAlmostEqual(transfers[1]["amount"], 5_000 * ETH_PRECISION, places=-15)           #10k XTZ -> 5k ETH
         res = chain.execute(self.dex.swap(0, 2, 0, 10_000 * ETH_PRECISION, 1, 0, None, None))
-        transfers2 = parse_transfers(res)
+        transfers = parse_transfers(res)
+        self.assertAlmostEqual(transfers[1]["amount"], 10_000 * BITCOIN_PRECISION * 4, places=-6)  #10k ETH -> 40k BTC
         res = chain.execute(self.dex.swap(0, 2, 1, 10_000 * ETH_PRECISION, 1, 0, None, None))
-        transfers3 = parse_transfers(res)
+        transfers = parse_transfers(res)
+        self.assertAlmostEqual(transfers[1]["amount"], 10_000 * TEZOS_PRECISION * 2, places=-4)    #10k ETH -> 20k XTZ
         res = chain.execute(self.dex.swap(0, 1, 0, 10_000 * TEZOS_PRECISION, 1, 0, None, None))
-        transfers4 = parse_transfers(res)
+        transfers = parse_transfers(res)
+        self.assertAlmostEqual(transfers[1]["amount"], 10_000 * BITCOIN_PRECISION * 2, places=-6)  #10k XTZ -> 20k BTC
         res = chain.execute(self.dex.swap(0, 0, 2, 10_000 * BITCOIN_PRECISION, 1, 0, None, None))
         transfers5 = parse_transfers(res)
-        self.assertAlmostEqual(transfers[1]["amount"], 5_000 * TEZOS_PRECISION, places=-6)          #10k BTC -> 5k XTZ
-        self.assertAlmostEqual(transfers1[1]["amount"], 5_000 * ETH_PRECISION, places=-18)          #10k XTZ -> 5k ETH
-        self.assertAlmostEqual(transfers2[1]["amount"], 10_000 * BITCOIN_PRECISION * 4, places=-9)  #10k ETH -> 40k BTC
-        self.assertAlmostEqual(transfers3[1]["amount"], 10_000 * TEZOS_PRECISION * 2, places=-6)    #10k ETH -> 20k XTZ
-        self.assertAlmostEqual(transfers4[1]["amount"], 10_000 * BITCOIN_PRECISION * 2, places=-9)  #10k XTZ -> 20k BTC
-        self.assertAlmostEqual(transfers5[1]["amount"], 2_500 * ETH_PRECISION, places=-18)          #10k BTC -> 2.5k ETH
+        self.assertAlmostEqual(transfers5[1]["amount"], 2_500 * ETH_PRECISION, places=-16)           #10k BTC -> 2.5k ETH
         # TODO: calculate more accurate
-        
-
         return
 
         res = chain.execute(self.dex.swap(0, 1, 2, 10_000 * TEZOS_PRECISION, 1, 0, None, None))
@@ -402,6 +400,55 @@ class StableSwapTest(TestCase):
         self.assertAlmostEqual(transfers[1]["amount"], 100_000 * TEZOS_PRECISION, delta=30_000)
         self.assertAlmostEqual(transfers[0]["amount"], 100_000 * ETH_PRECISION, delta=30_000_000)
 
+    # WARNING: long-running test (6+ min)
+    def test_threeway_pool_different_rates_many_swaps(self):
+        chain = LocalChain(storage=self.init_storage)
+
+        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c], {
+            0:  {
+                    "rate": pow(10,18) * int(1e18 // BITCOIN_PRECISION),
+                    "precision_multiplier": int(1e18 // BITCOIN_PRECISION),
+                    "reserves": 100_000 * BITCOIN_PRECISION * 4,
+                },
+            1:  {
+                    "rate": pow(10,18) * int(1e18 // TEZOS_PRECISION) * 2,
+                    "precision_multiplier": int(1e18 // TEZOS_PRECISION),
+                    "reserves": 100_000 * TEZOS_PRECISION * 2,
+                },
+            2:  {
+                    "rate": pow(10,18) * int(1e18 // ETH_PRECISION) * 4,
+                    "precision_multiplier": int(1e18 // ETH_PRECISION),
+                    "reserves": 100_000 * ETH_PRECISION,
+                },
+            }
+        )
+        res = chain.execute(add_pool, sender=admin)
+        init = 0
+        end = 0
+        start_progress("Swap 100 BTC -> XTZ 2000 times")
+        for i in range(2000): # 2000 * 50 = 100_000 - half of the pool
+            res = chain.execute(self.dex.swap(0, 0, 1, 100 * BITCOIN_PRECISION, 1, 0, None, None)) # 100 * 200 = 200_000
+            transfers = parse_transfers(res)
+            if i == 0:
+                init = transfers[1]["amount"]/TEZOS_PRECISION
+            progress(i/20)
+            self.assertAlmostEqual(transfers[1]["amount"], 50 * TEZOS_PRECISION, places=-3)        #100 BTC -> 50 XTZ
+        end_progress()
+        end = transfers[1]["amount"]/TEZOS_PRECISION
+        print(f'Price for 100 BTC change after swap half a pool: {init} -> {end} XTZ')
+        print(f"Price change XTZ {(init/end - 1) * 100} %")
+        start_progress("Swap 100 XTZ -> BTC 750 times")
+        for i in range(750): # 750 * 200 = 150_000 - half of the pool (100k inital + 200k swap)
+            res = chain.execute(self.dex.swap(0, 1, 0, 100 * TEZOS_PRECISION, 1, 0, None, None))
+            transfers = parse_transfers(res)
+            if i == 0:
+                init = transfers[1]["amount"] / BITCOIN_PRECISION
+            progress(i/7.5)
+            self.assertAlmostEqual(transfers[1]["amount"], 100 * BITCOIN_PRECISION * 2, places=-6) #100 XTZ -> 200 BTC
+        end_progress()
+        end = transfers[1]["amount"] / BITCOIN_PRECISION
+        print(f'Price for 100 XTZ change after swap half a pool: {init} -> {end} BTC')
+        print(f"Price change BTC {(init/end - 1) * 100} %")
 
     def test_threeway_pool_same_rates(self):
         chain = LocalChain(storage=self.init_storage)
