@@ -180,6 +180,14 @@ def get_shares(res, pool, user):
     storage = res.storage["storage"]
     return storage["ledger"][(user, pool)]
 
+def get_reseves(res, pool):
+    storage = res.storage["storage"]
+    tokens = storage["pools"][pool]["tokens_info"]
+    reserves = {}
+    for (token_idx, token) in tokens.items():
+        reserves[token_idx] = token["reserves"]
+    return reserves
+
 def form_pool_rates(reserves_a, reserves_b, reserves_c=None):
     rates = {
                 0: {
