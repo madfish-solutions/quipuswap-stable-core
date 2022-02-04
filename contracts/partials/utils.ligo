@@ -203,7 +203,7 @@ function get_token_by_id(
   block {
 
 #if FACTORY
-#if !FOUR
+#if !INSIDE_DEX
     require(Tezos.sender = s.storage.dev_store.dev_address, Errors.Dex.not_developer);
 #endif
 #else
@@ -213,7 +213,7 @@ function get_token_by_id(
     | FAdmin  -> s.admin_lambdas := set_func_or_fail(params, Constants.admin_func_count,  s.admin_lambdas)
     | FDex    -> s.dex_lambdas := set_func_or_fail(params, Constants.dex_func_count, s.dex_lambdas)
     | FToken  -> s.token_lambdas := set_func_or_fail(params, Constants.token_func_count,  s.token_lambdas)
-#if !FOUR
+#if !INSIDE_DEX
     | FDev    -> s.storage.dev_store.dev_lambdas := set_func_or_fail(params, Constants.dev_func_count,  s.storage.dev_store.dev_lambdas)
 #else
     | _ -> skip

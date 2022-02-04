@@ -35,7 +35,7 @@ const storage: DexStorage = {
     pool_to_id: new MichelsonMap(),
     pools: new MichelsonMap(),
     ledger: new MichelsonMap(),
-    account_data: new MichelsonMap(),
+    allowances: new MichelsonMap(),
     dev_rewards: new MichelsonMap(),
     referral_rewards: new MichelsonMap(),
     stakers_balance: new MichelsonMap(),

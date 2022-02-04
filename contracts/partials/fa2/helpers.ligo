@@ -5,20 +5,11 @@
                         : unit is
   require(from_account = Tezos.sender or (allowances contains Tezos.sender), Errors.FA2.not_operator);
 
-(* Balance check *)
-[@inline] function check_balance(
-  const account_bal     : nat;
-  const to_spend        : nat)
-                        : unit is
-  if account_bal < to_spend
-    then failwith(Errors.FA2.insufficient_balance)
-  else Unit;
-
-[@inline] function get_account_data(
+[@inline] function get_allowances(
   const key             : address * pool_id_t;
-  const acc_bm          : big_map((address * pool_id_t), account_data_t))
-                        : account_data_t is
-  unwrap_or(acc_bm[key], record [ allowances = (set[]: set(address)); ]);
+  const acc_bm          : big_map((address * pool_id_t), allowances_data_t))
+                        : allowances_data_t is
+  unwrap_or(acc_bm[key], (set[]: set(address)));
 
 (* Perform transfers from one owner *)
 [@inline] function iterate_transfer(
@@ -33,7 +24,7 @@
       block {
         const sender_key =  (user_trx_params.from_, transfer.token_id);
         var sender_balance := unwrap_or(s.storage.ledger[sender_key], 0n);
-        var sender_allowance: set(address) := case s.storage.account_data[sender_key] of
+        var sender_allowance: set(address) := case s.storage.allowances[sender_key] of
             Some(data) -> data.allowances
           | None -> (set[]: set(address))
           end;
@@ -63,7 +54,7 @@
     require(param.token_id < s.storage.pools_count, Errors.Dex.pool_not_listed);
 
     const owner_key = (param.owner, param.token_id);
-    var account := get_account_data(owner_key, s.storage.account_data);
+    var account := get_allowances(owner_key, s.storage.allowances);
     account.allowances := Set.update(param.operator, should_add, account.allowances);
-    s.storage.account_data[owner_key] := account;
+    s.storage.allowances[owner_key] := account;
   } with s

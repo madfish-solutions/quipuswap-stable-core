@@ -10,9 +10,7 @@ import {
 } from "../../../utils/helpers";
 import { DevStorage } from "../../Developer/API/storage";
 
-export declare type AccountDataType = {
-  allowances: MichelsonMap<string, Array<string>>;
-};
+export declare type AllowancesDataType = Array<string>;
 
 export declare type FeeType = {
   lp: BigNumber;
@@ -53,7 +51,7 @@ export declare type DexMainStorage = {
   pool_to_id: MichelsonMap<BytesString, number>;
   pools: MichelsonMap<string, PairInfo>;
   ledger: MichelsonMap<string, BigNumber>;
-  account_data: MichelsonMap<string, AccountDataType>;
+  allowances: MichelsonMap<string, AllowancesDataType>;
   dev_rewards: MichelsonMap<FA12TokenType | FA2TokenType, BigNumber>;
   referral_rewards: MichelsonMap<
     {

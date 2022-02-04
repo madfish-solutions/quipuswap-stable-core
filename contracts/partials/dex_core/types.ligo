@@ -90,7 +90,7 @@ type divest_one_c_param_t is [@layout:comb] record [
   referral                : option(address);
 ]
 
-type clc_w_one_v_param_t is [@layout:comb] record [
+type calc_withdraw_one_param_t is [@layout:comb] record [
   pool_id                 : nat; (* pool identifier *)
   token_amount            : nat; (* LP to burn *)
   i                       : nat; (* token index in pool *)
