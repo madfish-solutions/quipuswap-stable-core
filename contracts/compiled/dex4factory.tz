@@ -84,7 +84,7 @@
                                                                                         (pair (pair %staker_accumulator (map %accumulator nat nat) (nat %total_staked))
                                                                                               (nat %total_supply)))))))))
                                                  (pair (big_map %ledger (pair address nat) nat)
-                                                       (pair (big_map %account_data (pair address nat) (set address))
+                                                       (pair (big_map %allowances (pair address nat) (set address))
                                                              (pair (big_map %dev_rewards
                                                                       (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
                                                                       nat)
@@ -260,7 +260,7 @@
                                                                                                              (pair (pair %staker_accumulator (map %accumulator nat nat) (nat %total_staked))
                                                                                                                    (nat %total_supply)))))))))
                                                                       (pair (big_map %ledger (pair address nat) nat)
-                                                                            (pair (big_map %account_data (pair address nat) (set address))
+                                                                            (pair (big_map %allowances (pair address nat) (set address))
                                                                                   (pair (big_map %dev_rewards
                                                                                            (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
                                                                                            nat)
@@ -295,7 +295,7 @@
                                                                                                              (pair (pair %staker_accumulator (map %accumulator nat nat) (nat %total_staked))
                                                                                                                    (nat %total_supply)))))))))
                                                                       (pair (big_map %ledger (pair address nat) nat)
-                                                                            (pair (big_map %account_data (pair address nat) (set address))
+                                                                            (pair (big_map %allowances (pair address nat) (set address))
                                                                                   (pair (big_map %dev_rewards
                                                                                            (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
                                                                                            nat)
@@ -402,7 +402,7 @@
                                                                                                              (pair (pair %staker_accumulator (map %accumulator nat nat) (nat %total_staked))
                                                                                                                    (nat %total_supply)))))))))
                                                                       (pair (big_map %ledger (pair address nat) nat)
-                                                                            (pair (big_map %account_data (pair address nat) (set address))
+                                                                            (pair (big_map %allowances (pair address nat) (set address))
                                                                                   (pair (big_map %dev_rewards
                                                                                            (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
                                                                                            nat)
@@ -437,7 +437,7 @@
                                                                                                              (pair (pair %staker_accumulator (map %accumulator nat nat) (nat %total_staked))
                                                                                                                    (nat %total_supply)))))))))
                                                                       (pair (big_map %ledger (pair address nat) nat)
-                                                                            (pair (big_map %account_data (pair address nat) (set address))
+                                                                            (pair (big_map %allowances (pair address nat) (set address))
                                                                                   (pair (big_map %dev_rewards
                                                                                            (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
                                                                                            nat)
@@ -518,7 +518,7 @@
                                                                                                                 (pair (pair %staker_accumulator (map %accumulator nat nat) (nat %total_staked))
                                                                                                                       (nat %total_supply)))))))))
                                                                          (pair (big_map %ledger (pair address nat) nat)
-                                                                               (pair (big_map %account_data (pair address nat) (set address))
+                                                                               (pair (big_map %allowances (pair address nat) (set address))
                                                                                      (pair (big_map %dev_rewards
                                                                                               (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
                                                                                               nat)
@@ -558,7 +558,7 @@
                                                                                                                 (pair (pair %staker_accumulator (map %accumulator nat nat) (nat %total_staked))
                                                                                                                       (nat %total_supply)))))))))
                                                                          (pair (big_map %ledger (pair address nat) nat)
-                                                                               (pair (big_map %account_data (pair address nat) (set address))
+                                                                               (pair (big_map %allowances (pair address nat) (set address))
                                                                                      (pair (big_map %dev_rewards
                                                                                               (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
                                                                                               nat)

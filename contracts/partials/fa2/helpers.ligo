@@ -25,7 +25,7 @@
         const sender_key =  (user_trx_params.from_, transfer.token_id);
         var sender_balance := unwrap_or(s.storage.ledger[sender_key], 0n);
         var sender_allowance: set(address) := case s.storage.allowances[sender_key] of
-            Some(data) -> data.allowances
+            Some(data) -> data
           | None -> (set[]: set(address))
           end;
         check_permissions(user_trx_params.from_, sender_allowance);
@@ -54,7 +54,7 @@
     require(param.token_id < s.storage.pools_count, Errors.Dex.pool_not_listed);
 
     const owner_key = (param.owner, param.token_id);
-    var account := get_allowances(owner_key, s.storage.allowances);
-    account.allowances := Set.update(param.operator, should_add, account.allowances);
-    s.storage.allowances[owner_key] := account;
+    var allowances := get_allowances(owner_key, s.storage.allowances);
+    allowances := Set.update(param.operator, should_add, allowances);
+    s.storage.allowances[owner_key] := allowances;
   } with s
