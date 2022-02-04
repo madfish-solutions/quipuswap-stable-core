@@ -121,7 +121,7 @@ class TokenToTokenTransferTest(TestCase):
         transfer = self.dex.transfer(
             [
                 {
-                    "from_": alice,
+                    "from_": admin,
                         "txs": [{
                             "amount": 150_000_000,
                             "to_": bob,
