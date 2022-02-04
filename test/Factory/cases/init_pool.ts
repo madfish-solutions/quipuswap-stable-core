@@ -11,7 +11,6 @@ import { TokenFA12, TokenFA2 } from "../../Token";
 import { TezosToolkit, MichelsonMap } from "@taquito/taquito";
 import { defaultTokenId } from "../../Token/token";
 import { Dex } from "../../Dex/API/dexAPI";
-import { DexStorage } from "../../Dex/API/types";
 import chalk from "chalk";
 export async function initializeExchangeSuccessCase(
   factory: DexFactory,

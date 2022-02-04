@@ -10,7 +10,6 @@ import {
   FA12TokenType,
   FA2TokenType,
   setFunctionBatchCompilled,
-  Tezos,
   TezosAddress,
 } from "../../../utils/helpers";
 import { FactoryStorage } from "./types";
