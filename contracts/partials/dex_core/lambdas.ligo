@@ -204,7 +204,7 @@ function divest_imbalanced(
               Tezos.self_address,
               receiver,
               value.1,
-              get_token_by_id(value.0, Some(tokens))
+              unwrap(tokens[value.0], Errors.Dex.wrong_index)
             ) # accum.operations;
           else skip;
         } with accum;

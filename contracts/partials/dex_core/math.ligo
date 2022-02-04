@@ -96,10 +96,10 @@ function calc_y(
   const a_nn            : nat;
   const s_              : nat;
   const d               : nat;
-  const s               : pool_t)
+  const pool            : pool_t)
                         : nat is
   block {
-    const tokens_count = Map.size(s.tokens_info);
+    const tokens_count = Map.size(pool.tokens_info);
     c := c * d * Constants.a_precision / (a_nn * tokens_count);
     const b: nat = s_ + d * Constants.a_precision / a_nn;
     var tmp := record [ y = d; prev_y = 0n; ];
