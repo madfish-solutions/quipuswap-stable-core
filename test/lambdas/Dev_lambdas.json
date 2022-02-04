@@ -1,0 +1,10 @@
+[
+  {
+    "index": 0,
+    "name": "set_dev_address"
+  },
+  {
+    "index": 1,
+    "name": "set_dev_fee"
+  }
+]

@@ -24,7 +24,6 @@ Core concept is to provide low slippage swap between stablecoins like uUSD, kUSD
 ├──────────── dex_core/           # core codebase of DEX contact
 ├──────────── fa2/                # token of FA2 standart sources for DEX contact
 ├──────────── fa12/               # helpers for interaction with FA12 tokens for DEX contact
-├──────────── permit/             # permit part for token methods of DEX contract
 ├──────────── common_types.ligo   # common types used for interaction with contracts
 ├──────────── constants.ligo      # constants that used in DEX contract
 ├──────────── constants_test.ligo # modified constants that used in tests of DEX contract

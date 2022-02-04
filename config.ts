@@ -1,11 +1,15 @@
 import { TezosProtocols } from "./scripts/commands/sandbox/types";
+import * as dotenv from "dotenv";
+
+dotenv.config();
+
 export const config = {
   repoName: "quipuswap-stable-core",
-  ligoVersion: "0.31.0",
+  ligoVersion: "0.33.0",
   preferredLigoFlavor: "pascaligo",
   networks: {
     sandbox: {
-      host: "localhost",
+      host: "http://localhost",
       port: 20000,
       protocol: TezosProtocols.HANGZHOU,
       genesisBlockHash: "random",
@@ -29,7 +33,7 @@ export const config = {
       },
     },
     testnet: {
-      host: "https://testnet-tezos.giganode.io",
+      host: "https://rpc.hangzhounet.teztnets.xyz",
       port: 443,
       faucet: null,
     },
@@ -38,9 +42,15 @@ export const config = {
       port: 443,
     },
   },
+  deployerSK:
+    process.env.DEX_DEPLOYER_SK ||
+    "edsk3QoqBuvdamxouPhin7swCvkQNgq4jP5KZPbwWNnwdZpSpJiEbq",
+  deployNetwork: process.env.NETWORK || "sandbox",
   contractsDirectory: "contracts/main",
   outputDirectory: "build",
   migrationsDir: "migrations",
+  dockerizedLigo: true,
+  ligoLocalPath: "./ligo",
 };
 
 export default config;

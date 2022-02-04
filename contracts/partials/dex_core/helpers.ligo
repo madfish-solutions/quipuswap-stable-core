@@ -1,28 +1,28 @@
-const default_tmp_tokens: tmp_tkns_map_t = record [
-    tokens = (map[]: tkns_map_t);
-    index  = 0n;
-];
-
 (* Helper for sum fees that separated from reserves  *)
 [@inline] function sum_wo_lp_fee(
-  const fee             : fees_storage_t)
+  const fee             : fees_storage_t;
+  const dev_fee         : nat)
                         : nat is
-    fee.stakers_fee
-  + fee.ref_fee
-  + fee.dev_fee;
+    fee.stakers
+  + fee.ref
+  + dev_fee;
 
 (* Helper for sum all fee  *)
 function sum_all_fee(
-  const fee             : fees_storage_t)
+  const fee             : fees_storage_t;
+  const dev_fee         : nat)
                         : nat is
-    fee.lp_fee + sum_wo_lp_fee(fee);
+    fee.lp + sum_wo_lp_fee(fee, dev_fee);
 
 (* Update reserves with pre-calculated `fees` *)
 [@inline] function nip_off_fees(
   const fees            : fees_storage_t;
-  const token_info      : tkn_inf_t)
-                        : tkn_inf_t is
-  token_info with record [ reserves = nat_or_error(token_info.reserves - sum_wo_lp_fee(fees), Errors.Dex.low_reserves); ]
+  const dev_fee         : nat;
+  const token_info      : token_info_t)
+                        : token_info_t is
+  token_info with record [
+    reserves = nat_or_error(token_info.reserves - sum_wo_lp_fee(fees, dev_fee), Errors.Dex.low_reserves);
+  ]
 
 (* Helper for separating fee when request is imbalanced *)
 [@inline] function divide_fee_for_balance(
@@ -31,79 +31,70 @@ function sum_all_fee(
                         : nat is
   fee * tokens_count / (4n * nat_or_error(tokens_count - 1n, Errors.Dex.wrong_tokens_count));
 
-(* Get token from map tokens of pool by inner index *)
-function get_token_by_id(
-  const token_id        : tkn_pool_idx_t;
-  const map_entry       : option(tkns_map_t))
-                        : token_t is
-  block {
-    const tokens = unwrap(map_entry, Errors.Dex.pool_not_listed);
-    const token = unwrap(tokens[token_id], Errors.Dex.wrong_index);
-  } with token;
-
 (* Slice fees from calculated `dy` and returns new dy and sliced fees *)
 function perform_fee_slice(
     const dy            : nat;
     const fee           : fees_storage_t;
+    const dev_fee       : nat;
     const total_staked  : nat)
-                        : record [ dy: nat; ref: nat; dev: nat; stkr: nat; lp: nat; ] is
+                        : record [ dy: nat; ref: nat; dev: nat; staker: nat; lp: nat; ] is
   block {
-    const to_ref = dy * fee.ref_fee / Constants.fee_denominator;
-    const to_dev = dy * fee.dev_fee / Constants.fee_denominator;
-    var to_prov := dy * fee.lp_fee / Constants.fee_denominator;
+    const to_ref = dy * fee.ref / Constants.fee_denominator;
+    const to_dev = dy * dev_fee / Constants.fee_denominator;
+    var to_prov := dy * fee.lp / Constants.fee_denominator;
 
     var to_stakers := 0n;
     if (total_staked =/= 0n)
-    then to_stakers := dy * fee.stakers_fee / Constants.fee_denominator;
-    else to_prov := to_prov + dy * fee.stakers_fee / Constants.fee_denominator;
+    then to_stakers := dy * fee.stakers / Constants.fee_denominator;
+    else to_prov := to_prov + dy * fee.stakers / Constants.fee_denominator;
 
     const return = record [
       dy  = nat_or_error(dy - to_prov - to_ref - to_dev - to_stakers, Errors.Dex.fee_overflow);
       ref = to_ref;
       dev = to_dev;
-      stkr= to_stakers;
+      staker= to_stakers;
       lp  = to_prov
     ]
   } with return
 
 (* Helper function to calculate and harvest staker reward *)
 function harvest_staker_rewards(
-  var info              : stkr_info_t;
+  var info              : staker_info_t;
   var operations        : list(operation);
-  const accumulator     : stkr_acc_t;
-  const tokens          : option(tkns_map_t))
-                        : record [ account: stkr_info_t; operations: list(operation) ] is
+  const accumulator     : staker_accum_t;
+  const tokens          : option(tokens_map_t))
+                        : record [ account: staker_info_t; operations: list(operation) ] is
   block {
     const staker_balance = info.balance;
     function fold_rewards(
-      var acc           : record [ op: list(operation); earnings: map(tkn_pool_idx_t, account_rwrd_t); ];
-      const entry       : tkn_pool_idx_t * nat)
-                        : record [ op: list(operation); earnings: map(tkn_pool_idx_t, account_rwrd_t); ] is
+      var accum         : record [ op: list(operation); earnings: map(token_pool_idx_t, account_reward_t); ];
+      const entry       : token_pool_idx_t * nat)
+                        : record [ op: list(operation); earnings: map(token_pool_idx_t, account_reward_t); ] is
       block {
         const i = entry.0;
-        const pool_acc = entry.1;
+        const pool_accum = entry.1;
         const reward = unwrap_or(
-          acc.earnings[i],
+          accum.earnings[i],
           record [
             former = 0n;
             reward = 0n;
           ]
         );
-        const new_former = staker_balance * pool_acc;
-        const reward_amt = (reward.reward + abs(new_former - reward.former)) / Constants.acc_precision;
+        const new_former = staker_balance * pool_accum;
+        const reward_amt = (reward.reward + abs(new_former - reward.former)) / Constants.accum_precision;
 
-        acc.op := typed_transfer(
+        accum.op := typed_transfer(
           Tezos.self_address,
           Tezos.sender,
           reward_amt,
           get_token_by_id(i, tokens)
-        ) # acc.op;
+        ) # accum.op;
 
-        acc.earnings[i] := record[
+        accum.earnings[i] := record[
           former = new_former;
           reward = 0n;
         ];
-    } with acc;
+    } with accum;
     const harvest = Map.fold(
       fold_rewards,
       accumulator.accumulator,
@@ -115,13 +106,12 @@ function harvest_staker_rewards(
 
 (* Helper function to transfer staker tokens and update former *)
 function update_former_and_transfer(
-  const flag            : a_r_flag_t;
+  const flag            : should_unstake_fl;
   const shares          : nat;
-  const staker_acc      : stkr_info_t;
-  const p_s_acc         : stkr_acc_t;
-  const quipu_token     : fa2_token_t;
-  const operations      : list(operation))
-                        : record [ account: stkr_info_t; staker_accumulator: stkr_acc_t; ops: list(operation); ] is
+  const staker_accum    : staker_info_t;
+  const pool_stake_accum: staker_accum_t;
+  const quipu_token     : fa2_token_t)
+                        : record [ account: staker_info_t; staker_accumulator: staker_accum_t; op: operation; ] is
   block {
     const (
       new_balance,
@@ -130,26 +120,26 @@ function update_former_and_transfer(
       total_staked
     ) = case flag of
         | Add -> (
-            staker_acc.balance + shares,
+            staker_accum.balance + shares,
             Tezos.sender,
             Tezos.self_address,
-            p_s_acc.total_staked + shares
+            pool_stake_accum.total_staked + shares
             )
         | Remove -> (
-            nat_or_error(staker_acc.balance - shares, Errors.Dex.wrong_shares_out),
+            nat_or_error(staker_accum.balance - shares, Errors.Dex.wrong_shares_out),
             Tezos.self_address,
             Tezos.sender,
-            nat_or_error(p_s_acc.total_staked - shares, Errors.Dex.wrong_shares_out)
+            nat_or_error(pool_stake_accum.total_staked - shares, Errors.Dex.wrong_shares_out)
             )
         end;
 
     function upd_former(
-      const i           : tkn_pool_idx_t;
-      const rew         : account_rwrd_t)
-                        : account_rwrd_t is
+      const i           : token_pool_idx_t;
+      const rew         : account_reward_t)
+                        : account_reward_t is
       block{
-        const new_former = new_balance * unwrap_or(p_s_acc.accumulator[i], 0n);
-        const new_reward = (rew.reward + abs(new_former - rew.former)) / Constants.acc_precision;
+        const new_former = new_balance * unwrap_or(pool_stake_accum.accumulator[i], 0n);
+        const new_reward = (rew.reward + abs(new_former - rew.former)) / Constants.accum_precision;
       } with rew with record [
         former = new_former;
         reward = new_reward;
@@ -157,61 +147,60 @@ function update_former_and_transfer(
   } with record [
     account = record [
       balance = new_balance;
-      earnings = Map.map(upd_former, staker_acc.earnings);
+      earnings = Map.map(upd_former, staker_accum.earnings);
     ];
-    staker_accumulator = p_s_acc with record [
+    staker_accumulator = pool_stake_accum with record [
       total_staked = total_staked
     ];
-    ops = typed_transfer(
+    op = typed_transfer(
       forwarder,
       receiver,
       shares,
       Fa2(quipu_token)
-    ) # operations;
+    );
   ]
 
 (* Harvest staked rewards and stakes/unstakes QUIPU tokens if amount > 0n *)
 function perform_un_stake(
-  const flag            : a_r_flag_t;
-  const params          : un_stake_prm_t;
+  const flag            : should_unstake_fl;
+  const params          : un_stake_param_t;
   var   s               : storage_t)
                         : return_t is
   block {
     var operations: list(operation) := Constants.no_operations;
     const staker_key = (Tezos.sender, params.pool_id);
-    var staker_acc := unwrap_or(
+    var staker_accum := unwrap_or(
       s.stakers_balance[staker_key],
       record [
         balance = 0n;
-        earnings = (map[] : map(nat , account_rwrd_t))
+        earnings = (map[] : map(nat , account_reward_t))
       ]
     );
     var pool := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
     const harvested = harvest_staker_rewards(
-      staker_acc,
+      staker_accum,
       operations,
       pool.staker_accumulator,
       s.tokens[params.pool_id]
     );
-    staker_acc := harvested.account;
+    staker_accum := harvested.account;
     operations := harvested.operations;
     if params.amount > 0n
     then {
       const after_updates = update_former_and_transfer(
         flag,
         params.amount,
-        staker_acc,
+        staker_accum,
         pool.staker_accumulator,
-        s.quipu_token,
-        operations
+        s.quipu_token
       );
-      staker_acc := after_updates.account;
+      staker_accum := after_updates.account;
       pool.staker_accumulator := after_updates.staker_accumulator;
-      operations := after_updates.ops;
+      operations := after_updates.op # operations;
     }
     else skip;
     s.pools[params.pool_id] := pool;
-    s.stakers_balance[staker_key] := staker_acc;
+    s.stakers_balance[staker_key] := staker_accum;
   } with (operations, s)
 
 (* Helper function to get token pool *)
@@ -228,15 +217,14 @@ function get_pool_info(
       future_A            = 0n;
       initial_A_time      = Tezos.now;
       future_A_time       = Tezos.now;
-      tokens_info         = (map []: map(tkn_pool_idx_t, tkn_inf_t));
+      tokens_info         = (map []: map(token_pool_idx_t, token_info_t));
       fee                 = record [
-        dev_fee             = 0n;
-        lp_fee              = 0n;
-        ref_fee             = 0n;
-        stakers_fee         = 0n;
+        lp              = 0n;
+        ref             = 0n;
+        stakers         = 0n;
       ];
       staker_accumulator  = record [
-        accumulator         = (map []: map(tkn_pool_idx_t, nat));
+        accumulator         = (map []: map(token_pool_idx_t, nat));
         total_staked        = 0n;
       ];
       total_supply        = 0n;
@@ -244,8 +232,8 @@ function get_pool_info(
   } with (pool, token_id)
 
 (* Helper function to get pool info *)
-function get_token_info(
-  const key             : tkn_pool_idx_t;
-  const tokens_info     : map(tkn_pool_idx_t, tkn_inf_t))
-                        : tkn_inf_t is
+[@inline] function get_token_info(
+  const key             : token_pool_idx_t;
+  const tokens_info     : map(token_pool_idx_t, token_info_t))
+                        : token_info_t is
   unwrap(tokens_info[key], Errors.Dex.no_token_info)

@@ -5,10 +5,30 @@
   },
   {
     "index": 1,
-    "name": "set_dev_address"
+    "name": "set_admin"
   },
   {
     "index": 2,
-    "name": "set_admin"
+    "name": "claim_dev"
+  },
+  {
+    "index": 3,
+    "name": "ramp_A"
+  },
+  {
+    "index": 4,
+    "name": "stop_ramp_A"
+  },
+  {
+    "index": 5,
+    "name": "set_fees"
+  },
+  {
+    "index": 6,
+    "name": "set_default_referral"
+  },
+  {
+    "index": 7,
+    "name": "add_pool"
   }
 ]
