@@ -142,3 +142,4 @@ dist
 
 # Compiled contracts
 build
+__pycache__
