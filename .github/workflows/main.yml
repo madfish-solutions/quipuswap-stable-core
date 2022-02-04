@@ -47,9 +47,7 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: './yarn.lock'
       - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: "3.9"
+        run: sudo apt install python pip
       - name: Install crypto libs
         run: sudo apt install libsodium-dev libsecp256k1-dev libgmp-dev
       - name: Install pytezos and pytest
