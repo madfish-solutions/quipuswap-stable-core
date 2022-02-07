@@ -13,7 +13,7 @@ function add_pool(
       const n_tokens = Set.size(params.input_tokens);
 
       require(
-        n_tokens < Constants.max_tokens_count
+        n_tokens <= Constants.max_tokens_count
         and n_tokens >= Constants.min_tokens_count
         and n_tokens = Map.size(params.tokens_info),
         Errors.Dex.wrong_tokens_count

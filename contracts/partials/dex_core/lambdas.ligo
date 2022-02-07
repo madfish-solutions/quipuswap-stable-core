@@ -198,6 +198,7 @@ function divest_imbalanced(
             t_i.reserves - value.1,
             Errors.Dex.low_reserves
           );
+          require(t_i.reserves > 0n, Errors.Dex.low_reserves);
           accum.tokens_info[value.0] := t_i;
           if value.1 > 0n
           then accum.operations := typed_transfer(
