@@ -1,4 +1,4 @@
-name: Main Testing Pipeline
+name: Testing Pipeline
 
 on:
   push:
@@ -10,8 +10,8 @@ on:
       - main
       - develop
 jobs:
-  test:
-    name: Test Contract Job
+  jest:
+    name: Jest tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -34,21 +34,19 @@ jobs:
         run: yarn test
       - name: Stop sandbox
         run: yarn stop-sandbox
-  scenarios:
+  pytest:
+    name: Pytest tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-      - name: Setup dependencies
+      - name: Setup Node
         uses: actions/setup-node@v2
         with:
           node-version: "14"
           cache: 'yarn'
           cache-dependency-path: './yarn.lock'
-          
-      - name: Install Git
-        run: sudo apt install git -y
-      - name: Install python and pip
+      - name: Set up Python
         run: sudo apt install python pip
       - name: Install crypto libs
         run: sudo apt install libsodium-dev libsecp256k1-dev libgmp-dev
