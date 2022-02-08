@@ -15,7 +15,7 @@ function sum_all_fee(
     fee.lp + sum_wo_lp_fee(fee, dev_fee);
 
 (* Update reserves with pre-calculated `fees` *)
-[@inline] function nip_off_fees(
+[@inline] function nip_fees_off_reserves(
   const fees            : fees_storage_t;
   const dev_fee         : nat;
   const token_info      : token_info_t)
@@ -32,28 +32,28 @@ function sum_all_fee(
   fee * tokens_count / (4n * nat_or_error(tokens_count - 1n, Errors.Dex.wrong_tokens_count));
 
 (* Slice fees from calculated `dy` and returns new dy and sliced fees *)
-function perform_fee_slice(
+function slice_fee(
     const dy            : nat;
     const fee           : fees_storage_t;
     const dev_fee       : nat;
     const total_staked  : nat)
-                        : record [ dy: nat; ref: nat; dev: nat; staker: nat; lp: nat; ] is
+                        : record [ dy: nat; ref: nat; dev: nat; stakers: nat; lp: nat; ] is
   block {
     const to_ref = dy * fee.ref / Constants.fee_denominator;
     const to_dev = dy * dev_fee / Constants.fee_denominator;
-    var to_prov := dy * fee.lp / Constants.fee_denominator;
+    var to_providers := dy * fee.lp / Constants.fee_denominator;
 
     var to_stakers := 0n;
     if (total_staked =/= 0n)
     then to_stakers := dy * fee.stakers / Constants.fee_denominator;
-    else to_prov := to_prov + dy * fee.stakers / Constants.fee_denominator;
+    else to_providers := to_providers + dy * fee.stakers / Constants.fee_denominator;
 
     const return = record [
-      dy  = nat_or_error(dy - to_prov - to_ref - to_dev - to_stakers, Errors.Dex.fee_overflow);
+      dy  = nat_or_error(dy - to_providers - to_ref - to_dev - to_stakers, Errors.Dex.fee_overflow);
       ref = to_ref;
       dev = to_dev;
-      staker= to_stakers;
-      lp  = to_prov
+      stakers = to_stakers;
+      lp  = to_providers
     ]
   } with return
 
