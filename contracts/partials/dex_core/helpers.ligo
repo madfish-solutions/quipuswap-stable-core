@@ -82,14 +82,14 @@ function harvest_staker_rewards(
         );
         const new_former = staker_balance * pool_accum;
         const reward_amt = (reward.reward + abs(new_former - reward.former)) / Constants.accum_precision;
-
-        accum.op := typed_transfer(
-          Tezos.self_address,
-          Tezos.sender,
-          reward_amt,
-          get_token_by_id(i, tokens)
-        ) # accum.op;
-
+        if reward_amt > 0n
+        then accum.op := typed_transfer(
+            Tezos.self_address,
+            Tezos.sender,
+            reward_amt,
+            get_token_by_id(i, tokens)
+          ) # accum.op;
+        else skip;
         accum.earnings[i] := record[
           former = new_former;
           reward = 0n;
