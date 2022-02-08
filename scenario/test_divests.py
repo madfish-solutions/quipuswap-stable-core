@@ -134,16 +134,11 @@ class DivestsTest(TestCase):
         transfers = parse_transfers(res)
         one_coin_withdraw = transfers[0]["amount"]
 
-        shares_left_after_one_coin = get_shares(res, 0, me)
-        print("shares_left_after_one_coin", shares_left_after_one_coin)
-
         # execute imbalanced divest
-        res = chain.execute(self.dex.divest_imbalanced(pool_id=0, max_shares=all_shares, amounts_out={0: 600_000 - 13}, deadline=1, receiver=None, referral=None))
+        res = chain.interpret(self.dex.divest_imbalanced(pool_id=0, max_shares=all_shares, amounts_out={0: 600_000 - 13}, deadline=1, receiver=None, referral=None))
 
         transfers = parse_transfers(res)
         imbalanced_withdraw = transfers[0]["amount"]
-        shares_left_after_imbalance = get_shares(res, 0, me)
-        print("shares_left_after_imbalance", shares_left_after_imbalance)
 
         self.assertAlmostEqual(imbalanced_withdraw, one_coin_withdraw, delta=10)
 
@@ -189,3 +184,40 @@ class DivestsTest(TestCase):
         self.assertEqual(len(transfers), 1)
         self.assertEqual(transfers[0]["destination"], admin)
         self.assertAlmostEqual(transfers[0]["amount"], 100_000, delta=3)
+
+    def test_fees_divest_vs_swap(self):
+        chain = LocalChain(storage=self.init_storage)
+
+        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c], form_pool_rates(int(1e18), int(1e18), int(1e18)))
+        res = chain.execute(add_pool, sender=admin)
+        res = chain.execute(self.dex.set_fees(0, fees), sender=admin)
+
+        res = chain.execute(self.dex.invest(pool_id=0, shares=1, in_amounts={0: int(1e12)}, deadline=1, receiver=None, referral=None))
+
+        all_shares = get_shares(res, 0, me)
+
+        # interpret one coin divest
+        res = chain.interpret(self.dex.divest_one_coin(pool_id=0, shares=all_shares, token_index=1, min_amount_out=1, deadline=1, receiver=None, referral=None))
+
+        transfers = parse_transfers(res)
+        one_coin_withdraw = transfers[0]["amount"]
+        self.assertEqual(transfers[0]["token_address"], token_b_address)
+
+        # execute imbalanced divest
+        res = chain.interpret(self.dex.divest_imbalanced(pool_id=0, max_shares=all_shares, amounts_out={1: int(1e12 - 1e8)}, deadline=1, receiver=None, referral=None))
+
+        transfers = parse_transfers(res)
+        imbalanced_withdraw = transfers[0]["amount"]
+        self.assertEqual(transfers[0]["token_address"], token_b_address)
+
+        self.assertAlmostEqual(imbalanced_withdraw, one_coin_withdraw, delta=1e8)
+
+        res = chain.execute(self.dex.swap(0, 0, 1, int(1e12), 1, 0, None, None))
+        transfers = parse_transfers(res)
+        token_b_out = transfers[1]
+        self.assertEqual(token_b_out["token_address"], token_b_address)
+
+        print(token_b_out["amount"])
+        self.assertAlmostEqual(token_b_out["amount"], one_coin_withdraw, delta=10_000)
+
+
