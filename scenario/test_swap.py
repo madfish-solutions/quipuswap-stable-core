@@ -423,40 +423,24 @@ class StableSwapTest(TestCase):
             }
         )
         res = chain.execute(add_pool, sender=admin)
-        init_reserves = get_reseves(res, 0)
         init = 0
         end = 0
-        start_progress("Swap 100 BTC -> XTZ 4 times")
         for i in range(4): # 4 * 50 = 200
             res = chain.execute(self.dex.swap(0, 0, 1, 100 * BITCOIN_PRECISION, 1, 0, None, None)) # 100 * 4 = 400
             transfers = parse_transfers(res)
             if i == 0:
                 init = transfers[1]["amount"]/TEZOS_PRECISION
-            progress(i/20)
             self.assertAlmostEqual(transfers[1]["amount"] / TEZOS_PRECISION, 50 , delta=0.25)        #100 BTC -> 50 XTZ
-        end_progress()
         end = transfers[1]["amount"]/TEZOS_PRECISION
-        print(f'Price for 100 BTC change after swap volume of a whole pool: {init} -> {end} XTZ')
-        print(f"Price change XTZ {(init/end - 1) * 100} %")
-        end_reserves = get_reseves(res, 0)
-        print(f"Reserve change BTC {(end_reserves[0] - init_reserves[0])/ BITCOIN_PRECISION}")
-        print(f"Reserve change XTZ {(end_reserves[1] - init_reserves[1])/ TEZOS_PRECISION}")
-        init_reserves = end_reserves
-        start_progress("Swap 100 XTZ -> BTC 4 times")
+        self.assertLess((init/end - 1) * 100, 0.4)
         for i in range(4): # 4 * 200 = 800 (400 inital + 400 swap)
             res = chain.execute(self.dex.swap(0, 1, 0, 100 * TEZOS_PRECISION, 1, 0, None, None))
             transfers = parse_transfers(res)
             if i == 0:
                 init = transfers[1]["amount"] / BITCOIN_PRECISION
-            progress(i/7.5)
             self.assertAlmostEqual(transfers[1]["amount"] / BITCOIN_PRECISION, 100 * 2, delta=0.5) #100 XTZ -> 200 BTC
-        end_progress()
         end = transfers[1]["amount"] / BITCOIN_PRECISION
-        print(f'Price for 100 XTZ change after swap volume of a whole pool: {init} -> {end} BTC')
-        print(f"Price change BTC {(init/end - 1) * 100} %")
-        end_reserves = get_reseves(res, 0)
-        print(f"Reserve change XTZ {(end_reserves[1] - init_reserves[1])/ TEZOS_PRECISION}")
-        print(f"Reserve change BTC {(end_reserves[0] - init_reserves[0])/ BITCOIN_PRECISION}")
+        self.assertLess((init/end - 1) * 100, 0.4)
 
     def test_threeway_pool_same_rates(self):
         chain = LocalChain(storage=self.init_storage)
