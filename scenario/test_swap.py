@@ -348,7 +348,7 @@ class StableSwapTest(TestCase):
             0:  {
                     "rate": pow(10,18) * int(1e18 // BITCOIN_PRECISION),
                     "precision_multiplier": int(1e18 // BITCOIN_PRECISION),
-                    "reserves": 100_000 *  BITCOIN_PRECISION,
+                    "reserves": 400_000 *  BITCOIN_PRECISION,
                 },
             1:  {
                     "rate": pow(10,18) * int(1e18 // TEZOS_PRECISION) * 2,
@@ -358,7 +358,7 @@ class StableSwapTest(TestCase):
             2:  {
                     "rate": pow(10,18) * int(1e18 // ETH_PRECISION) * 4,
                     "precision_multiplier": int(1e18 // ETH_PRECISION),
-                    "reserves": 400_000 * ETH_PRECISION,
+                    "reserves": 100_000 * ETH_PRECISION,
                 },
             }
         )
