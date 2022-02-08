@@ -366,15 +366,18 @@ class StableSwapTest(TestCase):
         
         res = chain.interpret(self.dex.swap(0, 0, 1, 10_000 * BITCOIN_PRECISION, 1, 0, None, None))
         transfers = parse_transfers(res)
-        self.assertAlmostEqual(transfers[1]["amount"], 5_000 * TEZOS_PRECISION, delta=10_000)
+        self.assertAlmostEqual(transfers[1]["amount"], 5_000 * TEZOS_PRECISION, delta=TEZOS_PRECISION // 100)
+        # delta is 0.01 of TEZOS
 
         res = chain.interpret(self.dex.swap(0, 1, 2, 10_000 * TEZOS_PRECISION, 1, 0, None, None))
         transfers = parse_transfers(res)
-        self.assertAlmostEqual(transfers[1]["amount"], 5_000 * ETH_PRECISION, delta=10_000)
+        self.assertAlmostEqual(transfers[1]["amount"], 5_000 * ETH_PRECISION, delta=ETH_PRECISION // 100)
+        # delta is 0.01 of ETH
 
         res = chain.interpret(self.dex.swap(0, 2, 0, 10_000 * ETH_PRECISION, 1, 0, None, None))
         transfers = parse_transfers(res)
-        self.assertAlmostEqual(transfers[1]["amount"], 40_000 * BITCOIN_PRECISION, delta=10_000)
+        self.assertAlmostEqual(transfers[1]["amount"], 40_000 * BITCOIN_PRECISION, delta=BITCOIN_PRECISION // 100)
+        # delta is 0.01 of BITCOIN
         return
 
         res = chain.execute(self.dex.swap(0, 2, 0, 10_000 * ETH_PRECISION, 1, 0, None, None))
