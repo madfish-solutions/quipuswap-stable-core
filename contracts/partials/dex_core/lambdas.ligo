@@ -381,21 +381,11 @@ function claim_ref(
 
 (* QuipuToken Stakers *)
 (* Stake *)
-function stake_staker(
+function stake(
   const p               : dex_action_t;
   var s                 : storage_t)
                         : return_t is
   case p of
-  | Stake(params) -> perform_un_stake(Add, params, s)
-  | _ -> (Constants.no_operations, s)
-  end;
-
-(* Unstake/harvest *)
-function unstake_staker(
-  const p               : dex_action_t;
-  var s                 : storage_t)
-                        : return_t is
-  case p of
-  | Unstake(params) -> perform_un_stake(Remove, params, s)
+  | Stake(params) -> update_stake(params, s)
   | _ -> (Constants.no_operations, s)
   end;

@@ -106,8 +106,7 @@ function harvest_staker_rewards(
 
 (* Helper function to transfer staker tokens and update former *)
 function update_former_and_transfer(
-  const flag            : should_unstake_fl;
-  const shares          : nat;
+  const param           : stake_action_t;
   const staker_accum    : staker_info_t;
   const pool_stake_accum: staker_accum_t;
   const quipu_token     : fa2_token_t)
@@ -117,19 +116,22 @@ function update_former_and_transfer(
       new_balance,
       forwarder,
       receiver,
-      total_staked
-    ) = case flag of
-        | Add -> (
-            staker_accum.balance + shares,
+      total_staked,
+      shares
+    ) = case param of
+        | Add(p) -> (
+            staker_accum.balance + p.amount,
             Tezos.sender,
             Tezos.self_address,
-            pool_stake_accum.total_staked + shares
+            pool_stake_accum.total_staked + p.amount,
+            p.amount
             )
-        | Remove -> (
-            nat_or_error(staker_accum.balance - shares, Errors.Dex.wrong_shares_out),
+        | Remove(p) -> (
+            nat_or_error(staker_accum.balance - p.amount, Errors.Dex.wrong_shares_out),
             Tezos.self_address,
             Tezos.sender,
-            nat_or_error(pool_stake_accum.total_staked - shares, Errors.Dex.wrong_shares_out)
+            nat_or_error(pool_stake_accum.total_staked - p.amount, Errors.Dex.wrong_shares_out),
+            p.amount
             )
         end;
 
@@ -161,14 +163,17 @@ function update_former_and_transfer(
   ]
 
 (* Harvest staked rewards and stakes/unstakes QUIPU tokens if amount > 0n *)
-function perform_un_stake(
-  const flag            : should_unstake_fl;
-  const params          : un_stake_param_t;
+function update_stake(
+  const params          : stake_action_t;
   var   s               : storage_t)
                         : return_t is
   block {
+    const (pool_id, shares) = case params of
+        Add(p) -> (p.pool_id, p.amount)
+      | Remove(p) -> (p.pool_id, p.amount)
+      end;
     var operations: list(operation) := Constants.no_operations;
-    const staker_key = (Tezos.sender, params.pool_id);
+    const staker_key = (Tezos.sender, pool_id);
     var staker_accum := unwrap_or(
       s.stakers_balance[staker_key],
       record [
@@ -176,20 +181,19 @@ function perform_un_stake(
         earnings = (map[] : map(nat , account_reward_t))
       ]
     );
-    var pool := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
+    var pool := unwrap(s.pools[pool_id], Errors.Dex.pool_not_listed);
     const harvested = harvest_staker_rewards(
       staker_accum,
       operations,
       pool.staker_accumulator,
-      s.tokens[params.pool_id]
+      s.tokens[pool_id]
     );
     staker_accum := harvested.account;
     operations := harvested.operations;
-    if params.amount > 0n
+    if shares > 0n
     then {
       const after_updates = update_former_and_transfer(
-        flag,
-        params.amount,
+        params,
         staker_accum,
         pool.staker_accumulator,
         s.quipu_token
@@ -199,7 +203,7 @@ function perform_un_stake(
       operations := after_updates.op # operations;
     }
     else skip;
-    s.pools[params.pool_id] := pool;
+    s.pools[pool_id] := pool;
     s.stakers_balance[staker_key] := staker_accum;
   } with (operations, s)
 

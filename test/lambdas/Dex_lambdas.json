@@ -25,10 +25,6 @@
   },
   {
     "index": 6,
-    "name": "stake_staker"
-  },
-  {
-    "index": 7,
-    "name": "unstake_staker"
+    "name": "stake"
   }
 ]

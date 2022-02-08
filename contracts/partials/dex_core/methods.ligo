@@ -23,7 +23,6 @@ based on the argument type.
     | Claim_referral(_)       -> 5n
     (* QUIPU stakers *)
     | Stake(_)                -> 6n
-    | Unstake(_)              -> 7n
     end;
 
     const lambda_bytes : bytes = unwrap(s.dex_lambdas[idx], Errors.Dex.unknown_func);

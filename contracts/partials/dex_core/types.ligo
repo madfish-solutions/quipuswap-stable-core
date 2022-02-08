@@ -1,4 +1,4 @@
-type should_unstake_fl  is Add | Remove
+//type should_unstake_fl  is Add | Remove
 
 type func_entry_t       is FAdmin | FDex | FToken | FDev
 
@@ -113,10 +113,14 @@ type get_fee_v_param_t  is [@layout:comb] record [
   receiver                : contract(fees_storage_t);
 ]
 
-type un_stake_param_t   is [@layout:comb] record [
+type stake_param_t      is [@layout:comb] record [
   pool_id                 : pool_id_t;
   amount                  : nat;
 ]
+
+type stake_action_t     is
+| Add of stake_param_t
+| Remove of stake_param_t
 
 type dex_action_t       is
 (* Base actions *)
@@ -127,8 +131,7 @@ type dex_action_t       is
 | Divest_imbalanced       of divest_imb_param_t
 | Divest_one_coin         of divest_one_c_param_t
 | Claim_referral          of claim_by_token_param_t
-| Stake                   of un_stake_param_t
-| Unstake                 of un_stake_param_t
+| Stake                   of stake_action_t
 
 type user_action_t      is
 | Use_dex                 of dex_action_t
