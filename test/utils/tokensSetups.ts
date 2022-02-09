@@ -10,7 +10,6 @@ import {
   FA2TokenType,
   prepareProviderOptions,
 } from "../../utils/helpers";
-import { DexStorage } from "../Dex/API/types";
 import chalk from "chalk";
 
 async function originateTokens(Tezos: TezosToolkit): Promise<TokensMap> {

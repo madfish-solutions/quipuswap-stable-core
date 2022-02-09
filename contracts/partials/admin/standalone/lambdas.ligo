@@ -13,7 +13,7 @@ function add_pool(
       const n_tokens = Set.size(params.input_tokens);
 
       require(
-        n_tokens < Constants.max_tokens_count
+        n_tokens <= Constants.max_tokens_count
         and n_tokens >= Constants.min_tokens_count
         and n_tokens = Map.size(params.tokens_info),
         Errors.Dex.wrong_tokens_count
@@ -53,8 +53,6 @@ function add_pool(
         const entry     : token_pool_idx_t * token_info_t)
                         : map(token_pool_idx_t, token_info_t) * map(token_pool_idx_t, nat) is
         block {
-          const is_correct_rate: bool = (entry.1.rate / entry.1.precision_multiplier = Constants.precision);
-          require(is_correct_rate, Errors.Dex.wrong_precision);
           accum.1[entry.0] := entry.1.reserves;
           accum.0[entry.0] := entry.1 with record [ reserves = 0n; ]
         } with accum;

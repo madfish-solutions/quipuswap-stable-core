@@ -20,8 +20,11 @@ function swap(
       require(i < tokens_count and j < tokens_count, Errors.Dex.wrong_index);
       var pool : pool_t := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
       const dy = perform_swap(i, j, dx, pool);
-      const after_fees = perform_fee_slice(dy, pool.fee, get_dev_fee(s), pool.staker_accumulator.total_staked);
-      const to_stakers = after_fees.staker;
+      const pool_total_staked = pool.staker_accumulator.total_staked;
+      const after_fees = slice_fee(dy, pool.fee, get_dev_fee(s), pool_total_staked);
+      const to_stakers = if pool_total_staked > 0n
+        then after_fees.stakers * Constants.accum_precision / pool_total_staked
+        else 0n;
       const referral: address = unwrap_or(params.referral, s.default_referral);
       const token_j = unwrap(tokens[j], Errors.Dex.no_token);
       const ref_key = (referral, token_j);
@@ -29,18 +32,15 @@ function swap(
       s.referral_rewards[ref_key] := unwrap_or(s.referral_rewards[ref_key], 0n) + after_fees.ref;
       s.dev_rewards[token_j] := unwrap_or(s.dev_rewards[token_j], 0n) + after_fees.dev;
 
-      if to_stakers > 0n
-      then pool.staker_accumulator.accumulator[j] := unwrap_or(pool.staker_accumulator.accumulator[j], 0n)
-        + to_stakers * Constants.accum_precision / pool.staker_accumulator.total_staked;
-      else skip;
+      pool.staker_accumulator.accumulator[j] := unwrap_or(pool.staker_accumulator.accumulator[j], 0n) + to_stakers;
 
       require(after_fees.dy >= params.min_amount_out, Errors.Dex.high_min_out);
 
       var token_info_i := unwrap(pool.tokens_info[i], Errors.Dex.no_token_info);
-      var token_info_j := nip_off_fees(
+      var token_info_j := nip_fees_off_reserves(
         record [
           lp      = after_fees.lp;
-          stakers = to_stakers;
+          stakers = after_fees.stakers;
           ref     = after_fees.ref;
         ],
         after_fees.dev,
@@ -198,13 +198,14 @@ function divest_imbalanced(
             t_i.reserves - value.1,
             Errors.Dex.low_reserves
           );
+          require(t_i.reserves > 0n, Errors.Dex.low_reserves);
           accum.tokens_info[value.0] := t_i;
           if value.1 > 0n
           then accum.operations := typed_transfer(
               Tezos.self_address,
               receiver,
               value.1,
-              get_token_by_id(value.0, Some(tokens))
+              unwrap(tokens[value.0], Errors.Dex.wrong_index)
             ) # accum.operations;
           else skip;
         } with accum;
@@ -302,7 +303,7 @@ function divest_one_coin(
 
       require(result.dy >= params.min_amount_out, Errors.Dex.high_min_out);
 
-      var info := nip_off_fees(
+      var info := nip_fees_off_reserves(
         record[
           lp = lp_fee;
           stakers = staker_fee;
@@ -380,21 +381,11 @@ function claim_ref(
 
 (* QuipuToken Stakers *)
 (* Stake *)
-function stake_staker(
+function stake(
   const p               : dex_action_t;
   var s                 : storage_t)
                         : return_t is
   case p of
-  | Stake(params) -> perform_un_stake(Add, params, s)
-  | _ -> (Constants.no_operations, s)
-  end;
-
-(* Unstake/harvest *)
-function unstake_staker(
-  const p               : dex_action_t;
-  var s                 : storage_t)
-                        : return_t is
-  case p of
-  | Unstake(params) -> perform_un_stake(Remove, params, s)
+  | Stake(params) -> update_stake(params, s)
   | _ -> (Constants.no_operations, s)
   end;

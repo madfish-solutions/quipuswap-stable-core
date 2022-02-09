@@ -1,11 +1,10 @@
-import { MichelsonMap, TezosToolkit, Contract } from "@taquito/taquito";
+import { MichelsonMap, TezosToolkit } from "@taquito/taquito";
 import BigNumber from "bignumber.js";
 import config from "../config";
 import { migrate } from "../scripts/commands/migrate/utils";
 import {
   FA2,
   NetworkLiteral,
-  setFunctionBatchCompilled,
   setupLambdasToStorage,
   TezosAddress,
   validateValue,

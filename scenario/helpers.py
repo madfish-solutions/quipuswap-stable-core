@@ -1,5 +1,7 @@
+import sys
 from os import urandom
-from pytezos import pytezos 
+from pytezos import pytezos
+
 from pytezos.crypto.encoding import base58_encode
 
 fee_rate = 333
@@ -192,6 +194,14 @@ def calc_out_per_hundred(chain, dex):
 def get_shares(res, pool, user):
     storage = res.storage["storage"]
     return storage["ledger"][(user, pool)]
+
+def get_reserves(res, pool):
+    storage = res.storage["storage"]
+    tokens = storage["pools"][pool]["tokens_info"]
+    reserves = {}
+    for (token_idx, token) in tokens.items():
+        reserves[token_idx] = token["reserves"]
+    return reserves
 
 def form_pool_rates(reserves_a, reserves_b, reserves_c=None):
     rates = {

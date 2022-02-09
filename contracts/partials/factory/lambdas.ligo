@@ -11,7 +11,7 @@ function add_pool(
     const n_tokens = Set.size(params.input_tokens);
 
     require(
-      n_tokens < Constants.max_tokens_count
+      n_tokens <= Constants.max_tokens_count
       and n_tokens >= Constants.min_tokens_count
       and n_tokens = Map.size(params.tokens_info),
       Errors.Dex.wrong_tokens_count
@@ -25,10 +25,7 @@ function add_pool(
       var _key          : token_pool_idx_t;
       const value       : token_prec_info_t)
                         : token_info_t is
-      block {
-        const is_correct_rate: bool = (value.rate / value.precision_multiplier = Constants.precision);
-        require(is_correct_rate, Errors.Dex.wrong_precision);
-      } with record [
+      record [
         rate = value.rate;
         precision_multiplier = value.precision_multiplier;
         reserves = 0n;

@@ -38,16 +38,17 @@
                                (pair (map %in_amounts nat nat)
                                      (pair (timestamp %deadline)
                                            (pair (option %receiver address) (option %referral address))))))
-                      (pair %stake (nat %pool_id) (nat %amount)))
-                  (or (pair %swap
-                         (nat %pool_id)
-                         (pair (nat %idx_from)
-                               (pair (nat %idx_to)
-                                     (pair (nat %amount)
-                                           (pair (nat %min_amount_out)
-                                                 (pair (timestamp %deadline)
-                                                       (pair (option %receiver address) (option %referral address))))))))
-                      (pair %unstake (nat %pool_id) (nat %amount)))))
+                      (or %stake
+                         (pair %add (nat %pool_id) (nat %amount))
+                         (pair %remove (nat %pool_id) (nat %amount))))
+                  (pair %swap
+                     (nat %pool_id)
+                     (pair (nat %idx_from)
+                           (pair (nat %idx_to)
+                                 (pair (nat %amount)
+                                       (pair (nat %min_amount_out)
+                                             (pair (timestamp %deadline)
+                                                   (pair (option %receiver address) (option %referral address))))))))))
            (or %use_token
               (or (or (pair %balance_of
                          (list %requests (pair (address %owner) (nat %token_id)))
@@ -338,7 +339,7 @@
                        { IF_LEFT { DROP ; PUSH nat 3 } { DROP ; PUSH nat 4 } } }
                    { IF_LEFT
                        { IF_LEFT { DROP ; PUSH nat 1 } { DROP ; PUSH nat 6 } }
-                       { IF_LEFT { DROP ; PUSH nat 0 } { DROP ; PUSH nat 7 } } } ;
+                       { DROP ; PUSH nat 0 } } ;
                  GET ;
                  IF_NONE { FAILWITH } { SWAP ; DROP } ;
                  DIG 3 ;
@@ -371,16 +372,17 @@
                                                  (pair (map %in_amounts nat nat)
                                                        (pair (timestamp %deadline)
                                                              (pair (option %receiver address) (option %referral address))))))
-                                        (pair %stake (nat %pool_id) (nat %amount)))
-                                    (or (pair %swap
-                                           (nat %pool_id)
-                                           (pair (nat %idx_from)
-                                                 (pair (nat %idx_to)
-                                                       (pair (nat %amount)
-                                                             (pair (nat %min_amount_out)
-                                                                   (pair (timestamp %deadline)
-                                                                         (pair (option %receiver address) (option %referral address))))))))
-                                        (pair %unstake (nat %pool_id) (nat %amount)))))
+                                        (or %stake
+                                           (pair %add (nat %pool_id) (nat %amount))
+                                           (pair %remove (nat %pool_id) (nat %amount))))
+                                    (pair %swap
+                                       (nat %pool_id)
+                                       (pair (nat %idx_from)
+                                             (pair (nat %idx_to)
+                                                   (pair (nat %amount)
+                                                         (pair (nat %min_amount_out)
+                                                               (pair (timestamp %deadline)
+                                                                     (pair (option %receiver address) (option %referral address))))))))))
                             (pair (address %admin)
                                   (pair (address %default_referral)
                                         (pair (set %managers address)

@@ -2,7 +2,6 @@ import { TezosToolkit, VIEW_LAMBDA } from "@taquito/taquito";
 import { confirmOperation } from "../../../utils/confirmation";
 import {
   AccountsLiteral,
-  BytesString,
   prepareProviderOptions,
   setupLambdasToStorage,
 } from "../../../utils/helpers";
@@ -19,7 +18,6 @@ import {
   defaultDexFactoryStorage as storage,
 } from "../API";
 import BigNumber from "bignumber.js";
-import { MichelsonMap } from "@taquito/michelson-encoder";
 import { DevStorage } from "../../Developer/API/storage";
 import chalk from "chalk";
 

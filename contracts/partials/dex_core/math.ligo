@@ -96,10 +96,10 @@ function calc_y(
   const a_nn            : nat;
   const s_              : nat;
   const d               : nat;
-  const s               : pool_t)
+  const pool            : pool_t)
                         : nat is
   block {
-    const tokens_count = Map.size(s.tokens_info);
+    const tokens_count = Map.size(pool.tokens_info);
     c := c * d * Constants.a_precision / (a_nn * tokens_count);
     const b: nat = s_ + d * Constants.a_precision / a_nn;
     var tmp := record [ y = d; prev_y = 0n; ];
@@ -281,7 +281,7 @@ function balance_inputs(
 
         accum.dev_rewards[token] := unwrap_or(accum.dev_rewards[token], 0n) + to_dev;
         accum.referral_rewards[(referral, token)] := unwrap_or(accum.referral_rewards[(referral, token)], 0n) + to_ref;
-        token_info := nip_off_fees(
+        token_info := nip_fees_off_reserves(
           record [
             lp = to_lp;
             stakers = to_stakers;

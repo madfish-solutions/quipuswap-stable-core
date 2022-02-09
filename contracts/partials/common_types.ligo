@@ -7,8 +7,8 @@ type token_pool_idx_t   is nat
 type fa12_token_t       is address
 
 type fa2_token_t        is [@layout:comb] record [
-  token_address           : address; (* token A address *)
-  token_id                : token_id_t; (* token A identifier *)
+  token_address           : address;
+  token_id                : token_id_t;
 ]
 
 type token_t            is

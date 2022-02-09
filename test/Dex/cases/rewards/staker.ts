@@ -33,7 +33,7 @@ export async function harvestFromPoolSuccessCase(
     );
   });
   const op = await dex.contract.methods
-    .unstake(pool_id, new BigNumber(0))
+    .stake("remove", pool_id, new BigNumber(0))
     .send();
   await confirmOperation(Tezos, op.hash);
   await dex.updateStorage({ pools: [pool_id.toString()] });

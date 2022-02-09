@@ -138,7 +138,9 @@ export async function swapSuccessCase(
     );
 
   console.debug(
-    `[${chalk.bold.bgYellowBright.magenta.inverse("SWAP")}] Swapped to ${chalk.bgGreen.black(
+    `[${chalk.bold.bgYellowBright.magenta.inverse(
+      "SWAP"
+    )}] Swapped to ${chalk.bgGreen.black(
       output.dividedBy(rates[j]).div(new BigNumber(10).pow(18)).toFormat(10)
     )} ${t_to}.`
   );
@@ -164,23 +166,25 @@ export async function swapSuccessCase(
   init_in =
     init_in instanceof BigNumber
       ? init_in
-      : (init_in[0] as any & { balance: BigNumber }).balance;
+      : (init_in[0] as unknown & { balance: BigNumber }).balance;
   init_out =
     init_out instanceof BigNumber
       ? init_out
-      : (init_out[0] as any & { balance: BigNumber }).balance;
+      : (init_out[0] as unknown & { balance: BigNumber }).balance;
   upd_in =
     upd_in instanceof BigNumber
       ? upd_in
-      : (upd_in[0] as any & { balance: BigNumber }).balance;
+      : (upd_in[0] as unknown & { balance: BigNumber }).balance;
   upd_out =
     upd_out instanceof BigNumber
       ? upd_out
-      : (upd_out[0] as any & { balance: BigNumber }).balance;
+      : (upd_out[0] as unknown & { balance: BigNumber }).balance;
   const ch = (init: BigNumber, upd: BigNumber) =>
     init.gt(upd) ? chalk.red : upd.gt(init) ? chalk.green : chalk.yellow;
   console.debug(
-    `[${chalk.bold.bgYellowBright.magenta.inverse("SWAP")}] Balances\n\t\t${t_in}:\t${ch(
+    `[${chalk.bold.bgYellowBright.magenta.inverse(
+      "SWAP"
+    )}] Balances\n\t\t${t_in}:\t${ch(
       init_in,
       upd_in
     )(
@@ -293,9 +297,11 @@ export async function batchSwap(
     const op = await batch.send();
     await confirmOperation(Tezos, op.hash);
     console.debug(
-      `[${chalk.bold.bgWhite.bgBlueBright("BATCH")}:${chalk.bold.bgYellowBright.magenta.inverse(
-        "SWAP"
-      )}] ${i + 1}/${times} ${chalk.bold.yellow(op.hash)}`
+      `[${chalk.bold.bgWhite.bgBlueBright(
+        "BATCH"
+      )}:${chalk.bold.bgYellowBright.magenta.inverse("SWAP")}] ${
+        i + 1
+      }/${times} ${chalk.bold.yellow(op.hash)}`
     );
     await dex.updateStorage({ pools: [poolId.toString()] });
   }

@@ -348,7 +348,7 @@ class StableSwapTest(TestCase):
             0:  {
                     "rate": pow(10,18) * int(1e18 // BITCOIN_PRECISION),
                     "precision_multiplier": int(1e18 // BITCOIN_PRECISION),
-                    "reserves": 400_000 *  BITCOIN_PRECISION,
+                    "reserves": 400_000 * BITCOIN_PRECISION,
                 },
             1:  {
                     "rate": pow(10,18) * int(1e18 // TEZOS_PRECISION) * 2,
@@ -366,16 +366,18 @@ class StableSwapTest(TestCase):
         
         res = chain.interpret(self.dex.swap(0, 0, 1, 10_000 * BITCOIN_PRECISION, 1, 0, None, None))
         transfers = parse_transfers(res)
-        self.assertAlmostEqual(transfers[1]["amount"], 5_000 * TEZOS_PRECISION, delta=10_000)
+        self.assertAlmostEqual(transfers[1]["amount"], 5_000 * TEZOS_PRECISION, delta=TEZOS_PRECISION // 100)
+        # delta is 0.01 of TEZOS
 
         res = chain.interpret(self.dex.swap(0, 1, 2, 10_000 * TEZOS_PRECISION, 1, 0, None, None))
         transfers = parse_transfers(res)
-        self.assertAlmostEqual(transfers[1]["amount"], 5_000 * ETH_PRECISION, delta=10_000)
+        self.assertAlmostEqual(transfers[1]["amount"], 5_000 * ETH_PRECISION, delta=ETH_PRECISION // 100)
+        # delta is 0.01 of ETH
 
         res = chain.interpret(self.dex.swap(0, 2, 0, 10_000 * ETH_PRECISION, 1, 0, None, None))
         transfers = parse_transfers(res)
-        self.assertAlmostEqual(transfers[1]["amount"], 40_000 * BITCOIN_PRECISION, delta=10_000)
-
+        self.assertAlmostEqual(transfers[1]["amount"], 40_000 * BITCOIN_PRECISION, delta=BITCOIN_PRECISION // 100)
+        # delta is 0.01 of BITCOIN
         return
 
         res = chain.execute(self.dex.swap(0, 2, 0, 10_000 * ETH_PRECISION, 1, 0, None, None))
@@ -392,6 +394,47 @@ class StableSwapTest(TestCase):
         self.assertAlmostEqual(transfers[1]["amount"], 100_000 * TEZOS_PRECISION, delta=30_000)
         self.assertAlmostEqual(transfers[0]["amount"], 100_000 * ETH_PRECISION, delta=30_000_000)
 
+    # WARNING: long-running test (6+ min)
+    def test_threeway_pool_different_rates_many_swaps(self):
+        chain = LocalChain(storage=self.init_storage)
+
+        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c], {
+            0:  {
+                    "rate": pow(10,18) * int(1e18 // BITCOIN_PRECISION),
+                    "precision_multiplier": int(1e18 // BITCOIN_PRECISION),
+                    "reserves": 100 * BITCOIN_PRECISION * 4,
+                },
+            1:  {
+                    "rate": pow(10,18) * int(1e18 // TEZOS_PRECISION) * 2,
+                    "precision_multiplier": int(1e18 // TEZOS_PRECISION),
+                    "reserves": 100 * TEZOS_PRECISION * 2,
+                },
+            2:  {
+                    "rate": pow(10,18) * int(1e18 // ETH_PRECISION) * 4,
+                    "precision_multiplier": int(1e18 // ETH_PRECISION),
+                    "reserves": 100 * ETH_PRECISION,
+                },
+            }
+        )
+        res = chain.execute(add_pool, sender=admin)
+        init = 0
+        end = 0
+        for i in range(4): # 4 * 50 = 200
+            res = chain.execute(self.dex.swap(0, 0, 1, 100 * BITCOIN_PRECISION, 1, 0, None, None)) # 100 * 4 = 400
+            transfers = parse_transfers(res)
+            if i == 0:
+                init = transfers[1]["amount"]/TEZOS_PRECISION
+            self.assertAlmostEqual(transfers[1]["amount"] / TEZOS_PRECISION, 50 , delta=0.25)        #100 BTC -> 50 XTZ
+        end = transfers[1]["amount"]/TEZOS_PRECISION
+        self.assertLess((init/end - 1) * 100, 0.4)
+        for i in range(4): # 4 * 200 = 800 (400 inital + 400 swap)
+            res = chain.execute(self.dex.swap(0, 1, 0, 100 * TEZOS_PRECISION, 1, 0, None, None))
+            transfers = parse_transfers(res)
+            if i == 0:
+                init = transfers[1]["amount"] / BITCOIN_PRECISION
+            self.assertAlmostEqual(transfers[1]["amount"] / BITCOIN_PRECISION, 100 * 2, delta=0.5) #100 XTZ -> 200 BTC
+        end = transfers[1]["amount"] / BITCOIN_PRECISION
+        self.assertLess((init/end - 1) * 100, 0.4)
 
     def test_threeway_pool_same_rates(self):
         chain = LocalChain(storage=self.init_storage)

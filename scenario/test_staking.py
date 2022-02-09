@@ -39,14 +39,14 @@ class StableStakingTest(TestCase):
         add_pool = self.dex.add_pool(100_000, [token_a, token_b], form_pool_rates(1_000_000, 1_000_000))
         res = chain.execute(add_pool, sender=admin)
         
-        res = chain.execute(self.dex.stake(0, 20))
+        res = chain.execute(self.dex.stake(add = { 'pool_id': 0, 'amount': 20 }))
         trxs = parse_transfers(res)
         self.assertEqual(len(trxs), 1)
         self.assertEqual(trxs[0]["amount"], 20)
         self.assertEqual(trxs[0]["source"], me)
         self.assertEqual(trxs[0]["destination"], contract_self_address)
 
-        res = chain.execute(self.dex.unstake(0, 20))
+        res = chain.execute(self.dex.stake(remove = { 'pool_id': 0, 'amount': 20 }))
         trxs = parse_transfers(res)
         self.assertEqual(len(trxs), 1)
         self.assertEqual(trxs[0]["amount"], 20)
@@ -55,7 +55,7 @@ class StableStakingTest(TestCase):
 
         # nothing left to unstake
         with self.assertRaises(MichelsonRuntimeError):
-            res = chain.execute(self.dex.unstake(0, 20))
+            res = chain.execute(self.dex.stake(remove = { 'pool_id': 0, 'amount': 20 }))
             
     def test_get_staking_reward(self):
         chain = LocalChain(storage=self.init_storage)
@@ -64,11 +64,11 @@ class StableStakingTest(TestCase):
         res = chain.execute(add_pool, sender=admin)
         res = chain.execute(self.dex.set_fees(0, fees), sender=admin)
 
-        res = chain.execute(self.dex.stake(0, 20))
+        res = chain.execute(self.dex.stake(add = { 'pool_id': 0, 'amount': 20 }))
 
         res = chain.execute(self.dex.swap(0, 0, 1, 1_000_000, 1, 0, None, None))
 
-        res = chain.execute(self.dex.unstake(0, 10))
+        res = chain.execute(self.dex.stake(remove = { 'pool_id': 0, 'amount': 10 }))
         trxs = parse_transfers(res)
         self.assertEqual(len(trxs), 2)
         self.assertEqual(trxs[0]["amount"], 10)
@@ -82,7 +82,7 @@ class StableStakingTest(TestCase):
         self.assertEqual(trxs[1]["token_address"], token_b_address)
 
         # unstaking the rest produces no more rewards
-        res = chain.execute(self.dex.unstake(0, 10))
+        res = chain.execute(self.dex.stake(remove = { 'pool_id': 0, 'amount': 10 }))
         trxs = parse_transfers(res)
         self.assertEqual(len(trxs), 1 )
         self.assertEqual(trxs[0]["amount"], 10)
@@ -97,13 +97,13 @@ class StableStakingTest(TestCase):
         res = chain.execute(add_pool, sender=admin)
         res = chain.execute(self.dex.set_fees(0, fees), sender=admin)
 
-        res = chain.execute(self.dex.stake(0, 20))
+        res = chain.execute(self.dex.stake(add = { 'pool_id': 0, 'amount': 20 }))
 
         res = chain.execute(self.dex.swap(0, 0, 1, 1_000_000, 1, 0, None, None))
         res = chain.execute(self.dex.swap(0, 1, 2, 1_000_000, 1, 0, None, None))
         res = chain.execute(self.dex.swap(0, 2, 0, 1_000_000, 1, 0, None, None))
 
-        res = chain.execute(self.dex.unstake(0, 0))
+        res = chain.execute(self.dex.stake(remove = { 'pool_id': 0, 'amount': 0 }))
         trxs = parse_transfers(res)
         self.assertEqual(len(trxs), 3)
         self.assertAlmostEqual(trxs[0]["amount"], 20, delta=1)
@@ -128,12 +128,12 @@ class StableStakingTest(TestCase):
         res = chain.execute(add_pool, sender=admin)
         res = chain.execute(self.dex.set_fees(0, fees), sender=admin)
 
-        res = chain.execute(self.dex.stake(0, 77), sender=alice)
-        res = chain.execute(self.dex.stake(0, 77), sender=bob)
+        res = chain.execute(self.dex.stake(add = { 'pool_id': 0, 'amount': 77 }), sender=alice)
+        res = chain.execute(self.dex.stake(add = { 'pool_id': 0, 'amount': 77 }), sender=bob)
 
         res = chain.execute(self.dex.swap(0, 0, 1, 10_000_000, 1, 0, None, None))
 
-        res = chain.execute(self.dex.unstake(0, 77), sender=alice)
+        res = chain.execute(self.dex.stake(remove = { 'pool_id': 0, 'amount': 77 }), sender=alice)
         trxs = parse_transfers(res)
         self.assertEqual(len(trxs), 2)
         self.assertEqual(trxs[0]["amount"], 77)
@@ -147,7 +147,7 @@ class StableStakingTest(TestCase):
         self.assertEqual(trxs[1]["token_address"], token_b_address)
 
         # unstaking the rest produces no more rewards
-        res = chain.execute(self.dex.unstake(0, 77), sender=bob)
+        res = chain.execute(self.dex.stake(remove = { 'pool_id': 0, 'amount': 77 }), sender=bob)
         trxs = parse_transfers(res)
         self.assertEqual(len(trxs), 2)
         self.assertEqual(trxs[0]["amount"], 77)
@@ -167,18 +167,18 @@ class StableStakingTest(TestCase):
         chain.execute(add_pool, sender=admin)
         chain.execute(self.dex.set_fees(0, fees), sender=admin)
 
-        chain.execute(self.dex.stake(0, 333_333), sender=alice)
+        chain.execute(self.dex.stake(add = { 'pool_id': 0, 'amount': 333_333 }), sender=alice)
 
         chain.execute(self.dex.swap(0, 0, 1, 10_000_000, 1, 0, None, None))
 
-        chain.execute(self.dex.stake(0, 333_333), sender=bob)
+        chain.execute(self.dex.stake(add = { 'pool_id': 0, 'amount': 333_333 }), sender=bob)
         chain.execute(self.dex.swap(0, 0, 1, 10_000_000, 1, 0, None, None))
 
-        res = chain.execute(self.dex.unstake(0, 0), sender=alice)
+        res = chain.execute(self.dex.stake(remove = { 'pool_id': 0, 'amount': 0 }), sender=alice)
         trxs = parse_transfers(res)
         self.assertAlmostEqual(trxs[0]["amount"], 300, delta=2)
 
-        res = chain.execute(self.dex.unstake(0, 0), sender=bob)
+        res = chain.execute(self.dex.stake(remove = { 'pool_id': 0, 'amount': 0 }), sender=bob)
         trxs = parse_transfers(res)
         self.assertAlmostEqual(trxs[0]["amount"], 100, delta=2)
 

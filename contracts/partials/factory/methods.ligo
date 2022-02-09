@@ -41,7 +41,7 @@ function start_dex_func(
       const input       : nat * nat)
                         : list(operation) is
       block {
-        const token = get_token_by_id(input.0, Some(tokens));
+        const token = unwrap(tokens[input.0], Errors.Dex.wrong_index);
         case token of
         | Fa2(_) -> operations := concat_lists(operations, list[
           typed_approve(
