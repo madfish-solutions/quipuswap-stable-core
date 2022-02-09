@@ -16,3 +16,4 @@ def parse_lambdas(path):
 admin_lambdas = parse_lambdas("./build/lambdas/Admin_lambdas.json")
 dex_lambdas = parse_lambdas("./build/lambdas/Dex_lambdas.json")
 token_lambdas = parse_lambdas("./build/lambdas/Token_lambdas.json")
+dev_lambdas = parse_lambdas("./build/lambdas/Dev_lambdas.json")

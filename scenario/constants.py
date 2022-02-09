@@ -19,6 +19,8 @@ price_feed = "KT1Qf46j2x37sAN4t2MKRQRVt9gc4FZ5duMs"
 fee_collector = "tz1MDhGTfMQjtMYFXeasKzRWzkQKPtXEkSEw"
 dummy_sig = "sigY3oZknG7z2N9bj5aWVtdZBakTviKnwbSYTecbbT2gwQDrnLRNhP5KDcLroggq71AjXWkx27nSLfS8rodS4DYn14FyueS5"
 
+dev = "tz1fRXMLR27hWoD49tdtKunHyfy3CQb5XZst"
+
 vr = {
     f"{factory}%dev_fee": 500_000
 }
