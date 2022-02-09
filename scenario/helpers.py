@@ -180,7 +180,7 @@ def get_shares(res, pool, user):
     storage = res.storage["storage"]
     return storage["ledger"][(user, pool)]
 
-def get_reseves(res, pool):
+def get_reserves(res, pool):
     storage = res.storage["storage"]
     tokens = storage["pools"][pool]["tokens_info"]
     reserves = {}
