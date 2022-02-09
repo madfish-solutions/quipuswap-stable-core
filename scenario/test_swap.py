@@ -158,7 +158,7 @@ class StableSwapTest(TestCase):
         # divest bob's shares
         res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=200_000, deadline=1, receiver=None), sender=bob)
         bob_trxs = parse_transfers(res)
-        bob_profit = alice_trxs[1]["amount"] - 100_000
+        bob_profit = bob_trxs[1]["amount"] - 100_000
 
         # profits are equal +-1 due to rounding errors
         self.assertAlmostEqual(alice_profit, bob_profit, delta=1)

@@ -95,24 +95,35 @@ def parse_as_fa12(value):
     return {
         "type": "token",
         "amount": int(args[2]["int"]),
-        "destination": args[1]["string"]
+        "destination": args[1]["string"],
+        "source": args[0]["string"]
     }
 
 def parse_as_fa2(values):
+    result = []
     value = values[0]
-    args = value["args"][1][0]["args"]
+    source = value["args"][0]["string"]
+    transfers = value["args"][1]
+    for transfer in transfers:
+        args = transfer["args"]
 
-    amount = args[-1]["int"]
-    amount = int(amount)
+        amount = args[-1]["int"]
+        amount = int(amount)
 
-    dest = args[0]["string"]
+        token_id = args[1]["int"]
+        token_id = int(token_id)
 
-    return {
-        "type": "token",
-        "destination": dest,
-        "amount": amount,
-        
-    }
+        dest = args[0]["string"]
+
+        result.append({
+            "type": "token",
+            "token_id": token_id,
+            "destination": dest,
+            "amount": amount,
+            "source": source
+        })
+
+    return result
 
 def parse_transfers(res):
     token_transfers = []
@@ -120,19 +131,23 @@ def parse_transfers(res):
         if op["kind"] == "transaction":
             entrypoint = op["parameters"]["entrypoint"]
             if entrypoint == "transfer":
-                tx = parse_transfer(op)
-                token_transfers.append(tx)
+                txs = parse_transfer(op)
+                token_transfers += txs
     return token_transfers
 
 def parse_transfer(op):
-    transfer = None
-    if not isinstance(op["parameters"]["value"], list):
-        transfer = parse_as_fa12(op["parameters"]["value"])
+    transfers = []
+    value = op["parameters"]["value"]
+    if not isinstance(value, list):
+        transfer = parse_as_fa12(value)
+        transfers.append(transfer)
     else:
-        transfer = parse_as_fa2(op["parameters"]["value"])
+        transfers += parse_as_fa2(value)
 
-    transfer["token_address"] = op["destination"]
-    return transfer
+    for transfer in transfers:
+        transfer["token_address"] = op["destination"]
+
+    return transfers
 
 def parse_delegations(res):
     delegates = []
@@ -151,8 +166,8 @@ def parse_ops(res):
                 tx = parse_tez_transfer(op)
                 result.append(tx)
             elif entrypoint == "transfer":
-                tx = parse_transfer(op)
-                result.append(tx)
+                txs = parse_transfer(op)
+                result += txs
             elif entrypoint == "close":
                 result.append({"type" : "close"})
     return result

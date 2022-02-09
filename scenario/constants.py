@@ -13,6 +13,7 @@ token_b = ("fa12", token_b_address)
 token_c = ("fa12", token_c_address)
 
 factory = "KT1LzyPS8rN375tC31WPAVHaQ4HyBvTSLwBu"
+quipu_token = "KT1LzyPS8rN375tC31WPAVHaQ4HyBvTSLwBu"
 price_feed = "KT1Qf46j2x37sAN4t2MKRQRVt9gc4FZ5duMs"
 
 fee_collector = "tz1MDhGTfMQjtMYFXeasKzRWzkQKPtXEkSEw"
