@@ -1,5 +1,3 @@
-//type should_unstake_fl  is Add | Remove
-
 type func_entry_t       is FAdmin | FDex | FToken | FDev
 
 type staker_info_req_t  is [@layout:comb] record [
