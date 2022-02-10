@@ -38,11 +38,8 @@ function swap(
 
       var token_info_i := unwrap(pool.tokens_info[i], Errors.Dex.no_token_info);
       var token_info_j := nip_fees_off_reserves(
-        record [
-          lp      = after_fees.lp;
-          stakers = after_fees.stakers;
-          ref     = after_fees.ref;
-        ],
+        after_fees.stakers,
+        after_fees.ref,
         after_fees.dev,
         unwrap(pool.tokens_info[j], Errors.Dex.no_token_info)
       );
@@ -304,11 +301,8 @@ function divest_one_coin(
       require(result.dy >= params.min_amount_out, Errors.Dex.high_min_out);
 
       var info := nip_fees_off_reserves(
-        record[
-          lp = lp_fee;
-          stakers = staker_fee;
-          ref = ref_fee;
-        ],
+        staker_fee,
+        ref_fee,
         dev_fee,
         unwrap(pool.tokens_info[params.token_index], Errors.Dex.no_token_info)
       );

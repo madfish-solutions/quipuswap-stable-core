@@ -282,11 +282,8 @@ function balance_inputs(
         accum.dev_rewards[token] := unwrap_or(accum.dev_rewards[token], 0n) + to_dev;
         accum.referral_rewards[(referral, token)] := unwrap_or(accum.referral_rewards[(referral, token)], 0n) + to_ref;
         token_info := nip_fees_off_reserves(
-          record [
-            lp = to_lp;
-            stakers = to_stakers;
-            ref = to_ref;
-          ],
+          to_stakers,
+          to_ref,
           to_dev,
           token_info
         );

@@ -1,27 +1,21 @@
-(* Helper for sum fees that separated from reserves  *)
-[@inline] function sum_wo_lp_fee(
+[@inline] function sum_all_fee(
   const fee             : fees_storage_t;
   const dev_fee         : nat)
                         : nat is
-    fee.stakers
-  + fee.ref
-  + dev_fee;
-
-(* Helper for sum all fee  *)
-function sum_all_fee(
-  const fee             : fees_storage_t;
-  const dev_fee         : nat)
-                        : nat is
-    fee.lp + sum_wo_lp_fee(fee, dev_fee);
+    fee.lp + fee.stakers + fee.ref + dev_fee;
 
 (* Update reserves with pre-calculated `fees` *)
 [@inline] function nip_fees_off_reserves(
-  const fees            : fees_storage_t;
+  const stakers_fee     : nat;
+  const ref_fee         : nat;
   const dev_fee         : nat;
   const token_info      : token_info_t)
                         : token_info_t is
   token_info with record [
-    reserves = nat_or_error(token_info.reserves - sum_wo_lp_fee(fees, dev_fee), Errors.Dex.low_reserves);
+    reserves = nat_or_error(
+      token_info.reserves - stakers_fee - ref_fee - dev_fee,
+      Errors.Dex.low_reserves
+    );
   ]
 
 (* Helper for separating fee when request is imbalanced *)
