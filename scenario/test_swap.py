@@ -480,3 +480,36 @@ class StableSwapTest(TestCase):
         self.assertAlmostEqual(transfers[2]["amount"], 100_000 * TEZOS_PRECISION, delta=300)
         self.assertAlmostEqual(transfers[1]["amount"], 100_000 * TEZOS_PRECISION, delta=300)
         self.assertAlmostEqual(transfers[0]["amount"], 100_000 * TEZOS_PRECISION, delta=300)
+
+    def test_pools_with_same_rates(self):
+        for n_coins in range(2, 5):
+            with self.subTest(n_coins=n_coins):
+                chain = LocalChain(storage=self.init_storage)
+
+                reserves = [100_000] * n_coins
+                tokens = [token_a, token_b, token_c, token_d]
+                tokens_in = tokens[:n_coins]
+
+                add_pool = self.dex.add_pool(A_CONST, tokens_in, equal_pool_rates(reserves))
+                chain.execute(add_pool, sender=admin)
+
+                amounts_in = {k: v for k, v in enumerate(reserves)}
+
+                res = chain.execute(self.dex.invest(pool_id=0, shares=1, in_amounts=amounts_in, deadline=1, receiver=None, referral=None))
+                
+                for i in range(n_coins):
+                    res = chain.execute(self.dex.swap(0, i, (i + 1) % n_coins, 10_000, 1, 0, None, None))
+
+
+                min_amounts =  amounts_in = {k: 1 for k, v in enumerate(reserves)}
+
+                all_shares = get_shares(res, 0, me)
+                with self.assertRaises(MichelsonRuntimeError):
+                    res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out=min_amounts, shares=all_shares + 1, deadline=1, receiver=None))
+
+                res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out=min_amounts, shares=all_shares, deadline=1, receiver=None))
+                
+                transfers = parse_transfers(res)
+                self.assertEqual(len(transfers), n_coins)
+                for i in range(n_coins):
+                    self.assertAlmostEqual(transfers[i]["amount"], 100_000)
