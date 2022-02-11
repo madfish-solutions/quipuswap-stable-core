@@ -224,6 +224,18 @@ def form_pool_rates(reserves_a, reserves_b, reserves_c=None):
                 }
     return rates
 
+def equal_pool_rates(array):
+    rates = {}
+    for i in range(len(array)):
+        reserves = array[i]
+
+        rates[i] = {
+            "rate": pow(10,18),
+            "precision_multiplier": 1,
+            "reserves": reserves,
+        }
+    return rates
+
 def operator_add(owner, operator, token_id=0):
     return {
         "add_operator": {

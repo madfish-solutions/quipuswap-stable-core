@@ -8,9 +8,14 @@ ETH_PRECISION = int(1e18)
 token_a_address = "KT18amZmM5W7qDWVt2pH6uj7sCEd3kbzLrHT"
 token_b_address = "KT1AxaBxkFLCUi3f8rdDAAxBKHfzY8LfKDRA"
 token_c_address = "KT1XXAavg3tTj12W1ADvd3EEnm1pu6XTmiEF"
+token_d_address = "KT1PQ8TMzGMfViRq4tCMFKD2QF5zwJnY67Xn"
+token_e_address = "KT1X1LgNkQShpF9nRLYw3Dgdy4qp38MX617z"
+
 token_a = ("fa12", token_a_address)
 token_b = ("fa12", token_b_address)
 token_c = ("fa12", token_c_address)
+token_d = ("fa12", token_d_address)
+token_e = ("fa12", token_e_address)
 
 factory = "KT1LzyPS8rN375tC31WPAVHaQ4HyBvTSLwBu"
 quipu_token = "KT1LzyPS8rN375tC31WPAVHaQ4HyBvTSLwBu"

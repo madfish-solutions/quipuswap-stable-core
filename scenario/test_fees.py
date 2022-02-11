@@ -27,6 +27,10 @@ class StableSwapTest(TestCase):
         storage["storage"]["admin"] = admin
         storage["storage"]["dev_store"]["dev_address"] = dev
         storage["storage"]["dev_store"]["dev_lambdas"] = dev_lambdas
+        storage["storage"]["quipu_token"] = {
+            "token_address" : quipu_token,
+            "token_id": 0,
+        }
 
         cls.init_storage = storage
 
@@ -133,6 +137,37 @@ class StableSwapTest(TestCase):
        
         self.assertEqual(alice_total, bob_total)
 
+    def test_smallest_fees(self):
+        chain = LocalChain(storage=self.init_storage)
 
+        add_pool = self.dex.add_pool(100_000, [token_a, token_b], form_pool_rates(int(1e12), int(1e12)))
+        chain.execute(add_pool, sender=admin)
+        res = chain.execute(self.dex.set_fees(0, fees), sender=admin)
 
+        res = chain.execute(self.dex.stake(add=dict(pool_id=0, amount=20)), sender=bob)
 
+        swap = self.dex.swap(pool_id=0, idx_from=0, idx_to=1, amount=1, min_amount_out=0, deadline=1, receiver=None, referral=alice)
+        res = chain.execute(swap)
+
+        transfers = parse_transfers(res)
+        self.assertEqual(transfers[1]["amount"], 0)
+
+        res = chain.execute(self.dex.stake(remove=dict(pool_id=0, amount=20)), sender=bob)
+        trxs = parse_transfers(res)
+        self.assertEqual(len(trxs), 1) #only one transfer is stake. No rewards paid
+        self.assertEqual(trxs[0]["amount"], 20)
+        self.assertEqual(trxs[0]["source"], contract_self_address)
+        self.assertEqual(trxs[0]["destination"], bob)
+        self.assertEqual(trxs[0]["token_address"], quipu_token)
+
+        # no dev rewards
+        with self.assertRaises(MichelsonRuntimeError):
+            res = chain.execute(self.dex.claim_developer(token_a, 1))
+        with self.assertRaises(MichelsonRuntimeError):
+            res = chain.execute(self.dex.claim_developer(token_b, 1))        
+
+        # no referral rewards
+        with self.assertRaises(MichelsonRuntimeError):
+            res = chain.execute(self.dex.claim_developer(token_a, 1), sender=alice)
+        with self.assertRaises(MichelsonRuntimeError):
+            res = chain.execute(self.dex.claim_developer(token_b, 1), sender=alice)
