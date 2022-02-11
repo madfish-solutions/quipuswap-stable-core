@@ -387,15 +387,16 @@ function add_liq(
     function transfer_to_pool(
       const operations  : list(operation);
       const input       : nat * nat)
-                        : list(operation) is
-      if input.1 > 0n
-      then typed_transfer(
-        Tezos.sender,
-        Tezos.self_address,
-        input.1,
-        get_token_by_id(input.0, tokens[params.pool_id])
-      ) # operations
-      else operations;
+                        : list(operation) is block {
+        const (token_id, amt) = input;                  
+      } with if amt > 0n
+          then typed_transfer(
+            Tezos.sender,
+            Tezos.self_address,
+            amt,
+            get_token_by_id(token_id, tokens[params.pool_id])
+          ) # operations
+          else operations;
 
     pool.total_supply := pool.total_supply + mint_amount;
 
