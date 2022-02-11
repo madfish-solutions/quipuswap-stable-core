@@ -183,4 +183,21 @@ class StableStakingTest(TestCase):
         self.assertAlmostEqual(trxs[0]["amount"], 100, delta=2)
 
 
-        
+    def test_stake_zero(self):
+        chain = LocalChain(storage=self.init_storage)
+
+        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100_000_000, 100_000_000))
+        chain.execute(add_pool, sender=admin)
+        chain.execute(self.dex.set_fees(0, fees), sender=admin)
+
+        chain.execute(self.dex.stake(add={"pool_id": 0, "amount": 333_333}), sender=alice)
+
+        chain.execute(self.dex.swap(0, 0, 1, 10_000_000, 1, 0, None, None))
+
+        res = chain.execute(self.dex.stake(add={"pool_id": 0, "amount": 0}), sender=alice)
+        trxs = parse_transfers(res)
+        self.assertAlmostEqual(trxs[0]["amount"], 200, delta=2)
+
+        res = chain.execute(self.dex.stake(add={"pool_id": 0, "amount": 0}), sender=alice)
+        trxs = parse_transfers(res)
+        self.assertEqual(len(trxs), 0)

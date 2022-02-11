@@ -173,6 +173,16 @@ class StableSwapTest(TestCase):
         token_out = next(v for v in transfers if v["destination"] == me)
         self.assertEqual(token_out["amount"], 1)
 
+    def test_huge_amounts(self):
+        chain = LocalChain(storage=self.init_storage)
+        res = chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100_000_000_000, 100_000_000_000)), sender=admin)
+
+        res = chain.execute(self.dex.swap(pool_id=0, idx_from=0, idx_to=1, amount=100_000_000_000, min_amount_out=1, deadline=0, receiver=None, referral=None))
+
+        transfers = parse_transfers(res)
+        self.assertLess(transfers[1]["amount"], 100_000_000_000)
+        self.assertGreater(transfers[1]["amount"], 99_900_000_000)
+
     def test_multiple_singular_invests(self):
         chain = LocalChain(storage=self.init_storage)
         res = chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(10, 10)), sender=admin)
@@ -260,10 +270,6 @@ class StableSwapTest(TestCase):
         transfers = parse_transfers(res) 
         self.assertLessEqual(transfers[0]["amount"], 777_777_777)
         self.assertLessEqual(transfers[1]["amount"], 42)
-
-    def test_different_pool_rates(self):
-        # TODO not implemented
-        pass
 
     def test_threeway_pool(self):
         chain = LocalChain(storage=self.init_storage)
@@ -377,21 +383,16 @@ class StableSwapTest(TestCase):
         res = chain.interpret(self.dex.swap(0, 2, 0, 10_000 * ETH_PRECISION, 1, 0, None, None))
         transfers = parse_transfers(res)
         self.assertAlmostEqual(transfers[1]["amount"], 40_000 * BITCOIN_PRECISION, delta=BITCOIN_PRECISION // 100)
-        # delta is 0.01 of BITCOIN
-        return
 
-        res = chain.execute(self.dex.swap(0, 2, 0, 10_000 * ETH_PRECISION, 1, 0, None, None))
-
-        all_shares = get_shares(res, 0, me)
-
+        all_shares = get_shares(res, 0, admin)
         with self.assertRaises(MichelsonRuntimeError):
-            res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=all_shares + 1, deadline=1, receiver=None))
+            res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=all_shares + 1, deadline=1, receiver=None), sender=admin)
 
-        res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=all_shares, deadline=1, receiver=None))
+        res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=all_shares, deadline=1, receiver=None), sender=admin)
         
         transfers = parse_transfers(res)
-        self.assertAlmostEqual(transfers[2]["amount"], 100_000 * BITCOIN_PRECISION, delta=30_000)
-        self.assertAlmostEqual(transfers[1]["amount"], 100_000 * TEZOS_PRECISION, delta=30_000)
+        self.assertAlmostEqual(transfers[2]["amount"], 400_000 * BITCOIN_PRECISION, delta=30_000)
+        self.assertAlmostEqual(transfers[1]["amount"], 200_000 * TEZOS_PRECISION, delta=30_000)
         self.assertAlmostEqual(transfers[0]["amount"], 100_000 * ETH_PRECISION, delta=30_000_000)
 
     # WARNING: long-running test (6+ min)
@@ -554,5 +555,7 @@ class StableSwapTest(TestCase):
 
     def test_add_pool_same_coin(self):
         chain = LocalChain(storage=self.init_storage)
-        with self.assertRaises(MichelsonRuntimeError):
+        with self.assertRaises(ValueError):
             chain.execute(self.dex.add_pool(A_CONST, [token_a, token_a], form_pool_rates(100_000, 100_000)), sender=admin)
+
+    
