@@ -4,8 +4,7 @@ from pytezos import pytezos
 
 from pytezos.crypto.encoding import base58_encode
 
-fee_rate = 333
-voting_period = 2592000
+BLOCK_TIME = 30
 
 alice = "tz1iA1iceA1iceA1iceA1iceA1ice9ydjsaW"
 bob = "tz1iBobBobBobBobBobBobBobBobBodTWLCX"
@@ -305,8 +304,5 @@ class LocalChain():
         )
         return res
 
-    def advance_period(self):
-        self.now += voting_period
-
     def advance_blocks(self, count=1):
-        self.now += count * 60
+        self.now += count * BLOCK_TIME
