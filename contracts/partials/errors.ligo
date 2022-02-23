@@ -27,14 +27,8 @@ module Dex is {
   const balance_overflow          : string = "balance-overflow";
   const time_expired              : string = "time-expired";
   const timestamp_error           : string = "timestamp-error";
-}
-
-module Permit is {
-  const missigned                 : string = "MISSIGNED";
-  const not_issuer                : string = "NOT_PERMIT_ISSUER";
-  const permit_dupl               : string = "DUP_PERMIT";
-  const permit_expired            : string = "EXPIRED_PERMIT";
-  const expiration_overflow       : string = "EXPIRY_TOO_BIG";
+  const not_developer             : string = "not-developer";
+  const not_started               : string = "not-started";
 }
 
 module FA2 is {
@@ -44,6 +38,14 @@ module FA2 is {
 }
 
 module Math is {
-  const nat_error                 : string = "Value_not_natural";
+  const nat_error                 : string = "value-not-natural";
   const ediv_error                : string = "ediv-error";
+}
+
+module Factory is {
+  const no_fee                    : string = "no-fee-view";
+  const no_address                : string = "no-address";
+  const pool_not_listed           : string = "not-listed-pool";
+  const not_deployer              : string = "not-deployer-of-pool";
+  const not_dex                   : string = "not-dex";
 }

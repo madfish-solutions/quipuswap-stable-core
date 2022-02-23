@@ -1,8 +1,7 @@
 (* 1n *)
 function get_balance_of(
     const p             : token_action_t;
-    const s             : full_storage_t;
-    const _action       : full_action_t)
+    const s             : full_storage_t)
                         : full_return_t is
   block {
     var operations := Constants.no_operations;
@@ -36,8 +35,7 @@ function get_balance_of(
 (* 4n *)
 function total_supply_view(
   const p               : token_action_t;
-  var   s               : full_storage_t;
-  const _action         : full_action_t)
+  const s               : full_storage_t)
                         : full_return_t is
   block {
     var operations := Constants.no_operations;

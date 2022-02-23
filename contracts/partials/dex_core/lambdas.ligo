@@ -1,117 +1,30 @@
-(* Initial exchange setup
- * note: tokens should be approved before the operation
- *)
-function initialize_exchange(
-  const p               : action_t;
-  var s                 : storage_t)
-                        : return_t is
-  block {
-    var operations: list(operation) := Constants.no_operations;
-    case p of
-    | Add_pool(params) -> {
-      check_admin(s.admin);
-
-      (* Params check *)
-      const n_tokens = Set.size(params.input_tokens);
-
-      assert_with_error(
-        n_tokens < Constants.max_tokens_count
-        and n_tokens >= Constants.min_tokens_count
-        and n_tokens = Map.size(params.tokens_info),
-        Errors.Dex.wrong_tokens_count
-      );
-
-      function get_tokens_from_param(
-        var result      : tmp_tkns_map_t;
-        const value     : token_t)
-                        : tmp_tkns_map_t is
-        block {
-          result.tokens[result.index] := value;
-          result.index := result.index + 1n;
-        }
-        with result;
-
-      const result: tmp_tkns_map_t = Set.fold(get_tokens_from_param, params.input_tokens, default_tmp_tokens);
-
-      const tokens : tkns_map_t = result.tokens;
-      const token_bytes : bytes = Bytes.pack(tokens);
-      var (pool_i, token_id) := get_pool_info(token_bytes, s.pools_count, s.pool_to_id, s.pools);
-
-      s.tokens[token_id] := tokens;
-
-      assert_with_error(pool_i.total_supply = 0n, Errors.Dex.pool_listed);
-
-      if s.pools_count = token_id
-      then {
-        s.pool_to_id[token_bytes] := token_id;
-        s.pools_count := s.pools_count + 1n;
-      }
-      else skip;
-
-      assert_with_error(Constants.max_a >= params.a_constant, Errors.Dex.a_limit);
-
-      function separate_inputs(
-        var acc         : map(tkn_pool_idx_t, tkn_inf_t) * map(tkn_pool_idx_t, nat);
-        const entry     : tkn_pool_idx_t * tkn_inf_t)
-                        : map(tkn_pool_idx_t, tkn_inf_t) * map(tkn_pool_idx_t, nat) is
-        block {
-          acc.1[entry.0] := entry.1.reserves;
-          acc.0[entry.0] := entry.1 with record [ reserves = 0n; ]
-        } with acc;
-
-      const (tokens_info, inputs) = Map.fold(
-        separate_inputs,
-        params.tokens_info,
-        (params.tokens_info, (map[]:map(tkn_pool_idx_t, nat)))
-      );
-
-      const pool = pool_i with record [
-        initial_A       = params.a_constant * Constants.a_precision;
-        future_A        = params.a_constant * Constants.a_precision;
-        initial_A_time  = Tezos.now;
-        future_A_time   = Tezos.now;
-        tokens_info     = tokens_info;
-      ];
-
-      const res = add_liq(record [
-        referral        = (None: option(address));
-        pool_id         = token_id;
-        pool            = pool;
-        inputs          = inputs;
-        min_mint_amount = 1n;
-        receiver        = Some(Tezos.sender)
-      ], s);
-      operations := res.op;
-      s := res.s;
-    }
-    | _                 -> skip
-    end
-  } with (operations, s)
-
 (* Swap token i to j
  * note: tokens should be approved before the operation
  *)
 function swap(
-  const p               : action_t;
+  const p               : dex_action_t;
   var s                 : storage_t)
                         : return_t is
   block {
     var operations: list(operation) := Constants.no_operations;
     case p of
     | Swap(params) -> {
-      check_time_expiration(params.time_expiration);
+      check_deadline(params.deadline);
       const dx = params.amount;
-      assert_with_error(dx =/= 0n, Errors.Dex.zero_in);
+      require(dx =/= 0n, Errors.Dex.zero_in);
       const receiver = unwrap_or(params.receiver, Tezos.sender);
-      const tokens : tkns_map_t = unwrap(s.tokens[params.pool_id], Errors.Dex.pool_not_listed);
+      const tokens : tokens_map_t = unwrap(s.tokens[params.pool_id], Errors.Dex.pool_not_listed);
       const tokens_count = Map.size(tokens);
       const i = params.idx_from;
       const j = params.idx_to;
-      assert_with_error(i < tokens_count and j < tokens_count, Errors.Dex.wrong_index);
+      require(i < tokens_count and j < tokens_count, Errors.Dex.wrong_index);
       var pool : pool_t := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
       const dy = perform_swap(i, j, dx, pool);
-      const after_fees = perform_fee_slice(dy, pool.fee, pool.staker_accumulator.total_staked);
-      const to_stakers = after_fees.stkr;
+      const pool_total_staked = pool.staker_accumulator.total_staked;
+      const after_fees = slice_fee(dy, pool.fee, get_dev_fee(s), pool_total_staked);
+      const to_stakers = if pool_total_staked > 0n
+        then after_fees.stakers * Constants.accum_precision / pool_total_staked
+        else 0n;
       const referral: address = unwrap_or(params.referral, s.default_referral);
       const token_j = unwrap(tokens[j], Errors.Dex.no_token);
       const ref_key = (referral, token_j);
@@ -119,21 +32,15 @@ function swap(
       s.referral_rewards[ref_key] := unwrap_or(s.referral_rewards[ref_key], 0n) + after_fees.ref;
       s.dev_rewards[token_j] := unwrap_or(s.dev_rewards[token_j], 0n) + after_fees.dev;
 
-      if to_stakers > 0n
-      then pool.staker_accumulator.accumulator[j] := unwrap_or(pool.staker_accumulator.accumulator[j], 0n)
-        + to_stakers * Constants.acc_precision / pool.staker_accumulator.total_staked;
-      else skip;
+      pool.staker_accumulator.accumulator[j] := unwrap_or(pool.staker_accumulator.accumulator[j], 0n) + to_stakers;
 
-      assert_with_error(after_fees.dy >= params.min_amount_out, Errors.Dex.high_min_out);
+      require(after_fees.dy >= params.min_amount_out, Errors.Dex.high_min_out);
 
       var token_info_i := unwrap(pool.tokens_info[i], Errors.Dex.no_token_info);
-      var token_info_j := nip_off_fees(
-        record [
-          lp_fee      = after_fees.lp;
-          stakers_fee = to_stakers;
-          ref_fee     = after_fees.ref;
-          dev_fee     = after_fees.dev;
-        ],
+      var token_info_j := nip_fees_off_reserves(
+        after_fees.stakers,
+        after_fees.ref,
+        after_fees.dev,
         unwrap(pool.tokens_info[j], Errors.Dex.no_token_info)
       );
 
@@ -163,14 +70,14 @@ function swap(
  * note: tokens should be approved before the operation
  *)
 function invest_liquidity(
-  const p               : action_t;
+  const p               : dex_action_t;
   var s                 : storage_t)
                         : return_t is
   block {
     var operations: list(operation) := Constants.no_operations;
     case p of
     | Invest(params) -> {
-      check_time_expiration(params.time_expiration);
+      check_deadline(params.deadline);
 
       const result = add_liq(record [
         referral        = params.referral;
@@ -191,43 +98,42 @@ function invest_liquidity(
 
 (* Remove liquidity (balanced) from the pool by burning shares *)
 function divest_liquidity(
-  const p               : action_t;
+  const p               : dex_action_t;
   var s                 : storage_t)
                         : return_t is
   block {
     var operations: list(operation) := Constants.no_operations;
     case p of
     | Divest(params) -> {
-      check_time_expiration(params.time_expiration);
-      assert_with_error(s.pools_count > params.pool_id, Errors.Dex.pool_not_listed);
-      assert_with_error(params.shares =/= 0n, Errors.Dex.zero_in);
+      check_deadline(params.deadline);
+      require(s.pools_count > params.pool_id, Errors.Dex.pool_not_listed);
+      require(params.shares =/= 0n, Errors.Dex.zero_in);
 
       var   pool          : pool_t := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
       const receiver = unwrap_or(params.receiver, Tezos.sender);
       const total_supply  : nat = pool.total_supply;
 
       function divest_reserves(
-        var acc       : record [ tok_inf: map(tkn_pool_idx_t, tkn_inf_t); op: list(operation) ];
-        const entry   : (tkn_pool_idx_t * token_t))
-                      : record [ tok_inf: map(tkn_pool_idx_t, tkn_inf_t); op: list(operation) ] is
+        var accum       : record [ tok_inf: map(token_pool_idx_t, token_info_t); op: list(operation) ];
+        const entry     : (token_pool_idx_t * token_t))
+                        : record [ tok_inf: map(token_pool_idx_t, token_info_t); op: list(operation) ] is
         block {
-          var token_info := unwrap(acc.tok_inf[entry.0], Errors.Dex.no_token_info);
+          var token_info := unwrap(accum.tok_inf[entry.0], Errors.Dex.no_token_info);
           const min_amount_out = unwrap_or(params.min_amounts_out[entry.0], 1n);
           const value = token_info.reserves * params.shares / total_supply;
-          assert_with_error(value >= min_amount_out, Errors.Dex.high_min_out);
-          assert_with_error(value =/= 0n, Errors.Dex.dust_out);
-          token_info.reserves := nat_or_error(token_info.reserves - value, Errors.Dex.no_liquidity);
-          acc.op := typed_transfer(
+          require(value >= min_amount_out, Errors.Dex.high_min_out);
+          require(value =/= 0n, Errors.Dex.dust_out);
+          accum.op := typed_transfer(
             Tezos.self_address,
             receiver,
             value,
             entry.1
-          ) # acc.op;
+          ) # accum.op;
           token_info.reserves := nat_or_error(token_info.reserves - value, Errors.Dex.low_reserves);
-          acc.tok_inf[entry.0] := token_info;
-        } with acc;
+          accum.tok_inf[entry.0] := token_info;
+        } with accum;
 
-      const tokens : tkns_map_t = unwrap(s.tokens[params.pool_id], Errors.Dex.pool_not_listed);
+      const tokens : tokens_map_t = unwrap(s.tokens[params.pool_id], Errors.Dex.pool_not_listed);
       const res = Map.fold(divest_reserves, tokens, record [ tok_inf = pool.tokens_info; op = operations ]);
 
       pool.tokens_info := res.tok_inf;
@@ -248,20 +154,20 @@ function divest_liquidity(
 
 (* Divest imbalanced *)
 function divest_imbalanced(
-  const p               : action_t;
+  const p               : dex_action_t;
   var s                 : storage_t)
                         : return_t is
   block {
     var operations: list(operation) := Constants.no_operations;
     case p of
     | Divest_imbalanced(params) -> {
-      check_time_expiration(params.time_expiration);
+      check_deadline(params.deadline);
 
       const receiver = unwrap_or(params.receiver, Tezos.sender);
       const key = (Tezos.sender, params.pool_id);
       const share = unwrap_or(s.ledger[key], 0n);
 
-      assert_with_error(params.max_shares =/= 0n, Errors.Dex.zero_in);
+      require(params.max_shares =/= 0n, Errors.Dex.zero_in);
 
       var pool := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
       const tokens = unwrap(s.tokens[params.pool_id], Errors.Dex.pool_not_listed);
@@ -277,28 +183,29 @@ function divest_imbalanced(
       var token_supply := pool.total_supply;
 
       function min_inputs(
-        var acc         : info_ops_acc_t;
-        var value       : (tkn_pool_idx_t * nat))
-                        : info_ops_acc_t is
+        var accum       : info_ops_accum_t;
+        var value       : (token_pool_idx_t * nat))
+                        : info_ops_accum_t is
         block {
           var t_i := unwrap(
-            acc.tokens_info[value.0],
+            accum.tokens_info[value.0],
             Errors.Dex.no_token_info
           );
           t_i.reserves := nat_or_error(
             t_i.reserves - value.1,
             Errors.Dex.low_reserves
           );
-          acc.tokens_info[value.0] := t_i;
+          require(t_i.reserves > 0n, Errors.Dex.low_reserves);
+          accum.tokens_info[value.0] := t_i;
           if value.1 > 0n
-          then acc.operations := typed_transfer(
+          then accum.operations := typed_transfer(
               Tezos.self_address,
               receiver,
               value.1,
-              get_token_by_id(value.0, Some(tokens))
-            ) # acc.operations;
+              unwrap(tokens[value.0], Errors.Dex.wrong_index)
+            ) # accum.operations;
           else skip;
-        } with acc;
+        } with accum;
 
       const result = Map.fold(
         min_inputs,
@@ -320,6 +227,7 @@ function divest_imbalanced(
         d1,
         tokens,
         pool.fee,
+        get_dev_fee(s),
         unwrap_or(params.referral, s.default_referral),
         record[
           dev_rewards = s.dev_rewards;
@@ -330,13 +238,13 @@ function divest_imbalanced(
         ]
       );
       const d2 = get_D_mem(balanced.tokens_info_without_lp, amp);
-      var burn_amount := nat_or_error(d0 - d2, Errors.Math.nat_error) * token_supply / d0;
+      var burn_amount := ceil_div(nat_or_error(d0 - d2, Errors.Math.nat_error) * token_supply, d0);
 
-      assert_with_error(burn_amount =/= 0n, Errors.Dex.zero_burn_amount);
+      require(burn_amount =/= 0n, Errors.Dex.zero_burn_amount);
 
-      burn_amount := burn_amount + 1n; // In case of rounding Errors.Dex - make it unfavorable for the "attacker"
+      // burn_amount := burn_amount + 1n; // In case of rounding errors - make it unfavorable for the "attacker"
 
-      assert_with_error(burn_amount <= params.max_shares, Errors.Dex.low_max_shares_in);
+      require(burn_amount <= params.max_shares, Errors.Dex.low_max_shares_in);
 
       const new_shares = nat_or_error(share - burn_amount, Errors.Dex.insufficient_lp);
 
@@ -358,20 +266,20 @@ function divest_imbalanced(
 
 (* Divest one coin *)
 function divest_one_coin(
-  const p               : action_t;
+  const p               : dex_action_t;
   var s                 : storage_t)
                         : return_t is
   block {
     var operations: list(operation) := Constants.no_operations;
     case p of
     | Divest_one_coin(params) -> {
-      check_time_expiration(params.time_expiration);
+      check_deadline(params.deadline);
 
       var pool := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
       const sender_key = (Tezos.sender, params.pool_id);
       const token = get_token_by_id(params.token_index, s.tokens[params.pool_id]);
 
-      assert_with_error(params.token_index>=0n and params.token_index < Map.size(pool.tokens_info), Errors.Dex.wrong_index);
+      require(params.token_index < Map.size(pool.tokens_info), Errors.Dex.wrong_index);
 
       const amp : nat =  get_A(
         pool.initial_A_time,
@@ -379,41 +287,40 @@ function divest_one_coin(
         pool.future_A_time,
         pool.future_A
       );
-      const result = calc_withdraw_one_coin(amp, params.shares, params.token_index, pool);
-      const lp_fee = result.dy_fee * pool.fee.lp_fee / sum_all_fee(pool.fee);
-      const dev_fee = result.dy_fee * pool.fee.dev_fee / sum_all_fee(pool.fee);
-      const ref_fee = result.dy_fee * pool.fee.ref_fee / sum_all_fee(pool.fee);
-      const stkr_fee = result.dy_fee * pool.fee.stakers_fee / sum_all_fee(pool.fee);
+      const dev_fee_v = get_dev_fee(s);
+      const result = calc_withdraw_one_coin(amp, params.shares, params.token_index, dev_fee_v, pool);
+      var all_fee := sum_all_fee(pool.fee, dev_fee_v);
+      if (all_fee = 0n) // check for avoid zero division
+      then all_fee := 1n
+      else skip;
+      const lp_fee = result.dy_fee * pool.fee.lp / all_fee;
+      const dev_fee = result.dy_fee * dev_fee_v / all_fee;
+      const ref_fee = result.dy_fee * pool.fee.ref / all_fee;
+      const staker_fee = result.dy_fee * pool.fee.stakers / all_fee;
 
-      assert_with_error(result.dy >= params.min_amount_out, Errors.Dex.high_min_out);
+      require(result.dy >= params.min_amount_out, Errors.Dex.high_min_out);
 
-      var info := nip_off_fees(
-        record[
-          lp_fee = lp_fee;
-          stakers_fee = stkr_fee;
-          ref_fee = ref_fee;
-          dev_fee = dev_fee;
-        ],
+      var info := nip_fees_off_reserves(
+        staker_fee,
+        ref_fee,
+        dev_fee,
         unwrap(pool.tokens_info[params.token_index], Errors.Dex.no_token_info)
       );
 
       info.reserves := nat_or_error(info.reserves - result.dy, Errors.Dex.low_reserves);
       pool.tokens_info[params.token_index] := info;
 
-      const acc_bal = unwrap_or(s.ledger[sender_key], 0n);
-
-      check_balance(acc_bal, params.shares);
-
-      const new_acc_bal = acc_bal - params.shares;
+      const account_bal = unwrap_or(s.ledger[sender_key], 0n);
 
       if pool.staker_accumulator.total_staked > 0n
       then pool.staker_accumulator.accumulator[params.token_index] :=
         unwrap_or(
           pool.staker_accumulator.accumulator[params.token_index],
           0n
-        ) + stkr_fee * Constants.acc_precision / pool.staker_accumulator.total_staked;
+        ) + staker_fee * Constants.accum_precision / pool.staker_accumulator.total_staked;
       else skip;
-      s.ledger[sender_key] := unwrap_or(is_nat(new_acc_bal), 0n); // already checked for nat at check_balance
+
+      s.ledger[sender_key] := unwrap(is_nat(account_bal - params.shares), Errors.FA2.insufficient_balance);
       s.dev_rewards[token] := unwrap_or(s.dev_rewards[token], 0n) + dev_fee;
 
       const referral: address = unwrap_or(params.referral, s.default_referral);
@@ -430,7 +337,7 @@ function divest_one_coin(
           Tezos.self_address,
           receiver,
           result.dy,
-          get_token_by_id(params.token_index, s.tokens[params.pool_id])
+          token
         ) # operations;
       else skip;
     }
@@ -438,147 +345,9 @@ function divest_one_coin(
     end;
   } with (operations, s)
 
-(* DEX admin methods *)
-
-(* ramping A constant *)
-function ramp_A(
-  const p               : action_t;
-  var s                 : storage_t)
-                        : return_t is
-  block {
-    var operations: list(operation) := Constants.no_operations;
-    case p of
-    | Ramp_A(params) -> {
-        check_admin(s.admin);
-
-        var pool : pool_t := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
-
-        assert_with_error(Tezos.now >= pool.initial_A_time + Constants.min_ramp_time, Errors.Dex.timestamp_error);
-        assert_with_error(params.future_time >= Tezos.now + Constants.min_ramp_time, Errors.Dex.timestamp_error); // dev: insufficient time
-
-        const initial_A: nat = get_A(
-          pool.initial_A_time,
-          pool.initial_A,
-          pool.future_A_time,
-          pool.future_A
-        );
-        const future_A_p: nat = params.future_A * Constants.a_precision;
-
-        assert((params.future_A > 0n) and (params.future_A <= Constants.max_a));
-
-        if future_A_p >= initial_A
-        then assert_with_error(future_A_p <= initial_A * Constants.max_a_change, Errors.Dex.a_limit)
-        else assert_with_error(future_A_p * Constants.max_a_change >= initial_A, Errors.Dex.a_limit);
-
-        pool.initial_A := initial_A;
-        pool.future_A := future_A_p;
-        pool.initial_A_time := Tezos.now;
-        pool.future_A_time := params.future_time;
-        s.pools[params.pool_id] := pool;
-      }
-    | _ -> skip
-    end
-  } with (operations, s)
-
-(* stop ramping A constant *)
-function stop_ramp_A(
-  const p               : action_t;
-  var s                 : storage_t)
-                        : return_t is
-  block {
-    var operations: list(operation) := Constants.no_operations;
-    case p of
-    | Stop_ramp_A(pool_id) -> {
-      check_admin(s.admin);
-
-      var pool : pool_t := unwrap(s.pools[pool_id], Errors.Dex.pool_not_listed);
-      const current_A: nat = get_A(
-        pool.initial_A_time,
-        pool.initial_A,
-        pool.future_A_time,
-        pool.future_A
-      );
-
-      pool.initial_A := current_A;
-      pool.future_A := current_A;
-      pool.initial_A_time := Tezos.now;
-      pool.future_A_time := Tezos.now;
-      s.pools[pool_id] := pool;
-    }
-    | _ -> skip
-    end
-  } with (operations, s)
-
-(* updates fees percents *)
-function set_fees(
-  const p               : action_t;
-  var s                 : storage_t)
-                        : return_t is
-  block {
-    var operations: list(operation) := Constants.no_operations;
-    case p of
-    | Set_fees(params) -> {
-      check_admin(s.admin);
-
-      var pool := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
-
-      pool.fee := params.fee;
-      s.pools[params.pool_id] := pool;
-    }
-    | _ -> skip
-    end
-  } with (operations, s)
-
-(* set default referral *)
-function set_default_referral(
-  const p               : action_t;
-  var s                 : storage_t)
-                        : return_t is
-  block {
-    var operations: list(operation) := Constants.no_operations;
-    case p of
-    | Set_default_referral(params) -> {
-      check_admin(s.admin);
-
-      s.default_referral := params;
-    }
-    | _ -> skip
-    end
-  } with (operations, s)
-
-(* Claimers of rewards *)
-
-(* Developer *)
-function claim_dev(
-  const p               : action_t;
-  var s                 : storage_t)
-                        : return_t is
-  block {
-    var operations: list(operation) := Constants.no_operations;
-    case p of
-    | Claim_developer(params) -> {
-      check_admin_or_dev(s.admin, s.dev_address);
-
-      const bal = unwrap_or(s.dev_rewards[params.token], 0n);
-
-      s.dev_rewards[params.token] := nat_or_error(bal - params.amount, Errors.Dex.balance_overflow);
-
-      assert_with_error(params.amount > 0n, Errors.Dex.zero_in);
-
-      operations := typed_transfer(
-        Tezos.self_address,
-        s.dev_address,
-        params.amount,
-        params.token
-      ) # operations;
-    }
-    | _ -> skip
-    end;
-  } with (operations, s)
-
 (* Referral *)
 function claim_ref(
-  const p               : action_t;
+  const p               : dex_action_t;
   var s                 : storage_t)
                         : return_t is
   block {
@@ -591,7 +360,7 @@ function claim_ref(
 
       s.referral_rewards[key] := nat_or_error(bal - params.amount, Errors.Dex.balance_overflow);
 
-      assert_with_error(params.amount > 0n, Errors.Dex.zero_in);
+      require(params.amount > 0n, Errors.Dex.zero_in);
 
       operations := typed_transfer(
         Tezos.self_address,
@@ -606,21 +375,11 @@ function claim_ref(
 
 (* QuipuToken Stakers *)
 (* Stake *)
-function stake_staker(
-  const p               : action_t;
+function stake(
+  const p               : dex_action_t;
   var s                 : storage_t)
                         : return_t is
   case p of
-  | Stake(params) -> perform_un_stake(Add, params, s)
-  | _ -> (Constants.no_operations, s)
-  end;
-
-(* Unstake/harvest *)
-function unstake_staker(
-  const p               : action_t;
-  var s                 : storage_t)
-                        : return_t is
-  case p of
-  | Unstake(params) -> perform_un_stake(Remove, params, s)
+  | Stake(params) -> update_stake(params, s)
   | _ -> (Constants.no_operations, s)
   end;

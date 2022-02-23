@@ -1,35 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import BigNumber from "bignumber.js";
 import { MichelsonMap } from "@taquito/taquito";
-import { TezosAddress } from "../../../scripts/helpers/utils";
+import {
+  BytesString,
+  FA12TokenType,
+  FA2,
+  FA2TokenType,
+  TezosAddress,
+} from "../../../utils/helpers";
+import { DevStorage } from "../../Developer/API/storage";
 
-export declare type LambdaFunctionType = {
-  index: number;
-  name: string;
-};
-
-export declare type BytesString = string;
-export declare type FA2 = { token_address: TezosAddress; token_id: BigNumber };
-export declare type FA12 = TezosAddress;
-export declare type FA2TokenType = {
-  fa2: FA2;
-};
-
-export declare type FA12TokenType = {
-  fa12: FA12;
-};
-
-export declare type TokenType = FA12 | FA2;
-
-export declare type AccountDataType = {
-  allowances: MichelsonMap<string, Array<string>>;
-};
+export declare type AllowancesDataType = Array<string>;
 
 export declare type FeeType = {
-  lp_fee: BigNumber;
-  stakers_fee: BigNumber;
-  ref_fee: BigNumber;
-  dev_fee: BigNumber;
+  lp: BigNumber;
+  stakers: BigNumber;
+  ref: BigNumber;
 };
 
 export declare type TokenInfo = {
@@ -57,7 +43,6 @@ export declare type DexMainStorage = {
   admin: TezosAddress;
   default_referral: TezosAddress;
   managers: Array<TezosAddress>;
-  dev_address: TezosAddress;
   pools_count: BigNumber;
   tokens: MichelsonMap<
     string,
@@ -66,7 +51,7 @@ export declare type DexMainStorage = {
   pool_to_id: MichelsonMap<BytesString, number>;
   pools: MichelsonMap<string, PairInfo>;
   ledger: MichelsonMap<string, BigNumber>;
-  account_data: MichelsonMap<string, AccountDataType>;
+  allowances: MichelsonMap<string, AllowancesDataType>;
   dev_rewards: MichelsonMap<FA12TokenType | FA2TokenType, BigNumber>;
   referral_rewards: MichelsonMap<
     {
@@ -83,6 +68,8 @@ export declare type DexMainStorage = {
     },
     StakerInfo
   >;
+  dev_store?: DevStorage;
+  factory_address?: TezosAddress;
 };
 
 export declare type DexStorage = {
@@ -90,13 +77,8 @@ export declare type DexStorage = {
   metadata: MichelsonMap<string, BytesString>;
   token_metadata: MichelsonMap<string, any>;
   admin_lambdas: MichelsonMap<string, BytesString>;
-  permit_lambdas: MichelsonMap<string, BytesString>;
   dex_lambdas: MichelsonMap<string, BytesString>;
   token_lambdas: MichelsonMap<string, BytesString>;
-
-  permits: MichelsonMap<TezosAddress, any>;
-  permits_counter: BigNumber;
-  default_expiry: BigNumber;
 };
 
 export declare type RewardsType = {
