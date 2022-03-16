@@ -43,13 +43,13 @@ export async function setDevFeeSuccessCase(
   await expect(tezos.signer.publicKeyHash()).resolves.toStrictEqual(
     store.dev_address
   );
-  const initFee = store.dev_fee as BigNumber;
+  const initFee = store.dev_fee_f as BigNumber;
   expect(initFee.toNumber()).not.toStrictEqual(fee.toNumber());
 
   await DEC.setDevFee(fee, tezos);
 
   await DEC.updateStorage({});
   store = DEC.storage.storage.dev_store;
-  const updatedFee: BigNumber = store.dev_fee;
+  const updatedFee: BigNumber = store.dev_fee_f;
   expect(updatedFee.toNumber()).toStrictEqual(fee.toNumber());
 }

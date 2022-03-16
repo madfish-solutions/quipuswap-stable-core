@@ -8,7 +8,9 @@
                    (or (pair %ramp_A (nat %pool_id) (pair (nat %future_A) (timestamp %future_time)))
                        (address %set_admin)))
                (or (or (address %set_default_referral)
-                       (pair %set_fees (nat %pool_id) (pair %fee (nat %lp) (pair (nat %stakers) (nat %ref)))))
+                       (pair %set_fees
+                          (nat %pool_id)
+                          (pair %fee (nat %lp_f) (pair (nat %stakers_f) (nat %ref_f)))))
                    (nat %stop_ramp_A))))
         (or %user_action
            (or %use_dex
@@ -74,15 +76,15 @@
                                      (pair (big_map %pool_to_id bytes nat)
                                            (pair (big_map %pools
                                                     nat
-                                                    (pair (nat %initial_A)
+                                                    (pair (nat %initial_A_f)
                                                           (pair (timestamp %initial_A_time)
-                                                                (pair (nat %future_A)
+                                                                (pair (nat %future_A_f)
                                                                       (pair (timestamp %future_A_time)
                                                                             (pair (map %tokens_info
                                                                                      nat
-                                                                                     (pair (nat %rate) (pair (nat %precision_multiplier) (nat %reserves))))
-                                                                                  (pair (pair %fee (nat %lp) (pair (nat %stakers) (nat %ref)))
-                                                                                        (pair (pair %staker_accumulator (map %accumulator nat nat) (nat %total_staked))
+                                                                                     (pair (nat %rate_f) (pair (nat %precision_multiplier_f) (nat %reserves))))
+                                                                                  (pair (pair %fee (nat %lp_f) (pair (nat %stakers_f) (nat %ref_f)))
+                                                                                        (pair (pair %staker_accumulator (map %accumulator_f nat nat) (nat %total_staked))
                                                                                               (nat %total_supply)))))))))
                                                  (pair (big_map %ledger (pair address nat) nat)
                                                        (pair (big_map %allowances (pair address nat) (set address))
@@ -95,7 +97,7 @@
                                                                             nat)
                                                                          (pair (big_map %stakers_balance
                                                                                   (pair address nat)
-                                                                                  (pair (nat %balance) (map %earnings nat (pair (nat %reward) (nat %former)))))
+                                                                                  (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
                                                                                (pair (pair %quipu_token (address %token_address) (nat %token_id))
                                                                                      (pair (address %factory_address) (bool %started)))))))))))))))
           (pair (big_map %metadata string bytes)
@@ -238,7 +240,9 @@
                                     (or (pair %ramp_A (nat %pool_id) (pair (nat %future_A) (timestamp %future_time)))
                                         (address %set_admin)))
                                 (or (or (address %set_default_referral)
-                                        (pair %set_fees (nat %pool_id) (pair %fee (nat %lp) (pair (nat %stakers) (nat %ref)))))
+                                        (pair %set_fees
+                                           (nat %pool_id)
+                                           (pair %fee (nat %lp_f) (pair (nat %stakers_f) (nat %ref_f)))))
                                     (nat %stop_ramp_A)))
                             (pair (address %admin)
                                   (pair (address %default_referral)
@@ -250,15 +254,15 @@
                                                           (pair (big_map %pool_to_id bytes nat)
                                                                 (pair (big_map %pools
                                                                          nat
-                                                                         (pair (nat %initial_A)
+                                                                         (pair (nat %initial_A_f)
                                                                                (pair (timestamp %initial_A_time)
-                                                                                     (pair (nat %future_A)
+                                                                                     (pair (nat %future_A_f)
                                                                                            (pair (timestamp %future_A_time)
                                                                                                  (pair (map %tokens_info
                                                                                                           nat
-                                                                                                          (pair (nat %rate) (pair (nat %precision_multiplier) (nat %reserves))))
-                                                                                                       (pair (pair %fee (nat %lp) (pair (nat %stakers) (nat %ref)))
-                                                                                                             (pair (pair %staker_accumulator (map %accumulator nat nat) (nat %total_staked))
+                                                                                                          (pair (nat %rate_f) (pair (nat %precision_multiplier_f) (nat %reserves))))
+                                                                                                       (pair (pair %fee (nat %lp_f) (pair (nat %stakers_f) (nat %ref_f)))
+                                                                                                             (pair (pair %staker_accumulator (map %accumulator_f nat nat) (nat %total_staked))
                                                                                                                    (nat %total_supply)))))))))
                                                                       (pair (big_map %ledger (pair address nat) nat)
                                                                             (pair (big_map %allowances (pair address nat) (set address))
@@ -271,7 +275,7 @@
                                                                                                  nat)
                                                                                               (pair (big_map %stakers_balance
                                                                                                        (pair address nat)
-                                                                                                       (pair (nat %balance) (map %earnings nat (pair (nat %reward) (nat %former)))))
+                                                                                                       (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
                                                                                                     (pair (pair %quipu_token (address %token_address) (nat %token_id))
                                                                                                           (pair (address %factory_address) (bool %started))))))))))))))))
                       (pair (list operation)
@@ -285,15 +289,15 @@
                                                           (pair (big_map %pool_to_id bytes nat)
                                                                 (pair (big_map %pools
                                                                          nat
-                                                                         (pair (nat %initial_A)
+                                                                         (pair (nat %initial_A_f)
                                                                                (pair (timestamp %initial_A_time)
-                                                                                     (pair (nat %future_A)
+                                                                                     (pair (nat %future_A_f)
                                                                                            (pair (timestamp %future_A_time)
                                                                                                  (pair (map %tokens_info
                                                                                                           nat
-                                                                                                          (pair (nat %rate) (pair (nat %precision_multiplier) (nat %reserves))))
-                                                                                                       (pair (pair %fee (nat %lp) (pair (nat %stakers) (nat %ref)))
-                                                                                                             (pair (pair %staker_accumulator (map %accumulator nat nat) (nat %total_staked))
+                                                                                                          (pair (nat %rate_f) (pair (nat %precision_multiplier_f) (nat %reserves))))
+                                                                                                       (pair (pair %fee (nat %lp_f) (pair (nat %stakers_f) (nat %ref_f)))
+                                                                                                             (pair (pair %staker_accumulator (map %accumulator_f nat nat) (nat %total_staked))
                                                                                                                    (nat %total_supply)))))))))
                                                                       (pair (big_map %ledger (pair address nat) nat)
                                                                             (pair (big_map %allowances (pair address nat) (set address))
@@ -306,7 +310,7 @@
                                                                                                  nat)
                                                                                               (pair (big_map %stakers_balance
                                                                                                        (pair address nat)
-                                                                                                       (pair (nat %balance) (map %earnings nat (pair (nat %reward) (nat %former)))))
+                                                                                                       (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
                                                                                                     (pair (pair %quipu_token (address %token_address) (nat %token_id))
                                                                                                           (pair (address %factory_address) (bool %started))))))))))))))))) ;
                  IF_NONE { FAILWITH } { SWAP ; DROP } ;
@@ -393,15 +397,15 @@
                                                           (pair (big_map %pool_to_id bytes nat)
                                                                 (pair (big_map %pools
                                                                          nat
-                                                                         (pair (nat %initial_A)
+                                                                         (pair (nat %initial_A_f)
                                                                                (pair (timestamp %initial_A_time)
-                                                                                     (pair (nat %future_A)
+                                                                                     (pair (nat %future_A_f)
                                                                                            (pair (timestamp %future_A_time)
                                                                                                  (pair (map %tokens_info
                                                                                                           nat
-                                                                                                          (pair (nat %rate) (pair (nat %precision_multiplier) (nat %reserves))))
-                                                                                                       (pair (pair %fee (nat %lp) (pair (nat %stakers) (nat %ref)))
-                                                                                                             (pair (pair %staker_accumulator (map %accumulator nat nat) (nat %total_staked))
+                                                                                                          (pair (nat %rate_f) (pair (nat %precision_multiplier_f) (nat %reserves))))
+                                                                                                       (pair (pair %fee (nat %lp_f) (pair (nat %stakers_f) (nat %ref_f)))
+                                                                                                             (pair (pair %staker_accumulator (map %accumulator_f nat nat) (nat %total_staked))
                                                                                                                    (nat %total_supply)))))))))
                                                                       (pair (big_map %ledger (pair address nat) nat)
                                                                             (pair (big_map %allowances (pair address nat) (set address))
@@ -414,7 +418,7 @@
                                                                                                  nat)
                                                                                               (pair (big_map %stakers_balance
                                                                                                        (pair address nat)
-                                                                                                       (pair (nat %balance) (map %earnings nat (pair (nat %reward) (nat %former)))))
+                                                                                                       (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
                                                                                                     (pair (pair %quipu_token (address %token_address) (nat %token_id))
                                                                                                           (pair (address %factory_address) (bool %started))))))))))))))))
                       (pair (list operation)
@@ -428,15 +432,15 @@
                                                           (pair (big_map %pool_to_id bytes nat)
                                                                 (pair (big_map %pools
                                                                          nat
-                                                                         (pair (nat %initial_A)
+                                                                         (pair (nat %initial_A_f)
                                                                                (pair (timestamp %initial_A_time)
-                                                                                     (pair (nat %future_A)
+                                                                                     (pair (nat %future_A_f)
                                                                                            (pair (timestamp %future_A_time)
                                                                                                  (pair (map %tokens_info
                                                                                                           nat
-                                                                                                          (pair (nat %rate) (pair (nat %precision_multiplier) (nat %reserves))))
-                                                                                                       (pair (pair %fee (nat %lp) (pair (nat %stakers) (nat %ref)))
-                                                                                                             (pair (pair %staker_accumulator (map %accumulator nat nat) (nat %total_staked))
+                                                                                                          (pair (nat %rate_f) (pair (nat %precision_multiplier_f) (nat %reserves))))
+                                                                                                       (pair (pair %fee (nat %lp_f) (pair (nat %stakers_f) (nat %ref_f)))
+                                                                                                             (pair (pair %staker_accumulator (map %accumulator_f nat nat) (nat %total_staked))
                                                                                                                    (nat %total_supply)))))))))
                                                                       (pair (big_map %ledger (pair address nat) nat)
                                                                             (pair (big_map %allowances (pair address nat) (set address))
@@ -449,7 +453,7 @@
                                                                                                  nat)
                                                                                               (pair (big_map %stakers_balance
                                                                                                        (pair address nat)
-                                                                                                       (pair (nat %balance) (map %earnings nat (pair (nat %reward) (nat %former)))))
+                                                                                                       (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
                                                                                                     (pair (pair %quipu_token (address %token_address) (nat %token_id))
                                                                                                           (pair (address %factory_address) (bool %started))))))))))))))))) ;
                  IF_NONE { FAILWITH } { SWAP ; DROP } ;
@@ -509,15 +513,15 @@
                                                              (pair (big_map %pool_to_id bytes nat)
                                                                    (pair (big_map %pools
                                                                             nat
-                                                                            (pair (nat %initial_A)
+                                                                            (pair (nat %initial_A_f)
                                                                                   (pair (timestamp %initial_A_time)
-                                                                                        (pair (nat %future_A)
+                                                                                        (pair (nat %future_A_f)
                                                                                               (pair (timestamp %future_A_time)
                                                                                                     (pair (map %tokens_info
                                                                                                              nat
-                                                                                                             (pair (nat %rate) (pair (nat %precision_multiplier) (nat %reserves))))
-                                                                                                          (pair (pair %fee (nat %lp) (pair (nat %stakers) (nat %ref)))
-                                                                                                                (pair (pair %staker_accumulator (map %accumulator nat nat) (nat %total_staked))
+                                                                                                             (pair (nat %rate_f) (pair (nat %precision_multiplier_f) (nat %reserves))))
+                                                                                                          (pair (pair %fee (nat %lp_f) (pair (nat %stakers_f) (nat %ref_f)))
+                                                                                                                (pair (pair %staker_accumulator (map %accumulator_f nat nat) (nat %total_staked))
                                                                                                                       (nat %total_supply)))))))))
                                                                          (pair (big_map %ledger (pair address nat) nat)
                                                                                (pair (big_map %allowances (pair address nat) (set address))
@@ -530,7 +534,7 @@
                                                                                                     nat)
                                                                                                  (pair (big_map %stakers_balance
                                                                                                           (pair address nat)
-                                                                                                          (pair (nat %balance) (map %earnings nat (pair (nat %reward) (nat %former)))))
+                                                                                                          (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
                                                                                                        (pair (pair %quipu_token (address %token_address) (nat %token_id))
                                                                                                              (pair (address %factory_address) (bool %started)))))))))))))))
                                   (pair (big_map %metadata string bytes)
@@ -549,15 +553,15 @@
                                                              (pair (big_map %pool_to_id bytes nat)
                                                                    (pair (big_map %pools
                                                                             nat
-                                                                            (pair (nat %initial_A)
+                                                                            (pair (nat %initial_A_f)
                                                                                   (pair (timestamp %initial_A_time)
-                                                                                        (pair (nat %future_A)
+                                                                                        (pair (nat %future_A_f)
                                                                                               (pair (timestamp %future_A_time)
                                                                                                     (pair (map %tokens_info
                                                                                                              nat
-                                                                                                             (pair (nat %rate) (pair (nat %precision_multiplier) (nat %reserves))))
-                                                                                                          (pair (pair %fee (nat %lp) (pair (nat %stakers) (nat %ref)))
-                                                                                                                (pair (pair %staker_accumulator (map %accumulator nat nat) (nat %total_staked))
+                                                                                                             (pair (nat %rate_f) (pair (nat %precision_multiplier_f) (nat %reserves))))
+                                                                                                          (pair (pair %fee (nat %lp_f) (pair (nat %stakers_f) (nat %ref_f)))
+                                                                                                                (pair (pair %staker_accumulator (map %accumulator_f nat nat) (nat %total_staked))
                                                                                                                       (nat %total_supply)))))))))
                                                                          (pair (big_map %ledger (pair address nat) nat)
                                                                                (pair (big_map %allowances (pair address nat) (set address))
@@ -570,7 +574,7 @@
                                                                                                     nat)
                                                                                                  (pair (big_map %stakers_balance
                                                                                                           (pair address nat)
-                                                                                                          (pair (nat %balance) (map %earnings nat (pair (nat %reward) (nat %former)))))
+                                                                                                          (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
                                                                                                        (pair (pair %quipu_token (address %token_address) (nat %token_id))
                                                                                                              (pair (address %factory_address) (bool %started)))))))))))))))
                                   (pair (big_map %metadata string bytes)
@@ -682,7 +686,7 @@
          DROP 2 } ;
   view "get_fees"
        nat
-       (pair (nat %lp) (pair (nat %stakers) (nat %ref)))
+       (pair (nat %lp_f) (pair (nat %stakers_f) (nat %ref_f)))
        { UNPAIR ;
          PUSH string "not-launched" ;
          DIG 2 ;
@@ -1195,15 +1199,13 @@
          GET 11 ;
          DUP ;
          DUG 2 ;
-         DUP ;
-         DUG 2 ;
          GET 4 ;
-         DIG 2 ;
+         DUP 3 ;
          GET 3 ;
-         ADD ;
-         ADD ;
-         SWAP ;
+         DIG 3 ;
          CAR ;
+         ADD ;
+         ADD ;
          ADD ;
          MUL ;
          EDIV ;
@@ -1623,15 +1625,13 @@
          GET 11 ;
          DUP ;
          DUG 2 ;
-         DUP ;
-         DUG 2 ;
          GET 4 ;
-         DIG 2 ;
+         DUP 3 ;
          GET 3 ;
-         ADD ;
-         ADD ;
-         SWAP ;
+         DIG 3 ;
          CAR ;
+         ADD ;
+         ADD ;
          ADD ;
          DUP 5 ;
          MAP { UNPAIR ;

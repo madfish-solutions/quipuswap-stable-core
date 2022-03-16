@@ -64,8 +64,8 @@ function add_pool(
       );
 
       const pool = pool_i with record [
-        initial_A       = params.a_constant * Constants.a_precision;
-        future_A        = params.a_constant * Constants.a_precision;
+        initial_A_f     = params.a_constant * Constants.a_precision;
+        future_A_f      = params.a_constant * Constants.a_precision;
         initial_A_time  = Tezos.now;
         future_A_time   = Tezos.now;
         tokens_info     = tokens_info;

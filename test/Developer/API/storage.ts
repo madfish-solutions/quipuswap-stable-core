@@ -4,6 +4,6 @@ import BigNumber from "bignumber.js";
 
 export declare type DevStorage = {
   dev_address: TezosAddress;
-  dev_fee: BigNumber;
+  dev_fee_f: BigNumber;
   dev_lambdas: MichelsonMap<string, BytesString>;
 };

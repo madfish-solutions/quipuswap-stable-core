@@ -65,7 +65,7 @@ export async function swapSuccessCase(
     dex.storage.storage.pools[pool_id.toString()].tokens_info;
   const rates = {};
   dex.storage.storage.pools[pool_id.toString()].tokens_info.forEach((v, k) => {
-    rates[k] = new BigNumber(10).pow(18).dividedBy(v.rate);
+    rates[k] = new BigNumber(10).pow(18).dividedBy(v.rate_f);
   });
   const tok_in = tokens[t_in];
   const tok_out = tokens[t_to];

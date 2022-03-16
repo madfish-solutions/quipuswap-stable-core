@@ -17,9 +17,9 @@ export async function rampASuccessCase(
   await dex.updateStorage({ pools: [pool_id.toString()] });
   const init: PairInfo = dex.storage.storage.pools[pool_id.toString()];
   const {
-    future_A: init_ft_A,
+    future_A_f: init_ft_A,
     future_A_time: init_ft_A_t,
-    initial_A: init_in_A,
+    initial_A_f: init_in_A,
     initial_A_time: init_in_A_t,
   } = init;
   ft_time = new BigNumber(Date.now())
@@ -30,9 +30,9 @@ export async function rampASuccessCase(
   await dex.updateStorage({ pools: [pool_id.toString()] });
   const upd: PairInfo = dex.storage.storage.pools[pool_id.toString()];
   const {
-    future_A: upd_ft_A,
+    future_A_f: upd_ft_A,
     future_A_time: upd_ft_A_t,
-    initial_A: upd_in_A,
+    initial_A_f: upd_in_A,
     initial_A_time: upd_in_A_t,
   } = upd;
   expect(init_ft_A.toNumber()).not.toStrictEqual(upd_ft_A.toNumber());
@@ -46,9 +46,9 @@ export async function stopRampASuccessCase(dex: Dex, pool_id: BigNumber) {
   await dex.updateStorage({ pools: [pool_id.toString()] });
   const init: PairInfo = dex.storage.storage.pools[pool_id.toString()];
   const {
-    future_A: init_ft_A,
+    future_A_f: init_ft_A,
     future_A_time: init_ft_A_t,
-    initial_A: init_in_A,
+    initial_A_f: init_in_A,
     initial_A_time: init_in_A_t,
   } = init;
   const op = await dex.contract.methods.stop_ramp_A(pool_id).send();
@@ -56,9 +56,9 @@ export async function stopRampASuccessCase(dex: Dex, pool_id: BigNumber) {
   await dex.updateStorage({ pools: [pool_id.toString()] });
   const upd: PairInfo = dex.storage.storage.pools[pool_id.toString()];
   const {
-    future_A: upd_ft_A,
+    future_A_f: upd_ft_A,
     future_A_time: upd_ft_A_t,
-    initial_A: upd_in_A,
+    initial_A_f: upd_in_A,
     initial_A_time: upd_in_A_t,
   } = upd;
   expect(upd_ft_A.toNumber()).toStrictEqual(upd_in_A.toNumber());

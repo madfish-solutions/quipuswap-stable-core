@@ -20,8 +20,8 @@ type input_t_v_t        is [@layout:comb] record [
 type start_dex_param_t  is map(nat, input_t_v_t)
 
 type token_prec_info_t  is [@layout:comb] record [
-  rate                    : nat;
-  precision_multiplier    : nat;
+  rate_f                  : nat;
+  precision_multiplier_f  : nat;
 ]
 
 type pool_init_param_t  is [@layout:comb] record [
@@ -37,7 +37,7 @@ type pool_init_param_t  is [@layout:comb] record [
 type inner_store_t      is [@layout:comb] record[
   dev_store               : dev_storage_t;
   init_price              : nat; (* Pool creation price in QUIPU token *)
-  burn_rate               : nat; (* Percent of QUIPU tokens to be burned *)
+  burn_rate_f               : nat; (* Percent of QUIPU tokens to be burned *)
   pools_count             : nat;
   pool_to_address         : big_map(bytes, address);
   quipu_token             : fa2_token_t;
