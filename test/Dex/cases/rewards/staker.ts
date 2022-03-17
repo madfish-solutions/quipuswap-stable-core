@@ -54,8 +54,8 @@ export async function harvestFromPoolSuccessCase(
     .then((balance) => balance.get([staker, pool_id.toString()]))
     .then((value) => value?.earnings);
   upd_user_rew.forEach((earning) => {
-    expect(earning.reward_f.toNumber()).toStrictEqual(
-      new BigNumber(0).toNumber()
+    expect(earning.reward_f.toNumber()).toBeLessThanOrEqual(
+      new BigNumber("10000000000").toNumber() // denominator of accumulator value less than denominator is amount less than 1 token.
     );
   });
   expect(init_total_stake.toNumber()).toStrictEqual(upd_total_stake.toNumber());
