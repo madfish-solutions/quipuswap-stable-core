@@ -1,7 +1,7 @@
 function get_dev_fee(
   const s               : storage_t)
                         : nat is
-  s.dev_store.dev_fee
+  s.dev_store.dev_fee_f
 
 function get_dev_address(
   const s               : storage_t)

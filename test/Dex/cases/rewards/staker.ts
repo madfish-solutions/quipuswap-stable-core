@@ -17,8 +17,8 @@ export async function harvestFromPoolSuccessCase(
   const init_user_rew: MichelsonMap<
     string,
     {
-      reward: BigNumber;
-      former: BigNumber;
+      reward_f: BigNumber;
+      former_f: BigNumber;
     }
   > = await dex.contract
     .storage()
@@ -28,7 +28,7 @@ export async function harvestFromPoolSuccessCase(
     .then((balance) => balance.get([staker, pool_id.toString()]))
     .then((value) => value?.earnings);
   init_user_rew.forEach((earning) => {
-    expect(earning.reward.toNumber()).toBeGreaterThanOrEqual(
+    expect(earning.reward_f.toNumber()).toBeGreaterThanOrEqual(
       new BigNumber(0).toNumber()
     );
   });
@@ -43,8 +43,8 @@ export async function harvestFromPoolSuccessCase(
   const upd_user_rew: MichelsonMap<
     string,
     {
-      reward: BigNumber;
-      former: BigNumber;
+      reward_f: BigNumber;
+      former_f: BigNumber;
     }
   > = await dex.contract
     .storage()
@@ -54,8 +54,8 @@ export async function harvestFromPoolSuccessCase(
     .then((balance) => balance.get([staker, pool_id.toString()]))
     .then((value) => value?.earnings);
   upd_user_rew.forEach((earning) => {
-    expect(earning.reward.toNumber()).toStrictEqual(
-      new BigNumber(0).toNumber()
+    expect(earning.reward_f.toNumber()).toBeLessThanOrEqual(
+      new BigNumber("10000000000").toNumber() // denominator of accumulator value less than denominator is amount less than 1 token.
     );
   });
   expect(init_total_stake.toNumber()).toStrictEqual(upd_total_stake.toNumber());

@@ -1,16 +1,12 @@
-import {
-  BytesString,
-  DevStorage,
-  FA2,
-  TezosAddress,
-} from "../../../utils/helpers";
+import { BytesString, FA2, TezosAddress } from "../../../utils/helpers";
 import BigNumber from "bignumber.js";
 import { MichelsonMap } from "@taquito/taquito";
+import { DevStorage } from "../../Developer/API/storage";
 
 export declare type InnerFactoryStore = {
   dev_store: DevStorage;
   init_price: BigNumber;
-  burn_rate: BigNumber;
+  burn_rate_f: BigNumber;
   pools_count: BigNumber;
   pool_to_address: MichelsonMap<BytesString, TezosAddress>;
   quipu_token: FA2;

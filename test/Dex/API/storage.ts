@@ -21,7 +21,7 @@ const dex_storage: DexStorage = {
     quipu_token: null as FA2,
     dev_store: {
       dev_address: null as TezosAddress,
-      dev_fee: new BigNumber("0"),
+      dev_fee_f: new BigNumber("0"),
       dev_lambdas: new MichelsonMap(),
     },
     factory_address: null as TezosAddress,

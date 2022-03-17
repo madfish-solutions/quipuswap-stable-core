@@ -16,28 +16,28 @@ export async function manageInputs(
   Array<{
     asset: TokenFA12 | TokenFA2;
     in_amount: BigNumber;
-    rate: BigNumber;
-    precision_multiplier: BigNumber;
+    rate_f: BigNumber;
+    precision_multiplier_f: BigNumber;
   }>
 > {
   let inputs = [
     {
       asset: tokens.kUSD,
       in_amount: decimals.kUSD.multipliedBy(input),
-      rate: new BigNumber(10).pow(18),
-      precision_multiplier: new BigNumber(1),
+      rate_f: new BigNumber(10).pow(18),
+      precision_multiplier_f: new BigNumber(1),
     },
     {
       asset: tokens.USDtz,
       in_amount: decimals.USDtz.multipliedBy(input),
-      rate: new BigNumber(10).pow(18 + 12),
-      precision_multiplier: new BigNumber(10).pow(12),
+      rate_f: new BigNumber(10).pow(18 + 12),
+      precision_multiplier_f: new BigNumber(10).pow(12),
     },
     {
       asset: tokens.uUSD,
       in_amount: decimals.uUSD.multipliedBy(input),
-      rate: new BigNumber(10).pow(18 + 6),
-      precision_multiplier: new BigNumber(10).pow(6),
+      rate_f: new BigNumber(10).pow(18 + 6),
+      precision_multiplier_f: new BigNumber(10).pow(6),
     },
   ];
   inputs = inputs.sort(
@@ -64,8 +64,8 @@ export async function addNewPair(
   inputs: {
     asset: TokenFA12 | TokenFA2;
     in_amount: BigNumber;
-    rate: BigNumber;
-    precision_multiplier: BigNumber;
+    rate_f: BigNumber;
+    precision_multiplier_f: BigNumber;
   }[],
   approve = false,
   Tezos: TezosToolkit

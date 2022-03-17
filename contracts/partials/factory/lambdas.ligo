@@ -26,8 +26,8 @@ function add_pool(
       const value       : token_prec_info_t)
                         : token_info_t is
       record [
-        rate = value.rate;
-        precision_multiplier = value.precision_multiplier;
+        rate_f = value.rate_f;
+        precision_multiplier_f = value.precision_multiplier_f;
         reserves = 0n;
       ];
 
@@ -38,18 +38,18 @@ function add_pool(
     require(Constants.max_a >= params.a_constant, Errors.Dex.a_limit);
 
     const pool = record [
-      initial_A       = params.a_constant * Constants.a_precision;
-      future_A        = params.a_constant * Constants.a_precision;
+      initial_A_f     = params.a_constant * Constants.a_precision;
+      future_A_f      = params.a_constant * Constants.a_precision;
       initial_A_time  = Tezos.now;
       future_A_time   = Tezos.now;
       tokens_info     = tokens_info;
       fee             = record [
-        lp          = 0n;
-        ref         = 0n;
-        stakers     = 0n;
+        lp_f          = 0n;
+        ref_f         = 0n;
+        stakers_f     = 0n;
       ];
       staker_accumulator  = record [
-        accumulator         = (map []: map(token_pool_idx_t, nat));
+        accumulator_f       = (map []: map(token_pool_idx_t, nat));
         total_staked        = 0n;
       ];
       total_supply        = 0n;
@@ -98,7 +98,7 @@ function add_pool(
     const charges = manage_startup_charges(
       s.storage.whitelist,
       s.storage.init_price,
-      s.storage.burn_rate,
+      s.storage.burn_rate_f,
       s.storage.quipu_token,
       operations,
       s.storage.quipu_rewards

@@ -20,8 +20,8 @@ export async function initializeExchangeSuccessCase(
   inputs: {
     asset: TokenFA12 | TokenFA2;
     in_amount: BigNumber;
-    rate: BigNumber;
-    precision_multiplier: BigNumber;
+    rate_f: BigNumber;
+    precision_multiplier_f: BigNumber;
   }[],
   default_referral: TezosAddress,
   managers = [],
@@ -81,7 +81,7 @@ export async function initializeExchangeSuccessCase(
     price
       .minus(
         price.multipliedBy(
-          factory.storage.storage.burn_rate.dividedBy("1000000")
+          factory.storage.storage.burn_rate_f.dividedBy("1000000")
         )
       )
       .toNumber()

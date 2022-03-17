@@ -31,10 +31,10 @@ export async function setBurnRateSuccessCase(
   const config = await prepareProviderOptions(sender);
   tezos.setProvider(config);
   await factory.updateStorage({});
-  const start_rate: BigNumber = factory.storage.storage.burn_rate;
+  const start_rate: BigNumber = factory.storage.storage.burn_rate_f;
   expect(start_rate.toNumber()).not.toStrictEqual(newRate.toNumber());
   await factory.setBurnRate(newRate, tezos);
   await factory.updateStorage({});
-  const new_rate: BigNumber = factory.storage.storage.burn_rate;
+  const new_rate: BigNumber = factory.storage.storage.burn_rate_f;
   expect(new_rate.toNumber()).toStrictEqual(newRate.toNumber());
 }
