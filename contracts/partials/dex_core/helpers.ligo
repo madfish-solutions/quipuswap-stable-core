@@ -75,7 +75,8 @@ function harvest_staker_rewards(
           ]
         );
         const new_former_f = staker_balance * pool_accum_f;
-        const reward_amt = (reward.reward_f + abs(new_former_f - reward.former_f)) / Constants.accum_precision;
+        const (reward_amt, reward_change) = unwrap_ediv(reward.reward_f + abs(new_former_f - reward.former_f),
+          Constants.accum_precision);
         if reward_amt > 0n
         then accum.op := typed_transfer(
             Tezos.self_address,
@@ -86,7 +87,7 @@ function harvest_staker_rewards(
         else skip;
         accum.earnings[i] := record[
           former_f = new_former_f;
-          reward_f = 0n;
+          reward_f = reward_change;
         ];
     } with accum;
     const harvest = Map.fold(
@@ -135,10 +136,8 @@ function update_former_and_transfer(
                         : account_reward_t is
       block{
         const new_former_f = new_balance * unwrap_or(pool_stake_accum.accumulator_f[i], 0n);
-        const new_reward_f = rew.reward_f + abs(new_former_f - rew.former_f);
       } with rew with record [
-        former_f = new_former_f;
-        reward_f = new_reward_f;
+          former_f = new_former_f;
         ];
   } with record [
     account = record [

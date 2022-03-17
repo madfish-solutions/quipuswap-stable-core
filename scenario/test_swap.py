@@ -306,18 +306,18 @@ class StableSwapTest(TestCase):
 
         add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c], {
             0:  {
-                    "rate": pow(10,18) * int(1e18 // BITCOIN_PRECISION),
-                    "precision_multiplier": int(1e18 // BITCOIN_PRECISION),
+                    "rate_f": pow(10,18) * int(1e18 // BITCOIN_PRECISION),
+                    "precision_multiplier_f": int(1e18 // BITCOIN_PRECISION),
                     "reserves": 100_000 *  BITCOIN_PRECISION,
                 },
             1:  {
-                    "rate": pow(10,18) * int(1e18 // TEZOS_PRECISION),
-                    "precision_multiplier": int(1e18 // TEZOS_PRECISION),
+                    "rate_f": pow(10,18) * int(1e18 // TEZOS_PRECISION),
+                    "precision_multiplier_f": int(1e18 // TEZOS_PRECISION),
                     "reserves": 100_000 * TEZOS_PRECISION,
                 },
             2:  {
-                    "rate": pow(10,18) * int(1e18 // ETH_PRECISION),
-                    "precision_multiplier": int(1e18 // ETH_PRECISION),
+                    "rate_f": pow(10,18) * int(1e18 // ETH_PRECISION),
+                    "precision_multiplier_f": int(1e18 // ETH_PRECISION),
                     "reserves": 100_000 * ETH_PRECISION,
                 },
             }
@@ -352,18 +352,18 @@ class StableSwapTest(TestCase):
 
         add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c], {
             0:  {
-                    "rate": pow(10,18) * int(1e18 // BITCOIN_PRECISION),
-                    "precision_multiplier": int(1e18 // BITCOIN_PRECISION),
+                    "rate_f": pow(10,18) * int(1e18 // BITCOIN_PRECISION),
+                    "precision_multiplier_f": int(1e18 // BITCOIN_PRECISION),
                     "reserves": 400_000 * BITCOIN_PRECISION,
                 },
             1:  {
-                    "rate": pow(10,18) * int(1e18 // TEZOS_PRECISION) * 2,
-                    "precision_multiplier": int(1e18 // TEZOS_PRECISION),
+                    "rate_f": pow(10,18) * int(1e18 // TEZOS_PRECISION) * 2,
+                    "precision_multiplier_f": int(1e18 // TEZOS_PRECISION),
                     "reserves": 200_000 * TEZOS_PRECISION,
                 },
             2:  {
-                    "rate": pow(10,18) * int(1e18 // ETH_PRECISION) * 4,
-                    "precision_multiplier": int(1e18 // ETH_PRECISION),
+                    "rate_f": pow(10,18) * int(1e18 // ETH_PRECISION) * 4,
+                    "precision_multiplier_f": int(1e18 // ETH_PRECISION),
                     "reserves": 100_000 * ETH_PRECISION,
                 },
             }
@@ -401,18 +401,18 @@ class StableSwapTest(TestCase):
 
         add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c], {
             0:  {
-                    "rate": pow(10,18) * int(1e18 // BITCOIN_PRECISION),
-                    "precision_multiplier": int(1e18 // BITCOIN_PRECISION),
+                    "rate_f": pow(10,18) * int(1e18 // BITCOIN_PRECISION),
+                    "precision_multiplier_f": int(1e18 // BITCOIN_PRECISION),
                     "reserves": 100 * BITCOIN_PRECISION * 4,
                 },
             1:  {
-                    "rate": pow(10,18) * int(1e18 // TEZOS_PRECISION) * 2,
-                    "precision_multiplier": int(1e18 // TEZOS_PRECISION),
+                    "rate_f": pow(10,18) * int(1e18 // TEZOS_PRECISION) * 2,
+                    "precision_multiplier_f": int(1e18 // TEZOS_PRECISION),
                     "reserves": 100 * TEZOS_PRECISION * 2,
                 },
             2:  {
-                    "rate": pow(10,18) * int(1e18 // ETH_PRECISION) * 4,
-                    "precision_multiplier": int(1e18 // ETH_PRECISION),
+                    "rate_f": pow(10,18) * int(1e18 // ETH_PRECISION) * 4,
+                    "precision_multiplier_f": int(1e18 // ETH_PRECISION),
                     "reserves": 100 * ETH_PRECISION,
                 },
             }
@@ -442,18 +442,18 @@ class StableSwapTest(TestCase):
 
         add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c], {
             0:  {
-                    "rate": pow(10,18) * TEZOS_PRECISION,
-                    "precision_multiplier": TEZOS_PRECISION,
+                    "rate_f": pow(10,18) * TEZOS_PRECISION,
+                    "precision_multiplier_f": TEZOS_PRECISION,
                     "reserves": 100_000 * TEZOS_PRECISION,
                 },
             1:  {
-                    "rate": pow(10,18) * TEZOS_PRECISION,
-                    "precision_multiplier": TEZOS_PRECISION,
+                    "rate_f": pow(10,18) * TEZOS_PRECISION,
+                    "precision_multiplier_f": TEZOS_PRECISION,
                     "reserves": 100_000 * TEZOS_PRECISION,
                 },
             2:  {
-                    "rate": pow(10,18) * TEZOS_PRECISION,
-                    "precision_multiplier": TEZOS_PRECISION,
+                    "rate_f": pow(10,18) * TEZOS_PRECISION,
+                    "precision_multiplier_f": TEZOS_PRECISION,
                     "reserves": 100_000 * TEZOS_PRECISION,
                 },
             }
