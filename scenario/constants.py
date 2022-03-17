@@ -42,7 +42,7 @@ dummy_metadata = {
 }
 
 fees = {
-  "lp": 200_000,
-  "stakers": 200_000,
-  "ref": 500_000,
+  "lp_f": 200_000,
+  "stakers_f": 200_000,
+  "ref_f": 500_000,
 }

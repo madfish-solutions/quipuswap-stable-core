@@ -205,20 +205,20 @@ def get_reserves(res, pool):
 def form_pool_rates(reserves_a, reserves_b, reserves_c=None):
     rates = {
                 0: {
-                    "rate": pow(10,18),
-                    "precision_multiplier": 1,
+                    "rate_f": pow(10,18),
+                    "precision_multiplier_f": 1,
                     "reserves": reserves_a,
                 },
                 1: {
-                    "rate": pow(10,18),
-                    "precision_multiplier": 1,
+                    "rate_f": pow(10,18),
+                    "precision_multiplier_f": 1,
                     "reserves": reserves_b,
                 }
             }
     if reserves_c:
         rates[2] = {
-                    "rate": pow(10,18),
-                    "precision_multiplier": 1,
+                    "rate_f": pow(10,18),
+                    "precision_multiplier_f": 1,
                     "reserves": reserves_c,
                 }
     return rates
@@ -229,8 +229,8 @@ def equal_pool_rates(array):
         reserves = array[i]
 
         rates[i] = {
-            "rate": pow(10,18),
-            "precision_multiplier": 1,
+            "rate_f": pow(10,18),
+            "precision_multiplier_f": 1,
             "reserves": reserves,
         }
     return rates
