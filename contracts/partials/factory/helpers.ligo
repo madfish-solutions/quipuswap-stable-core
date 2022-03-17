@@ -88,7 +88,7 @@ function get_tokens_from_param(
 function manage_startup_charges(
   const wl              : set(address);
   const price           : nat;
-  const burn_rate       : nat;
+  const burn_rate_f     : nat;
   const quipu_token     : fa2_token_t;
   var operations        : list(operation);
   var quipu_rewards     : nat)
@@ -96,7 +96,7 @@ function manage_startup_charges(
   block {
     if not (wl contains Tezos.sender)
     then {
-      const to_burn = price * burn_rate / Constants.burn_rate_precision;
+      const to_burn = price * burn_rate_f / Constants.burn_rate_precision;
       const to_factory = abs(price - to_burn);
       operations := typed_transfer(
         Tezos.sender,

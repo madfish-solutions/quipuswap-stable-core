@@ -20,11 +20,11 @@ const storage: FactoryStorage = {
   storage: {
     dev_store: {
       dev_address: null as TezosAddress, // DON'T Touch! Setting from deployer SK
-      dev_fee: new BigNumber(0),
+      dev_fee_f: new BigNumber(0),
       dev_lambdas: new MichelsonMap(),
     } as DevStorage,
     init_price: new BigNumber("0"),
-    burn_rate: new BigNumber("0"),
+    burn_rate_f: new BigNumber("0"),
     pools_count: new BigNumber("0"),
     pool_to_address: new MichelsonMap(),
     quipu_token: {

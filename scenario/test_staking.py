@@ -84,7 +84,7 @@ class StableStakingTest(TestCase):
         # unstaking the rest produces no more rewards
         res = chain.execute(self.dex.stake(remove = { 'pool_id': 0, 'amount': 10 }))
         trxs = parse_transfers(res)
-        self.assertEqual(len(trxs), 1 )
+        self.assertEqual(len(trxs), 1)
         self.assertEqual(trxs[0]["amount"], 10)
         self.assertEqual(trxs[0]["source"], contract_self_address)
         self.assertEqual(trxs[0]["destination"], me)

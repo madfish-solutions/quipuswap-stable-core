@@ -1,8 +1,8 @@
 [@inline] function sum_all_fee(
   const fee             : fees_storage_t;
-  const dev_fee         : nat)
+  const dev_fee_f         : nat)
                         : nat is
-    fee.lp + fee.stakers + fee.ref + dev_fee;
+    fee.lp_f + fee.stakers_f + fee.ref_f + dev_fee_f;
 
 (* Update reserves with pre-calculated `fees` *)
 [@inline] function nip_fees_off_reserves(
@@ -29,18 +29,18 @@
 function slice_fee(
     const dy            : nat;
     const fee           : fees_storage_t;
-    const dev_fee       : nat;
+    const dev_fee_f     : nat;
     const total_staked  : nat)
                         : record [ dy: nat; ref: nat; dev: nat; stakers: nat; lp: nat; ] is
   block {
-    const to_ref = dy * fee.ref / Constants.fee_denominator;
-    const to_dev = dy * dev_fee / Constants.fee_denominator;
-    var to_providers := dy * fee.lp / Constants.fee_denominator;
+    const to_ref = dy * fee.ref_f / Constants.fee_denominator;
+    const to_dev = dy * dev_fee_f / Constants.fee_denominator;
+    var to_providers := dy * fee.lp_f / Constants.fee_denominator;
 
     var to_stakers := 0n;
     if (total_staked =/= 0n)
-    then to_stakers := dy * fee.stakers / Constants.fee_denominator;
-    else to_providers := to_providers + dy * fee.stakers / Constants.fee_denominator;
+    then to_stakers := dy * fee.stakers_f / Constants.fee_denominator;
+    else to_providers := to_providers + dy * fee.stakers_f / Constants.fee_denominator;
 
     const return = record [
       dy  = nat_or_error(dy - to_providers - to_ref - to_dev - to_stakers, Errors.Dex.fee_overflow);
@@ -66,16 +66,17 @@ function harvest_staker_rewards(
                         : record [ op: list(operation); earnings: map(token_pool_idx_t, account_reward_t); ] is
       block {
         const i = entry.0;
-        const pool_accum = entry.1;
+        const pool_accum_f = entry.1;
         const reward = unwrap_or(
           accum.earnings[i],
           record [
-            former = 0n;
-            reward = 0n;
+            former_f = 0n;
+            reward_f = 0n;
           ]
         );
-        const new_former = staker_balance * pool_accum;
-        const reward_amt = (reward.reward + abs(new_former - reward.former)) / Constants.accum_precision;
+        const new_former_f = staker_balance * pool_accum_f;
+        const (reward_amt, reward_change) = unwrap_ediv(reward.reward_f + abs(new_former_f - reward.former_f),
+          Constants.accum_precision);
         if reward_amt > 0n
         then accum.op := typed_transfer(
             Tezos.self_address,
@@ -85,13 +86,13 @@ function harvest_staker_rewards(
           ) # accum.op;
         else skip;
         accum.earnings[i] := record[
-          former = new_former;
-          reward = 0n;
+          former_f = new_former_f;
+          reward_f = reward_change;
         ];
     } with accum;
     const harvest = Map.fold(
       fold_rewards,
-      accumulator.accumulator,
+      accumulator.accumulator_f,
       record[ op = operations; earnings = info.earnings ]
     );
     operations := harvest.op;
@@ -134,11 +135,9 @@ function update_former_and_transfer(
       const rew         : account_reward_t)
                         : account_reward_t is
       block{
-        const new_former = new_balance * unwrap_or(pool_stake_accum.accumulator[i], 0n);
-        const new_reward = (rew.reward + abs(new_former - rew.former)) / Constants.accum_precision;
+        const new_former_f = new_balance * unwrap_or(pool_stake_accum.accumulator_f[i], 0n);
       } with rew with record [
-        former = new_former;
-        reward = new_reward;
+          former_f = new_former_f;
         ];
   } with record [
     account = record [
@@ -211,18 +210,18 @@ function get_pool_info(
   block {
     const token_id : nat = unwrap_or(pool_to_id[token_bytes], pools_count);
     const pool : pool_t = unwrap_or(pools[token_id], record [
-      initial_A           = 0n;
-      future_A            = 0n;
+      initial_A_f         = 0n;
+      future_A_f          = 0n;
       initial_A_time      = Tezos.now;
       future_A_time       = Tezos.now;
       tokens_info         = (map []: map(token_pool_idx_t, token_info_t));
       fee                 = record [
-        lp              = 0n;
-        ref             = 0n;
-        stakers         = 0n;
+        lp_f            = 0n;
+        ref_f           = 0n;
+        stakers_f       = 0n;
       ];
       staker_accumulator  = record [
-        accumulator         = (map []: map(token_pool_idx_t, nat));
+        accumulator_f       = (map []: map(token_pool_idx_t, nat));
         total_staked        = 0n;
       ];
       total_supply        = 0n;

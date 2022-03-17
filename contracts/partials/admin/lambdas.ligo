@@ -17,7 +17,7 @@ function set_default_referral(
   var s                 : storage_t)
                         : return_t is
   case p of
-  | Set_default_referral(params) -> (Constants.no_operations, s with record [ default_referral = params ])
+  | Set_default_referral(referral) -> (Constants.no_operations, s with record [ default_referral = referral ])
   | _ -> (Constants.no_operations, s)
   end
 
@@ -46,23 +46,23 @@ function ramp_A(
         require(Tezos.now >= pool.initial_A_time + Constants.min_ramp_time, Errors.Dex.timestamp_error);
         require(params.future_time >= Tezos.now + Constants.min_ramp_time, Errors.Dex.timestamp_error); // dev: insufficient time
 
-        const initial_A: nat = get_A(
+        const initial_A_f: nat = get_A(
           pool.initial_A_time,
-          pool.initial_A,
+          pool.initial_A_f,
           pool.future_A_time,
-          pool.future_A
+          pool.future_A_f
         );
-        const future_A_p: nat = params.future_A * Constants.a_precision;
+        const future_A_f: nat = params.future_A * Constants.a_precision;
 
         assert((params.future_A > 0n) and (params.future_A <= Constants.max_a));
 
-        if future_A_p >= initial_A
-        then require(future_A_p <= initial_A * Constants.max_a_change, Errors.Dex.a_limit)
-        else require(future_A_p * Constants.max_a_change >= initial_A, Errors.Dex.a_limit);
+        if future_A_f >= initial_A_f
+        then require(future_A_f <= initial_A_f * Constants.max_a_change, Errors.Dex.a_limit)
+        else require(future_A_f * Constants.max_a_change >= initial_A_f, Errors.Dex.a_limit);
 
         s.pools[params.pool_id] := pool with record [
-        initial_A = initial_A;
-        future_A = future_A_p;
+        initial_A_f = initial_A_f;
+        future_A_f = future_A_f;
         initial_A_time = Tezos.now;
         future_A_time = params.future_time;
       ];
@@ -80,15 +80,15 @@ function stop_ramp_A(
     case p of
     | Stop_ramp_A(pool_id) -> {
       var pool : pool_t := unwrap(s.pools[pool_id], Errors.Dex.pool_not_listed);
-      const current_A: nat = get_A(
+      const current_A_f: nat = get_A(
         pool.initial_A_time,
-        pool.initial_A,
+        pool.initial_A_f,
         pool.future_A_time,
-        pool.future_A
+        pool.future_A_f
       );
       s.pools[pool_id] := pool with record [
-        initial_A = current_A;
-        future_A = current_A;
+        initial_A_f = current_A_f;
+        future_A_f = current_A_f;
         initial_A_time = Tezos.now;
         future_A_time = Tezos.now;
       ];
@@ -124,7 +124,8 @@ function claim_dev(
     var operations: list(operation) := Constants.no_operations;
     case p of
     | Claim_developer(params) -> {
-      require(Tezos.sender = get_dev_address(s), Errors.Dex.not_developer);
+      const dev_address = get_dev_address(s);
+      require(Tezos.sender = dev_address, Errors.Dex.not_developer);
 
       const bal = unwrap_or(s.dev_rewards[params.token], 0n);
 
@@ -134,7 +135,7 @@ function claim_dev(
 
       operations := typed_transfer(
         Tezos.self_address,
-        get_dev_address(s),
+        dev_address,
         params.amount,
         params.token
       ) # operations;

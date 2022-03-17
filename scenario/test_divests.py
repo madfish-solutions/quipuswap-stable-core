@@ -160,18 +160,18 @@ class DivestsTest(TestCase):
 
         add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c], {
             0:  {
-                    "rate": pow(10,18),
-                    "precision_multiplier": 1,
+                    "rate_f": pow(10,18),
+                    "precision_multiplier_f": 1,
                     "reserves": 100_000,
                 },
             1:  {
-                    "rate": pow(10,24),
-                    "precision_multiplier": 1_000_000,
+                    "rate_f": pow(10,24),
+                    "precision_multiplier_f": 1_000_000,
                     "reserves": 100_000 * int(1e6),
                 },
             2:  {
-                    "rate": pow(10,36),
-                    "precision_multiplier": int(1e18),
+                    "rate_f": pow(10,36),
+                    "precision_multiplier_f": int(1e18),
                     "reserves": 100_000 * int(1e18),
                 },
             }

@@ -124,8 +124,8 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
     token_info: {
       asset: TokenFA12 | TokenFA2;
       in_amount: BigNumber;
-      rate: BigNumber;
-      precision_multiplier: BigNumber;
+      rate_f: BigNumber;
+      precision_multiplier_f: BigNumber;
     }[],
     approve = true,
     tezos: TezosToolkit
@@ -140,12 +140,12 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
       const mapped_item = (input: {
         asset: TokenFA12 | TokenFA2;
         in_amount: BigNumber;
-        rate: BigNumber;
-        precision_multiplier: BigNumber;
+        rate_f: BigNumber;
+        precision_multiplier_f: BigNumber;
       }) => {
         let result: {
-          rate: BigNumber;
-          precision_multiplier: BigNumber;
+          rate_f: BigNumber;
+          precision_multiplier_f: BigNumber;
           reserves: BigNumber;
         };
         if (input.asset instanceof TokenFA2) {
@@ -156,8 +156,8 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
             },
           });
           result = {
-            rate: input.rate,
-            precision_multiplier: input.precision_multiplier,
+            rate_f: input.rate_f,
+            precision_multiplier_f: input.precision_multiplier_f,
             reserves: input.in_amount,
           };
         } else {
@@ -165,8 +165,8 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
             fa12: input.asset.contract.address,
           });
           result = {
-            rate: input.rate,
-            precision_multiplier: input.precision_multiplier,
+            rate_f: input.rate_f,
+            precision_multiplier_f: input.precision_multiplier_f,
             reserves: input.in_amount,
           };
         }
@@ -199,7 +199,7 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
         toIdx,
         amountIn,
         minAmountOut,
-        new BigNumber(expiration.getTime()),
+        new BigNumber(expiration.getTime()).dividedToIntegerBy(1000),
         receiver,
         referral
       )
@@ -350,7 +350,7 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
     tezos: TezosToolkit
   ): Promise<TransactionOperation> {
     const operation = await this.contract.methods
-      .set_fees(pool_id, fees.lp, fees.stakers, fees.ref)
+      .set_fees(pool_id, fees.lp_f, fees.stakers_f, fees.ref_f)
       .send();
 
     await confirmOperation(tezos, operation.hash);

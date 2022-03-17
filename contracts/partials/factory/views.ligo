@@ -2,7 +2,7 @@
   const _               : unit;
   const s               : full_storage_t)
                         : nat is
-  s.storage.dev_store.dev_fee
+  s.storage.dev_store.dev_fee_f
 
 [@view] function dev_address(
   const _               : unit;

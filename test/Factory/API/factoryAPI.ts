@@ -190,8 +190,8 @@ export class DexFactory implements DevEnabledContract {
     token_info: {
       asset: TokenFA12 | TokenFA2;
       in_amount: BigNumber;
-      rate: BigNumber;
-      precision_multiplier: BigNumber;
+      rate_f: BigNumber;
+      precision_multiplier_f: BigNumber;
     }[],
     default_referral: TezosAddress,
     managers: TezosAddress[] = [],
@@ -210,12 +210,12 @@ export class DexFactory implements DevEnabledContract {
       const mapped_item = (input: {
         asset: TokenFA12 | TokenFA2;
         in_amount: BigNumber;
-        rate: BigNumber;
-        precision_multiplier: BigNumber;
+        rate_f: BigNumber;
+        precision_multiplier_f: BigNumber;
       }) => {
         let result: {
-          rate: BigNumber;
-          precision_multiplier: BigNumber;
+          rate_f: BigNumber;
+          precision_multiplier_f: BigNumber;
           reserves: BigNumber;
         };
         if (input.asset instanceof TokenFA2) {
@@ -226,8 +226,8 @@ export class DexFactory implements DevEnabledContract {
             },
           });
           result = {
-            rate: input.rate,
-            precision_multiplier: input.precision_multiplier,
+            rate_f: input.rate_f,
+            precision_multiplier_f: input.precision_multiplier_f,
             reserves: input.in_amount,
           };
         } else {
@@ -235,8 +235,8 @@ export class DexFactory implements DevEnabledContract {
             fa12: input.asset.contract.address,
           });
           result = {
-            rate: input.rate,
-            precision_multiplier: input.precision_multiplier,
+            rate_f: input.rate_f,
+            precision_multiplier_f: input.precision_multiplier_f,
             reserves: input.in_amount,
           };
         }

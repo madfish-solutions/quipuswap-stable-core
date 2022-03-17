@@ -95,7 +95,7 @@ function use_factory(
   block {
     require(Tezos.sender = s.storage.dev_store.dev_address, Errors.Dex.not_developer);
     case params of
-    | Set_burn_rate(rate)   -> s.storage.burn_rate := rate
+    | Set_burn_rate(rate)   -> s.storage.burn_rate_f := rate
     | Set_price(price)      -> s.storage.init_price := price
     | Set_whitelist(params) -> s.storage.whitelist := add_rem_candidate(params, s.storage.whitelist)
     | _ -> skip

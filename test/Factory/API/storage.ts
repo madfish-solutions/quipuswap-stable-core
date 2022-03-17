@@ -8,11 +8,11 @@ export const factory_storage: FactoryStorage = {
   storage: {
     dev_store: {
       dev_address: null as TezosAddress,
-      dev_fee: new BigNumber(0),
+      dev_fee_f: new BigNumber(0),
       dev_lambdas: new MichelsonMap(),
     } as DevStorage,
     init_price: new BigNumber(0),
-    burn_rate: new BigNumber(0),
+    burn_rate_f: new BigNumber(0),
     pools_count: new BigNumber(0),
     pool_to_address: new MichelsonMap(),
     quipu_token: null as FA2,

@@ -13,27 +13,27 @@ import { DevStorage } from "../../Developer/API/storage";
 export declare type AllowancesDataType = Array<string>;
 
 export declare type FeeType = {
-  lp: BigNumber;
-  stakers: BigNumber;
-  ref: BigNumber;
+  lp_f: BigNumber;
+  stakers_f: BigNumber;
+  ref_f: BigNumber;
 };
 
 export declare type TokenInfo = {
-  rate: BigNumber;
-  precision_multiplier: BigNumber;
+  rate_f: BigNumber;
+  precision_multiplier_f: BigNumber;
   reserves: BigNumber;
 };
 
 export declare type PairInfo = {
-  initial_A: BigNumber;
+  initial_A_f: BigNumber;
   initial_A_time: Date;
-  future_A: BigNumber;
+  future_A_f: BigNumber;
   future_A_time: Date;
   tokens_info: MichelsonMap<string, TokenInfo>;
 
   fee: FeeType;
   staker_accumulator: {
-    accumulator: MichelsonMap<string, BigNumber>;
+    accumulator_f: MichelsonMap<string, BigNumber>;
     total_staked: BigNumber;
   };
   total_supply: BigNumber;
@@ -82,8 +82,8 @@ export declare type DexStorage = {
 };
 
 export declare type RewardsType = {
-  reward: BigNumber;
-  former: BigNumber;
+  reward_f: BigNumber;
+  former_f: BigNumber;
 };
 
 export declare type StakerInfo = {

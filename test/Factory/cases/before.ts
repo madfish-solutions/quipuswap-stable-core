@@ -41,11 +41,11 @@ export async function setupFactoryEnvironment(
   const lambdaContractAddress = op.contractAddress;
   storage.storage.dev_store = {
     dev_address: accounts[developer].pkh,
-    dev_fee: new BigNumber(0),
+    dev_fee_f: new BigNumber(0),
     dev_lambdas: await setupLambdasToStorage(dev_lambdas_comp),
   } as DevStorage;
   storage.storage.init_price = new BigNumber("100");
-  storage.storage.burn_rate = new BigNumber("0"); // Rate precision
+  storage.storage.burn_rate_f = new BigNumber("0"); // Rate precision
   storage.storage.quipu_token = {
     token_address: quipuToken.contract.address,
     token_id: new BigNumber(defaultTokenId),
