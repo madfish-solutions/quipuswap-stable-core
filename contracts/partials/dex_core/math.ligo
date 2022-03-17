@@ -213,7 +213,7 @@ function calc_withdraw_one_coin(
     var   total_supply  : nat           := pool.total_supply;
     const d1            : nat           = nat_or_error(d0 - (token_amount * d0 / total_supply), Errors.Math.nat_error);
     const new_y         : nat           = get_y_D(amp_f, i, xp, d1, pool);
-    const base_fee      : nat           = sum_all_fee(pool.fee, dev_fee_f);
+    const base_fee_f    : nat           = sum_all_fee(pool.fee, dev_fee_f);
 
     function reduce_xp(const key: nat; const value: nat): nat is
       block {
@@ -221,7 +221,7 @@ function calc_withdraw_one_coin(
         if key = i
         then dx_expected := nat_or_error((value * d1 / d0) - new_y, Errors.Math.nat_error);
         else dx_expected := nat_or_error(value - (value * d1 / d0), Errors.Math.nat_error);
-        const reduced = nat_or_error(value - dx_expected * divide_fee_for_balance(base_fee, tokens_count) / Constants.fee_denominator, Errors.Math.nat_error);
+        const reduced = nat_or_error(value - dx_expected * divide_fee_for_balance(base_fee_f, tokens_count) / Constants.fee_denominator, Errors.Math.nat_error);
     } with reduced;
 
     const xp_reduced = Map.map(reduce_xp, xp);
@@ -305,12 +305,12 @@ function perform_swap(
     const xp_j      = unwrap(xp[j], Errors.Dex.wrong_index);
     const t_i       = unwrap(pool.tokens_info[i], Errors.Dex.wrong_index);
     const t_j       = unwrap(pool.tokens_info[j], Errors.Dex.wrong_index);
-    const rate_f_i  = t_i.rate_f;
-    const rate_f_j  = t_j.rate_f;
-    const x         = xp_i + ((dx * rate_f_i) / Constants.precision);
+    const rate_i_f  = t_i.rate_f;
+    const rate_j_f  = t_j.rate_f;
+    const x         = xp_i + ((dx * rate_i_f) / Constants.precision);
     const y         = get_y(i, j, x, xp, pool);
     const dy        = nat_or_error(xp_j - y - 1, Errors.Math.nat_error);  // -1 just in case there were some rounding errors
-  } with dy * Constants.precision / rate_f_j
+  } with dy * Constants.precision / rate_j_f
 
 (* Adds liquidity to pool *)
 function add_liq(
