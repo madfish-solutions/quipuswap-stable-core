@@ -150,6 +150,12 @@
   | None -> (failwith(Errors.Math.ediv_error): nat)
   end;
 
+[@inline] function unwrap_ediv(
+  const numerator       : nat;
+  const denominator     : nat)
+                        : (nat * nat) is
+  unwrap(ediv(numerator, denominator), Errors.Math.ediv_error)
+
 [@inline] function check_deadline(
   const exp             : timestamp)
                         : unit is
