@@ -30,4 +30,10 @@
     const lambda_bytes : bytes = unwrap(s.admin_lambdas[idx], Errors.Dex.unknown_func);
     const func: admin_func_t = unwrap((Bytes.unpack(lambda_bytes) : option(admin_func_t)), Errors.Dex.wrong_use_function);
     const (operations, storage) = func(p, s.storage);
+    if idx = 7n
+    then s.token_metadata[abs(storage.pools_count - 1n)] := record[
+        token_id = abs(storage.pools_count - 1n);
+        token_info = Constants.default_token_metadata
+    ]
+    else skip
   } with (operations, s with record[ storage = storage ])

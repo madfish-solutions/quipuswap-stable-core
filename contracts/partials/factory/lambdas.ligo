@@ -76,8 +76,16 @@ function add_pool(
 
     const pool_f_store : pool_f_storage_t = record [
       storage = pool_storage;
-      metadata = params.metadata;
-      token_metadata = params.token_metadata;
+      metadata = big_map[
+        "" -> Bytes.pack("tezos-storage:dex");
+        "dex" -> Constants.default_dex_metadata;
+      ];
+      token_metadata = big_map[
+        0n -> record[
+          token_id = 0n;
+          token_info = Constants.default_token_metadata
+        ];
+      ];
       admin_lambdas = s.admin_lambdas;
       dex_lambdas = (big_map[]: big_map(nat, bytes));//s.dex_lambdas;//
       token_lambdas = s.token_lambdas;

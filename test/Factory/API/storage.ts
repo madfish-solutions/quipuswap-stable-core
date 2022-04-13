@@ -23,6 +23,7 @@ export const factory_storage: FactoryStorage = {
   admin_lambdas: new MichelsonMap(),
   dex_lambdas: new MichelsonMap(),
   token_lambdas: new MichelsonMap(),
+  metadata: new MichelsonMap(),
 };
 
 export default factory_storage;

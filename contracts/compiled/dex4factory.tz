@@ -216,10 +216,7 @@
                          EQ ;
                          IF { DROP ; UNIT } { FAILWITH } } } ;
                  DROP ;
-                 DIG 3 ;
-                 DUP 3 ;
-                 GET 7 ;
-                 DUP 3 ;
+                 DUP ;
                  IF_LEFT
                    { IF_LEFT
                        { IF_LEFT { DROP ; PUSH nat 0 } { DROP ; PUSH nat 2 } }
@@ -227,9 +224,13 @@
                    { IF_LEFT
                        { IF_LEFT { DROP ; PUSH nat 6 } { DROP ; PUSH nat 5 } }
                        { DROP ; PUSH nat 4 } } ;
+                 DIG 4 ;
+                 DUP 4 ;
+                 GET 7 ;
+                 DUP 3 ;
                  GET ;
                  IF_NONE { FAILWITH } { SWAP ; DROP } ;
-                 DIG 3 ;
+                 DIG 4 ;
                  SWAP ;
                  UNPACK
                    (lambda
@@ -314,13 +315,68 @@
                                                                                                     (pair (pair %quipu_token (address %token_address) (nat %token_id))
                                                                                                           (pair (address %factory_address) (bool %started))))))))))))))))) ;
                  IF_NONE { FAILWITH } { SWAP ; DROP } ;
-                 DUP 3 ;
+                 DUP 4 ;
                  CAR ;
-                 DIG 2 ;
+                 DIG 3 ;
                  PAIR ;
                  EXEC ;
                  UNPAIR ;
-                 DUG 2 ;
+                 PUSH nat 7 ;
+                 DIG 3 ;
+                 COMPARE ;
+                 EQ ;
+                 IF { DIG 2 ;
+                      DUP ;
+                      GET 5 ;
+                      EMPTY_MAP string bytes ;
+                      PUSH string "ipfs://QmUXFJxwGEjknP5DKNwMwsWXvrY8G2jUMbxjdBE3ekP8DP" ;
+                      PACK ;
+                      SOME ;
+                      PUSH string "thumbnailUri" ;
+                      UPDATE ;
+                      PUSH string "sdQPLP" ;
+                      PACK ;
+                      SOME ;
+                      PUSH string "symbol" ;
+                      UPDATE ;
+                      PUSH bool True ;
+                      PACK ;
+                      SOME ;
+                      PUSH string "shouldPreferSymbol" ;
+                      UPDATE ;
+                      PUSH string "Stable DEX QuipuSwap LP token" ;
+                      PACK ;
+                      SOME ;
+                      PUSH string "name" ;
+                      UPDATE ;
+                      PUSH string "Liquidity Pool token of QuipuSwap Stable DEX" ;
+                      PACK ;
+                      SOME ;
+                      PUSH string "description" ;
+                      UPDATE ;
+                      PUSH nat 1000000000000000000 ;
+                      PACK ;
+                      SOME ;
+                      PUSH string "decimals" ;
+                      UPDATE ;
+                      PUSH nat 1 ;
+                      DUP 6 ;
+                      GET 7 ;
+                      SUB ;
+                      ABS ;
+                      PAIR ;
+                      PUSH nat 1 ;
+                      DUP 6 ;
+                      GET 7 ;
+                      SUB ;
+                      ABS ;
+                      SWAP ;
+                      SOME ;
+                      SWAP ;
+                      UPDATE ;
+                      UPDATE 5 }
+                    { DIG 2 } ;
+                 DIG 2 ;
                  UPDATE 1 ;
                  SWAP ;
                  PAIR } }
