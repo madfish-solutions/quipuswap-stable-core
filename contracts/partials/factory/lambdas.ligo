@@ -77,7 +77,7 @@ function add_pool(
     const pool_f_store : pool_f_storage_t = record [
       storage = pool_storage;
       metadata = big_map[
-        "" -> Bytes.pack("tezos-storage:dex");
+        "" -> 0x74657a6f732d73746f726167653a646578;
         "dex" -> Constants.default_dex_metadata;
       ];
       token_metadata = big_map[
