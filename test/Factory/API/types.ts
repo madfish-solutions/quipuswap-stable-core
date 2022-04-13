@@ -21,4 +21,5 @@ export declare type FactoryStorage = {
   dex_lambdas: MichelsonMap<string, BytesString>;
   token_lambdas: MichelsonMap<string, BytesString>;
   init_func?: BytesString;
+  metadata: MichelsonMap<string, BytesString>;
 };

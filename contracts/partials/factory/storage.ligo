@@ -30,14 +30,12 @@ type pool_init_param_t  is [@layout:comb] record [
   tokens_info             : map(token_pool_idx_t, token_prec_info_t);
   default_referral        : address;
   managers                : set(address);
-  metadata                : big_map(string, bytes);
-  token_metadata          : big_map(token_id_t, token_meta_info_t);
 ]
 
 type inner_store_t      is [@layout:comb] record[
   dev_store               : dev_storage_t;
   init_price              : nat; (* Pool creation price in QUIPU token *)
-  burn_rate_f               : nat; (* Percent of QUIPU tokens to be burned *)
+  burn_rate_f             : nat; (* Percent of QUIPU tokens to be burned *)
   pools_count             : nat;
   pool_to_address         : big_map(bytes, address);
   quipu_token             : fa2_token_t;
@@ -52,6 +50,7 @@ type full_storage_t     is [@layout:comb] record [
   dex_lambdas             : big_map(nat, bytes); (* map with exchange-related functions code *)
   token_lambdas           : big_map(nat, bytes); (* map with token-related functions code *)
   init_func               : option(bytes);
+  metadata                : big_map(string, bytes); (* TZIP-16 metadata *)
 ]
 
 type use_factory_t      is

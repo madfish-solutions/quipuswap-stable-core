@@ -51,6 +51,7 @@ export declare type DexMainStorage = {
   pool_to_id: MichelsonMap<BytesString, number>;
   pools: MichelsonMap<string, PairInfo>;
   ledger: MichelsonMap<string, BigNumber>;
+  token_metadata: MichelsonMap<string, any>;
   allowances: MichelsonMap<string, AllowancesDataType>;
   dev_rewards: MichelsonMap<FA12TokenType | FA2TokenType, BigNumber>;
   referral_rewards: MichelsonMap<
@@ -75,7 +76,6 @@ export declare type DexMainStorage = {
 export declare type DexStorage = {
   storage: DexMainStorage;
   metadata: MichelsonMap<string, BytesString>;
-  token_metadata: MichelsonMap<string, any>;
   admin_lambdas: MichelsonMap<string, BytesString>;
   dex_lambdas: MichelsonMap<string, BytesString>;
   token_lambdas: MichelsonMap<string, BytesString>;

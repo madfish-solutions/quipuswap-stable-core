@@ -42,6 +42,10 @@ function add_pool(
       if s.pools_count = token_id
       then {
         s.pool_to_id[token_bytes] := token_id;
+        s.token_metadata[token_id] := record[
+            token_id = token_id;
+            token_info = Constants.default_token_metadata
+        ];
         s.pools_count := s.pools_count + 1n;
       }
       else skip;

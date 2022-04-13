@@ -88,22 +88,22 @@
                                                                                               (nat %total_supply)))))))))
                                                  (pair (big_map %ledger (pair address nat) nat)
                                                        (pair (big_map %allowances (pair address nat) (set address))
-                                                             (pair (big_map %dev_rewards
-                                                                      (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
-                                                                      nat)
-                                                                   (pair (big_map %referral_rewards
-                                                                            (pair address
-                                                                                  (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                             (pair (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
+                                                                   (pair (big_map %dev_rewards
+                                                                            (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
                                                                             nat)
-                                                                         (pair (big_map %stakers_balance
-                                                                                  (pair address nat)
-                                                                                  (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
-                                                                               (pair (pair %quipu_token (address %token_address) (nat %token_id))
-                                                                                     (pair (address %factory_address) (bool %started)))))))))))))))
+                                                                         (pair (big_map %referral_rewards
+                                                                                  (pair address
+                                                                                        (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                                                  nat)
+                                                                               (pair (big_map %stakers_balance
+                                                                                        (pair address nat)
+                                                                                        (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
+                                                                                     (pair (pair %quipu_token (address %token_address) (nat %token_id))
+                                                                                           (pair (address %factory_address) (bool %started))))))))))))))))
           (pair (big_map %metadata string bytes)
-                (pair (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
-                      (pair (big_map %admin_lambdas nat bytes)
-                            (pair (big_map %dex_lambdas nat bytes) (big_map %token_lambdas nat bytes)))))) ;
+                (pair (big_map %admin_lambdas nat bytes)
+                      (pair (big_map %dex_lambdas nat bytes) (big_map %token_lambdas nat bytes))))) ;
   code { PUSH string "function-not-set" ;
          PUSH string "cant-unpack-use-lambda" ;
          PUSH string "not-contract-admin" ;
@@ -117,13 +117,13 @@
                  DUP ;
                  DUG 2 ;
                  CAR ;
-                 GET 27 ;
+                 GET 29 ;
                  SENDER ;
                  COMPARE ;
                  EQ ;
                  IF {} { PUSH string "failed assertion" ; FAILWITH } ;
                  IF_LEFT
-                   { UPDATE 9 }
+                   { UPDATE 7 }
                    { DROP ;
                      DUP ;
                      DUP ;
@@ -131,9 +131,9 @@
                      CAR ;
                      DIG 2 ;
                      CAR ;
-                     GET 28 ;
+                     GET 30 ;
                      NOT ;
-                     UPDATE 28 ;
+                     UPDATE 30 ;
                      UPDATE 1 } }
                { DROP ; SWAP } }
            { DROP ; SWAP } ;
@@ -145,7 +145,7 @@
                  DUP ;
                  DUG 3 ;
                  CAR ;
-                 GET 28 ;
+                 GET 30 ;
                  IF { DROP } { FAILWITH } ;
                  DUP ;
                  IF_LEFT
@@ -218,7 +218,7 @@
                  DROP ;
                  DIG 3 ;
                  DUP 3 ;
-                 GET 7 ;
+                 GET 5 ;
                  DUP 3 ;
                  IF_LEFT
                    { IF_LEFT
@@ -266,18 +266,19 @@
                                                                                                                    (nat %total_supply)))))))))
                                                                       (pair (big_map %ledger (pair address nat) nat)
                                                                             (pair (big_map %allowances (pair address nat) (set address))
-                                                                                  (pair (big_map %dev_rewards
-                                                                                           (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
-                                                                                           nat)
-                                                                                        (pair (big_map %referral_rewards
-                                                                                                 (pair address
-                                                                                                       (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                                                  (pair (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
+                                                                                        (pair (big_map %dev_rewards
+                                                                                                 (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
                                                                                                  nat)
-                                                                                              (pair (big_map %stakers_balance
-                                                                                                       (pair address nat)
-                                                                                                       (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
-                                                                                                    (pair (pair %quipu_token (address %token_address) (nat %token_id))
-                                                                                                          (pair (address %factory_address) (bool %started))))))))))))))))
+                                                                                              (pair (big_map %referral_rewards
+                                                                                                       (pair address
+                                                                                                             (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                                                                       nat)
+                                                                                                    (pair (big_map %stakers_balance
+                                                                                                             (pair address nat)
+                                                                                                             (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
+                                                                                                          (pair (pair %quipu_token (address %token_address) (nat %token_id))
+                                                                                                                (pair (address %factory_address) (bool %started)))))))))))))))))
                       (pair (list operation)
                             (pair (address %admin)
                                   (pair (address %default_referral)
@@ -301,18 +302,19 @@
                                                                                                                    (nat %total_supply)))))))))
                                                                       (pair (big_map %ledger (pair address nat) nat)
                                                                             (pair (big_map %allowances (pair address nat) (set address))
-                                                                                  (pair (big_map %dev_rewards
-                                                                                           (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
-                                                                                           nat)
-                                                                                        (pair (big_map %referral_rewards
-                                                                                                 (pair address
-                                                                                                       (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                                                  (pair (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
+                                                                                        (pair (big_map %dev_rewards
+                                                                                                 (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
                                                                                                  nat)
-                                                                                              (pair (big_map %stakers_balance
-                                                                                                       (pair address nat)
-                                                                                                       (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
-                                                                                                    (pair (pair %quipu_token (address %token_address) (nat %token_id))
-                                                                                                          (pair (address %factory_address) (bool %started))))))))))))))))) ;
+                                                                                              (pair (big_map %referral_rewards
+                                                                                                       (pair address
+                                                                                                             (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                                                                       nat)
+                                                                                                    (pair (big_map %stakers_balance
+                                                                                                             (pair address nat)
+                                                                                                             (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
+                                                                                                          (pair (pair %quipu_token (address %token_address) (nat %token_id))
+                                                                                                                (pair (address %factory_address) (bool %started)))))))))))))))))) ;
                  IF_NONE { FAILWITH } { SWAP ; DROP } ;
                  DUP 3 ;
                  CAR ;
@@ -331,11 +333,11 @@
                  DUP ;
                  DUG 3 ;
                  CAR ;
-                 GET 28 ;
+                 GET 30 ;
                  IF { DROP } { FAILWITH } ;
                  DIG 3 ;
                  DUP 3 ;
-                 GET 9 ;
+                 GET 7 ;
                  DUP 3 ;
                  IF_LEFT
                    { IF_LEFT
@@ -409,18 +411,19 @@
                                                                                                                    (nat %total_supply)))))))))
                                                                       (pair (big_map %ledger (pair address nat) nat)
                                                                             (pair (big_map %allowances (pair address nat) (set address))
-                                                                                  (pair (big_map %dev_rewards
-                                                                                           (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
-                                                                                           nat)
-                                                                                        (pair (big_map %referral_rewards
-                                                                                                 (pair address
-                                                                                                       (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                                                  (pair (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
+                                                                                        (pair (big_map %dev_rewards
+                                                                                                 (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
                                                                                                  nat)
-                                                                                              (pair (big_map %stakers_balance
-                                                                                                       (pair address nat)
-                                                                                                       (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
-                                                                                                    (pair (pair %quipu_token (address %token_address) (nat %token_id))
-                                                                                                          (pair (address %factory_address) (bool %started))))))))))))))))
+                                                                                              (pair (big_map %referral_rewards
+                                                                                                       (pair address
+                                                                                                             (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                                                                       nat)
+                                                                                                    (pair (big_map %stakers_balance
+                                                                                                             (pair address nat)
+                                                                                                             (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
+                                                                                                          (pair (pair %quipu_token (address %token_address) (nat %token_id))
+                                                                                                                (pair (address %factory_address) (bool %started)))))))))))))))))
                       (pair (list operation)
                             (pair (address %admin)
                                   (pair (address %default_referral)
@@ -444,18 +447,19 @@
                                                                                                                    (nat %total_supply)))))))))
                                                                       (pair (big_map %ledger (pair address nat) nat)
                                                                             (pair (big_map %allowances (pair address nat) (set address))
-                                                                                  (pair (big_map %dev_rewards
-                                                                                           (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
-                                                                                           nat)
-                                                                                        (pair (big_map %referral_rewards
-                                                                                                 (pair address
-                                                                                                       (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                                                  (pair (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
+                                                                                        (pair (big_map %dev_rewards
+                                                                                                 (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
                                                                                                  nat)
-                                                                                              (pair (big_map %stakers_balance
-                                                                                                       (pair address nat)
-                                                                                                       (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
-                                                                                                    (pair (pair %quipu_token (address %token_address) (nat %token_id))
-                                                                                                          (pair (address %factory_address) (bool %started))))))))))))))))) ;
+                                                                                              (pair (big_map %referral_rewards
+                                                                                                       (pair address
+                                                                                                             (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                                                                       nat)
+                                                                                                    (pair (big_map %stakers_balance
+                                                                                                             (pair address nat)
+                                                                                                             (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
+                                                                                                          (pair (pair %quipu_token (address %token_address) (nat %token_id))
+                                                                                                                (pair (address %factory_address) (bool %started)))))))))))))))))) ;
                  IF_NONE { FAILWITH } { SWAP ; DROP } ;
                  DUP 3 ;
                  CAR ;
@@ -473,11 +477,11 @@
                  DUP ;
                  DUG 3 ;
                  CAR ;
-                 GET 28 ;
+                 GET 30 ;
                  IF { DROP } { FAILWITH } ;
                  DIG 3 ;
                  DUP 3 ;
-                 GET 10 ;
+                 GET 8 ;
                  DUP 3 ;
                  IF_LEFT
                    { IF_LEFT
@@ -525,22 +529,22 @@
                                                                                                                       (nat %total_supply)))))))))
                                                                          (pair (big_map %ledger (pair address nat) nat)
                                                                                (pair (big_map %allowances (pair address nat) (set address))
-                                                                                     (pair (big_map %dev_rewards
-                                                                                              (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
-                                                                                              nat)
-                                                                                           (pair (big_map %referral_rewards
-                                                                                                    (pair address
-                                                                                                          (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                                                     (pair (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
+                                                                                           (pair (big_map %dev_rewards
+                                                                                                    (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
                                                                                                     nat)
-                                                                                                 (pair (big_map %stakers_balance
-                                                                                                          (pair address nat)
-                                                                                                          (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
-                                                                                                       (pair (pair %quipu_token (address %token_address) (nat %token_id))
-                                                                                                             (pair (address %factory_address) (bool %started)))))))))))))))
+                                                                                                 (pair (big_map %referral_rewards
+                                                                                                          (pair address
+                                                                                                                (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                                                                          nat)
+                                                                                                       (pair (big_map %stakers_balance
+                                                                                                                (pair address nat)
+                                                                                                                (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
+                                                                                                             (pair (pair %quipu_token (address %token_address) (nat %token_id))
+                                                                                                                   (pair (address %factory_address) (bool %started))))))))))))))))
                                   (pair (big_map %metadata string bytes)
-                                        (pair (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
-                                              (pair (big_map %admin_lambdas nat bytes)
-                                                    (pair (big_map %dex_lambdas nat bytes) (big_map %token_lambdas nat bytes)))))))
+                                        (pair (big_map %admin_lambdas nat bytes)
+                                              (pair (big_map %dex_lambdas nat bytes) (big_map %token_lambdas nat bytes))))))
                       (pair (list operation)
                             (pair (pair %storage
                                      (address %admin)
@@ -565,22 +569,22 @@
                                                                                                                       (nat %total_supply)))))))))
                                                                          (pair (big_map %ledger (pair address nat) nat)
                                                                                (pair (big_map %allowances (pair address nat) (set address))
-                                                                                     (pair (big_map %dev_rewards
-                                                                                              (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
-                                                                                              nat)
-                                                                                           (pair (big_map %referral_rewards
-                                                                                                    (pair address
-                                                                                                          (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                                                     (pair (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
+                                                                                           (pair (big_map %dev_rewards
+                                                                                                    (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
                                                                                                     nat)
-                                                                                                 (pair (big_map %stakers_balance
-                                                                                                          (pair address nat)
-                                                                                                          (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
-                                                                                                       (pair (pair %quipu_token (address %token_address) (nat %token_id))
-                                                                                                             (pair (address %factory_address) (bool %started)))))))))))))))
+                                                                                                 (pair (big_map %referral_rewards
+                                                                                                          (pair address
+                                                                                                                (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                                                                                          nat)
+                                                                                                       (pair (big_map %stakers_balance
+                                                                                                                (pair address nat)
+                                                                                                                (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
+                                                                                                             (pair (pair %quipu_token (address %token_address) (nat %token_id))
+                                                                                                                   (pair (address %factory_address) (bool %started))))))))))))))))
                                   (pair (big_map %metadata string bytes)
-                                        (pair (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
-                                              (pair (big_map %admin_lambdas nat bytes)
-                                                    (pair (big_map %dex_lambdas nat bytes) (big_map %token_lambdas nat bytes)))))))) ;
+                                        (pair (big_map %admin_lambdas nat bytes)
+                                              (pair (big_map %dex_lambdas nat bytes) (big_map %token_lambdas nat bytes))))))) ;
                  IF_NONE { FAILWITH } { SWAP ; DROP } ;
                  DUG 2 ;
                  PAIR ;
@@ -602,7 +606,7 @@
                 PUSH nat 0 ;
                 DUP 4 ;
                 CAR ;
-                GET 21 ;
+                GET 23 ;
                 DUP 4 ;
                 CDR ;
                 DUP 5 ;
@@ -638,7 +642,7 @@
                 DUP 5 ;
                 DUP 5 ;
                 CAR ;
-                GET 23 ;
+                GET 25 ;
                 DUP 4 ;
                 CDR ;
                 DUP 5 ;
@@ -1191,7 +1195,7 @@
          PUSH string "no-fee-view" ;
          DIG 5 ;
          CAR ;
-         GET 27 ;
+         GET 29 ;
          UNIT ;
          VIEW "dev_fee" nat ;
          IF_NONE { FAILWITH } { SWAP ; DROP } ;
@@ -1457,7 +1461,7 @@
          PUSH string "no-fee-view" ;
          DIG 4 ;
          CAR ;
-         GET 27 ;
+         GET 29 ;
          UNIT ;
          VIEW "dev_fee" nat ;
          IF_NONE { FAILWITH } { SWAP ; DROP } ;
