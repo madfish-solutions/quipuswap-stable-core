@@ -64,6 +64,12 @@ function add_pool(
       pool_to_id = big_map[Bytes.pack(tokens) -> 0n];
       pools = big_map[0n -> pool];
       ledger = (big_map[]: big_map((address * nat), nat));
+      token_metadata = big_map[
+        0n -> record[
+          token_id = 0n;
+          token_info = Constants.default_token_metadata
+        ];
+      ];
       allowances = (big_map[]: big_map((address * nat), allowances_data_t));
       dev_rewards = (big_map[]: big_map(token_t, nat));
       referral_rewards = (big_map[]: big_map((address * token_t), nat));
@@ -79,12 +85,6 @@ function add_pool(
       metadata = big_map[
         "" -> 0x74657a6f732d73746f726167653a646578;
         "dex" -> Constants.default_dex_metadata;
-      ];
-      token_metadata = big_map[
-        0n -> record[
-          token_id = 0n;
-          token_info = Constants.default_token_metadata
-        ];
       ];
       admin_lambdas = s.admin_lambdas;
       dex_lambdas = (big_map[]: big_map(nat, bytes));//s.dex_lambdas;//

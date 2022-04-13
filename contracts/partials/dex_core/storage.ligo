@@ -70,6 +70,7 @@ type storage_t          is [@layout:comb] record [
   (* FA2 data *)
   ledger                  : big_map((address * pool_id_t), nat); (* account info per address *)
   allowances              : big_map((address * pool_id_t), allowances_data_t); (* account info per each lp provider *)
+  token_metadata          : big_map(token_id_t, token_meta_info_t);
 
   (* Rewards and accumulators *)
   dev_rewards             : big_map(token_t, nat);
@@ -90,7 +91,6 @@ type full_storage_t     is [@layout:comb] record [
   storage                 : storage_t; (* real dex storage_t *)
   (* Token Metadata *)
   metadata                : big_map(string, bytes); (* metadata storage_t according to TZIP-016 *)
-  token_metadata          : big_map(token_id_t, token_meta_info_t);
   (* Contract lambdas storage *)
   admin_lambdas           : big_map(nat, bytes); (* map with admin-related functions code *)
   dex_lambdas             : big_map(nat, bytes); (* map with exchange-related functions code *)

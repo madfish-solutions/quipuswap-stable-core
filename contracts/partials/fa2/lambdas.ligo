@@ -28,7 +28,7 @@ function update_token_metadata(
     case p of
     | Update_metadata(params) -> {
       require(s.storage.managers contains Tezos.sender, Errors.Dex.not_manager);
-      s.token_metadata[params.token_id] := params
+      s.storage.token_metadata[params.token_id] := params
     }
     | _ -> skip
     end
