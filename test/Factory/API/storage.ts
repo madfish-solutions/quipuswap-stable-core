@@ -14,6 +14,7 @@ export const factory_storage: FactoryStorage = {
     init_price: new BigNumber(0),
     burn_rate_f: new BigNumber(0),
     pools_count: new BigNumber(0),
+    pool_id_to_address: new MichelsonMap(),
     pool_to_address: new MichelsonMap(),
     quipu_token: null as FA2,
     quipu_rewards: new BigNumber(0),
