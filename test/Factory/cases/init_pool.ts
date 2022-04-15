@@ -60,7 +60,6 @@ export async function initializeExchangeSuccessCase(
       factory.contract.address,
       factory.storage.storage.init_price
     );
-
   await factory.addPool(
     tezos,
     inputs,
@@ -105,7 +104,7 @@ export async function initializeExchangeSuccessCase(
   console.log(`DEX is ${chalk.green("ONLINE")}: ${dex_address}`);
   const dex = await Dex.init(tezos, dex_address, true);
   await dex.updateStorage({
-    pools: [(factory.storage.storage.pools_count.toNumber() - 1).toString()],
+    pools: [(0).toString()],
     ledger: [[sender_addr, 0]],
   });
   const updatedPairCount = new BigNumber(factory.storage.storage.pools_count);

@@ -194,7 +194,7 @@ export class DexFactory implements DevEnabledContract {
       precision_multiplier_f: BigNumber;
     }[],
     default_referral: TezosAddress,
-    a_const: BigNumber = new BigNumber("100000"),
+    a_constant: BigNumber = new BigNumber("100000"),
     managers: TezosAddress[] = [],
     fees: FeeType = {
       lp_f: new BigNumber("0"),
@@ -247,16 +247,14 @@ export class DexFactory implements DevEnabledContract {
       };
       tokens_info.set(i, mapped_item(info));
     }
-    const opr = this.contract.methods.add_pool(
-      a_const,
+    const opr = this.contract.methodsObject.add_pool({
+      a_constant,
       input_tokens,
       tokens_info,
       default_referral,
       managers,
-      fees.lp_f,
-      fees.stakers_f,
-      fees.ref_f
-    );
+      fees,
+    });
     const operation = await opr.send();
     await confirmOperation(tezos, operation.hash);
     const inputs = new MichelsonMap();

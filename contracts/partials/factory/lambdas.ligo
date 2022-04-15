@@ -43,11 +43,7 @@ function add_pool(
       initial_A_time  = Tezos.now;
       future_A_time   = Tezos.now;
       tokens_info     = tokens_info;
-      fee             = record [
-        lp_f          = 0n;
-        ref_f         = 0n;
-        stakers_f     = 0n;
-      ];
+      fee             = params.fees;
       staker_accumulator  = record [
         accumulator_f       = (map []: map(token_pool_idx_t, nat));
         total_staked        = 0n;
