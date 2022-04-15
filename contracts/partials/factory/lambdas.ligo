@@ -99,7 +99,7 @@ function add_pool(
     const pool_address = deploy.1;
 
     s.storage.pool_to_address[pool_key] := pool_address;
-    s.pool_id_to_address[s.storage.pools_count] := pool_address;
+    s.storage.pool_id_to_address[s.storage.pools_count] := pool_address;
     s.storage.pools_count := s.storage.pools_count + 1n;
 
     operations := deploy.0 # operations;
