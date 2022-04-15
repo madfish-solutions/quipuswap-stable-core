@@ -33,6 +33,11 @@ describe("01. Dex Factory", () => {
   const tezos = Tezos;
   const developer_name: AccountsLiteral = "alice";
   const developer_address: TezosAddress = accounts[developer_name].pkh;
+  const zero_fees = {
+    lp_f: new BigNumber("0"),
+    stakers_f: new BigNumber("0"),
+    ref_f: new BigNumber("0"),
+  };
   let factory: DexFactory;
   let lambda: TezosAddress;
   let quipuToken: TokenFA2;
@@ -101,8 +106,7 @@ describe("01. Dex Factory", () => {
         inputs,
         accounts.bob.pkh,
         [],
-        new MichelsonMap(),
-        new MichelsonMap(),
+        dex_case.pools.PoolAdmin.Fee.fees,
         true,
         quipuToken,
         tezos,
@@ -135,15 +139,6 @@ describe("01. Dex Factory", () => {
         accounts.eve.pkh,
         true,
         tezos
-      ));
-
-    it("pool admin should change fees", async () =>
-      await dex_case.pools.PoolAdmin.Fee.setFeesSuccessCase(
-        dex,
-        "bob",
-        pool_id,
-        dex_case.pools.PoolAdmin.Fee.fees,
-        Tezos
       ));
 
     describe("pool use", () => {
@@ -339,8 +334,7 @@ describe("01. Dex Factory", () => {
         inputs,
         accounts.bob.pkh,
         [],
-        new MichelsonMap(),
-        new MichelsonMap(),
+        zero_fees,
         true,
         quipuToken,
         tezos,
@@ -404,8 +398,7 @@ describe("01. Dex Factory", () => {
         inputs,
         accounts.bob.pkh,
         [],
-        new MichelsonMap(),
-        new MichelsonMap(),
+        zero_fees,
         true,
         quipuToken,
         tezos,
@@ -454,8 +447,7 @@ describe("01. Dex Factory", () => {
         inputs,
         accounts.bob.pkh,
         [],
-        new MichelsonMap(),
-        new MichelsonMap(),
+        zero_fees,
         true,
         quipuToken,
         tezos,

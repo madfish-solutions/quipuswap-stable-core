@@ -12,6 +12,7 @@ import { TezosToolkit, MichelsonMap } from "@taquito/taquito";
 import { defaultTokenId } from "../../Token/token";
 import { Dex } from "../../Dex/API/dexAPI";
 import chalk from "chalk";
+import { FeeType } from "../../Dex/API/types";
 export async function initializeExchangeSuccessCase(
   factory: DexFactory,
   sender: AccountsLiteral,
@@ -25,8 +26,11 @@ export async function initializeExchangeSuccessCase(
   }[],
   default_referral: TezosAddress,
   managers = [],
-  metadata: MichelsonMap<string, string> = new MichelsonMap(),
-  token_metadata: MichelsonMap<string, string> = new MichelsonMap(),
+  fees: FeeType = {
+    lp_f: new BigNumber("0"),
+    stakers_f: new BigNumber("0"),
+    ref_f: new BigNumber("0"),
+  },
   approve = false,
   quipuToken: TokenFA2,
   tezos: TezosToolkit,
@@ -58,14 +62,13 @@ export async function initializeExchangeSuccessCase(
     );
 
   await factory.addPool(
-    a_const,
+    tezos,
     inputs,
     default_referral,
+    a_const,
     managers,
-    metadata,
-    token_metadata,
-    approve,
-    tezos
+    fees,
+    approve
   );
   await factory.updateStorage({});
   const upd_balance: BigNumber = await quipuToken.contract.views
