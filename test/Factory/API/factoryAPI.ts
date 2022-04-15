@@ -253,7 +253,9 @@ export class DexFactory implements DevEnabledContract {
       tokens_info,
       default_referral,
       managers,
-      fees
+      fees.lp_f,
+      fees.stakers_f,
+      fees.ref_f
     );
     const operation = await opr.send();
     await confirmOperation(tezos, operation.hash);
