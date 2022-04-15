@@ -97,10 +97,10 @@ function add_pool(
       pool_f_store
     );
     const pool_address = deploy.1;
-    s.storage.pool_to_address[pool_key] := pool_address;
-    s.storage.pools_count := s.storage.pools_count + 1n;
 
-    // s.storage.deployers[pool_address] := Tezos.sender;
+    s.storage.pool_to_address[pool_key] := pool_address;
+    s.pool_id_to_address[s.storage.pools_count] := pool_address;
+    s.storage.pools_count := s.storage.pools_count + 1n;
 
     operations := deploy.0 # operations;
     const charges = manage_startup_charges(

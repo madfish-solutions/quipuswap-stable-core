@@ -19,7 +19,7 @@ import token_lambdas_comp from "../../../build/lambdas/factory/Token_lambdas.jso
 import { confirmOperation } from "../../../utils/confirmation";
 import BigNumber from "bignumber.js";
 import { defaultTokenId, TokenFA12, TokenFA2 } from "../../Token";
-import { TokenInfo } from "../../Dex/API/types";
+import { FeeType, TokenInfo } from "../../Dex/API/types";
 import fs from "fs";
 import { DevEnabledContract } from "../../Developer/API/devAPI";
 const init_func_bytes = fs
@@ -197,6 +197,11 @@ export class DexFactory implements DevEnabledContract {
     managers: TezosAddress[] = [],
     metadata: MichelsonMap<string, BytesString> = new MichelsonMap(),
     token_metadata: MichelsonMap<string, BytesString> = new MichelsonMap(),
+    fees: FeeType = {
+      lp_f: new BigNumber("0"),
+      stakers_f: new BigNumber("0"),
+      ref_f: new BigNumber("0"),
+    },
     approve = true,
     tezos: TezosToolkit
   ): Promise<TransactionOperation> {
@@ -251,7 +256,8 @@ export class DexFactory implements DevEnabledContract {
       default_referral,
       managers,
       metadata,
-      token_metadata
+      token_metadata,
+      fees
     );
     const operation = await opr.send();
     await confirmOperation(tezos, operation.hash);
