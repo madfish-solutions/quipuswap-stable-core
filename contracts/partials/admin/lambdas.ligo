@@ -105,7 +105,7 @@ function set_fees(
   block {
     case p of
     | Set_fees(params) -> {
-      require(sum_all_fee(params.fee, get_dev_fee(s)) <= Constants.fee_denominator, Errors.Dex.fee_overflow);
+      require(sum_all_fee(params.fee, 0n) < Constants.fee_denominator / 2n, Errors.Dex.fee_overflow);
       var pool := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
       s.pools[params.pool_id] := pool with record[ fee = params.fee ];
     }

@@ -1,9 +1,3 @@
-[@inline] function sum_all_fee(
-  const fee             : fees_storage_t;
-  const dev_fee_f         : nat)
-                        : nat is
-    fee.lp_f + fee.stakers_f + fee.ref_f + dev_fee_f;
-
 (* Update reserves with pre-calculated `fees` *)
 [@inline] function nip_fees_off_reserves(
   const stakers_fee     : nat;
