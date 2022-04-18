@@ -43,11 +43,7 @@ function add_pool(
       initial_A_time  = Tezos.now;
       future_A_time   = Tezos.now;
       tokens_info     = tokens_info;
-      fee             = record [
-        lp_f          = 0n;
-        ref_f         = 0n;
-        stakers_f     = 0n;
-      ];
+      fee             = params.fees;
       staker_accumulator  = record [
         accumulator_f       = (map []: map(token_pool_idx_t, nat));
         total_staked        = 0n;
@@ -97,10 +93,10 @@ function add_pool(
       pool_f_store
     );
     const pool_address = deploy.1;
-    s.storage.pool_to_address[pool_key] := pool_address;
-    s.storage.pools_count := s.storage.pools_count + 1n;
 
-    // s.storage.deployers[pool_address] := Tezos.sender;
+    s.storage.pool_to_address[pool_key] := pool_address;
+    s.storage.pool_id_to_address[s.storage.pools_count] := pool_address;
+    s.storage.pools_count := s.storage.pools_count + 1n;
 
     operations := deploy.0 # operations;
     const charges = manage_startup_charges(

@@ -19,7 +19,7 @@ import token_lambdas_comp from "../../../build/lambdas/factory/Token_lambdas.jso
 import { confirmOperation } from "../../../utils/confirmation";
 import BigNumber from "bignumber.js";
 import { defaultTokenId, TokenFA12, TokenFA2 } from "../../Token";
-import { TokenInfo } from "../../Dex/API/types";
+import { FeeType, TokenInfo } from "../../Dex/API/types";
 import fs from "fs";
 import { DevEnabledContract } from "../../Developer/API/devAPI";
 const init_func_bytes = fs
@@ -186,7 +186,7 @@ export class DexFactory implements DevEnabledContract {
     return operation;
   }
   async addPool(
-    a_const: BigNumber = new BigNumber("100000"),
+    tezos: TezosToolkit,
     token_info: {
       asset: TokenFA12 | TokenFA2;
       in_amount: BigNumber;
@@ -194,11 +194,14 @@ export class DexFactory implements DevEnabledContract {
       precision_multiplier_f: BigNumber;
     }[],
     default_referral: TezosAddress,
+    a_constant: BigNumber = new BigNumber("100000"),
     managers: TezosAddress[] = [],
-    metadata: MichelsonMap<string, BytesString> = new MichelsonMap(),
-    token_metadata: MichelsonMap<string, BytesString> = new MichelsonMap(),
-    approve = true,
-    tezos: TezosToolkit
+    fees: FeeType = {
+      lp_f: new BigNumber("0"),
+      stakers_f: new BigNumber("0"),
+      ref_f: new BigNumber("0"),
+    },
+    approve = true
   ): Promise<TransactionOperation> {
     const tokens_info = new MichelsonMap<number, TokenInfo>();
     const input_tokens: Array<FA2TokenType | FA12TokenType> = [];
@@ -244,15 +247,14 @@ export class DexFactory implements DevEnabledContract {
       };
       tokens_info.set(i, mapped_item(info));
     }
-    const opr = this.contract.methods.add_pool(
-      a_const,
+    const opr = this.contract.methodsObject.add_pool({
+      a_constant,
       input_tokens,
       tokens_info,
       default_referral,
       managers,
-      metadata,
-      token_metadata
-    );
+      fees,
+    });
     const operation = await opr.send();
     await confirmOperation(tezos, operation.hash);
     const inputs = new MichelsonMap();

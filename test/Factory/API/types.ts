@@ -8,6 +8,7 @@ export declare type InnerFactoryStore = {
   init_price: BigNumber;
   burn_rate_f: BigNumber;
   pools_count: BigNumber;
+  pool_id_to_address: MichelsonMap<BigNumber, TezosAddress>;
   pool_to_address: MichelsonMap<BytesString, TezosAddress>;
   quipu_token: FA2;
   quipu_rewards: BigNumber;

@@ -1,12 +1,5 @@
 type pool_f_storage_t   is full_storage_t
 
-type callback_param_t   is [@layout:comb] record [
-  in_amounts              : map(nat, nat);
-  pool_address            : address;
-  tokens                  : tokens_map_t;
-  sender                  : address;
-]
-
 type key_to_pack_t      is [@layout:comb] record [
   tokens                : tokens_map_t;
   deployer              : address;
@@ -30,6 +23,7 @@ type pool_init_param_t  is [@layout:comb] record [
   tokens_info             : map(token_pool_idx_t, token_prec_info_t);
   default_referral        : address;
   managers                : set(address);
+  fees                    : fees_storage_t
 ]
 
 type inner_store_t      is [@layout:comb] record[
@@ -37,11 +31,11 @@ type inner_store_t      is [@layout:comb] record[
   init_price              : nat; (* Pool creation price in QUIPU token *)
   burn_rate_f             : nat; (* Percent of QUIPU tokens to be burned *)
   pools_count             : nat;
+  pool_id_to_address      : big_map(nat, address);
   pool_to_address         : big_map(bytes, address);
   quipu_token             : fa2_token_t;
   quipu_rewards           : nat;
   whitelist               : set(address);
-  // deployers               : big_map(address, address);
 ]
 
 type full_storage_t     is [@layout:comb] record [
@@ -74,7 +68,6 @@ type fact_action_t      is
 | Use_factory             of use_factory_t
 | Add_pool                of pool_init_param_t
 | Start_dex               of start_dex_param_t
-// | Init_callback           of callback_param_t
 
 
 type fact_return_t      is list(operation) * full_storage_t
