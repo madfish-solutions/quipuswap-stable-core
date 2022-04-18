@@ -36,6 +36,7 @@ function add_pool(
     const token_id = 0n;
 
     require(Constants.max_a >= params.a_constant, Errors.Dex.a_limit);
+    require(sum_all_fee(params.fees, 0n) < Constants.fee_denominator / 2n, Errors.Dex.fee_overflow);
 
     const pool = record [
       initial_A_f     = params.a_constant * Constants.a_precision;
