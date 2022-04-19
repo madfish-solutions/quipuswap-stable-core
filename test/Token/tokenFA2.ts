@@ -88,14 +88,18 @@ export class TokenFA2 implements Token {
     return operation;
   }
 
-  async approve(to: string, amount: BigNumber): Promise<TransactionOperation> {
+  async approve(
+    to: string,
+    amount: BigNumber,
+    tokenId: string = defaultTokenId.toString()
+  ): Promise<TransactionOperation> {
     return await this.updateOperators([
       {
-        option: "add_operator",
+        option: amount.eq(0) ? "remove_operator" : "add_operator",
         param: {
           owner: await this.Tezos.signer.publicKeyHash(),
           operator: to,
-          token_id: defaultTokenId,
+          token_id: parseInt(tokenId),
         },
       },
     ]);

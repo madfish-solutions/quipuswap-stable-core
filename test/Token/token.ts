@@ -23,5 +23,5 @@ export interface Token {
     amount: BigNumber
   ): Promise<TransactionOperation>;
 
-  approve(to: string, amount: BigNumber): Promise<TransactionOperation>;
+  approve(to: string, amount: BigNumber, tokenId: string): Promise<TransactionOperation>;
 }
