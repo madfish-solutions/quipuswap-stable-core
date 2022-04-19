@@ -111,6 +111,12 @@ type get_fee_v_param_t  is [@layout:comb] record [
   receiver                : contract(fees_storage_t);
 ]
 
+type token_amt_v_param_t is [@layout:comb] record [
+  pool_id               : pool_id_t;
+  amounts               : map(token_pool_idx_t, nat);
+  is_deposit            : bool;
+]
+
 type stake_param_t      is [@layout:comb] record [
   pool_id                 : pool_id_t;
   amount                  : nat;
