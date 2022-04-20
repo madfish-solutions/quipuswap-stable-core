@@ -22,7 +22,15 @@ export const runMigrations = async (
   migrations: string[]
 ) => {
   try {
-    const networkConfig = `${config.networks[network].host}:${config.networks[network].port}`;
+    let networkConfig = `${config.networks[network].host}`;
+    if (config.networks[network].port)
+      if (
+        !(
+          config.networks[network].port == 443 &&
+          networkConfig.startsWith("https")
+        )
+      )
+        networkConfig += `:${config.networks[network].port}`;
 
     const tezos = new TezosToolkit(networkConfig);
     const signer = await InMemorySigner.fromSecretKey(key);

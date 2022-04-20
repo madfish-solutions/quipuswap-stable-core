@@ -12,6 +12,7 @@ import dev_lambdas_comp from "../build/lambdas/Dev_lambdas.json";
 import { DexFactoryAPI as DexFactory } from "../test/Factory/API";
 import chalk from "chalk";
 import storage from "../storage/factory";
+import BigNumber from "bignumber.js";
 
 module.exports = async (tezos: TezosToolkit, network: NetworkLiteral) => {
   storage.storage.dev_store.dev_address = await tezos.signer.publicKeyHash();
@@ -19,6 +20,10 @@ module.exports = async (tezos: TezosToolkit, network: NetworkLiteral) => {
     validateAddress,
     storage.storage.dev_store.dev_address
   );
+  storage.storage.dev_store.dev_fee_f = new BigNumber(500_000);
+  storage.storage.burn_rate_f = new BigNumber(90_0000);
+  storage.storage.init_price = new BigNumber(1000_000_000);
+  storage.storage.whitelist = [storage.storage.dev_store.dev_address];
   storage.storage.quipu_token.token_address = validateValue(
     validateContractAddress,
     storage.storage.quipu_token.token_address
