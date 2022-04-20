@@ -42,14 +42,14 @@
                         : nat is
   block {
     const pool = unwrap(s.storage.pools[params.pool_id], Errors.Dex.pool_not_listed);
-    const amp = get_A(
+    const amp_f = get_A(
       pool.initial_A_time,
-      pool.initial_A,
+      pool.initial_A_f,
       pool.future_A_time,
-      pool.future_A
+      pool.future_A_f
     );
     const result = calc_withdraw_one_coin(
-      amp,
+      amp_f,
       params.token_amount,
       params.i,
       get_dev_fee(s.storage),
@@ -77,9 +77,9 @@
     const pool = unwrap(s.storage.pools[pool_id], Errors.Dex.pool_not_listed);
   } with get_A(
         pool.initial_A_time,
-        pool.initial_A,
+        pool.initial_A_f,
         pool.future_A_time,
-        pool.future_A
+        pool.future_A_f
       ) / Constants.a_precision
 
 (* Fees *)
@@ -102,7 +102,7 @@
                         : list(staker_info_res_t) is
       block {
         const pool = unwrap(s.storage.pools[params.pool_id], Errors.Dex.pool_not_listed);
-        const pool_accumulator = pool.staker_accumulator.accumulator;
+        const pool_accumulator_f = pool.staker_accumulator.accumulator_f;
         const key = (params.user, params.pool_id);
         const info = unwrap(s.storage.stakers_balance[key], Errors.Dex.pool_not_listed);
         function get_rewards(
@@ -110,9 +110,9 @@
           const value   : account_reward_t)
                         : nat is
           block {
-            const pool_accum = unwrap_or(pool_accumulator[key], 0n);
-            const new_former = info.balance * pool_accum;
-            const reward_amt = (value.reward + abs(new_former - value.former)) / Constants.accum_precision;
+            const pool_accum_f = unwrap_or(pool_accumulator_f[key], 0n);
+            const new_former_f = info.balance * pool_accum_f;
+            const reward_amt = (value.reward_f + abs(new_former_f - value.former_f)) / Constants.accum_precision;
           } with reward_amt;
         const rew_info: staker_res = record[
             balance = info.balance;

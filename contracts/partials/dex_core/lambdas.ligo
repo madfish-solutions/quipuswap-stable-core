@@ -22,7 +22,7 @@ function swap(
       const dy = perform_swap(i, j, dx, pool);
       const pool_total_staked = pool.staker_accumulator.total_staked;
       const after_fees = slice_fee(dy, pool.fee, get_dev_fee(s), pool_total_staked);
-      const to_stakers = if pool_total_staked > 0n
+      const to_stakers_f = if pool_total_staked > 0n
         then after_fees.stakers * Constants.accum_precision / pool_total_staked
         else 0n;
       const referral: address = unwrap_or(params.referral, s.default_referral);
@@ -32,7 +32,7 @@ function swap(
       s.referral_rewards[ref_key] := unwrap_or(s.referral_rewards[ref_key], 0n) + after_fees.ref;
       s.dev_rewards[token_j] := unwrap_or(s.dev_rewards[token_j], 0n) + after_fees.dev;
 
-      pool.staker_accumulator.accumulator[j] := unwrap_or(pool.staker_accumulator.accumulator[j], 0n) + to_stakers;
+      pool.staker_accumulator.accumulator_f[j] := unwrap_or(pool.staker_accumulator.accumulator_f[j], 0n) + to_stakers_f;
 
       require(after_fees.dy >= params.min_amount_out, Errors.Dex.high_min_out);
 
@@ -171,15 +171,15 @@ function divest_imbalanced(
 
       var pool := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
       const tokens = unwrap(s.tokens[params.pool_id], Errors.Dex.pool_not_listed);
-      const amp : nat =  get_A(
+      const amp_f : nat =  get_A(
         pool.initial_A_time,
-        pool.initial_A,
+        pool.initial_A_f,
         pool.future_A_time,
-        pool.future_A
+        pool.future_A_f
       );
       // Initial invariant
       const init_tokens_info = pool.tokens_info;
-      const d0 = get_D_mem(init_tokens_info, amp);
+      const d0 = get_D_mem(init_tokens_info, amp_f);
       var token_supply := pool.total_supply;
 
       function min_inputs(
@@ -219,7 +219,7 @@ function divest_imbalanced(
 
       operations := result.operations;
 
-      const d1 = get_D_mem(new_tokens_info, amp);
+      const d1 = get_D_mem(new_tokens_info, amp_f);
       const balanced = balance_inputs(
         init_tokens_info,
         d0,
@@ -237,7 +237,7 @@ function divest_imbalanced(
           tokens_info_without_lp = new_tokens_info;
         ]
       );
-      const d2 = get_D_mem(balanced.tokens_info_without_lp, amp);
+      const d2 = get_D_mem(balanced.tokens_info_without_lp, amp_f);
       var burn_amount := ceil_div(nat_or_error(d0 - d2, Errors.Math.nat_error) * token_supply, d0);
 
       require(burn_amount =/= 0n, Errors.Dex.zero_burn_amount);
@@ -281,22 +281,21 @@ function divest_one_coin(
 
       require(params.token_index < Map.size(pool.tokens_info), Errors.Dex.wrong_index);
 
-      const amp : nat =  get_A(
+      const amp_f : nat =  get_A(
         pool.initial_A_time,
-        pool.initial_A,
+        pool.initial_A_f,
         pool.future_A_time,
-        pool.future_A
+        pool.future_A_f
       );
-      const dev_fee_v = get_dev_fee(s);
-      const result = calc_withdraw_one_coin(amp, params.shares, params.token_index, dev_fee_v, pool);
-      var all_fee := sum_all_fee(pool.fee, dev_fee_v);
-      if (all_fee = 0n) // check for avoid zero division
-      then all_fee := 1n
+      const dev_fee_f = get_dev_fee(s);
+      const result = calc_withdraw_one_coin(amp_f, params.shares, params.token_index, dev_fee_f, pool);
+      var all_fee_f := sum_all_fee(pool.fee, dev_fee_f);
+      if (all_fee_f = 0n) // check for avoid zero division
+      then all_fee_f := 1n
       else skip;
-      const lp_fee = result.dy_fee * pool.fee.lp / all_fee;
-      const dev_fee = result.dy_fee * dev_fee_v / all_fee;
-      const ref_fee = result.dy_fee * pool.fee.ref / all_fee;
-      const staker_fee = result.dy_fee * pool.fee.stakers / all_fee;
+      const dev_fee = result.dy_fee * dev_fee_f / all_fee_f;
+      const ref_fee = result.dy_fee * pool.fee.ref_f / all_fee_f;
+      const staker_fee = result.dy_fee * pool.fee.stakers_f / all_fee_f;
 
       require(result.dy >= params.min_amount_out, Errors.Dex.high_min_out);
 
@@ -313,9 +312,9 @@ function divest_one_coin(
       const account_bal = unwrap_or(s.ledger[sender_key], 0n);
 
       if pool.staker_accumulator.total_staked > 0n
-      then pool.staker_accumulator.accumulator[params.token_index] :=
+      then pool.staker_accumulator.accumulator_f[params.token_index] :=
         unwrap_or(
-          pool.staker_accumulator.accumulator[params.token_index],
+          pool.staker_accumulator.accumulator_f[params.token_index],
           0n
         ) + staker_fee * Constants.accum_precision / pool.staker_accumulator.total_staked;
       else skip;

@@ -172,8 +172,8 @@ describe("00. Standalone Dex", () => {
       let inputs: {
         asset: TokenFA2 | TokenFA12;
         in_amount: BigNumber;
-        rate: BigNumber;
-        precision_multiplier: BigNumber;
+        rate_f: BigNumber;
+        precision_multiplier_f: BigNumber;
       }[];
       const norm_input = new BigNumber(10).pow(6);
 

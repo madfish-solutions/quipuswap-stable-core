@@ -26,8 +26,8 @@ function add_pool(
       const value       : token_prec_info_t)
                         : token_info_t is
       record [
-        rate = value.rate;
-        precision_multiplier = value.precision_multiplier;
+        rate_f = value.rate_f;
+        precision_multiplier_f = value.precision_multiplier_f;
         reserves = 0n;
       ];
 
@@ -36,20 +36,17 @@ function add_pool(
     const token_id = 0n;
 
     require(Constants.max_a >= params.a_constant, Errors.Dex.a_limit);
+    require(sum_all_fee(params.fees, 0n) < Constants.fee_denominator / 2n, Errors.Dex.fee_overflow);
 
     const pool = record [
-      initial_A       = params.a_constant * Constants.a_precision;
-      future_A        = params.a_constant * Constants.a_precision;
+      initial_A_f     = params.a_constant * Constants.a_precision;
+      future_A_f      = params.a_constant * Constants.a_precision;
       initial_A_time  = Tezos.now;
       future_A_time   = Tezos.now;
       tokens_info     = tokens_info;
-      fee             = record [
-        lp          = 0n;
-        ref         = 0n;
-        stakers     = 0n;
-      ];
+      fee             = params.fees;
       staker_accumulator  = record [
-        accumulator         = (map []: map(token_pool_idx_t, nat));
+        accumulator_f       = (map []: map(token_pool_idx_t, nat));
         total_staked        = 0n;
       ];
       total_supply        = 0n;
@@ -64,6 +61,12 @@ function add_pool(
       pool_to_id = big_map[Bytes.pack(tokens) -> 0n];
       pools = big_map[0n -> pool];
       ledger = (big_map[]: big_map((address * nat), nat));
+      token_metadata = big_map[
+        0n -> record[
+          token_id = 0n;
+          token_info = Constants.default_token_metadata
+        ];
+      ];
       allowances = (big_map[]: big_map((address * nat), allowances_data_t));
       dev_rewards = (big_map[]: big_map(token_t, nat));
       referral_rewards = (big_map[]: big_map((address * token_t), nat));
@@ -76,8 +79,10 @@ function add_pool(
 
     const pool_f_store : pool_f_storage_t = record [
       storage = pool_storage;
-      metadata = params.metadata;
-      token_metadata = params.token_metadata;
+      metadata = big_map[
+        "" -> 0x74657a6f732d73746f726167653a646578;
+        "dex" -> Constants.default_dex_metadata;
+      ];
       admin_lambdas = s.admin_lambdas;
       dex_lambdas = (big_map[]: big_map(nat, bytes));//s.dex_lambdas;//
       token_lambdas = s.token_lambdas;
@@ -89,16 +94,16 @@ function add_pool(
       pool_f_store
     );
     const pool_address = deploy.1;
-    s.storage.pool_to_address[pool_key] := pool_address;
-    s.storage.pools_count := s.storage.pools_count + 1n;
 
-    // s.storage.deployers[pool_address] := Tezos.sender;
+    s.storage.pool_to_address[pool_key] := pool_address;
+    s.storage.pool_id_to_address[s.storage.pools_count] := pool_address;
+    s.storage.pools_count := s.storage.pools_count + 1n;
 
     operations := deploy.0 # operations;
     const charges = manage_startup_charges(
       s.storage.whitelist,
       s.storage.init_price,
-      s.storage.burn_rate,
+      s.storage.burn_rate_f,
       s.storage.quipu_token,
       operations,
       s.storage.quipu_rewards

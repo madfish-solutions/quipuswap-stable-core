@@ -4,7 +4,7 @@ type dev_action_t       is
 
 type dev_storage_t      is [@layout:comb] record [
   dev_address             : address;
-  dev_fee                 : nat;
+  dev_fee_f               : nat;
   dev_lambdas             : big_map(nat, bytes);
 ]
 

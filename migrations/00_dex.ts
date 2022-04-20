@@ -18,39 +18,7 @@ import admin_lambdas_comp from "../build/lambdas/Admin_lambdas.json";
 import { Dex } from "../test/Dex/API/dexAPI";
 import { DevStorage } from "../test/Developer/API/storage";
 import chalk from "chalk";
-
-const storage: DexStorage = {
-  storage: {
-    admin: null as TezosAddress, // DON'T Touch! Setting from deployer SK
-    dev_store: {
-      dev_address: (process.env.DEVELOPER_ADDRESS || null) as TezosAddress,
-      dev_fee: new BigNumber(0),
-      dev_lambdas: new MichelsonMap(),
-    } as DevStorage,
-    default_referral: (process.env.DEFAULT_REFERRAL || null) as TezosAddress,
-    managers: [],
-
-    pools_count: new BigNumber("0"),
-    tokens: new MichelsonMap(),
-    pool_to_id: new MichelsonMap(),
-    pools: new MichelsonMap(),
-    ledger: new MichelsonMap(),
-    allowances: new MichelsonMap(),
-    dev_rewards: new MichelsonMap(),
-    referral_rewards: new MichelsonMap(),
-    stakers_balance: new MichelsonMap(),
-    quipu_token: {
-      token_address: (process.env.QUIPU_TOKEN_ADDRESS || null) as TezosAddress,
-      token_id: (new BigNumber(process.env.QUIPU_TOKEN_ID) ||
-        null) as BigNumber,
-    } as FA2,
-  },
-  metadata: new MichelsonMap(),
-  token_metadata: new MichelsonMap(),
-  admin_lambdas: new MichelsonMap(),
-  dex_lambdas: new MichelsonMap(),
-  token_lambdas: new MichelsonMap(),
-};
+import storage from "../storage/dex";
 
 module.exports = async (tezos: TezosToolkit, network: NetworkLiteral) => {
   storage.storage.admin = await tezos.signer.publicKeyHash();

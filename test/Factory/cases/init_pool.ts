@@ -12,6 +12,7 @@ import { TezosToolkit, MichelsonMap } from "@taquito/taquito";
 import { defaultTokenId } from "../../Token/token";
 import { Dex } from "../../Dex/API/dexAPI";
 import chalk from "chalk";
+import { FeeType } from "../../Dex/API/types";
 export async function initializeExchangeSuccessCase(
   factory: DexFactory,
   sender: AccountsLiteral,
@@ -20,13 +21,16 @@ export async function initializeExchangeSuccessCase(
   inputs: {
     asset: TokenFA12 | TokenFA2;
     in_amount: BigNumber;
-    rate: BigNumber;
-    precision_multiplier: BigNumber;
+    rate_f: BigNumber;
+    precision_multiplier_f: BigNumber;
   }[],
   default_referral: TezosAddress,
   managers = [],
-  metadata: MichelsonMap<string, string> = new MichelsonMap(),
-  token_metadata: MichelsonMap<string, string> = new MichelsonMap(),
+  fees: FeeType = {
+    lp_f: new BigNumber("0"),
+    stakers_f: new BigNumber("0"),
+    ref_f: new BigNumber("0"),
+  },
   approve = false,
   quipuToken: TokenFA2,
   tezos: TezosToolkit,
@@ -56,16 +60,14 @@ export async function initializeExchangeSuccessCase(
       factory.contract.address,
       factory.storage.storage.init_price
     );
-
   await factory.addPool(
-    a_const,
+    tezos,
     inputs,
     default_referral,
+    a_const,
     managers,
-    metadata,
-    token_metadata,
-    approve,
-    tezos
+    fees,
+    approve
   );
   await factory.updateStorage({});
   const upd_balance: BigNumber = await quipuToken.contract.views
@@ -81,7 +83,7 @@ export async function initializeExchangeSuccessCase(
     price
       .minus(
         price.multipliedBy(
-          factory.storage.storage.burn_rate.dividedBy("1000000")
+          factory.storage.storage.burn_rate_f.dividedBy("1000000")
         )
       )
       .toNumber()
@@ -102,7 +104,7 @@ export async function initializeExchangeSuccessCase(
   console.log(`DEX is ${chalk.green("ONLINE")}: ${dex_address}`);
   const dex = await Dex.init(tezos, dex_address, true);
   await dex.updateStorage({
-    pools: [(factory.storage.storage.pools_count.toNumber() - 1).toString()],
+    pools: [(0).toString()],
     ledger: [[sender_addr, 0]],
   });
   const updatedPairCount = new BigNumber(factory.storage.storage.pools_count);

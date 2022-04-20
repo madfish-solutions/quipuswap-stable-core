@@ -145,7 +145,7 @@ export async function getDySuccessCase(
 export async function getASuccessCase(dex: Dex, pool_id: BigNumber) {
   await dex.updateStorage({ pools: [pool_id.toString()] });
   const exp_A: BigNumber =
-    dex.storage.storage.pools[pool_id.toString()].initial_A;
+    dex.storage.storage.pools[pool_id.toString()].initial_A_f;
   const a: BigNumber = await dex.contract.contractViews
     .view_A(pool_id)
     .executeView({
@@ -211,7 +211,7 @@ export async function getStkrInfoSuccessCase(
     );
     response.info.rewards.forEach((value, key) => {
       const rew_info = rewards.get(key);
-      const expected = rew_info ? rew_info.reward : new BigNumber(0);
+      const expected = rew_info ? rew_info.reward_f : new BigNumber(0);
       expect(value.toNumber()).toBeGreaterThanOrEqual(expected.toNumber());
     });
   }

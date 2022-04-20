@@ -8,12 +8,13 @@ export const factory_storage: FactoryStorage = {
   storage: {
     dev_store: {
       dev_address: null as TezosAddress,
-      dev_fee: new BigNumber(0),
+      dev_fee_f: new BigNumber(0),
       dev_lambdas: new MichelsonMap(),
     } as DevStorage,
     init_price: new BigNumber(0),
-    burn_rate: new BigNumber(0),
+    burn_rate_f: new BigNumber(0),
     pools_count: new BigNumber(0),
+    pool_id_to_address: new MichelsonMap(),
     pool_to_address: new MichelsonMap(),
     quipu_token: null as FA2,
     quipu_rewards: new BigNumber(0),
@@ -23,6 +24,7 @@ export const factory_storage: FactoryStorage = {
   admin_lambdas: new MichelsonMap(),
   dex_lambdas: new MichelsonMap(),
   token_lambdas: new MichelsonMap(),
+  metadata: new MichelsonMap(),
 };
 
 export default factory_storage;

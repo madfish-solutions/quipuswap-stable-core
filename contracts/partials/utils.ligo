@@ -36,6 +36,12 @@
                         : nat is
   unwrap(is_nat(value), err);
 
+[@inline] function sum_all_fee(
+  const fee             : fees_storage_t;
+  const dev_fee_f       : nat)
+                        : nat is
+    fee.lp_f + fee.stakers_f + fee.ref_f + dev_fee_f;
+
 (* Helper function to get fa2 token contract *)
 [@inline] function get_fa2_token_transfer_contract(
   const token_address   : address)
@@ -149,6 +155,12 @@
     else result.0
   | None -> (failwith(Errors.Math.ediv_error): nat)
   end;
+
+[@inline] function unwrap_ediv(
+  const numerator       : nat;
+  const denominator     : nat)
+                        : (nat * nat) is
+  unwrap(ediv(numerator, denominator), Errors.Math.ediv_error)
 
 [@inline] function check_deadline(
   const exp             : timestamp)

@@ -13,27 +13,27 @@ import { DevStorage } from "../../Developer/API/storage";
 export declare type AllowancesDataType = Array<string>;
 
 export declare type FeeType = {
-  lp: BigNumber;
-  stakers: BigNumber;
-  ref: BigNumber;
+  lp_f: BigNumber;
+  stakers_f: BigNumber;
+  ref_f: BigNumber;
 };
 
 export declare type TokenInfo = {
-  rate: BigNumber;
-  precision_multiplier: BigNumber;
+  rate_f: BigNumber;
+  precision_multiplier_f: BigNumber;
   reserves: BigNumber;
 };
 
 export declare type PairInfo = {
-  initial_A: BigNumber;
+  initial_A_f: BigNumber;
   initial_A_time: Date;
-  future_A: BigNumber;
+  future_A_f: BigNumber;
   future_A_time: Date;
   tokens_info: MichelsonMap<string, TokenInfo>;
 
   fee: FeeType;
   staker_accumulator: {
-    accumulator: MichelsonMap<string, BigNumber>;
+    accumulator_f: MichelsonMap<string, BigNumber>;
     total_staked: BigNumber;
   };
   total_supply: BigNumber;
@@ -51,6 +51,7 @@ export declare type DexMainStorage = {
   pool_to_id: MichelsonMap<BytesString, number>;
   pools: MichelsonMap<string, PairInfo>;
   ledger: MichelsonMap<string, BigNumber>;
+  token_metadata: MichelsonMap<string, any>;
   allowances: MichelsonMap<string, AllowancesDataType>;
   dev_rewards: MichelsonMap<FA12TokenType | FA2TokenType, BigNumber>;
   referral_rewards: MichelsonMap<
@@ -75,15 +76,14 @@ export declare type DexMainStorage = {
 export declare type DexStorage = {
   storage: DexMainStorage;
   metadata: MichelsonMap<string, BytesString>;
-  token_metadata: MichelsonMap<string, any>;
   admin_lambdas: MichelsonMap<string, BytesString>;
   dex_lambdas: MichelsonMap<string, BytesString>;
   token_lambdas: MichelsonMap<string, BytesString>;
 };
 
 export declare type RewardsType = {
-  reward: BigNumber;
-  former: BigNumber;
+  reward_f: BigNumber;
+  former_f: BigNumber;
 };
 
 export declare type StakerInfo = {
