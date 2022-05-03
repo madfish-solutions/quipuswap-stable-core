@@ -22,7 +22,7 @@
       const transfer    : transfer_fa2_dst_t)
                         : full_storage_t is
       block {
-        require(transfer.token_id < pools_count, Errors.FA2.undefined)
+        require(transfer.token_id < pools_count, Errors.FA2.undefined);
         const sender_key =  (user_trx_params.from_, transfer.token_id);
         var sender_balance := unwrap_or(s.storage.ledger[sender_key], 0n);
         var sender_allowance: set(address) := case s.storage.allowances[sender_key] of
