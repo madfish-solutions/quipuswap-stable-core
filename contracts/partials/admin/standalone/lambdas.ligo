@@ -19,16 +19,6 @@ function add_pool(
         Errors.Dex.wrong_tokens_count
       );
 
-      function get_tokens_from_param(
-        var result      : tmp_tokens_map_t;
-        const value     : token_t)
-                        : tmp_tokens_map_t is
-        block {
-          result.tokens[result.index] := value;
-          result.index := result.index + 1n;
-        }
-        with result;
-
       const result: tmp_tokens_map_t = Set.fold(get_tokens_from_param, params.input_tokens, default_tmp_tokens);
 
       const tokens : tokens_map_t = result.tokens;

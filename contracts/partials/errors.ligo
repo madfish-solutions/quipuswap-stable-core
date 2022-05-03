@@ -35,6 +35,7 @@ module FA2 is {
   const not_operator              : string = "FA2_NOT_OPERATOR";
   const not_owner                 : string = "FA2_NOT_OWNER";
   const insufficient_balance      : string = "FA2_INSUFFICIENT_BALANCE";
+  const undefined                : string = "FA2_TOKEN_UNDEFINED";
 }
 
 module Math is {
