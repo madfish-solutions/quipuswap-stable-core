@@ -233,3 +233,13 @@ function get_token_by_id(
     end
   } with s
 
+function get_tokens_from_param(
+      var result      : tmp_tokens_map_t;
+      const value     : token_t)
+                      : tmp_tokens_map_t is
+      block {
+        result.tokens[result.index] := value;
+        result.index := result.index + 1n;
+      }
+      with result;
+
