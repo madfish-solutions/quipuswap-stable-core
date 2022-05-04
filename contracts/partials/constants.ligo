@@ -1,7 +1,7 @@
 (* define noop for readability *)
 [@inline] const no_operations: list(operation) = nil;
 
-const dex_func_count    : nat   = 8n;
+const dex_func_count    : nat   = 7n;
 const dev_func_count    : nat   = 2n;
 const token_func_count  : nat   = 5n;
 #if !FACTORY
