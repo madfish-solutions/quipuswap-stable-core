@@ -11,7 +11,7 @@ function xp_mem(
 
 function xp(
   const s               : pool_t)
-                        : map(nat, nat) is
+                        : map(token_pool_idx_t, nat) is
   xp_mem(s.tokens_info);
 
 (* Handle ramping A up or down *)
@@ -47,7 +47,7 @@ function get_A(
     D[j+1] = (A * n**n * sum(x_i) - D[j]**(n+1) / (n**n prod(x_i))) / (A * n**n - 1)
 *)
 function get_D(
-  const xp              : map(nat, nat);
+  const xp              : map(token_pool_idx_t, nat);
   const amp_f           : nat)
                         : nat is
   block {
@@ -67,7 +67,7 @@ function get_D(
         const d_const = tmp.d;
         function count_D_P(
           const accum   : nat;
-          const i       : nat * nat)
+          const i       : token_pool_idx_t * nat)
                         : nat is
           accum * d_const / (i.1 * tokens_count);
         const d_P = Map.fold(count_D_P, xp, tmp.d);
@@ -114,7 +114,7 @@ function get_y(
   const i               : nat;
   const j               : nat;
   const x               : nat;
-  const xp              : map(nat, nat);
+  const xp              : map(token_pool_idx_t, nat);
   const s               : pool_t)
                         : nat is
   block {
@@ -165,7 +165,7 @@ function get_y(
 function get_y_D(
   const amp_f           : nat;
   const i               : nat;
-  const xp              : map(nat, nat);
+  const xp              : map(token_pool_idx_t, nat);
   const d               : nat;
   const s               : pool_t)
                         : nat is
@@ -208,14 +208,14 @@ function calc_withdraw_one_coin(
      *  Solve Eqn against y_i for D - token_amount
      *)
     const tokens_count = Map.size(pool.tokens_info);
-    const xp            : map(nat, nat) = xp(pool);
+    const xp: map(token_pool_idx_t, nat)= xp(pool);
     const d0            : nat           = get_D(xp, amp_f);
     var   total_supply  : nat           := pool.total_supply;
     const d1            : nat           = nat_or_error(d0 - (token_amount * d0 / total_supply), Errors.Math.nat_error);
     const new_y         : nat           = get_y_D(amp_f, i, xp, d1, pool);
     const base_fee_f    : nat           = sum_all_fee(pool.fee, dev_fee_f);
 
-    function reduce_xp(const key: nat; const value: nat): nat is
+    function reduce_xp(const key: token_pool_idx_t; const value: nat): nat is
       block {
         var dx_expected: nat := 0n;
         if key = i
