@@ -146,11 +146,11 @@ class StableSwapTest(TestCase):
 
         res = chain.execute(self.dex.stake(add=dict(pool_id=0, amount=20)), sender=bob)
 
-        swap = self.dex.swap(pool_id=0, idx_from=0, idx_to=1, amount=1, min_amount_out=1, deadline=1, receiver=None, referral=alice)
+        swap = self.dex.swap(pool_id=0, idx_from=0, idx_to=1, amount=2, min_amount_out=1, deadline=1, receiver=None, referral=alice)
         res = chain.execute(swap)
 
         transfers = parse_transfers(res)
-        self.assertEqual(transfers[1]["amount"], 0)
+        self.assertEqual(transfers[1]["amount"], 1)
 
         res = chain.execute(self.dex.stake(remove=dict(pool_id=0, amount=20)), sender=bob)
         trxs = parse_transfers(res)
