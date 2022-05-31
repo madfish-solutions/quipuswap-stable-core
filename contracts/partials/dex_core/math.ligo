@@ -318,6 +318,7 @@ function add_liq(
   var   s               : storage_t)
                         : record [ s: storage_t; op: list(operation); ] is
   block {
+    require(params.min_mint_amount > 0n, Errors.Dex.zero_min_out);
     var pool := params.pool;
     const amp_f = get_A(
       pool.initial_A_time,

@@ -10,14 +10,15 @@ function swap(
     case p of [
     | Swap(params) -> {
       check_deadline(params.deadline);
+      require(params.min_amount_out > 0n, Errors.Dex.zero_min_out);
       const dx = params.amount;
       require(dx =/= 0n, Errors.Dex.zero_in);
-      const receiver = unwrap_or(params.receiver, Tezos.sender);
       const tokens : tokens_map_t = unwrap(s.tokens[params.pool_id], Errors.Dex.pool_not_listed);
       const tokens_count = Map.size(tokens);
       const i = params.idx_from;
       const j = params.idx_to;
       require(i < tokens_count and j < tokens_count, Errors.Dex.wrong_index);
+      const receiver = unwrap_or(params.receiver, Tezos.sender);
       var pool : pool_t := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
       const dy = perform_swap(i, j, dx, pool);
       const pool_total_staked = pool.staker_accumulator.total_staked;
@@ -120,6 +121,7 @@ function divest_liquidity(
         block {
           var token_info := unwrap(accum.tok_inf[entry.0], Errors.Dex.no_token_info);
           const min_amount_out = unwrap_or(params.min_amounts_out[entry.0], 1n);
+          require(min_amount_out > 0n, Errors.Dex.zero_min_out);
           const value = token_info.reserves * params.shares / total_supply;
           require(value >= min_amount_out, Errors.Dex.high_min_out);
           require(value =/= 0n, Errors.Dex.dust_out);
@@ -162,12 +164,12 @@ function divest_imbalanced(
     case p of [
     | Divest_imbalanced(params) -> {
       check_deadline(params.deadline);
+      require(params.max_shares > 0n, Errors.Dex.zero_in);
 
       const receiver = unwrap_or(params.receiver, Tezos.sender);
       const key = (Tezos.sender, params.pool_id);
       const share = unwrap_or(s.ledger[key], 0n);
 
-      require(params.max_shares =/= 0n, Errors.Dex.zero_in);
 
       var pool := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
       const tokens = unwrap(s.tokens[params.pool_id], Errors.Dex.pool_not_listed);
@@ -240,7 +242,7 @@ function divest_imbalanced(
       const d2 = get_D_mem(balanced.tokens_info_without_lp, amp_f);
       var burn_amount := ceil_div(nat_or_error(d0 - d2, Errors.Math.nat_error) * token_supply, d0);
 
-      require(burn_amount =/= 0n, Errors.Dex.zero_burn_amount);
+      require(burn_amount > 0n, Errors.Dex.zero_burn_amount);
 
       // burn_amount := burn_amount + 1n; // In case of rounding errors - make it unfavorable for the "attacker"
 
@@ -274,12 +276,14 @@ function divest_one_coin(
     case p of [
     | Divest_one_coin(params) -> {
       check_deadline(params.deadline);
+      require(params.min_amount_out > 0n, Errors.Dex.zero_min_out);
+      require(params.shares > 0n, Errors.Dex.zero_in);
 
       var pool := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
+      require(params.token_index < Map.size(pool.tokens_info), Errors.Dex.wrong_index);
       const sender_key = (Tezos.sender, params.pool_id);
       const token = get_token_by_id(params.token_index, s.tokens[params.pool_id]);
 
-      require(params.token_index < Map.size(pool.tokens_info), Errors.Dex.wrong_index);
 
       const amp_f : nat =  get_A(
         pool.initial_A_time,
@@ -289,6 +293,7 @@ function divest_one_coin(
       );
       const dev_fee_f = get_dev_fee(s);
       const result = calc_withdraw_one_coin(amp_f, params.shares, params.token_index, dev_fee_f, pool);
+      require(result.dy >= params.min_amount_out, Errors.Dex.high_min_out);
       var all_fee_f := sum_all_fee(pool.fee, dev_fee_f);
       if (all_fee_f = 0n) // check for avoid zero division
       then all_fee_f := 1n
@@ -297,7 +302,6 @@ function divest_one_coin(
       const ref_fee = result.dy_fee * pool.fee.ref_f / all_fee_f;
       const staker_fee = result.dy_fee * pool.fee.stakers_f / all_fee_f;
 
-      require(result.dy >= params.min_amount_out, Errors.Dex.high_min_out);
 
       var info := nip_fees_off_reserves(
         staker_fee,
@@ -353,13 +357,13 @@ function claim_ref(
     var operations: list(operation) := Constants.no_operations;
     case p of [
     | Claim_referral(params) -> {
+      require(params.amount > 0n, Errors.Dex.zero_in);
 
       const key = (Tezos.sender, params.token);
       const bal = unwrap_or(s.referral_rewards[key], 0n);
 
       s.referral_rewards[key] := nat_or_error(bal - params.amount, Errors.Dex.balance_overflow);
 
-      require(params.amount > 0n, Errors.Dex.zero_in);
 
       operations := typed_transfer(
         Tezos.self_address,

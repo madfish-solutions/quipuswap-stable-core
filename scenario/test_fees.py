@@ -37,7 +37,7 @@ class StableSwapTest(TestCase):
     def test_ref_fee(self):
         chain = LocalChain(storage=self.init_storage)
 
-        add_pool = self.dex.add_pool(100_000, [token_a, token_b], form_pool_rates(int(1e12), int(1e12)))
+        add_pool = self.dex.add_pool(100_000, [token_a, token_b], form_pool_rates(int(1e12), int(1e12)), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         chain.execute(add_pool, sender=admin)
         res = chain.execute(self.dex.set_fees(0, fees), sender=admin)
         
@@ -74,7 +74,7 @@ class StableSwapTest(TestCase):
     def test_dev_fee(self):
         chain = LocalChain(storage=self.init_storage)
 
-        add_pool = self.dex.add_pool(100_000, [token_a, token_b], form_pool_rates(int(1e12), int(1e12)))
+        add_pool = self.dex.add_pool(100_000, [token_a, token_b], form_pool_rates(int(1e12), int(1e12)), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         chain.execute(add_pool, sender=admin)
         res = chain.execute(self.dex.set_dev_fee(200_000), sender=dev)
 
@@ -111,7 +111,7 @@ class StableSwapTest(TestCase):
     def test_lp_fees(self):
         chain = LocalChain(storage=self.init_storage)
 
-        add_pool = self.dex.add_pool(100_000, [token_a, token_b], form_pool_rates(int(1e12), int(1e12)))
+        add_pool = self.dex.add_pool(100_000, [token_a, token_b], form_pool_rates(int(1e12), int(1e12)), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         chain.execute(add_pool, sender=admin)
         res = chain.execute(self.dex.set_fees(0, fees), sender=admin)
 
@@ -140,13 +140,13 @@ class StableSwapTest(TestCase):
     def test_smallest_fees(self):
         chain = LocalChain(storage=self.init_storage)
 
-        add_pool = self.dex.add_pool(100_000, [token_a, token_b], form_pool_rates(int(1e12), int(1e12)))
+        add_pool = self.dex.add_pool(100_000, [token_a, token_b], form_pool_rates(int(1e12), int(1e12)), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         chain.execute(add_pool, sender=admin)
         res = chain.execute(self.dex.set_fees(0, fees), sender=admin)
 
         res = chain.execute(self.dex.stake(add=dict(pool_id=0, amount=20)), sender=bob)
 
-        swap = self.dex.swap(pool_id=0, idx_from=0, idx_to=1, amount=1, min_amount_out=0, deadline=1, receiver=None, referral=alice)
+        swap = self.dex.swap(pool_id=0, idx_from=0, idx_to=1, amount=1, min_amount_out=1, deadline=1, receiver=None, referral=alice)
         res = chain.execute(swap)
 
         transfers = parse_transfers(res)

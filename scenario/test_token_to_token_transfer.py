@@ -45,7 +45,7 @@ class TokenToTokenTransferTest(TestCase):
 
     def test_tt_transfer_divest(self):
         chain = LocalChain(storage=self.init_storage)
-        add_pool = self.dex.add_pool(100_000, [token_a, token_b], form_pool_rates(100_000_000, 1_000))
+        add_pool = self.dex.add_pool(100_000, [token_a, token_b], form_pool_rates(100_000_000, 1_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         res = chain.execute(add_pool, sender=admin)
 
         all_shares = get_shares(res, 0, admin)
@@ -81,7 +81,7 @@ class TokenToTokenTransferTest(TestCase):
 
     def test_tt_cant_double_transfer(self):
         chain = LocalChain(storage=self.init_storage)
-        add_pool = self.dex.add_pool(100_000, [token_a, token_b], form_pool_rates(100_000, 10_000))
+        add_pool = self.dex.add_pool(100_000, [token_a, token_b], form_pool_rates(100_000, 10_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         res = chain.execute(add_pool, sender=admin)
         
         transfer = self.dex.transfer(
@@ -107,7 +107,7 @@ class TokenToTokenTransferTest(TestCase):
 
     def test_transfer_multiple_froms(self):
         chain = LocalChain(storage=self.init_storage)
-        add_pool = self.dex.add_pool(100_000, [token_a, token_b, token_c], form_pool_rates(100_000_000, 100_000_000, 100_000_000))
+        add_pool = self.dex.add_pool(100_000, [token_a, token_b, token_c], form_pool_rates(100_000_000, 100_000_000, 100_000_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         res = chain.execute(add_pool, sender=admin)
 
         add_operator = self.dex.update_operators([{

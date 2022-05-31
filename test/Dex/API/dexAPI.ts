@@ -174,8 +174,17 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
       };
       tokens_info.set(i, mapped_item(info));
     }
-    const operation = await this.contract.methods
-      .add_pool(a_const, input_tokens, tokens_info)
+    const operation = await this.contract.methodsObject
+      .add_pool({
+        a_constant: a_const,
+        input_tokens: input_tokens,
+        tokens_info,
+        fees: {
+          lp_f: "0",
+          stakers_f: "0",
+          ref_f: "0",
+        },
+      })
       .send();
     await confirmOperation(tezos, operation.hash);
     return operation;

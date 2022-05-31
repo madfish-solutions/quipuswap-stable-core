@@ -30,7 +30,7 @@ class DivestsTest(TestCase):
 
     def test_divest_smallest(self):
         chain = LocalChain(storage=self.init_storage)
-        chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(3, 3)), sender=admin)
+        chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(3, 3), { "lp_f": 0, "stakers_f": 0, "ref_f": 0}), sender=admin)
 
         res = chain.execute(self.dex.invest(pool_id=0, shares=1, in_amounts={0: 2, 1: 2}, deadline=1, receiver=None, referral=None))
 
@@ -43,7 +43,7 @@ class DivestsTest(TestCase):
 
     def test_simple_divest_all(self):
         chain = LocalChain(storage=self.init_storage)
-        res = chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(42, 777_777_777)), sender=admin)
+        res = chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(42, 777_777_777), { "lp_f": 0, "stakers_f": 0, "ref_f": 0}), sender=admin)
 
         all_shares = get_shares(res, 0, admin)
         res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=all_shares, deadline=1, receiver=None), sender=admin)
@@ -54,7 +54,7 @@ class DivestsTest(TestCase):
     def test_threeway_pool_one_coin_divest(self):
         chain = LocalChain(storage=self.init_storage)
 
-        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c], form_pool_rates(100_000, 100_000, 100_000))
+        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c], form_pool_rates(100_000, 100_000, 100_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         res = chain.execute(add_pool, sender=admin)
 
         res = chain.execute(self.dex.set_fees(0, fees), sender=admin)
@@ -66,7 +66,7 @@ class DivestsTest(TestCase):
         self.assertEqual(len(transfers), 1)
         self.assertEqual(transfers[0]["destination"], admin)
         self.assertAlmostEqual(transfers[0]["amount"], 100_000, delta=3)
-
+        print(transfers[0]["amount"])
         all_shares = get_shares(res, 0, admin)
         self.assertEqual(all_shares, 0)
 
@@ -94,7 +94,7 @@ class DivestsTest(TestCase):
 
     def test_fail_divest_nonowner(self):
         chain = LocalChain(storage=self.init_storage)
-        res = chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100_000_000, 100_000)), sender=admin)
+        res = chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100_000_000, 100_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0}), sender=admin)
 
         invest = self.dex.invest(pool_id=0, shares=1, in_amounts={0: 100, 1: 100_000}, deadline=1, receiver=None, referral=None)
         chain.execute(invest, sender=alice)
@@ -106,7 +106,7 @@ class DivestsTest(TestCase):
     def test_divest_imbalanced(self):
         chain = LocalChain(storage=self.init_storage)
 
-        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c], form_pool_rates(100_000, 100_000, 100_000))
+        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c], form_pool_rates(100_000, 100_000, 100_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         res = chain.execute(add_pool, sender=admin)
 
         all_shares = get_shares(res, 0, admin)
@@ -131,7 +131,7 @@ class DivestsTest(TestCase):
     def test_divest_imbalanced_vs_single_coin(self):
         chain = LocalChain(storage=self.init_storage)
 
-        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c], form_pool_rates(100_000, 100_000, 100_000))
+        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c], form_pool_rates(100_000, 100_000, 100_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         res = chain.execute(add_pool, sender=admin)
         res = chain.execute(self.dex.set_fees(0, fees), sender=admin)
 
@@ -174,7 +174,8 @@ class DivestsTest(TestCase):
                     "precision_multiplier_f": int(1e18),
                     "reserves": 100_000 * int(1e18),
                 },
-            }
+            },
+            { "lp_f": 0, "stakers_f": 0, "ref_f": 0}
         )
         res = chain.execute(add_pool, sender=admin)
 
@@ -199,7 +200,7 @@ class DivestsTest(TestCase):
     def test_fees_divest_vs_swap(self):
         chain = LocalChain(storage=self.init_storage)
 
-        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c], form_pool_rates(int(1e18), int(1e18), int(1e18)))
+        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c], form_pool_rates(int(1e18), int(1e18), int(1e18)), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         res = chain.execute(add_pool, sender=admin)
         res = chain.execute(self.dex.set_fees(0, fees), sender=admin)
 

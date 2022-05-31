@@ -41,10 +41,11 @@ function ramp_A(
   block {
     case p of [
     | Ramp_A(params) -> {
+        require((params.future_A > 0n) and (params.future_A <= Constants.max_a), Errors.Dex.a_limit);
+        require(params.future_time >= Tezos.now + Constants.min_ramp_time, Errors.Dex.timestamp_error); // dev: insufficient time
         var pool : pool_t := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
 
         require(Tezos.now >= pool.initial_A_time + Constants.min_ramp_time, Errors.Dex.timestamp_error);
-        require(params.future_time >= Tezos.now + Constants.min_ramp_time, Errors.Dex.timestamp_error); // dev: insufficient time
 
         const initial_A_f: nat = get_A(
           pool.initial_A_time,
@@ -53,8 +54,6 @@ function ramp_A(
           pool.future_A_f
         );
         const future_A_f: nat = params.future_A * Constants.a_precision;
-
-        assert((params.future_A > 0n) and (params.future_A <= Constants.max_a));
 
         if future_A_f >= initial_A_f
         then require(future_A_f <= initial_A_f * Constants.max_a_change, Errors.Dex.a_limit)

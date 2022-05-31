@@ -16,7 +16,11 @@ function add_pool(
       and n_tokens = Map.size(params.tokens_info),
       Errors.Dex.wrong_tokens_count
     );
+    require((params.a_constant > 0n) and (Constants.max_a >= params.a_constant), Errors.Dex.a_limit);
+    require(sum_all_fee(params.fees, 0n) < Constants.fee_denominator / 2n, Errors.Dex.fee_overflow);
+
     const result: tmp_tokens_map_t = Set.fold(get_tokens_from_param, params.input_tokens, default_tmp_tokens);
+
     const tokens : tokens_map_t = result.tokens;
     const pool_key : bytes = pack_pool_key(Tezos.sender, tokens);
     check_pool(pool_key, s.storage.pool_to_address);
