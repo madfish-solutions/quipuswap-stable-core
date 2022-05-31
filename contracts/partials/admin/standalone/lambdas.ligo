@@ -7,10 +7,10 @@ function add_pool(
                         : return_t is
   block {
     var operations: list(operation) := Constants.no_operations;
-    case p of
+    case p of [
     | Add_pool(params) -> {
       (* Params check *)
-      const n_tokens = Set.size(params.input_tokens);
+      const n_tokens = Set.cardinal(params.input_tokens);
 
       require(
         n_tokens <= Constants.max_tokens_count
@@ -77,5 +77,5 @@ function add_pool(
       s := res.s;
     }
     | _                 -> skip
-    end
+    ]
   } with (operations, s)

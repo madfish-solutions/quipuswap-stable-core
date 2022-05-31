@@ -219,7 +219,7 @@ function calc_withdraw_one_coin(
       block {
         var dx_expected: nat := 0n;
         if key = i
-        then dx_expected := nat_or_error((value * d1 / d0) - new_y, Errors.Math.nat_error);
+        then dx_expected := nat_or_error((value * d1 / d0) - new_y, Errors.Math.nat_error)
         else dx_expected := nat_or_error(value - (value * d1 / d0), Errors.Math.nat_error);
         const reduced = nat_or_error(value - dx_expected * divide_fee_for_balance(base_fee_f, tokens_count) / Constants.fee_denominator, Errors.Math.nat_error);
     } with reduced;

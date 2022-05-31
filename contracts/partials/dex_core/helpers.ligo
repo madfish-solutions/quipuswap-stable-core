@@ -17,7 +17,7 @@
   const fee             : nat;
   const tokens_count    : nat)
                         : nat is
-  fee * tokens_count / (4n * nat_or_error(tokens_count - 1n, Errors.Dex.wrong_tokens_count));
+  fee * tokens_count / (4n * nat_or_error(tokens_count - 1n, Errors.Dex.wrong_tokens_count))
 
 (* Slice fees from calculated `dy` and returns new dy and sliced fees *)
 function slice_fee(
@@ -33,7 +33,7 @@ function slice_fee(
 
     var to_stakers := 0n;
     if (total_staked =/= 0n)
-    then to_stakers := dy * fee.stakers_f / Constants.fee_denominator;
+    then to_stakers := dy * fee.stakers_f / Constants.fee_denominator
     else to_providers := to_providers + dy * fee.stakers_f / Constants.fee_denominator;
 
     const return = record [
@@ -77,7 +77,7 @@ function harvest_staker_rewards(
             Tezos.sender,
             reward_amt,
             get_token_by_id(i, tokens)
-          ) # accum.op;
+          ) # accum.op
         else skip;
         accum.earnings[i] := record[
           former_f = new_former_f;
@@ -107,7 +107,7 @@ function update_former_and_transfer(
       receiver,
       total_staked,
       shares
-    ) = case param of
+    ) = case param of [
         | Add(p) -> (
             staker_accum.balance + p.amount,
             Tezos.sender,
@@ -122,7 +122,7 @@ function update_former_and_transfer(
             nat_or_error(pool_stake_accum.total_staked - p.amount, Errors.Dex.wrong_shares_out),
             p.amount
             )
-        end;
+        ];
 
     function upd_former(
       const i           : token_pool_idx_t;
@@ -155,10 +155,10 @@ function update_stake(
   var   s               : storage_t)
                         : return_t is
   block {
-    const (pool_id, shares) = case params of
+    const (pool_id, shares) = case params of [
         Add(p) -> (p.pool_id, p.amount)
       | Remove(p) -> (p.pool_id, p.amount)
-      end;
+      ];
     var operations: list(operation) := Constants.no_operations;
     const staker_key = (Tezos.sender, pool_id);
     var staker_accum := unwrap_or(

@@ -7,28 +7,28 @@
 [@inline] function get_token_address(
   const token           : token_t)
                         : address is
-  case token of
+  case token of [
   | Fa2(inf) -> inf.token_address
   | Fa12(addr) -> addr
-  end
+  ]
 
-[@inline] function unwrap_or(
-  const param           : option(_a);
-  const default         : _a)
-                        : _a is
-  case param of
+[@inline] function unwrap_or<t>(
+  const param           : option(t);
+  const default         : t)
+                        : t is
+  case param of [
   | Some(instance) -> instance
   | None -> default
-  end;
+  ]
 
-[@inline] function unwrap(
-  const param           : option(_a);
+[@inline] function unwrap<t>(
+  const param           : option(t);
   const error           : string)
-                        : _a is
-  case param of
+                        : t is
+  case param of [
   | Some(instance) -> instance
   | None -> failwith(error)
-  end;
+  ]
 
 [@inline] function nat_or_error(
   const value           : int;
@@ -86,7 +86,7 @@
   const amount_         : nat;
   const token           : token_t)
                         : operation is
-    case token of
+    case token of [
     | Fa12(token_address) -> Tezos.transaction(
         TransferTypeFA12(owner, (receiver, amount_)),
         0mutez,
@@ -104,7 +104,7 @@
         0mutez,
         get_fa2_token_transfer_contract(token_info.token_address)
       )
-    end;
+    ];
 
 [@inline] function typed_approve(
   const owner           : address;
@@ -112,7 +112,7 @@
   const amount_         : nat;
   const token           : token_t)
                         : operation is
-  case token of
+  case token of [
     | Fa12(token_address) -> Tezos.transaction(
         ApproveFA12(record[
           spender = spender;
@@ -137,7 +137,7 @@
         0mutez,
         get_fa2_token_approve_contract(token_info.token_address)
       )
-    end;
+    ];
 
 [@inline] function add_rem_candidate(
   const params          : set_man_param_t;
@@ -149,12 +149,12 @@
   const numerator       : nat;
   const denominator     : nat)
                         : nat is
-  case ediv(numerator, denominator) of
+  case ediv(numerator, denominator) of [
   | Some(result) -> if result.1 > 0n
     then result.0 + 1n
     else result.0
   | None -> (failwith(Errors.Math.ediv_error): nat)
-  end;
+  ];
 
 [@inline] function unwrap_ediv(
   const numerator       : nat;
@@ -181,16 +181,16 @@ function set_func_or_fail(
 (*
  * Helper function that merges two list`s.
  *)
-[@inline] function concat_lists(
-  const fst             : list(_a);
-  const snd             : list(_a))
-                        : list(_a) is
+[@inline] function concat_lists<t>(
+  const fst             : list(t);
+  const snd             : list(t))
+                        : list(t) is
   List.fold_right(
     function(
-      const operation   : _a;
-      const operations  : list(_a))
-                        : list(_a) is
-      operation # operations,
+      const entry       : t;
+      const array       : list(t))
+                        : list(t) is
+      entry # array,
     fst,
     snd
   )
@@ -221,7 +221,7 @@ function get_token_by_id(
 #else
     require(Tezos.sender = s.storage.admin, Errors.Dex.not_contract_admin);
 #endif
-    case f_type of
+    case f_type of [
     | FAdmin  -> s.admin_lambdas := set_func_or_fail(params, Constants.admin_func_count,  s.admin_lambdas)
     | FDex    -> s.dex_lambdas := set_func_or_fail(params, Constants.dex_func_count, s.dex_lambdas)
     | FToken  -> s.token_lambdas := set_func_or_fail(params, Constants.token_func_count,  s.token_lambdas)
@@ -230,7 +230,7 @@ function get_token_by_id(
 #else
     | _ -> skip
 #endif
-    end
+    ]
   } with s
 
 function get_tokens_from_param(

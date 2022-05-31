@@ -5,7 +5,7 @@ function get_balance_of(
                         : full_return_t is
   block {
     var operations := Constants.no_operations;
-    case p of
+    case p of [
     | Balance_of(params) -> {
       function bal_look_up(
         const l         : list(balc_of_fa2_res_t);
@@ -29,7 +29,7 @@ function get_balance_of(
         ) # operations;
     }
     | _                 -> skip
-    end
+    ]
   } with (operations, s)
 
 (* 4n *)
@@ -39,7 +39,7 @@ function total_supply_view(
                         : full_return_t is
   block {
     var operations := Constants.no_operations;
-    case p of
+    case p of [
     | Total_supply(params) -> {
       const pool = unwrap(s.storage.pools[params.token_id], Errors.Dex.pool_not_listed);
       operations := Tezos.transaction(
@@ -49,5 +49,5 @@ function total_supply_view(
       ) # operations;
     }
     | _ -> skip
-    end
+    ]
   } with (operations, s)

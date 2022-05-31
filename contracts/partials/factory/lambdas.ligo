@@ -8,7 +8,7 @@ function add_pool(
   block {
     var operations := Constants.no_operations;
     (* Params check *)
-    const n_tokens = Set.size(params.input_tokens);
+    const n_tokens = Set.cardinal(params.input_tokens);
 
     require(
       n_tokens <= Constants.max_tokens_count

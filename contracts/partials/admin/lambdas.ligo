@@ -3,33 +3,33 @@ function add_rem_managers(
   const p               : admin_action_t;
   var s                 : storage_t)
                         : return_t is
-  case p of
+  case p of [
   | Add_rem_managers(params) -> (
     Constants.no_operations,
     s with record [ managers = add_rem_candidate(params, s.managers) ]
   )
   | _ -> (Constants.no_operations, s)
-  end
+  ]
 
 (* set default referral *)
 function set_default_referral(
   const p               : admin_action_t;
   var s                 : storage_t)
                         : return_t is
-  case p of
+  case p of [
   | Set_default_referral(referral) -> (Constants.no_operations, s with record [ default_referral = referral ])
   | _ -> (Constants.no_operations, s)
-  end
+  ]
 
 (* Sets admin of contract *)
 function set_admin(
   const p               : admin_action_t;
   var s                 : storage_t)
                         : return_t is
-  case p of
+  case p of [
   | Set_admin(new_admin) -> (Constants.no_operations, s with record [ admin = new_admin ])
   | _ -> (Constants.no_operations, s)
-  end
+  ]
 
 (* DEX admin methods *)
 
@@ -39,7 +39,7 @@ function ramp_A(
   var s                 : storage_t)
                         : return_t is
   block {
-    case p of
+    case p of [
     | Ramp_A(params) -> {
         var pool : pool_t := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
 
@@ -68,7 +68,7 @@ function ramp_A(
       ];
       }
     | _ -> skip
-    end
+    ]
   } with (Constants.no_operations, s)
 
 (* stop ramping A constant *)
@@ -77,7 +77,7 @@ function stop_ramp_A(
   var s                 : storage_t)
                         : return_t is
   block {
-    case p of
+    case p of [
     | Stop_ramp_A(pool_id) -> {
       var pool : pool_t := unwrap(s.pools[pool_id], Errors.Dex.pool_not_listed);
       const current_A_f: nat = get_A(
@@ -94,7 +94,7 @@ function stop_ramp_A(
       ];
     }
     | _ -> skip
-    end
+    ]
   } with (Constants.no_operations, s)
 
 (* updates fees percents *)
@@ -103,14 +103,14 @@ function set_fees(
   var s                 : storage_t)
                         : return_t is
   block {
-    case p of
+    case p of [
     | Set_fees(params) -> {
       require(sum_all_fee(params.fee, 0n) < Constants.fee_denominator / 2n, Errors.Dex.fee_overflow);
       var pool := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
       s.pools[params.pool_id] := pool with record[ fee = params.fee ];
     }
     | _ -> skip
-    end
+    ]
   } with (Constants.no_operations, s)
 
 (* Claimers of rewards *)
@@ -122,7 +122,7 @@ function claim_dev(
                         : return_t is
   block {
     var operations: list(operation) := Constants.no_operations;
-    case p of
+    case p of [
     | Claim_developer(params) -> {
       const dev_address = get_dev_address(s);
       require(Tezos.sender = dev_address, Errors.Dex.not_developer);
@@ -141,6 +141,6 @@ function claim_dev(
       ) # operations;
     }
     | _ -> skip
-    end;
+    ]
   } with (operations, s)
 

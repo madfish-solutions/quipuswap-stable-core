@@ -39,6 +39,16 @@ export const flextesaProtocols: FlextesaTezosProtocols = {
     prefix: "011-PtHangz2",
     kind: "Hangzhou",
   },
+  [TezosProtocols.ITHACA]: {
+    hash: "Psithaca2MLRFYargivpo7YvUr7wUDqyxrdhC5CQq78mRvimz6A",
+    prefix: "012-Psithaca",
+    kind: "Ithaca",
+  },
+  [TezosProtocols.JACARTA]: {
+    hash: "PtJakart2xVj7pYXJBXrqHgd82rdkLey5ZeeGwDgPp9rhQUbSqY",
+    prefix: "013-PtJakart",
+    kind: "Jacarta",
+  },
 };
 
 export async function useSandbox(options: { up?: boolean; down?: boolean }) {
@@ -115,7 +125,7 @@ const FLEXTESA_IMAGE = "oxheadalpha/flextesa:20211221";
 // Name for the running Docker image
 export const POD_NAME = "flextesa-sandbox";
 
-const defaultProtocol = TezosProtocols.HANGZHOU;
+const defaultProtocol = TezosProtocols.ITHACA;
 const defaultOptions: FlextesaOptions = config.networks.sandbox;
 
 export const startFlextesa = async (

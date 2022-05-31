@@ -2,10 +2,10 @@
   const t_bytes         : bytes;
   const pool_map        : big_map(bytes, address))
                         : unit is
-  case pool_map[t_bytes] of
+  case pool_map[t_bytes] of [
   | None -> unit
   | Some(_address) -> failwith(Errors.Dex.pool_listed)
-  end
+  ]
 
 
 [@inline] function call_add_liq(
@@ -52,17 +52,17 @@
                         : option(bytes) is
   block {
     require(Tezos.sender = s.storage.dev_store.dev_address, Errors.Dex.not_developer);
-    case s.init_func of
+    case s.init_func of [
     | Some(_) -> failwith(Errors.Dex.func_set)
     | None -> skip
-    end;
+    ]
   } with Some(params)
 
 [@inline] function run_init_func(
   const params          : pool_init_param_t;
   const s               : full_storage_t)
                         : fact_return_t is
-  block{
+  block {
     const lambda: bytes = unwrap(s.init_func, Errors.Dex.unknown_func);
     const func: init_func_t = unwrap((Bytes.unpack(lambda) : option(init_func_t)), Errors.Dex.wrong_use_function);
   } with func(params, s)

@@ -7,7 +7,7 @@ function swap(
                         : return_t is
   block {
     var operations: list(operation) := Constants.no_operations;
-    case p of
+    case p of [
     | Swap(params) -> {
       check_deadline(params.deadline);
       const dx = params.amount;
@@ -63,7 +63,7 @@ function swap(
       ) # operations;
     }
     | _ -> skip
-    end
+    ]
   } with (operations, s)
 
 (* Provide liquidity (balanced) to the pool,
@@ -75,7 +75,7 @@ function invest_liquidity(
                         : return_t is
   block {
     var operations: list(operation) := Constants.no_operations;
-    case p of
+    case p of [
     | Invest(params) -> {
       check_deadline(params.deadline);
 
@@ -92,7 +92,7 @@ function invest_liquidity(
       s := result.s;
     }
     | _ -> skip
-    end
+    ]
   } with (operations, s)
 
 
@@ -103,7 +103,7 @@ function divest_liquidity(
                         : return_t is
   block {
     var operations: list(operation) := Constants.no_operations;
-    case p of
+    case p of [
     | Divest(params) -> {
       check_deadline(params.deadline);
       require(s.pools_count > params.pool_id, Errors.Dex.pool_not_listed);
@@ -147,7 +147,7 @@ function divest_liquidity(
       operations := res.op;
     }
     | _                 -> skip
-    end
+    ]
   } with (operations, s)
 
 (* Custom *)
@@ -159,7 +159,7 @@ function divest_imbalanced(
                         : return_t is
   block {
     var operations: list(operation) := Constants.no_operations;
-    case p of
+    case p of [
     | Divest_imbalanced(params) -> {
       check_deadline(params.deadline);
 
@@ -203,7 +203,7 @@ function divest_imbalanced(
               receiver,
               value.1,
               unwrap(tokens[value.0], Errors.Dex.wrong_index)
-            ) # accum.operations;
+            ) # accum.operations
           else skip;
         } with accum;
 
@@ -261,7 +261,7 @@ function divest_imbalanced(
       s.ledger[(Tezos.sender, params.pool_id)] := new_shares;
     }
     | _ -> skip
-    end;
+    ];
   } with (operations, s)
 
 (* Divest one coin *)
@@ -271,7 +271,7 @@ function divest_one_coin(
                         : return_t is
   block {
     var operations: list(operation) := Constants.no_operations;
-    case p of
+    case p of [
     | Divest_one_coin(params) -> {
       check_deadline(params.deadline);
 
@@ -316,7 +316,7 @@ function divest_one_coin(
         unwrap_or(
           pool.staker_accumulator.accumulator_f[params.token_index],
           0n
-        ) + staker_fee * Constants.accum_precision / pool.staker_accumulator.total_staked;
+        ) + staker_fee * Constants.accum_precision / pool.staker_accumulator.total_staked
       else skip;
 
       s.ledger[sender_key] := unwrap(is_nat(account_bal - params.shares), Errors.FA2.insufficient_balance);
@@ -337,11 +337,11 @@ function divest_one_coin(
           receiver,
           result.dy,
           token
-        ) # operations;
+        ) # operations
       else skip;
     }
     | _ -> skip
-    end;
+    ];
   } with (operations, s)
 
 (* Referral *)
@@ -351,7 +351,7 @@ function claim_ref(
                         : return_t is
   block {
     var operations: list(operation) := Constants.no_operations;
-    case p of
+    case p of [
     | Claim_referral(params) -> {
 
       const key = (Tezos.sender, params.token);
@@ -369,7 +369,7 @@ function claim_ref(
       ) # operations;
     }
     | _ -> skip
-    end;
+    ];
   } with (operations, s)
 
 (* QuipuToken Stakers *)
@@ -378,7 +378,7 @@ function stake(
   const p               : dex_action_t;
   var s                 : storage_t)
                         : return_t is
-  case p of
+  case p of [
   | Stake(params) -> update_stake(params, s)
   | _ -> (Constants.no_operations, s)
-  end;
+  ];

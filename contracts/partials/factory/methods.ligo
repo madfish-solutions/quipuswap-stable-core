@@ -42,7 +42,7 @@ function start_dex_func(
                         : list(operation) is
       block {
         const token = unwrap(tokens[input.0], Errors.Dex.wrong_index);
-        case token of
+        case token of [
         | Fa2(_) -> operations := concat_lists(operations, list[
           typed_approve(
             Tezos.self_address,
@@ -52,7 +52,7 @@ function start_dex_func(
           )
         ])
         | _ -> skip
-        end;
+        ];
         if input.1 > 0n
         then {
           operations := typed_approve(
@@ -76,7 +76,7 @@ function start_dex_func(
 function claim_quipu(
   var s                 : full_storage_t)
                         : fact_return_t is
-  block{
+  block {
     const operations = list[
       typed_transfer(
         Tezos.self_address,
@@ -94,13 +94,13 @@ function use_factory(
                         : fact_return_t is
   block {
     require(Tezos.sender = s.storage.dev_store.dev_address, Errors.Dex.not_developer);
-    case params of
+    case params of [
     | Set_burn_rate(rate)   -> s.storage.burn_rate_f := rate
     | Set_price(price)      -> s.storage.init_price := price
     | Set_whitelist(params) -> s.storage.whitelist := add_rem_candidate(params, s.storage.whitelist)
     | _ -> skip
-    end
-  } with case params of
+    ]
+  } with case params of [
     | Claim_rewards -> claim_quipu(s)
     | _ -> (Constants.no_operations, s)
-    end
+    ]

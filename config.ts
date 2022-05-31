@@ -5,13 +5,13 @@ dotenv.config();
 
 export const config = {
   repoName: "quipuswap-stable-core",
-  ligoVersion: "0.35.0",
+  ligoVersion: "0.41.0",
   preferredLigoFlavor: "pascaligo",
   networks: {
     sandbox: {
       host: "http://localhost",
       port: 20000,
-      protocol: TezosProtocols.HANGZHOU,
+      protocol: TezosProtocols.ITHACA,
       genesisBlockHash: "random",
       defaultSignerSK: "edsk3QoqBuvdamxouPhin7swCvkQNgq4jP5KZPbwWNnwdZpSpJiEbq",
       accounts: {
@@ -33,7 +33,7 @@ export const config = {
       },
     },
     testnet: {
-      host: "https://rpc.ithacanet.teztnets.xyz",
+      host: "https://ithacanet.ecadinfra.com",
       port: 443,
       faucet: null,
     },
