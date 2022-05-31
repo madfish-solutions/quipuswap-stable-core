@@ -108,3 +108,64 @@ function manage_startup_charges(
       rewards = quipu_rewards;
     ]
   } with return
+
+function form_pool_storage(
+  const tokens          : tokens_map_t;
+  const tokens_info     : map(token_pool_idx_t, token_info_t);
+  const a_constant      : nat;
+  const fees            : fees_storage_t;
+  const default_referral: address;
+  const managers        : set(address);
+  const quipu_token     : fa2_token_t;
+  const a_lambdas       : big_map(nat, bytes);
+  const t_lambdas       : big_map(nat, bytes))
+                        : pool_f_storage_t is
+  block {
+    const default_token_id = 0n;
+    const pool = record [
+      initial_A_f         = a_constant * Constants.a_precision;
+      future_A_f          = a_constant * Constants.a_precision;
+      initial_A_time      = Tezos.now;
+      future_A_time       = Tezos.now;
+      tokens_info         = tokens_info;
+      fee                 = fees;
+      staker_accumulator  = record [
+                              accumulator_f = (map []: map(token_pool_idx_t, nat));
+                              total_staked  = 0n;
+                            ];
+      total_supply        = 0n;
+    ];
+
+    const pool_storage: storage_t = record[
+      admin               = Tezos.sender;
+      default_referral    = default_referral;
+      managers            = managers;
+      pools_count         = 1n;
+      tokens              = big_map[default_token_id -> tokens];
+      pool_to_id          = big_map[Bytes.pack(tokens) -> default_token_id];
+      pools               = big_map[default_token_id -> pool];
+      ledger              = (big_map[]: big_map((address * nat), nat));
+      token_metadata      = big_map[
+                              default_token_id -> record[
+                                token_id   = default_token_id;
+                                token_info = Constants.default_token_metadata
+                              ];
+                            ];
+      allowances          = (big_map[]: big_map((address * nat), allowances_data_t));
+      dev_rewards         = (big_map[]: big_map(token_t, nat));
+      referral_rewards    = (big_map[]: big_map((address * token_t), nat));
+      stakers_balance     = (big_map[]: big_map((address * pool_id_t), staker_info_t));
+      quipu_token         = quipu_token;
+      factory_address     = Tezos.self_address;
+      started             = False;
+    ];
+  } with record [
+      storage       = pool_storage;
+      metadata      = big_map[
+                      "" -> 0x74657a6f732d73746f726167653a646578;
+                      "dex" -> Constants.default_dex_metadata;
+                    ];
+      admin_lambdas = a_lambdas;
+      dex_lambdas   = (big_map[]: big_map(nat, bytes)); // too large for injection in one operation
+      token_lambdas = t_lambdas;
+    ]
