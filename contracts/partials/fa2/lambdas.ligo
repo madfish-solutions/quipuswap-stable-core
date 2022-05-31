@@ -5,7 +5,7 @@ function transfer_ep(
                         : full_return_t is
   case p of [
   | Transfer(params)  -> (Constants.no_operations, List.fold(iterate_transfer, params, s))
-  | _                 -> (Constants.no_operations, s)
+  | _                 -> unreachable(Unit)
   ]
 
 (* 2n *)
@@ -15,7 +15,7 @@ function update_operators(
                         : full_return_t is
   case p of [
   | Update_operators(params) -> (Constants.no_operations, List.fold(iterate_update_operator, params, s))
-  | _ -> (Constants.no_operations, s)
+  | _ -> unreachable(Unit)
   ]
 
 (* 3n *)
@@ -30,7 +30,7 @@ function update_token_metadata(
       require(s.storage.managers contains Tezos.sender, Errors.Dex.not_manager);
       s.storage.token_metadata[params.token_id] := params
     }
-    | _ -> skip
+    | _ -> unreachable(Unit)
     ]
   } with (operations, s)
 

@@ -28,7 +28,7 @@ function get_balance_of(
           params.callback
         ) # operations;
     }
-    | _                 -> skip
+    | _                 -> unreachable(Unit)
     ]
   } with (operations, s)
 
@@ -48,6 +48,6 @@ function total_supply_view(
         params.receiver
       ) # operations;
     }
-    | _ -> skip
+    | _ -> unreachable(Unit)
     ]
   } with (operations, s)

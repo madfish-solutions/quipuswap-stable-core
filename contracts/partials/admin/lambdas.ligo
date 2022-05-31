@@ -8,7 +8,7 @@ function add_rem_managers(
     Constants.no_operations,
     s with record [ managers = add_rem_candidate(params, s.managers) ]
   )
-  | _ -> (Constants.no_operations, s)
+  | _ -> unreachable(Unit)
   ]
 
 (* set default referral *)
@@ -18,7 +18,7 @@ function set_default_referral(
                         : return_t is
   case p of [
   | Set_default_referral(referral) -> (Constants.no_operations, s with record [ default_referral = referral ])
-  | _ -> (Constants.no_operations, s)
+  | _ -> unreachable(Unit)
   ]
 
 (* Sets admin of contract *)
@@ -28,7 +28,7 @@ function set_admin(
                         : return_t is
   case p of [
   | Set_admin(new_admin) -> (Constants.no_operations, s with record [ admin = new_admin ])
-  | _ -> (Constants.no_operations, s)
+  | _ -> unreachable(Unit)
   ]
 
 (* DEX admin methods *)
@@ -67,7 +67,7 @@ function ramp_A(
         future_A_time = params.future_time;
       ];
       }
-    | _ -> skip
+    | _ -> unreachable(Unit)
     ]
   } with (Constants.no_operations, s)
 
@@ -93,7 +93,7 @@ function stop_ramp_A(
         future_A_time = Tezos.now;
       ];
     }
-    | _ -> skip
+    | _ -> unreachable(Unit)
     ]
   } with (Constants.no_operations, s)
 
@@ -109,7 +109,7 @@ function set_fees(
       var pool := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
       s.pools[params.pool_id] := pool with record[ fee = params.fee ];
     }
-    | _ -> skip
+    | _ -> unreachable(Unit)
     ]
   } with (Constants.no_operations, s)
 
@@ -124,6 +124,7 @@ function claim_dev(
     var operations: list(operation) := Constants.no_operations;
     case p of [
     | Claim_developer(params) -> {
+      require(params.amount > 0n, Errors.Dex.zero_in);
       const dev_address = get_dev_address(s);
       require(Tezos.sender = dev_address, Errors.Dex.not_developer);
 
@@ -131,7 +132,6 @@ function claim_dev(
 
       s.dev_rewards[params.token] := nat_or_error(bal - params.amount, Errors.Dex.balance_overflow);
 
-      require(params.amount > 0n, Errors.Dex.zero_in);
 
       operations := typed_transfer(
         Tezos.self_address,
@@ -140,7 +140,7 @@ function claim_dev(
         params.token
       ) # operations;
     }
-    | _ -> skip
+    | _ -> unreachable(Unit)
     ]
   } with (operations, s)
 

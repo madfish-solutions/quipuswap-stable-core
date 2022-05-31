@@ -62,7 +62,7 @@ function swap(
         unwrap(tokens[i], Errors.Dex.no_token)
       ) # operations;
     }
-    | _ -> skip
+    | _ -> unreachable(Unit)
     ]
   } with (operations, s)
 
@@ -91,7 +91,7 @@ function invest_liquidity(
       operations := result.op;
       s := result.s;
     }
-    | _ -> skip
+    | _ -> unreachable(Unit)
     ]
   } with (operations, s)
 
@@ -146,7 +146,7 @@ function divest_liquidity(
       s.pools[params.pool_id] := pool;
       operations := res.op;
     }
-    | _                 -> skip
+    | _                 -> unreachable(Unit)
     ]
   } with (operations, s)
 
@@ -260,7 +260,7 @@ function divest_imbalanced(
       s.pools[params.pool_id] := pool;
       s.ledger[(Tezos.sender, params.pool_id)] := new_shares;
     }
-    | _ -> skip
+    | _ -> unreachable(Unit)
     ];
   } with (operations, s)
 
@@ -340,7 +340,7 @@ function divest_one_coin(
         ) # operations
       else skip;
     }
-    | _ -> skip
+    | _ -> unreachable(Unit)
     ];
   } with (operations, s)
 
@@ -368,7 +368,7 @@ function claim_ref(
         params.token
       ) # operations;
     }
-    | _ -> skip
+    | _ -> unreachable(Unit)
     ];
   } with (operations, s)
 
@@ -380,5 +380,5 @@ function stake(
                         : return_t is
   case p of [
   | Stake(params) -> update_stake(params, s)
-  | _ -> (Constants.no_operations, s)
+  | _ -> unreachable(Unit)
   ];

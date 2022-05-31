@@ -5,7 +5,7 @@ function set_dev_address(
                         : dev_storage_t is
   case p of [
   | Set_dev_address(new_dev) -> s with record [dev_address = new_dev]
-  | _ -> s
+  | _ -> unreachable(Unit)
   ]
 
 function set_dev_fee(
@@ -18,6 +18,6 @@ function set_dev_fee(
       require(fee < Constants.fee_denominator / 2n, Errors.Dex.fee_overflow);
       s.dev_fee_f := fee;
     }
-    | _ -> skip
+    | _ -> unreachable(Unit)
     ]
   } with s

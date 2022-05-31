@@ -76,6 +76,6 @@ function add_pool(
       operations := res.op;
       s := res.s;
     }
-    | _                 -> skip
+    | _                 -> unreachable(Unit)
     ]
   } with (operations, s)

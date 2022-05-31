@@ -1,3 +1,8 @@
+[@inline] function unreachable<t>(
+  const _               : unit)
+                        : t is
+  (failwith(Errors.Dex.unreachable): t)
+
 [@inline] function require(
   const param           : bool;
   const error           : string)
@@ -228,7 +233,7 @@ function get_token_by_id(
 #if !INSIDE_DEX
     | FDev    -> s.storage.dev_store.dev_lambdas := set_func_or_fail(params, Constants.dev_func_count,  s.storage.dev_store.dev_lambdas)
 #else
-    | _ -> skip
+    | _ -> unreachable(Unit)
 #endif
     ]
   } with s
