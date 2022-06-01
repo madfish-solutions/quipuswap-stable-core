@@ -63,6 +63,7 @@ function add_pool(
         initial_A_time  = Tezos.now;
         future_A_time   = Tezos.now;
         tokens_info     = tokens_info;
+        fee             = params.fees;
       ];
 
       const res = add_liq(record [
