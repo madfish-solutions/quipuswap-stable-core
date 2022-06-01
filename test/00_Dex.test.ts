@@ -441,7 +441,7 @@ describe("00. Standalone Dex", () => {
         const idx_map = mapTokensToIdx(tokens_map, tokens);
         const USDtz_amt = amounts.get(idx_map.USDtz);
         const in_amt = amounts.set(idx_map.USDtz, new BigNumber(0));
-        min_shares = min_shares.multipliedBy(2).dividedToIntegerBy(3);
+        //min_shares = min_shares.multipliedBy(2).dividedToIntegerBy(3);
         await TPool.PoolInvest.investLiquiditySuccessCase(
           dex,
           sender,
@@ -456,7 +456,7 @@ describe("00. Standalone Dex", () => {
           idx_map.USDtz,
           USDtz_amt
         );
-        min_shares = min_shares.dividedToIntegerBy(2);
+        //min_shares = min_shares.dividedToIntegerBy(2);
         await TPool.PoolInvest.investLiquiditySuccessCase(
           dex,
           sender,
@@ -523,7 +523,7 @@ describe("00. Standalone Dex", () => {
                 new BigNumber(idx_map[t_in]),
                 new BigNumber(idx_map[t_to]),
                 zero_amount,
-                new BigNumber(0),
+                new BigNumber(1),
                 new Date(Date.now() + 1000 * 60 * 60 * 24),
                 bobAddress,
                 referral,

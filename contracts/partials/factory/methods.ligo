@@ -25,7 +25,7 @@ function start_dex_func(
     );
     const param = record [
         pool_id    = 0n;
-        shares     = 0n;
+        shares     = 1n;
         in_amounts = amounts;
         deadline = Tezos.now + 300;
         receiver = Some(Tezos.sender);
