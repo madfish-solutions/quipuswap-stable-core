@@ -63,13 +63,11 @@ class StableSwapTest(TestCase):
         res = chain.execute(self.dex.swap(0, 0, 1, 10_000, 1, 0, None, None))
         trxs = parse_transfers(res)
         amount_bought = trxs[1]["amount"]
-        print('\n' + str(amount_bought))
         self.assertEqual(trxs[1]["destination"], me)
 
         res = chain.execute(self.dex.swap(0, 1, 0, amount_bought, 1, 0, None, None))
         trxs = parse_transfers(res)
         amount_bought = trxs[1]["amount"]
-        print(amount_bought)
 
         with self.assertRaises(MichelsonRuntimeError):
             res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=200_001, deadline=1, receiver=None))
