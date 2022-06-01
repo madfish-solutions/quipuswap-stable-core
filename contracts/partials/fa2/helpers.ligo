@@ -22,22 +22,18 @@
       const transfer    : transfer_fa2_dst_t)
                         : full_storage_t is
       block {
-        if transfer.amount > 0n // for gas efficiency skipping of zero transfers
-        then {
-          require(transfer.token_id < s.storage.pools_count, Errors.FA2.undefined);
-          const sender_key =  (user_trx_params.from_, transfer.token_id);
-          var sender_balance := unwrap_or(s.storage.ledger[sender_key], 0n);
-          var sender_allowance := get_allowances(sender_key, s.storage.allowances);
-          check_permissions(user_trx_params.from_, sender_allowance);
-          sender_balance := nat_or_error(sender_balance - transfer.amount, Errors.FA2.insufficient_balance);
-          s.storage.ledger[sender_key] := sender_balance;
+        require(transfer.token_id < s.storage.pools_count, Errors.FA2.undefined);
+        const sender_key =  (user_trx_params.from_, transfer.token_id);
+        var sender_balance := unwrap_or(s.storage.ledger[sender_key], 0n);
+        var sender_allowance := get_allowances(sender_key, s.storage.allowances);
+        check_permissions(user_trx_params.from_, sender_allowance);
+        sender_balance := nat_or_error(sender_balance - transfer.amount, Errors.FA2.insufficient_balance);
+        s.storage.ledger[sender_key] := sender_balance;
 
-          const dest_key = (transfer.to_, transfer.token_id);
-          var dest_account := unwrap_or(s.storage.ledger[dest_key], 0n);
-          dest_account := dest_account + transfer.amount;
-          s.storage.ledger[dest_key] := dest_account;
-        }
-        else skip
+        const dest_key = (transfer.to_, transfer.token_id);
+        var dest_account := unwrap_or(s.storage.ledger[dest_key], 0n);
+        dest_account := dest_account + transfer.amount;
+        s.storage.ledger[dest_key] := dest_account;
     } with s;
 } with List.fold(make_transfer, user_trx_params.txs, s)
 
