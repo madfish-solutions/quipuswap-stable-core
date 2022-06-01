@@ -317,8 +317,10 @@ function perform_swap(
     const rate_j_f  = t_j.rate_f;
     const x         = xp_i + ((dx * rate_i_f) / Constants.precision);
     const y         = get_y(i, j, x, xp, pool);
-    const dy        = nat_or_error(xp_j - y, Errors.Math.nat_error);  // -1 just in case there were some rounding errors
-  } with dy * Constants.precision / rate_j_f
+    var dy          := nat_or_error(xp_j - y, Errors.Math.nat_error);  // -1 just in case there were some rounding errors
+    dy := dy * Constants.precision / rate_j_f;
+    require(dy < t_i.reserves, Errors.Dex.low_reserves);
+  } with dy
 
 (* Adds liquidity to pool *)
 function add_liq(
