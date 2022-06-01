@@ -76,7 +76,7 @@ class StableStakingTest(TestCase):
         self.assertEqual(trxs[0]["destination"], me)
         self.assertEqual(trxs[0]["token_address"], quipu_token)
         
-        self.assertEqual(trxs[1]["amount"], 19)
+        self.assertEqual(trxs[1]["amount"], 20)
         self.assertEqual(trxs[1]["source"], contract_self_address)
         self.assertEqual(trxs[1]["destination"], me)
         self.assertEqual(trxs[1]["token_address"], token_b_address)

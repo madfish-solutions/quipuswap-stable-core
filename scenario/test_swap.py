@@ -63,20 +63,22 @@ class StableSwapTest(TestCase):
         res = chain.execute(self.dex.swap(0, 0, 1, 10_000, 1, 0, None, None))
         trxs = parse_transfers(res)
         amount_bought = trxs[1]["amount"]
+        print('\n' + str(amount_bought))
         self.assertEqual(trxs[1]["destination"], me)
 
         res = chain.execute(self.dex.swap(0, 1, 0, amount_bought, 1, 0, None, None))
-
+        trxs = parse_transfers(res)
+        amount_bought = trxs[1]["amount"]
+        print(amount_bought)
 
         with self.assertRaises(MichelsonRuntimeError):
             res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=200_001, deadline=1, receiver=None))
-
         res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=200_000, deadline=1, receiver=None))
         
         transfers = parse_transfers(res)
         # TODO in isn't precise enough
         self.assertGreaterEqual(transfers[0]["amount"], 100_000) 
-        self.assertGreaterEqual(transfers[1]["amount"], 100_000)
+        self.assertAlmostEqual(transfers[1]["amount"], 100_000, delta=1)
 
         res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=200_000, deadline=1, receiver=None), sender=admin)
 
@@ -171,7 +173,7 @@ class StableSwapTest(TestCase):
 
         transfers = parse_transfers(res)
         token_out = next(v for v in transfers if v["destination"] == me)
-        self.assertEqual(token_out["amount"], 1)
+        self.assertEqual(token_out["amount"], 2)
 
     def test_huge_amounts(self):
         chain = LocalChain(storage=self.init_storage)
@@ -507,13 +509,11 @@ class StableSwapTest(TestCase):
                 all_shares = get_shares(res, 0, me)
                 with self.assertRaises(MichelsonRuntimeError):
                     res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out=min_amounts, shares=all_shares + 1, deadline=1, receiver=None))
-
                 res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out=min_amounts, shares=all_shares, deadline=1, receiver=None))
-
                 transfers = parse_transfers(res)
                 self.assertEqual(len(transfers), n_coins)
                 for i in range(n_coins):
-                    self.assertAlmostEqual(transfers[i]["amount"], 100_000)
+                    self.assertAlmostEqual(transfers[i]["amount"], 100_000, delta=1)
 
     def test_no_more_than_four_coins_per_pool(self):
         chain = LocalChain(storage=self.init_storage)

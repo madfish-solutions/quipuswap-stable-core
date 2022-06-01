@@ -66,11 +66,12 @@ function get_D(
       block {
         const d_const = tmp.d;
         function count_D_P(
-          const accum   : nat;
+          const accum   : nat * nat;
           const i       : token_pool_idx_t * nat)
-                        : nat is
-          accum * d_const / (i.1 * tokens_count);
-        const d_P = Map.fold(count_D_P, xp, tmp.d);
+                        : nat * nat is
+          (accum.0 * d_const, accum.1 * (i.1 * tokens_count));
+        const counted = Map.fold(count_D_P, xp, (tmp.d, 1n));
+        const d_P = counted.0 / counted.1;
         tmp.prev_d := tmp.d;
         tmp.d := (a_nn_f * sum_c / Constants.a_precision + d_P * tokens_count) * tmp.d / (
           nat_or_error(a_nn_f - Constants.a_precision, Errors.Dex.wrong_precision) * tmp.d / Constants.a_precision + (tokens_count + 1n) * d_P
@@ -100,7 +101,7 @@ function calc_y(
                         : nat is
   block {
     const tokens_count = Map.size(pool.tokens_info);
-    c := c * d * Constants.a_precision / (a_nn_f * tokens_count);
+    c := ceil_div(c * d * Constants.a_precision, (a_nn_f * tokens_count));
     const b: nat = s_ + d * Constants.a_precision / a_nn_f;
     var tmp := record [ y = d; prev_y = 0n; ];
     while abs(tmp.y - tmp.prev_y) > 1n
@@ -134,9 +135,9 @@ function get_y(
     const d = get_D(xp, amp_f);
 
     function prepare_params(
-      var accum         : record [ s_: nat; c: nat; ];
+      var accum         : record [ s_: nat; c: nat * nat; ];
       const entry       : nat * nat)
-                        : record [ s_: nat; c: nat; ] is
+                        : record [ s_: nat; c: nat * nat; ] is
     block {
       var   _x  : nat := 0n;
       const iter: nat = entry.0;
@@ -146,13 +147,15 @@ function get_y(
         then _x := x
         else _x := entry.1;
         accum.s_ := accum.s_ + _x;
-        accum.c := accum.c * d / (_x * tokens_count);
+        accum.c.0 := accum.c.0 * d;
+        accum.c.1 := accum.c.1 * (_x * tokens_count);
       }
       else skip;
     } with accum;
 
-    const res = Map.fold(prepare_params, xp, record[ s_ = 0n; c = d; ]);
-  } with calc_y(res.c, a_nn_f, res.s_, d, s)
+    const res = Map.fold(prepare_params, xp, record[ s_ = 0n; c = (d, 1n); ]);
+    const c = ceil_div(res.c.0, res.c.1);
+  } with calc_y(c, a_nn_f, res.s_, d, s)
 
 (*
   Calculate x[i] if one reduces D from being calculated for xp to D
@@ -177,9 +180,9 @@ function get_y_D(
     const a_nn_f = amp_f * tokens_count;
 
     function prepare_params(
-      var accum           : record[ s_: nat; c: nat; ];
+      var accum           : record[ s_: nat; c: nat * nat; ];
       const entry       : nat * nat)
-                        : record[ s_: nat; c: nat; ] is
+                        : record[ s_: nat; c: nat * nat; ] is
     block{
       var   _x := 0n;
       const iter = entry.0;
@@ -187,13 +190,15 @@ function get_y_D(
           then {
           _x := entry.1;
           accum.s_ := accum.s_ + _x;
-          accum.c := accum.c * d / (_x * tokens_count);
+          accum.c.0 := accum.c.0 * d;
+          accum.c.1 := accum.c.1 * (_x * tokens_count);
         }
         else skip;
     } with accum;
 
-    const res = Map.fold(prepare_params, xp, record[ s_ = 0n; c = d; ]);
-  } with calc_y(res.c, a_nn_f, res.s_, d, s)
+    const res = Map.fold(prepare_params, xp, record[ s_ = 0n; c = (d, 1n); ]);
+    const c = ceil_div(res.c.0, res.c.1);
+  } with calc_y(c, a_nn_f, res.s_, d, s)
 
 function calc_withdraw_one_coin(
     const amp_f         : nat;
@@ -221,17 +226,20 @@ function calc_withdraw_one_coin(
         if key = i
         then dx_expected := nat_or_error((value * d1 / d0) - new_y, Errors.Math.nat_error)
         else dx_expected := nat_or_error(value - (value * d1 / d0), Errors.Math.nat_error);
-        const reduced = nat_or_error(value - dx_expected * divide_fee_for_balance(base_fee_f, tokens_count) / Constants.fee_denominator, Errors.Math.nat_error);
+        const reduced = nat_or_error(
+          value - dx_expected * divide_fee_for_balance(base_fee_f, tokens_count) / Constants.fee_denominator,
+          Errors.Math.nat_error
+        );
     } with reduced;
 
     const xp_reduced = Map.map(reduce_xp, xp);
     const xp_red_i = unwrap(xp_reduced[i], Errors.Dex.wrong_index);
     var dy := nat_or_error(xp_red_i - get_y_D(amp_f, i, xp_reduced, d1, pool), Errors.Math.nat_error);
     const t_i = unwrap(pool.tokens_info[i], Errors.Dex.wrong_index);
+    require(dy < t_i.reserves, Errors.Dex.low_reserves);
     const precisions_i =  t_i.precision_multiplier_f;
     const xp_i = unwrap(xp[i], Errors.Dex.wrong_index);
-
-    dy := nat_or_error(dy - 1, Errors.Math.nat_error) / precisions_i;  //# Withdraw less to account for rounding errors
+    dy := dy / precisions_i;
 
     const dy_0 = nat_or_error(xp_i - new_y, Errors.Math.nat_error) / precisions_i;  //# w/o s.fee
 
@@ -309,7 +317,7 @@ function perform_swap(
     const rate_j_f  = t_j.rate_f;
     const x         = xp_i + ((dx * rate_i_f) / Constants.precision);
     const y         = get_y(i, j, x, xp, pool);
-    const dy        = nat_or_error(xp_j - y - 1, Errors.Math.nat_error);  // -1 just in case there were some rounding errors
+    const dy        = nat_or_error(xp_j - y, Errors.Math.nat_error);  // -1 just in case there were some rounding errors
   } with dy * Constants.precision / rate_j_f
 
 (* Adds liquidity to pool *)

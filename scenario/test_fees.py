@@ -150,7 +150,7 @@ class StableSwapTest(TestCase):
         res = chain.execute(swap)
 
         transfers = parse_transfers(res)
-        self.assertEqual(transfers[1]["amount"], 1)
+        self.assertEqual(transfers[1]["amount"], 2)
 
         res = chain.execute(self.dex.stake(remove=dict(pool_id=0, amount=20)), sender=bob)
         trxs = parse_transfers(res)

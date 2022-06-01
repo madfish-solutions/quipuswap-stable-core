@@ -69,7 +69,6 @@ class DivestsTest(TestCase):
         print(transfers[0]["amount"])
         all_shares = get_shares(res, 0, admin)
         self.assertEqual(all_shares, 0)
-
         res = chain.execute(self.dex.swap(0, 0, 2, 100, 1, 0, None, None))
         transfers = parse_transfers(res) 
         self.assertEqual(transfers[0]["amount"], 100)
@@ -82,7 +81,7 @@ class DivestsTest(TestCase):
         self.assertEqual(transfers[0]["amount"], 100)
 
         # at this point the price is almost back to normal
-        self.assertAlmostEqual(transfers[1]["amount"], 100, delta=10)
+        self.assertAlmostEqual(transfers[1]["amount"], 100, delta=11)
 
         invest = self.dex.invest(pool_id=0, shares=1, in_amounts={0: 100, 1: 100, 2: 100}, deadline=1, receiver=None, referral=None)
         res = chain.interpret(invest)
