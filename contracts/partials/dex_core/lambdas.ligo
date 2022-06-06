@@ -303,8 +303,17 @@ function divest_one_coin(
       else skip;
       const dev_fee = result.dy_fee * dev_fee_f / all_fee_f;
       const ref_fee = result.dy_fee * pool.fee.ref_f / all_fee_f;
-      const staker_fee = result.dy_fee * pool.fee.stakers_f / all_fee_f;
-
+      var staker_fee := result.dy_fee * pool.fee.stakers_f / all_fee_f;
+      if pool.staker_accumulator.total_staked > 0n
+      then {
+        pool.staker_accumulator.total_fees[params.token_index] := unwrap_or(pool.staker_accumulator.total_fees[params.token_index], 0n) + staker_fee;
+        pool.staker_accumulator.accumulator_f[params.token_index] :=
+        unwrap_or(
+          pool.staker_accumulator.accumulator_f[params.token_index],
+          0n
+        ) + staker_fee * Constants.accum_precision / pool.staker_accumulator.total_staked;
+      }
+      else staker_fee := 0n;
 
       var info := nip_fees_off_reserves(
         staker_fee,
@@ -317,17 +326,6 @@ function divest_one_coin(
       pool.tokens_info[params.token_index] := info;
 
       const account_bal = unwrap_or(s.ledger[sender_key], 0n);
-
-      if pool.staker_accumulator.total_staked > 0n
-      then {
-        pool.staker_accumulator.total_fees[params.token_index] := unwrap_or(pool.staker_accumulator.total_fees[params.token_index], 0n) + staker_fee;
-        pool.staker_accumulator.accumulator_f[params.token_index] :=
-        unwrap_or(
-          pool.staker_accumulator.accumulator_f[params.token_index],
-          0n
-        ) + staker_fee * Constants.accum_precision / pool.staker_accumulator.total_staked;
-      }
-      else skip;
 
       s.ledger[sender_key] := unwrap(is_nat(account_bal - params.shares), Errors.FA2.insufficient_balance);
       s.dev_rewards[token] := unwrap_or(s.dev_rewards[token], 0n) + dev_fee;
