@@ -43,16 +43,20 @@ module.exports = async (tezos: TezosToolkit, network: NetworkLiteral) => {
       if (value.token.fa12)
         asset = await TokenFA12.init(tezos, value.token.fa12);
       else asset = await TokenFA2.init(tezos, value.token.fa2.token_address);
+      const reserves = new BigNumber(value.reserves).multipliedBy(
+        value.precision
+      );
       const approve = await asset.approve(
         factory.address,
-        tokensAmount.multipliedBy(value.precision),
-        value.token.fa2 ? value.token.fa2.token_id : "0"
+        reserves,
+        value.token.fa2 !== undefined ? value.token.fa2.token_id : "0"
       );
       console.log(
         "Token ",
-        asset.contract.address + value.token.fa2
-          ? ":" + value.token.fa2.token_id
-          : "",
+        asset.contract.address +
+          (value.token.fa2 !== undefined
+            ? ":" + value.token.fa2?.token_id
+            : ""),
         " approved"
       );
       tokens_info.set(index, {
@@ -61,7 +65,7 @@ module.exports = async (tezos: TezosToolkit, network: NetworkLiteral) => {
       });
       inputs.set(index, {
         token: value.token,
-        value: tokensAmount.multipliedBy(value.precision),
+        value: reserves,
       });
     }
     let op = await factory.methodsObject
@@ -87,13 +91,14 @@ module.exports = async (tezos: TezosToolkit, network: NetworkLiteral) => {
       const approve = await asset.approve(
         factory.address,
         new BigNumber(0),
-        value.token.fa2 ? value.token.fa2.token_id : "0"
+        value.token.fa2 !== undefined ? value.token.fa2.token_id : "0"
       );
       console.log(
         "Token ",
-        asset.contract.address + value.token.fa2
-          ? ":" + value.token.fa2.token_id
-          : "",
+        asset.contract.address +
+          (value.token.fa2 !== undefined
+            ? ":" + value.token.fa2?.token_id
+            : ""),
         " disapproved"
       );
     }
