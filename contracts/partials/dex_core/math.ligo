@@ -107,7 +107,7 @@ function calc_y(
     while abs(tmp.y - tmp.prev_y) > 1n
       block {
         tmp.prev_y := tmp.y;
-        tmp.y := (tmp.y * tmp.y + c) / nat_or_error(2 * tmp.y + b - d, Errors.Math.nat_error);
+        tmp.y := ceil_div((tmp.y * tmp.y + c), nat_or_error(2 * tmp.y + b - d, Errors.Math.nat_error));
       }
   } with tmp.y
 
@@ -319,7 +319,7 @@ function perform_swap(
     const y         = get_y(i, j, x, xp, pool);
     var dy          := nat_or_error(xp_j - y, Errors.Math.nat_error);  // -1 just in case there were some rounding errors
     dy := dy * Constants.precision / rate_j_f;
-    require(dy < t_i.reserves, Errors.Dex.low_reserves);
+    require(dy < t_j.reserves, Errors.Dex.low_reserves);
   } with dy
 
 (* Adds liquidity to pool *)

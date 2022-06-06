@@ -171,7 +171,7 @@ class StableSwapTest(TestCase):
 
         transfers = parse_transfers(res)
         token_out = next(v for v in transfers if v["destination"] == me)
-        self.assertEqual(token_out["amount"], 2)
+        self.assertEqual(token_out["amount"], 1)
 
     def test_huge_amounts(self):
         chain = LocalChain(storage=self.init_storage)
@@ -254,12 +254,12 @@ class StableSwapTest(TestCase):
 
         res = chain.execute(self.dex.invest(pool_id=0, shares=1, in_amounts={0: 2, 1: 2}, deadline=1, receiver=None, referral=None))
 
-        res = chain.execute(self.dex.swap(0, 0, 1, 2, 1, 0, None, None))
+        res = chain.execute(self.dex.swap(0, 0, 1, 3, 1, 0, None, None))
 
         res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=4, deadline=1, receiver=None))
         transfers = parse_transfers(res) 
         self.assertLessEqual(transfers[0]["amount"], 2)
-        self.assertLessEqual(transfers[1]["amount"], 2)
+        self.assertLessEqual(transfers[1]["amount"], 3)
 
     def test_simple_divest_all(self):
         chain = LocalChain(storage=self.init_storage)
