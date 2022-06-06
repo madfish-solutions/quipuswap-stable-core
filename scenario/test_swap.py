@@ -66,8 +66,6 @@ class StableSwapTest(TestCase):
         self.assertEqual(trxs[1]["destination"], me)
 
         res = chain.execute(self.dex.swap(0, 1, 0, amount_bought, 1, 0, None, None))
-        trxs = parse_transfers(res)
-        amount_bought = trxs[1]["amount"]
 
         with self.assertRaises(MichelsonRuntimeError):
             res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=200_001, deadline=1, receiver=None))
@@ -76,7 +74,7 @@ class StableSwapTest(TestCase):
         transfers = parse_transfers(res)
         # TODO in isn't precise enough
         self.assertGreaterEqual(transfers[0]["amount"], 100_000) 
-        self.assertAlmostEqual(transfers[1]["amount"], 100_000, delta=1)
+        self.assertGreaterEqual(transfers[1]["amount"], 100_000)
 
         res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=200_000, deadline=1, receiver=None), sender=admin)
 
@@ -511,7 +509,7 @@ class StableSwapTest(TestCase):
                 transfers = parse_transfers(res)
                 self.assertEqual(len(transfers), n_coins)
                 for i in range(n_coins):
-                    self.assertAlmostEqual(transfers[i]["amount"], 100_000, delta=1)
+                    self.assertAlmostEqual(transfers[i]["amount"], 100_000)
 
     def test_no_more_than_four_coins_per_pool(self):
         chain = LocalChain(storage=self.init_storage)
