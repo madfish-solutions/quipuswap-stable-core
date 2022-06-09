@@ -103,7 +103,10 @@
         const pool = unwrap(s.storage.pools[params.pool_id], Errors.Dex.pool_not_listed);
         const pool_accumulator_f = pool.staker_accumulator.accumulator_f;
         const key = (params.user, params.pool_id);
-        const info = unwrap(s.storage.stakers_balance[key], Errors.Dex.pool_not_listed);
+        const info = unwrap_or(s.storage.stakers_balance[key], record [
+            balance = 0n;
+            earnings = (map[] : map(nat , account_reward_t))
+          ]);
         function get_rewards(
           const key     : token_pool_idx_t;
           const value   : account_reward_t)
