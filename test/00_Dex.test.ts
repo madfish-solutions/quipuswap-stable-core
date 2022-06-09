@@ -811,7 +811,7 @@ describe("00. Standalone Dex", () => {
           dex,
           {
             pool_id: pool_id,
-            token_amount: new BigNumber(10).pow(18).times(100),
+            token_amount: new BigNumber(10).pow(18),
             i: new BigNumber(map_tokens_idx.uUSD),
           },
           map_tokens_idx

@@ -101,7 +101,7 @@ export async function calcDivestOneSuccessCase(
   map_tokens_idx: IndexMap
 ) {
   const base = params.token_amount.dividedBy(new BigNumber(10).pow(18));
-  const expected = base.minus(base.multipliedBy(5).dividedBy(10000)).toNumber(); // in case of unbalanced pool shoul be calculated based on reserves proportion.
+  const expected = base.minus(base.multipliedBy(5).dividedBy(10000)).toNumber(); // in case of unbalanced pool should be calculated based on reserves proportion.
   const value = (await dex.contract.contractViews
     .calc_divest_one_coin(params)
     .executeView({ viewCaller: accounts["alice"].pkh })) as BigNumber;
