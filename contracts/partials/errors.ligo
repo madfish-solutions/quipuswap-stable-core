@@ -18,6 +18,8 @@ module Dex is {
   const not_started               : string = "not-started";
   const pool_listed               : string = "pool-exist";
   const pool_not_listed           : string = "not-launched";
+  const reserves_drained            : string = "zero-reserves-when-positive-shares";
+  const supply_drained            : string = "positive-reserves-when-zero-shares";
   const time_expired              : string = "time-expired";
   const timestamp_error           : string = "timestamp-error";
   const unknown_func              : string = "function-not-set";

@@ -229,3 +229,18 @@ function get_pool_info(
   const tokens_info     : map(token_pool_idx_t, token_info_t))
                         : token_info_t is
   unwrap(tokens_info[key], Errors.Dex.no_token_info)
+
+function check_shares_and_reserves(
+  const pool            : pool_t)
+                        : unit is
+  block {
+    function sum(
+          const acc     : nat;
+          const value   : token_pool_idx_t * token_info_t)
+                        : nat is acc + value.1.reserves;
+    const reserves_sum = Map.fold(sum, pool.tokens_info, 0n);
+  } with if pool.total_supply = 0n and reserves_sum > 0n
+      then failwith(Errors.Dex.supply_drained)
+    else if pool.total_supply > 0n and reserves_sum = 0n
+      then failwith(Errors.Dex.reserves_drained)
+    else Unit;

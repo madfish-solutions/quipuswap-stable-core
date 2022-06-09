@@ -260,8 +260,9 @@ function divest_imbalanced(
       patch pool with record [
         staker_accumulator = balanced.staker_accumulator;
         tokens_info = balanced.tokens_info;
-        total_supply = nat_or_error(pool.total_supply - burn_amount, Errors.Math.nat_error);
+        total_supply = nat_or_error(token_supply - burn_amount, Errors.Math.nat_error);
       ];
+      check_shares_and_reserves(pool);
       s.pools[params.pool_id] := pool;
       s.ledger[(Tezos.sender, params.pool_id)] := new_shares;
     }
@@ -324,7 +325,9 @@ function divest_one_coin(
 
       info.reserves := nat_or_error(info.reserves - result.dy, Errors.Dex.low_reserves);
       pool.tokens_info[params.token_index] := info;
-
+      pool.total_supply := result.ts;
+      check_shares_and_reserves(pool);
+      s.pools[params.pool_id] := pool;
       const account_bal = unwrap_or(s.ledger[sender_key], 0n);
 
       s.ledger[sender_key] := unwrap(is_nat(account_bal - params.shares), Errors.FA2.insufficient_balance);
@@ -333,9 +336,6 @@ function divest_one_coin(
       const referral: address = unwrap_or(params.referral, s.default_referral);
 
       s.referral_rewards[(referral, token)] := unwrap_or(s.referral_rewards[(referral, token)], 0n) + ref_fee;
-      s.pools[params.pool_id] := pool with record [
-        total_supply  = result.ts;
-      ];
 
       const receiver = unwrap_or(params.receiver, Tezos.sender);
 
