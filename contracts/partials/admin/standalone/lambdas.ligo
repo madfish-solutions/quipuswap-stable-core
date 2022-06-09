@@ -7,10 +7,10 @@ function add_pool(
                         : return_t is
   block {
     var operations: list(operation) := Constants.no_operations;
-    case p of
+    case p of [
     | Add_pool(params) -> {
       (* Params check *)
-      const n_tokens = Set.size(params.input_tokens);
+      const n_tokens = Set.cardinal(params.input_tokens);
 
       require(
         n_tokens <= Constants.max_tokens_count
@@ -18,6 +18,8 @@ function add_pool(
         and n_tokens = Map.size(params.tokens_info),
         Errors.Dex.wrong_tokens_count
       );
+      require((params.a_constant > 0n) and (Constants.max_a >= params.a_constant), Errors.Dex.a_limit);
+      require(sum_all_fee(params.fees, 0n) < Constants.fee_denominator / 2n, Errors.Dex.fee_overflow);
 
       const result: tmp_tokens_map_t = Set.fold(get_tokens_from_param, params.input_tokens, default_tmp_tokens);
 
@@ -25,9 +27,9 @@ function add_pool(
       const token_bytes : bytes = Bytes.pack(tokens);
       var (pool_i, token_id) := get_pool_info(token_bytes, s.pools_count, s.pool_to_id, s.pools);
 
+      require(pool_i.total_supply = 0n, Errors.Dex.pool_listed);
       s.tokens[token_id] := tokens;
 
-      require(pool_i.total_supply = 0n, Errors.Dex.pool_listed);
 
       if s.pools_count = token_id
       then {
@@ -39,8 +41,6 @@ function add_pool(
         s.pools_count := s.pools_count + 1n;
       }
       else skip;
-
-      require(Constants.max_a >= params.a_constant, Errors.Dex.a_limit);
 
       function separate_inputs(
         var accum       : map(token_pool_idx_t, token_info_t) * map(token_pool_idx_t, nat);
@@ -63,6 +63,7 @@ function add_pool(
         initial_A_time  = Tezos.now;
         future_A_time   = Tezos.now;
         tokens_info     = tokens_info;
+        fee             = params.fees;
       ];
 
       const res = add_liq(record [
@@ -76,6 +77,6 @@ function add_pool(
       operations := res.op;
       s := res.s;
     }
-    | _                 -> skip
-    end
+    | _                 -> unreachable(Unit)
+    ]
   } with (operations, s)

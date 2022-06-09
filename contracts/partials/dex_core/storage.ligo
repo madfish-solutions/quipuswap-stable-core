@@ -10,6 +10,7 @@ type staker_info_t      is [@layout:comb] record [
 
 type staker_accum_t     is [@layout:comb] record [
   accumulator_f           : map(token_pool_idx_t, nat);
+  total_fees              : map(token_pool_idx_t, nat);
   total_staked            : nat;
 ]
 

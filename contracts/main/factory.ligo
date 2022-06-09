@@ -23,7 +23,7 @@ function main(
   var s                 : full_storage_t)
                         : fact_return_t is
   block {
-    case p of
+    case p of [
     | Set_init_function(params)   -> s.init_func          := set_init_function(params, s)
     | Set_dev_function(params)    -> s                    := set_function(FDev,    params, s)
     | Set_admin_function(params)  -> s                    := set_function(FAdmin,  params, s)
@@ -31,10 +31,10 @@ function main(
     | Set_token_function(params)  -> s                    := set_function(FToken,  params, s)
     | Use_dev(params)             -> s.storage.dev_store  := call_dev(params, s.storage.dev_store)
     | _ -> skip
-    end
-  } with case p of
+    ]
+  } with case p of [
     | Add_pool(params)            -> run_init_func(params, s)
     | Start_dex(params)           -> start_dex_func(params, s)
     | Use_factory(params)         -> use_factory(params, s)
     | _                           -> (Constants.no_operations, s)
-    end
+    ]

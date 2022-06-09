@@ -19,6 +19,7 @@ type init_param_t       is [@layout:comb] record [
   a_constant              : nat;
   input_tokens            : set(token_t);
   tokens_info             : map(token_pool_idx_t, token_info_t);
+  fees                    : fees_storage_t
 ]
 #endif
 

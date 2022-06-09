@@ -12,7 +12,7 @@ based on the argument type.
 #if FACTORY
     require(s.storage.started, Errors.Dex.not_started);
 #endif
-    const idx : nat = case p of
+    const idx : nat = case p of [
     (* Base actions *)
     | Swap(_)                 -> 0n
     | Invest(_)               -> 1n
@@ -23,7 +23,7 @@ based on the argument type.
     | Claim_referral(_)       -> 5n
     (* QUIPU stakers *)
     | Stake(_)                -> 6n
-    end;
+    ];
 
     const lambda_bytes : bytes = unwrap(s.dex_lambdas[idx], Errors.Dex.unknown_func);
     const func: dex_func_t = unwrap((Bytes.unpack(lambda_bytes) : option(dex_func_t)), Errors.Dex.wrong_use_function);
@@ -36,10 +36,10 @@ based on the argument type.
   const p               : user_action_t;
   var s                 : full_storage_t)
                         : full_return_t is
-  case p of
+  case p of [
   | Use_dex(params)   -> call_dex(params, s)
   | Use_token(params) -> call_token(params, s)
-  end
+  ]
 
 #if FACTORY
 [@inline] function factory_action(
@@ -48,9 +48,9 @@ based on the argument type.
                         : full_storage_t is
   block {
     assert(Tezos.sender = s.storage.factory_address);
-    case p of
+    case p of [
     | Copy_dex_function(lambda)   -> s.dex_lambdas := lambda
     | Freeze -> s.storage.started := not s.storage.started
-    end
+    ]
   } with s
 #endif
