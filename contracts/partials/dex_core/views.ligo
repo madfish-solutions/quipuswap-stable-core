@@ -96,17 +96,13 @@
                         : list(staker_info_res_t) is
   block {
     function look_up_info(
-      const params      : staker_info_req_t;
-      const l           : list(staker_info_res_t))
-                        : list(staker_info_res_t) is
+      const params      : staker_info_req_t)
+                        : staker_info_res_t is
       block {
         const pool = unwrap(s.storage.pools[params.pool_id], Errors.Dex.pool_not_listed);
         const pool_accumulator_f = pool.staker_accumulator.accumulator_f;
         const key = (params.user, params.pool_id);
-        const info = unwrap_or(s.storage.stakers_balance[key], record [
-            balance = 0n;
-            earnings = (map[] : map(nat , account_reward_t))
-          ]);
+        const info = unwrap_or(s.storage.stakers_balance[key], default_staker_info);
         function get_rewards(
           const key     : token_pool_idx_t;
           const value   : account_reward_t)
@@ -116,22 +112,15 @@
             const new_former_f = info.balance * pool_accum_f;
             const reward_amt = (value.reward_f + abs(new_former_f - value.former_f)) / Constants.accum_precision;
           } with reward_amt;
-        const rew_info: staker_res = record[
+        const rew_info: staker_res = record [
             balance = info.balance;
             rewards = Map.map(get_rewards, info.earnings);
           ];
-        const response : staker_info_res_t = record [
+      } with record [
           request = params;
           info    = rew_info;
         ];
-      } with response # l;
-
-    const response : list(staker_info_res_t) = List.fold_right(
-      look_up_info,
-      requests,
-      (nil : list(staker_info_res_t))
-    );
-  } with response
+  } with List.map(look_up_info, requests)
 
 [@view] function get_referral_rewards(
   const requests        : list(ref_rew_req_t);
