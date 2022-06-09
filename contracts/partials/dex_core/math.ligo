@@ -273,6 +273,7 @@ function balance_inputs(
         if accum.staker_accumulator.total_staked =/= 0n
         then {
           to_stakers := diff * divide_fee_for_balance(fees.stakers_f, tokens_count) / Constants.fee_denominator;
+          accum.staker_accumulator.total_fees[i] := unwrap_or(accum.staker_accumulator.total_fees[i], 0n) + to_stakers;
           accum.staker_accumulator.accumulator_f[i] := unwrap_or(accum.staker_accumulator.accumulator_f[i], 0n) + to_stakers * Constants.accum_precision / accum.staker_accumulator.total_staked;
         }
         else to_lp := to_lp + diff * divide_fee_for_balance(fees.stakers_f, tokens_count) / Constants.fee_denominator;

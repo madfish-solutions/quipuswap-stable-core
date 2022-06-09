@@ -131,6 +131,7 @@ function form_pool_storage(
       fee                 = fees;
       staker_accumulator  = record [
                               accumulator_f = (map []: map(token_pool_idx_t, nat));
+                              total_fees    = (map []: map(token_pool_idx_t, nat));
                               total_staked  = 0n;
                             ];
       total_supply        = 0n;
