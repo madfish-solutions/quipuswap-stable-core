@@ -9,17 +9,17 @@ const metadata = MichelsonMap.fromLiteral({
   ssDEXFactory: Buffer.from(
     JSON.stringify({
       name: "QuipuSwap Stable DEX Factory",
-      version: "v1.0.0",
+      version: "v0.5.0",
       description:
         "Factory that provides DEX-as-a-Service liquidity pools for swap tokens with low slippage",
       authors: ["Madfish.Solutions <https://www.madfish.solutions>"],
       source: {
         tools: ["Ligo", "Flextesa"],
         location:
-          "https://github.com/madfish-solutions/quipuswap-stable-core/blob/main/contracts/main/dex.ligo",
+          "https://github.com/madfish-solutions/quipuswap-stable-core/blob/v0.5.0/contracts/main/factory.ligo",
       },
-      homepage: "https://quipuswap.com",
-      interfaces: ["TZIP-16"],
+      homepage: "https://quipuswap.com/stableswap",
+      interfaces: ["TZIP-016"],
       errors: [],
       views: [],
     }),
