@@ -8,12 +8,12 @@
     require(s.storage.started, Errors.Dex.not_started);
 #endif
 
-    case p of
+    case p of [
     | Claim_developer(_) -> skip // Claim_developer has own inner check for developer address
     | _ -> require(Tezos.sender = s.storage.admin, Errors.Dex.not_contract_admin)
-    end;
+    ];
 
-    const idx : nat = case p of
+    const idx : nat = case p of [
     | Add_rem_managers(_) -> 0n
     | Set_admin(_)        -> 1n
     (* Admin actions *)
@@ -25,7 +25,7 @@
 #if !FACTORY
     | Add_pool(_)             -> 7n
 #endif
-    end;
+    ];
 
     const lambda_bytes : bytes = unwrap(s.admin_lambdas[idx], Errors.Dex.unknown_func);
     const func: admin_func_t = unwrap((Bytes.unpack(lambda_bytes) : option(admin_func_t)), Errors.Dex.wrong_use_function);

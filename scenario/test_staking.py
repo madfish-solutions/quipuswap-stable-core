@@ -36,7 +36,7 @@ class StableStakingTest(TestCase):
     def test_basic_stake_unstake(self):
         chain = LocalChain(storage=self.init_storage)
 
-        add_pool = self.dex.add_pool(100_000, [token_a, token_b], form_pool_rates(1_000_000, 1_000_000))
+        add_pool = self.dex.add_pool(100_000, [token_a, token_b], form_pool_rates(1_000_000, 1_000_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         res = chain.execute(add_pool, sender=admin)
         
         res = chain.execute(self.dex.stake(add = { 'pool_id': 0, 'amount': 20 }))
@@ -60,7 +60,7 @@ class StableStakingTest(TestCase):
     def test_get_staking_reward(self):
         chain = LocalChain(storage=self.init_storage)
 
-        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100_000_000, 100_000_000))
+        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100_000_000, 100_000_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         res = chain.execute(add_pool, sender=admin)
         res = chain.execute(self.dex.set_fees(0, fees), sender=admin)
 
@@ -93,7 +93,7 @@ class StableStakingTest(TestCase):
     def test_get_staking_reward_all(self):
         chain = LocalChain(storage=self.init_storage)
 
-        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c], form_pool_rates(100_000_000, 100_000_000, 100_000_000))
+        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c], form_pool_rates(100_000_000, 100_000_000, 100_000_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         res = chain.execute(add_pool, sender=admin)
         res = chain.execute(self.dex.set_fees(0, fees), sender=admin)
 
@@ -124,7 +124,7 @@ class StableStakingTest(TestCase):
     def test_staking_proportions(self):
         chain = LocalChain(storage=self.init_storage)
 
-        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100_000_000, 100_000_000))
+        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100_000_000, 100_000_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         res = chain.execute(add_pool, sender=admin)
         res = chain.execute(self.dex.set_fees(0, fees), sender=admin)
 
@@ -163,7 +163,7 @@ class StableStakingTest(TestCase):
     def test_stake_in_between_swaps(self):
         chain = LocalChain(storage=self.init_storage)
 
-        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100_000_000, 100_000_000))
+        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100_000_000, 100_000_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         chain.execute(add_pool, sender=admin)
         chain.execute(self.dex.set_fees(0, fees), sender=admin)
 
@@ -186,7 +186,7 @@ class StableStakingTest(TestCase):
     def test_stake_zero(self):
         chain = LocalChain(storage=self.init_storage)
 
-        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100_000_000, 100_000_000))
+        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100_000_000, 100_000_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         chain.execute(add_pool, sender=admin)
         chain.execute(self.dex.set_fees(0, fees), sender=admin)
 

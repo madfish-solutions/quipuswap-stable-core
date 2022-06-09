@@ -49,8 +49,7 @@ function main(
   var s                 : full_storage_t
 )                       : full_return_t is
   block {
-    var operations := Constants.no_operations;
-    case p of
+    case p of [
 #if !FACTORY
     | Set_dex_function(params)    -> s := set_function(FDex, params, s)
     | Set_admin_function(params)  -> s := set_function(FAdmin, params, s)
@@ -61,9 +60,9 @@ function main(
     | Factory_action(params)      -> s := factory_action(params, s)
 #endif
     | _ -> skip
-    end;
-  } with case p of
+    ]
+  } with case p of [
     | User_action(params) -> call_user_action(params, s)
     | Use_admin(params) -> call_admin(params, s)
-    | _ -> (operations, s)
-    end
+    | _ -> (Constants.no_operations, s)
+    ]

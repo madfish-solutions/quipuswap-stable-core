@@ -1,4 +1,3 @@
-
 (* tokens per pool info *)
 [@view] function get_reserves(
   const pool_id         : pool_id_t;
@@ -150,3 +149,34 @@
       (nil : list(ref_rew_res_t))
     );
   } with response
+
+[@view] function calc_token_amount(
+  const params          : token_amt_v_param_t;
+  const s               : full_storage_t)
+                        : nat is
+  block {
+    const pool = unwrap(s.storage.pools[params.pool_id], Errors.Dex.pool_not_listed);
+    const amp_f = get_A(
+        pool.initial_A_time,
+        pool.initial_A_f,
+        pool.future_A_time,
+        pool.future_A_f
+      );
+    const d0 = get_D_mem(pool.tokens_info, amp_f);
+    function map_amounts(
+      const key         : token_pool_idx_t;
+      const value       : token_info_t)
+                        : token_info_t is
+      block {
+        const amnt = unwrap_or(params.amounts[key], 0n);
+        const new_reserves = if params.is_deposit
+          then value.reserves + amnt
+          else nat_or_error(value.reserves - amnt, Errors.Math.nat_error);
+      } with value with record[ reserves = new_reserves ];
+
+    const mod_info = Map.map(map_amounts, pool.tokens_info);
+    const d1 = get_D_mem(mod_info, amp_f);
+    const diff = if params.is_deposit
+      then nat_or_error(d1 - d0,  Errors.Math.nat_error)
+      else nat_or_error(d0 - d1,  Errors.Math.nat_error);
+  } with diff * pool.total_supply / d0

@@ -71,7 +71,11 @@ export class TokenFA12 implements Token {
     return operation;
   }
 
-  async approve(to: string, amount: BigNumber): Promise<TransactionOperation> {
+  async approve(
+    to: string,
+    amount: BigNumber,
+    tokenId = "0"
+  ): Promise<TransactionOperation> {
     const operation = await this.contract.methods.approve(to, amount).send();
     await confirmOperation(this.Tezos, operation.hash);
     return operation;

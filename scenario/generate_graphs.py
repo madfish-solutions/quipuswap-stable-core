@@ -49,7 +49,7 @@ class GraphDrawer:
         y_axis = []
         for i in range(10):
             chain = LocalChain(storage=self.init_storage)
-            res = chain.execute(self.dex.add_pool(A_CONST, [token_a_alt, token_b_alt], form_pool_rates(100_000_000, 50)), sender=admin)
+            res = chain.execute(self.dex.add_pool(A_CONST, [token_a_alt, token_b_alt], form_pool_rates(100_000_000, 50),{ "lp_f": 0, "stakers_f": 0, "ref_f": 0}), sender=admin)
 
             coef = i / 10
             invested_a = int(coef * 20_000_000) + 2_000_088

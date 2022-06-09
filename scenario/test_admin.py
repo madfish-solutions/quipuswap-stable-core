@@ -31,7 +31,7 @@ class StableSwapTest(TestCase):
     def test_ramp_a(self):
         chain = LocalChain(storage=self.init_storage)
 
-        add_pool = self.dex.add_pool(100_000, [token_a, token_b], form_pool_rates(1_000_000, 1_000_000))
+        add_pool = self.dex.add_pool(100_000, [token_a, token_b], form_pool_rates(1_000_000, 1_000_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         res = chain.execute(add_pool, sender=admin)
 
         # advance initial cooldown
@@ -68,7 +68,7 @@ class StableSwapTest(TestCase):
     def test_stop_ramp_a(self):
         chain = LocalChain(storage=self.init_storage)
 
-        add_pool = self.dex.add_pool(100_000, [token_a, token_b], form_pool_rates(1_000_000, 1_000_000))
+        add_pool = self.dex.add_pool(100_000, [token_a, token_b], form_pool_rates(1_000_000, 1_000_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         res = chain.execute(add_pool, sender=admin)
 
         # advance initial cooldown

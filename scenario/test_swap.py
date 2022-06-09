@@ -31,7 +31,7 @@ class StableSwapTest(TestCase):
     def test_dex_init(self):
         chain = LocalChain(storage=self.init_storage)
 
-        add_pool = self.dex.add_pool(100_000, [token_a, token_b], form_pool_rates(1_000_000, 1_000_000))
+        add_pool = self.dex.add_pool(100_000, [token_a, token_b], form_pool_rates(1_000_000, 1_000_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         res = chain.execute(add_pool, sender=admin)
         
         trxs = parse_transfers(res)
@@ -55,7 +55,7 @@ class StableSwapTest(TestCase):
     def test_dex_swap_and_divest(self):
         chain = LocalChain(storage=self.init_storage)
 
-        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100_000, 100_000))
+        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100_000, 100_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         res = chain.execute(add_pool, sender=admin)
 
         res = chain.execute(self.dex.invest(pool_id=0, shares=1, in_amounts={0: 100_000, 1: 100_000}, deadline=1, receiver=None, referral=None))
@@ -67,10 +67,8 @@ class StableSwapTest(TestCase):
 
         res = chain.execute(self.dex.swap(0, 1, 0, amount_bought, 1, 0, None, None))
 
-
         with self.assertRaises(MichelsonRuntimeError):
             res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=200_001, deadline=1, receiver=None))
-
         res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=200_000, deadline=1, receiver=None))
         
         transfers = parse_transfers(res)
@@ -86,7 +84,7 @@ class StableSwapTest(TestCase):
     def test_cant_init_already_init(self):
         chain = LocalChain(storage=self.init_storage)
 
-        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100_000, 100_000))
+        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100_000, 100_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         res = chain.execute(add_pool, sender=admin)
         
         with self.assertRaises(MichelsonRuntimeError):
@@ -96,7 +94,7 @@ class StableSwapTest(TestCase):
         init_supply_a = 100
         init_supply_b = 10**127
         chain = LocalChain(storage=self.init_storage)
-        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100_000, 100_000))
+        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100_000, 100_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         res = chain.execute(add_pool, sender=admin)
         
         res = chain.execute(self.dex.swap(pool_id=0, idx_from=0, idx_to=1, amount=100, min_amount_out=1, deadline=0, receiver=None, referral=None))
@@ -109,10 +107,10 @@ class StableSwapTest(TestCase):
 
     def test_two_pairs_dont_interfere(self):
         chain = LocalChain(storage=self.init_storage)
-        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100_000_000, 100_000))
+        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100_000_000, 100_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         res = chain.execute(add_pool, sender=admin)
 
-        add_pool = self.dex.add_pool(A_CONST, [token_a, token_c], form_pool_rates(10_000, 100_000))
+        add_pool = self.dex.add_pool(A_CONST, [token_a, token_c], form_pool_rates(10_000, 100_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         res = chain.execute(add_pool, sender=admin)
 
         key_swap = self.dex.swap(pool_id=0, idx_from=1, idx_to=0, amount=100, min_amount_out=1, deadline=0, receiver=None, referral=None)
@@ -136,7 +134,7 @@ class StableSwapTest(TestCase):
 
     def test_fee_even_distribution(self):
         chain = LocalChain(storage=self.init_storage)
-        res = chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100_000_000, 100_000)), sender=admin)
+        res = chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100_000_000, 100_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0}), sender=admin)
 
         # invest equally by Alice and Bob
         invest = self.dex.invest(pool_id=0, shares=1, in_amounts={0: 100_000, 1: 100_000}, deadline=1, receiver=None, referral=None)
@@ -165,7 +163,7 @@ class StableSwapTest(TestCase):
 
     def test_small_amounts(self):
         chain = LocalChain(storage=self.init_storage)
-        res = chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(10, 10)), sender=admin)
+        res = chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(10, 10), { "lp_f": 0, "stakers_f": 0, "ref_f": 0}), sender=admin)
 
         res = chain.execute(self.dex.swap(pool_id=0, idx_from=0, idx_to=1, amount=2, min_amount_out=1, deadline=0, receiver=None, referral=None))
 
@@ -175,7 +173,7 @@ class StableSwapTest(TestCase):
 
     def test_huge_amounts(self):
         chain = LocalChain(storage=self.init_storage)
-        res = chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100_000_000_000, 100_000_000_000)), sender=admin)
+        res = chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100_000_000_000, 100_000_000_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0}), sender=admin)
 
         res = chain.execute(self.dex.swap(pool_id=0, idx_from=0, idx_to=1, amount=100_000_000_000, min_amount_out=1, deadline=0, receiver=None, referral=None))
 
@@ -185,7 +183,7 @@ class StableSwapTest(TestCase):
 
     def test_multiple_singular_invests(self):
         chain = LocalChain(storage=self.init_storage)
-        res = chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(10, 10)), sender=admin)
+        res = chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(10, 10), { "lp_f": 0, "stakers_f": 0, "ref_f": 0}), sender=admin)
         invest = self.dex.invest(pool_id=0, shares=1, in_amounts={0: 1, 1: 1}, deadline=1, receiver=None, referral=None)
         chain.execute(invest, sender=alice)
         chain.execute(invest, sender=alice)
@@ -205,7 +203,7 @@ class StableSwapTest(TestCase):
         for ratio in ratios:
             token_b_amount = int(100 * ratio)
             chain = LocalChain(storage=self.init_storage)
-            res = chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100, token_b_amount)), sender=admin)
+            res = chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(100, token_b_amount), { "lp_f": 0, "stakers_f": 0, "ref_f": 0}), sender=admin)
             invest = self.dex.invest(pool_id=0, shares=1, in_amounts={0: 100, 1: token_b_amount}, deadline=1, receiver=None, referral=None)
 
             for i in range(3):
@@ -225,7 +223,7 @@ class StableSwapTest(TestCase):
         add_pool_chain = LocalChain(storage=self.init_storage)
 
         # perform a set of identical operations on two separate chains
-        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(10_000, 10_000))
+        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(10_000, 10_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         swap = self.dex.swap(0, 0, 1, 1_000, 1, 0, None, None)
         divest = self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=20_000, deadline=1, receiver=None)
 
@@ -242,7 +240,7 @@ class StableSwapTest(TestCase):
         invest_storage = res.storage["storage"]
 
         # in other try to add new pool
-        res = add_pool_chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(10_000, 10_000)), sender=admin)
+        res = add_pool_chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(10_000, 10_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0}), sender=admin)
         add_pool_storage = res.storage["storage"]
 
         # compare resulting storages
@@ -250,20 +248,20 @@ class StableSwapTest(TestCase):
 
     def test_divest_smallest(self):
         chain = LocalChain(storage=self.init_storage)
-        chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(3, 3)), sender=admin)
+        chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(3, 3), { "lp_f": 0, "stakers_f": 0, "ref_f": 0}), sender=admin)
 
         res = chain.execute(self.dex.invest(pool_id=0, shares=1, in_amounts={0: 2, 1: 2}, deadline=1, receiver=None, referral=None))
 
-        res = chain.execute(self.dex.swap(0, 0, 1, 2, 1, 0, None, None))
+        res = chain.execute(self.dex.swap(0, 0, 1, 3, 1, 0, None, None))
 
         res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=4, deadline=1, receiver=None))
         transfers = parse_transfers(res) 
         self.assertLessEqual(transfers[0]["amount"], 2)
-        self.assertLessEqual(transfers[1]["amount"], 2)
+        self.assertLessEqual(transfers[1]["amount"], 3)
 
     def test_simple_divest_all(self):
         chain = LocalChain(storage=self.init_storage)
-        res = chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(42, 777_777_777)), sender=admin)
+        res = chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(42, 777_777_777), { "lp_f": 0, "stakers_f": 0, "ref_f": 0}), sender=admin)
 
         all_shares = get_shares(res, 0, admin)
         res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=all_shares, deadline=1, receiver=None), sender=admin)
@@ -274,7 +272,7 @@ class StableSwapTest(TestCase):
     def test_threeway_pool(self):
         chain = LocalChain(storage=self.init_storage)
 
-        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c], form_pool_rates(100_000, 100_000, 100_000))
+        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c], form_pool_rates(100_000, 100_000, 100_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         res = chain.execute(add_pool, sender=admin)
 
         res = chain.execute(self.dex.invest(pool_id=0, shares=1, in_amounts={0: 100_000, 1: 100_000}, deadline=1, receiver=None, referral=None))
@@ -320,7 +318,7 @@ class StableSwapTest(TestCase):
                     "precision_multiplier_f": int(1e18 // ETH_PRECISION),
                     "reserves": 100_000 * ETH_PRECISION,
                 },
-            }
+            }, { "lp_f": 0, "stakers_f": 0, "ref_f": 0}
         )
         res = chain.execute(add_pool, sender=admin)
 
@@ -366,7 +364,7 @@ class StableSwapTest(TestCase):
                     "precision_multiplier_f": int(1e18 // ETH_PRECISION),
                     "reserves": 100_000 * ETH_PRECISION,
                 },
-            }
+            }, { "lp_f": 0, "stakers_f": 0, "ref_f": 0}
         )
         res = chain.execute(add_pool, sender=admin)
         
@@ -415,7 +413,7 @@ class StableSwapTest(TestCase):
                     "precision_multiplier_f": int(1e18 // ETH_PRECISION),
                     "reserves": 100 * ETH_PRECISION,
                 },
-            }
+            }, { "lp_f": 0, "stakers_f": 0, "ref_f": 0}
         )
         res = chain.execute(add_pool, sender=admin)
         init = 0
@@ -456,7 +454,7 @@ class StableSwapTest(TestCase):
                     "precision_multiplier_f": TEZOS_PRECISION,
                     "reserves": 100_000 * TEZOS_PRECISION,
                 },
-            }
+            }, { "lp_f": 0, "stakers_f": 0, "ref_f": 0}
         )
         res = chain.execute(add_pool, sender=admin)
 
@@ -491,7 +489,7 @@ class StableSwapTest(TestCase):
                 tokens = [token_a, token_b, token_c, token_d]
                 tokens_in = tokens[:n_coins]
 
-                add_pool = self.dex.add_pool(A_CONST, tokens_in, equal_pool_rates(reserves))
+                add_pool = self.dex.add_pool(A_CONST, tokens_in, equal_pool_rates(reserves), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
                 chain.execute(add_pool, sender=admin)
 
                 amounts_in = {k: v for k, v in enumerate(reserves)}
@@ -507,9 +505,7 @@ class StableSwapTest(TestCase):
                 all_shares = get_shares(res, 0, me)
                 with self.assertRaises(MichelsonRuntimeError):
                     res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out=min_amounts, shares=all_shares + 1, deadline=1, receiver=None))
-
                 res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out=min_amounts, shares=all_shares, deadline=1, receiver=None))
-
                 transfers = parse_transfers(res)
                 self.assertEqual(len(transfers), n_coins)
                 for i in range(n_coins):
@@ -520,7 +516,7 @@ class StableSwapTest(TestCase):
 
         reserves = [100_000] * 5
 
-        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c, token_d, token_e], equal_pool_rates(reserves))
+        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c, token_d, token_e], equal_pool_rates(reserves), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         with self.assertRaises(MichelsonRuntimeError):
             chain.execute(add_pool, sender=admin)
 
@@ -529,13 +525,13 @@ class StableSwapTest(TestCase):
 
         reserves = [100_000] * 5
 
-        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c, token_d, token_e], equal_pool_rates(reserves))
+        add_pool = self.dex.add_pool(A_CONST, [token_a, token_b, token_c, token_d, token_e], equal_pool_rates(reserves), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
         with self.assertRaises(MichelsonRuntimeError):
             chain.execute(add_pool, sender=admin)
 
     def test_invest_one_coin(self):
         chain = LocalChain(storage=self.init_storage)
-        res = chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(10, 10)), sender=admin)
+        res = chain.execute(self.dex.add_pool(A_CONST, [token_a, token_b], form_pool_rates(10, 10), { "lp_f": 0, "stakers_f": 0, "ref_f": 0}), sender=admin)
         res = chain.execute(self.dex.invest(pool_id=0, shares=1, in_amounts={0: 1_000}, deadline=1, receiver=None, referral=None))
 
         all_shares = get_shares(res, 0, me)
@@ -556,6 +552,6 @@ class StableSwapTest(TestCase):
     def test_add_pool_same_coin(self):
         chain = LocalChain(storage=self.init_storage)
         with self.assertRaises(ValueError):
-            chain.execute(self.dex.add_pool(A_CONST, [token_a, token_a], form_pool_rates(100_000, 100_000)), sender=admin)
+            chain.execute(self.dex.add_pool(A_CONST, [token_a, token_a], form_pool_rates(100_000, 100_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0}), sender=admin)
 
     
