@@ -1,5 +1,6 @@
 
 from unittest import TestCase
+from decimal import Decimal
 import json
 from pprint import pprint
 from constants import *
@@ -34,12 +35,12 @@ class DivestsTest(TestCase):
 
         res = chain.execute(self.dex.invest(pool_id=0, shares=1, in_amounts={0: 2, 1: 2}, deadline=1, receiver=None, referral=None))
 
-        res = chain.execute(self.dex.swap(0, 0, 1, 2, 1, 0, None, None))
+        res = chain.execute(self.dex.swap(0, 0, 1, 3, 1, 0, None, None))
 
         res = chain.execute(self.dex.divest(pool_id=0, min_amounts_out={0: 1, 1: 1}, shares=4, deadline=1, receiver=None))
         transfers = parse_transfers(res) 
         self.assertLessEqual(transfers[0]["amount"], 2)
-        self.assertLessEqual(transfers[1]["amount"], 2)
+        self.assertLessEqual(transfers[1]["amount"], 3)
 
     def test_simple_divest_all(self):
         chain = LocalChain(storage=self.init_storage)
@@ -60,16 +61,20 @@ class DivestsTest(TestCase):
         res = chain.execute(self.dex.set_fees(0, fees), sender=admin)
         
         all_shares = get_shares(res, 0, admin)
-        res = chain.execute(self.dex.divest_one_coin(pool_id=0, shares=all_shares, token_index=0, min_amount_out=1, deadline=1, receiver=None, referral=None), sender=admin)
-
+        
+        # should fail because cant divest all shares
+        with self.assertRaises(MichelsonRuntimeError):
+            chain.execute(self.dex.divest_one_coin(pool_id=0, shares=all_shares, token_index=0, min_amount_out=1, deadline=1, receiver=None, referral=None), sender=admin)
+        
+        res = chain.execute(self.dex.divest_one_coin(pool_id=0, shares=all_shares - 3, token_index=0, min_amount_out=1, deadline=1, receiver=None, referral=None), sender=admin)
+        
         transfers = parse_transfers(res)
         self.assertEqual(len(transfers), 1)
         self.assertEqual(transfers[0]["destination"], admin)
-        self.assertAlmostEqual(transfers[0]["amount"], 100_000, delta=3)
+        self.assertAlmostEqual(transfers[0]["amount"], 100_000, delta=1)
         print(transfers[0]["amount"])
         all_shares = get_shares(res, 0, admin)
-        self.assertEqual(all_shares, 0)
-
+        self.assertEqual(all_shares, 3)
         res = chain.execute(self.dex.swap(0, 0, 2, 100, 1, 0, None, None))
         transfers = parse_transfers(res) 
         self.assertEqual(transfers[0]["amount"], 100)
@@ -82,13 +87,26 @@ class DivestsTest(TestCase):
         self.assertEqual(transfers[0]["amount"], 100)
 
         # at this point the price is almost back to normal
-        self.assertAlmostEqual(transfers[1]["amount"], 100, delta=10)
-
-        invest = self.dex.invest(pool_id=0, shares=1, in_amounts={0: 100, 1: 100, 2: 100}, deadline=1, receiver=None, referral=None)
+        self.assertAlmostEqual(transfers[1]["amount"], 100, delta=11)
+        liquidity = sum(get_reserves(res, 0).values())
+        all_shares = get_shares(res, 0, admin)
+        one_lp_price = liquidity / all_shares
+        invest = self.dex.invest(
+            pool_id=0,
+            shares=1,
+            in_amounts={
+                0: int(one_lp_price//3),
+                1: int(one_lp_price//3),
+                2: int(one_lp_price//3)
+            },
+            deadline=1,
+            receiver=None,
+            referral=None
+        )
         res = chain.interpret(invest)
         transfers = parse_transfers(res)
         for i in range(3):
-            self.assertEqual(transfers[i]["amount"], 100)
+            self.assertEqual(transfers[i]["amount"], int(one_lp_price//3))
 
 
 
