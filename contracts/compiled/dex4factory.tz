@@ -1962,6 +1962,12 @@
          SUB ;
          ISNAT ;
          IF_NONE { FAILWITH } { SWAP ; DROP } ;
+         PUSH string "zero-amount-in" ;
+         DUP 3 ;
+         DUP 3 ;
+         COMPARE ;
+         LT ;
+         IF { DROP } { FAILWITH } ;
          DUP 8 ;
          SWAP ;
          DUP ;

@@ -217,6 +217,7 @@ function calc_withdraw_one_coin(
     const d0            : nat           = get_D(xp, amp_f);
     var   total_supply  : nat           := pool.total_supply;
     const d1            : nat           = nat_or_error(d0 - (token_amount * d0 / total_supply), Errors.Math.nat_error);
+    require(d1 < d0, Errors.Dex.zero_in);
     const new_y         : nat           = get_y_D(amp_f, i, xp, d1, pool);
     const base_fee_f    : nat           = sum_all_fee(pool.fee, dev_fee_f);
 

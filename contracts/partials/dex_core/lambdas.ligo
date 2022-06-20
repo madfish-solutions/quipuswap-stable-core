@@ -225,6 +225,7 @@ function divest_imbalanced(
       operations := result.operations;
 
       const d1 = get_D_mem(new_tokens_info, amp_f);
+      require(d1 < d0, Errors.Dex.zero_in);
       const balanced = balance_inputs(
         init_tokens_info,
         d0,
@@ -339,14 +340,12 @@ function divest_one_coin(
 
       const receiver = unwrap_or(params.receiver, Tezos.sender);
 
-      if result.dy > 0n
-        then operations := typed_transfer(
-          Tezos.self_address,
-          receiver,
-          result.dy,
-          token
-        ) # operations
-      else skip;
+      operations := typed_transfer(
+        Tezos.self_address,
+        receiver,
+        result.dy,
+        token
+      ) # operations;
     }
     | _ -> unreachable(Unit)
     ];
