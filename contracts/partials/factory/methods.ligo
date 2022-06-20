@@ -95,7 +95,7 @@ function use_factory(
   block {
     require(Tezos.sender = s.storage.dev_store.dev_address, Errors.Dex.not_developer);
     case params of [
-    | Set_burn_rate(rate)   -> if rate >= Constants.burn_rate_precision
+    | Set_burn_rate(rate)   -> if rate <= Constants.burn_rate_precision
                                 then s.storage.burn_rate_f := rate
                                 else failwith(Errors.Factory.burn_rate_overflow)
     | Set_price(price)      -> s.storage.init_price := price
