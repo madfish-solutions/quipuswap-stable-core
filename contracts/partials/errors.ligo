@@ -54,4 +54,5 @@ module Factory is {
   const pool_not_listed           : string = "not-listed-pool";
   const not_deployer              : string = "not-deployer-of-pool";
   const not_dex                   : string = "not-dex";
+  const burn_rate_overflow        : string = "burn-rate-overflow";
 }

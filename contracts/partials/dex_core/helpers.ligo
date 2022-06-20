@@ -149,6 +149,11 @@ function update_former_and_transfer(
     );
   ]
 
+const default_staker_info: staker_info_t = record [
+  balance   = 0n;
+  earnings  = (map[] : map(token_pool_idx_t, account_reward_t))
+];
+
 (* Harvest staked rewards and stakes/unstakes QUIPU tokens if amount > 0n *)
 function update_stake(
   const params          : stake_action_t;
@@ -163,10 +168,7 @@ function update_stake(
     const staker_key = (Tezos.sender, pool_id);
     var staker_accum := unwrap_or(
       s.stakers_balance[staker_key],
-      record [
-        balance = 0n;
-        earnings = (map[] : map(nat , account_reward_t))
-      ]
+      default_staker_info
     );
     var pool := unwrap(s.pools[pool_id], Errors.Dex.pool_not_listed);
     const harvested = harvest_staker_rewards(
