@@ -20,7 +20,7 @@ module.exports = async (tezos: TezosToolkit, network: NetworkLiteral) => {
     validateAddress,
     storage.storage.dev_store.dev_address
   );
-  storage.storage.dev_store.dev_fee_f = new BigNumber(500_000);
+  storage.storage.dev_store.dev_fee_f = new BigNumber(4_500_000);
   storage.storage.burn_rate_f = new BigNumber(90_0000);
   storage.storage.init_price = new BigNumber(1000_000_000);
   storage.storage.whitelist = [storage.storage.dev_store.dev_address];
