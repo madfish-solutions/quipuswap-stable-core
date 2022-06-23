@@ -105,16 +105,17 @@
         const info = unwrap_or(s.storage.stakers_balance[key], default_staker_info);
         function get_rewards(
           const key     : token_pool_idx_t;
-          const value   : account_reward_t)
+          const value   : nat)
                         : nat is
           block {
+            const earning = unwrap_or(info.earnings[key], record[reward_f=0n;former_f=0n])
             const pool_accum_f = unwrap_or(pool_accumulator_f[key], 0n);
-            const new_former_f = info.balance * pool_accum_f;
-            const reward_amt = (value.reward_f + abs(new_former_f - value.former_f)) / Constants.accum_precision;
+            const new_former_f = info.balance * value;
+            const reward_amt = (earning.reward_f + abs(new_former_f - earning.former_f)) / Constants.accum_precision;
           } with reward_amt;
         const rew_info: staker_res = record [
             balance = info.balance;
-            rewards = Map.map(get_rewards, info.earnings);
+            rewards = Map.map(get_rewards, pool_accumulator_f);
           ];
       } with record [
           request = params;
