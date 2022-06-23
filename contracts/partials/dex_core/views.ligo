@@ -108,7 +108,7 @@
           const value   : nat)
                         : nat is
           block {
-            const earning = unwrap_or(info.earnings[key], record[reward_f=0n;former_f=0n])
+            const earning = unwrap_or(info.earnings[key], record[reward_f=0n;former_f=0n]);
             const new_former_f = info.balance * value;
             const reward_amt = (earning.reward_f + abs(new_former_f - earning.former_f)) / Constants.accum_precision;
           } with reward_amt;
