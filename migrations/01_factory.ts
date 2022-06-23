@@ -21,9 +21,12 @@ module.exports = async (tezos: TezosToolkit, network: NetworkLiteral) => {
     storage.storage.dev_store.dev_address
   );
   storage.storage.dev_store.dev_fee_f = new BigNumber(4_500_000);
-  storage.storage.burn_rate_f = new BigNumber(90_0000);
-  storage.storage.init_price = new BigNumber(1000_000_000);
-  storage.storage.whitelist = [storage.storage.dev_store.dev_address];
+  storage.storage.burn_rate_f = new BigNumber(50_0000);
+  storage.storage.init_price = new BigNumber(500_000_000);
+  storage.storage.whitelist = [
+    storage.storage.dev_store.dev_address,
+    process.env.ADMIN_ADDRESS,
+  ];
   storage.storage.quipu_token.token_address = validateValue(
     validateContractAddress,
     storage.storage.quipu_token.token_address
@@ -42,6 +45,7 @@ module.exports = async (tezos: TezosToolkit, network: NetworkLiteral) => {
     `Factory contract: ${chalk.bgYellow.bold.redBright(contractAddress)}`
   );
   const dex_f: DexFactory = await DexFactory.init(tezos, contractAddress);
+  await dex_f.setDevAddress(process.env.ADMIN_ADDRESS, tezos);
   console.log(
     `Factory is ${chalk.green(
       "online"

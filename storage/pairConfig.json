@@ -1,7 +1,7 @@
 [
   {
-    "name": "uUSD/USDtz/kUSD/wUSDC",
-    "a_const": "50",
+    "name": "uUSD/USDtz/kUSD",
+    "a_const": "200",
     "fees": {
       "lp_f": "7000000",
       "stakers_f": "3000000",
@@ -11,88 +11,99 @@
       {
         "token": {
           "fa2": {
-            "token_address": "KT1N4NfnYmJucXYkuPdvJG4Jxbz3TetCTqJc",
+            "token_address": "KT1XRPEPXbZK25r3Htzp2o1x7xdMMmfocKNW",
             "token_id": "0"
           }
         },
         "precision": "1000000000000",
         "precision_multiplier_f": "1000000",
         "rate_f": "1000000000000000000000000",
-        "reserves": "236190.44"
+        "reserves": "100"
       },
       {
         "token": {
-          "fa12": "KT1QzmrMs1xUXZJ8TPAoDEFaKC6w56RfdLWo"
+          "fa12": "KT1LN4LPSqTMS7Sd2CJw4bbDGRkMv2t68Fy9"
         },
         "precision": "1000000",
         "precision_multiplier_f": "1000000000000",
         "rate_f": "1000000000000000000000000000000",
-        "reserves": "177302.22"
+        "reserves": "100"
       },
       {
         "token": {
-          "fa12": "KT1GG8Zd5rUp1XV8nMPRBY2tSyVn6NR5F4Q1"
+          "fa12": "KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV"
         },
         "precision": "1000000000000000000",
         "precision_multiplier_f": "1",
         "rate_f": "1000000000000000000",
-        "reserves": "122257.53"
-      },
-      {
-        "token": {
-          "fa2": {
-            "token_address": "KT1Pi7WthYrAtMBTCFmx66h2MrosTt7w1khh",
-            "token_id": "17"
-          }
-        },
-        "precision": "1000000",
-        "precision_multiplier_f": "1000000000000",
-        "rate_f": "1000000000000000000000000000000",
-        "reserves": "499682.56"
+        "reserves": "100"
       }
     ]
   },
   {
-    "name": "uBTC/tzBTC/wWBTC",
-    "a_const": "30",
+    "name": "uBTC/tzBTC",
+    "a_const": "200",
     "fees": {
-      "lp_f": "700000000",
-      "stakers_f": "300000000",
-      "ref_f": "50000000"
+      "lp_f": "7000000",
+      "stakers_f": "3000000",
+      "ref_f": "500000"
     },
     "tokensInfo": [
       {
         "token": {
           "fa2": {
-            "token_address": "KT1N4NfnYmJucXYkuPdvJG4Jxbz3TetCTqJc",
+            "token_address": "KT1XRPEPXbZK25r3Htzp2o1x7xdMMmfocKNW",
             "token_id": "2"
           }
         },
         "precision": "1000000000000",
         "precision_multiplier_f": "1000000",
         "rate_f": "1000000000000000000000000",
-        "reserves": "42.91215621"
+        "reserves": "0.005"
       },
       {
         "token": {
-          "fa12": "KT1Wdq6sj3ZkNqQ7CeE6kTNbJXfobMX7Eqpz"
+          "fa12": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
         },
         "precision": "100000000",
         "precision_multiplier_f": "10000000000",
         "rate_f": "10000000000000000000000000000",
-        "reserves": "43.80290442"
+        "reserves": "0.005"
+      }
+    ]
+  },
+  {
+    "name": "uUSD/USDC.e",
+    "a_const": "200",
+    "fees": {
+      "lp_f": "7000000",
+      "stakers_f": "3000000",
+      "ref_f": "500000"
+    },
+    "tokensInfo": [
+      {
+        "token": {
+          "fa2": {
+            "token_address": "KT1XRPEPXbZK25r3Htzp2o1x7xdMMmfocKNW",
+            "token_id": "0"
+          }
+        },
+        "precision": "1000000000000",
+        "precision_multiplier_f": "1000000",
+        "rate_f": "1000000000000000000000000",
+        "reserves": "100"
       },
       {
         "token": {
           "fa2": {
-            "token_address": "KT1Pi7WthYrAtMBTCFmx66h2MrosTt7w1khh",
-            "token_id": "19"
+            "token_address": "KT1UsSfaXyqcjSVPeiD7U1bWgKy3taYN7NWY",
+            "token_id": "2"
           }
         },
-        "precision": "100000000",
-        "precision_multiplier_f": "10000000000",
-        "rate_f": "10000000000000000000000000000",
-        "reserves": "43.46319615"
+        "precision": "1000000",
+        "precision_multiplier_f": "1000000000000",
+        "rate_f": "1000000000000000000000000000000",
+        "reserves": "100"
       }
     ]
   }

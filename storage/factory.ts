@@ -8,10 +8,10 @@ const metadata = MichelsonMap.fromLiteral({
   "": Buffer.from("tezos-storage:ssDEXFactory", "ascii").toString("hex"),
   ssDEXFactory: Buffer.from(
     JSON.stringify({
-      name: "QuipuSwap Stable DEX Factory",
+      name: "QuipuSwap Stableswap AMM Factory",
       version: "v0.5.2",
       description:
-        "Factory that provides DEX-as-a-Service liquidity pools for swap tokens with low slippage",
+        "A factory that provides DEX-as-a-Service liquidity pools for AMM allowing swap tokens, including stablecoins, with low fees and slippage.",
       authors: ["Madfish.Solutions <https://www.madfish.solutions>"],
       source: {
         tools: ["Ligo", "Flextesa"],

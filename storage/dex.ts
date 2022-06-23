@@ -11,7 +11,7 @@ const metadata = MichelsonMap.fromLiteral({
       name: "QuipuSwap Stable DEX Standalone contract",
       version: "v0.5.2",
       description:
-        "Contract that provides liquidity pools for swap tokens with low slippage",
+        "A contract that provides liquidity pools for AMM allowing swap tokens, including stablecoins, with low fees and slippage.",
       authors: ["Madfish.Solutions <https://www.madfish.solutions>"],
       source: {
         tools: ["Ligo", "Flextesa"],
