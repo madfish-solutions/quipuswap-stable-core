@@ -1,12 +1,16 @@
 # QuipuSwap StableDex core
 
-**Currently Work In Progress**
-
 Contracts of DEX with Curve-like invariant implementation. This contracts allows to exchange tokens with equal price.  💵 -> 💰
 
 Core concept is to provide low slippage swap between stablecoins like uUSD, kUSD, USDtz, etc.
 
-**The code here is currently unverified and unaudited, and is made publicly available only for exploration and discussion purposes. You should not use it for anything serious.**
+## Code Audit
+
+Contract code was audited by [Runtime Verification](https://runtimeverification.com/). 
+
+<a href="https://github.com/runtimeverification/publications/blob/main/reports/smart-contracts/quipuswap-stableswap.pdf">
+  <img alt="Audit report" src="https://img.shields.io/badge/Audit%20report%20by-Runtime%20Verification-informational?style=for-the-badge&logo=github"/>
+</a>
 
 ## Project structure
 
