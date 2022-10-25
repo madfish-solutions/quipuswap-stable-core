@@ -44,8 +44,6 @@ module.exports = async (tezos: TezosToolkit, network: NetworkLiteral) => {
   console.log(
     `Factory contract: ${chalk.bgYellow.bold.redBright(contractAddress)}`
   );
-  const dex_f: DexFactory = await DexFactory.init(tezos, contractAddress);
-  await dex_f.setDevAddress(process.env.ADMIN_ADDRESS, tezos);
   console.log(
     `Factory is ${chalk.green(
       "online"

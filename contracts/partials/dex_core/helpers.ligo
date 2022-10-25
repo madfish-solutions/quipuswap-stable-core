@@ -216,6 +216,10 @@ function get_pool_info(
         ref_f           = 0n;
         stakers_f       = 0n;
       ];
+      strategy            = record [
+        strat_contract  = (None: option(address));
+        configuration   = (map []: map(token_pool_idx_t, strategy_storage_t));
+      ]
       staker_accumulator  = record [
         accumulator_f       = (map []: map(token_pool_idx_t, nat));
         total_fees          = (map []: map(token_pool_idx_t, nat));

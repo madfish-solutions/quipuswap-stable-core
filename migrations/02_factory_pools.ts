@@ -1,4 +1,4 @@
-import { MichelsonMap, TezosToolkit } from "@taquito/taquito";
+import { MichelsonMap, OpKind, TezosToolkit } from "@taquito/taquito";
 import config from "../config";
 import {
   FA12TokenType,
@@ -6,19 +6,16 @@ import {
   NetworkLiteral,
   TezosAddress,
 } from "../utils/helpers";
-import { DexFactoryAPI as DexFactory } from "../test/Factory/API";
 import factoryInfo from "../build/factory.json";
 import pools from "../storage/pairConfig.json";
 import { Token, TokenFA2, TokenFA12 } from "../test/Token";
 import BigNumber from "bignumber.js";
 import { confirmOperation } from "../utils/confirmation";
 
-const tokensAmount = new BigNumber("100000");
-
 module.exports = async (tezos: TezosToolkit, network: NetworkLiteral) => {
-  await new Promise((r) => setTimeout(r, 10000));
   const factoryAddress: TezosAddress = factoryInfo.networks[network].factory;
   const factory = await tezos.contract.at(factoryAddress);
+  const sender_addr = await tezos.signer.publicKeyHash();
   let poolData;
   for (const pair of pools) {
     console.log("Pool", pair.name);
@@ -102,6 +99,25 @@ module.exports = async (tezos: TezosToolkit, network: NetworkLiteral) => {
         " disapproved"
       );
     }
+    const dex_address: TezosAddress = await factory.contractViews
+      .get_pool({
+        tokens: pair.tokensInfo.map((token) => token.token),
+        deployer: sender_addr,
+      })
+      .executeView({ viewCaller: sender_addr });
+    const dex = await tezos.contract.at(dex_address);
+    op = await dex.methods.set_admin(process.env.ADMIN_ADDRESS).send();
+    await confirmOperation(tezos, op.hash);
+    console.log("Admin set ", process.env.ADMIN_ADDRESS);
     console.log(`Dex of ${pair.name} started`);
   }
+  let operation = await factory.methods
+    .set_whitelist(false, sender_addr)
+    .send();
+  await confirmOperation(tezos, operation.hash);
+  console.log("Removed from whitelist ", sender_addr);
+  operation = await factory.methods
+    .set_dev_address(process.env.ADMIN_ADDRESS)
+    .send();
+  await confirmOperation(tezos, operation.hash);
 };

@@ -37,7 +37,6 @@ module.exports = async (tezos: TezosToolkit, network: NetworkLiteral) => {
   storage.storage.dev_store.dev_lambdas = await setupLambdasToStorage(
     dev_lambdas_comp
   );
-
   const contractAddress: TezosAddress = await migrate(
     tezos,
     config.outputDirectory,
