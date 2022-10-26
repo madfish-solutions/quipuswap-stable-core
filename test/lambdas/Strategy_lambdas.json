@@ -1,0 +1,14 @@
+[
+  {
+    "index": 0,
+    "name": "connect_strategy"
+  },
+  {
+    "index": 1,
+    "name": "update_token_to_strategy_params"
+  },
+  {
+    "index": 2,
+    "name": "set_updatable"
+  }
+]

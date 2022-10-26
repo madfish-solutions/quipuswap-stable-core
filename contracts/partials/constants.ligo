@@ -4,6 +4,7 @@
 const dex_func_count    : nat   = 7n;
 const dev_func_count    : nat   = 2n;
 const token_func_count  : nat   = 5n;
+const strat_func_count  : nat   = 3n;
 #if !FACTORY
 const admin_func_count  : nat   = 8n;
 #else

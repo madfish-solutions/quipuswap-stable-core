@@ -114,11 +114,13 @@ function form_pool_storage(
   const tokens_info     : map(token_pool_idx_t, token_info_t);
   const a_constant      : nat;
   const fees            : fees_storage_t;
+  const strategy        : option(address);
   const default_referral: address;
   const managers        : set(address);
   const quipu_token     : fa2_token_t;
   const a_lambdas       : big_map(nat, bytes);
-  const t_lambdas       : big_map(nat, bytes))
+  const t_lambdas       : big_map(nat, bytes);
+  const s_lambdas       : big_map(nat, bytes))
                         : pool_f_storage_t is
   block {
     const default_token_id = 0n;
@@ -129,6 +131,10 @@ function form_pool_storage(
       future_A_time       = Tezos.now;
       tokens_info         = tokens_info;
       fee                 = fees;
+      strategy            = record[
+        strat_contract      = strategy;
+        configuration       = (map[]: map(token_pool_idx_t, strategy_storage_t));
+      ];
       staker_accumulator  = record [
                               accumulator_f = (map []: map(token_pool_idx_t, nat));
                               total_fees    = (map []: map(token_pool_idx_t, nat));
@@ -169,4 +175,5 @@ function form_pool_storage(
       admin_lambdas = a_lambdas;
       dex_lambdas   = (big_map[]: big_map(nat, bytes)); // too large for injection in one operation
       token_lambdas = t_lambdas;
+      strat_lambdas = s_lambdas;
     ]

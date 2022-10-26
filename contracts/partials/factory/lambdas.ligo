@@ -45,11 +45,13 @@ function add_pool(
         tokens_info,
         params.a_constant,
         params.fees,
+        params.strategy,
         params.default_referral,
         params.managers,
         s.storage.quipu_token,
         s.admin_lambdas,
-        s.token_lambdas
+        s.token_lambdas,
+        s.strat_lambdas
       )
     );
     const pool_address = deploy.1;

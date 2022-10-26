@@ -10,63 +10,76 @@
                (or (or (address %set_default_referral)
                        (pair %set_fees (nat %pool_id) (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f))))
                    (nat %stop_ramp_A))))
-        (or %user_action
-           (or %use_dex
-              (or (or (pair %claim_referral
-                         (or %token (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
-                         (nat %amount))
-                      (pair %divest
+        (or (or %use_strategy
+               (or (pair %connect_strategy (nat %pool_id) (option %strategy_contract address))
+                   (pair %set_token_strategy
+                      (nat %pool_id)
+                      (nat %pool_token_id)
+                      (nat %lending_market_id)
+                      (nat %des_reserves_rate_f)
+                      (nat %delta_rate_f)
+                      (nat %min_invest)))
+               (pair %set_token_strategy_update_flag
+                  (nat %pool_id)
+                  (nat %pool_token_id)
+                  (bool %flag)))
+            (or %user_action
+               (or %use_dex
+                  (or (or (pair %claim_referral
+                             (or %token (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                             (nat %amount))
+                          (pair %divest
+                             (nat %pool_id)
+                             (map %min_amounts_out nat nat)
+                             (nat %shares)
+                             (timestamp %deadline)
+                             (option %receiver address)))
+                      (or (pair %divest_imbalanced
+                             (nat %pool_id)
+                             (map %amounts_out nat nat)
+                             (nat %max_shares)
+                             (timestamp %deadline)
+                             (option %receiver address)
+                             (option %referral address))
+                          (pair %divest_one_coin
+                             (nat %pool_id)
+                             (nat %shares)
+                             (nat %token_index)
+                             (nat %min_amount_out)
+                             (timestamp %deadline)
+                             (option %receiver address)
+                             (option %referral address))))
+                  (or (or (pair %invest
+                             (nat %pool_id)
+                             (nat %shares)
+                             (map %in_amounts nat nat)
+                             (timestamp %deadline)
+                             (option %receiver address)
+                             (option %referral address))
+                          (or %stake
+                             (pair %add (nat %pool_id) (nat %amount))
+                             (pair %remove (nat %pool_id) (nat %amount))))
+                      (pair %swap
                          (nat %pool_id)
-                         (map %min_amounts_out nat nat)
-                         (nat %shares)
-                         (timestamp %deadline)
-                         (option %receiver address)))
-                  (or (pair %divest_imbalanced
-                         (nat %pool_id)
-                         (map %amounts_out nat nat)
-                         (nat %max_shares)
-                         (timestamp %deadline)
-                         (option %receiver address)
-                         (option %referral address))
-                      (pair %divest_one_coin
-                         (nat %pool_id)
-                         (nat %shares)
-                         (nat %token_index)
+                         (nat %idx_from)
+                         (nat %idx_to)
+                         (nat %amount)
                          (nat %min_amount_out)
                          (timestamp %deadline)
                          (option %receiver address)
                          (option %referral address))))
-              (or (or (pair %invest
-                         (nat %pool_id)
-                         (nat %shares)
-                         (map %in_amounts nat nat)
-                         (timestamp %deadline)
-                         (option %receiver address)
-                         (option %referral address))
-                      (or %stake
-                         (pair %add (nat %pool_id) (nat %amount))
-                         (pair %remove (nat %pool_id) (nat %amount))))
-                  (pair %swap
-                     (nat %pool_id)
-                     (nat %idx_from)
-                     (nat %idx_to)
-                     (nat %amount)
-                     (nat %min_amount_out)
-                     (timestamp %deadline)
-                     (option %receiver address)
-                     (option %referral address))))
-           (or %use_token
-              (or (or (pair %balance_of
-                         (list %requests (pair (address %owner) (nat %token_id)))
-                         (contract %callback
-                            (list (pair (pair %request (address %owner) (nat %token_id)) (nat %balance)))))
-                      (pair %total_supply (nat %token_id) (contract %receiver nat)))
-                  (or (list %transfer
-                         (pair (address %from_) (list %txs (pair (address %to_) (nat %token_id) (nat %amount)))))
-                      (pair %update_metadata (nat %token_id) (map %token_info string bytes))))
-              (list %update_operators
-                 (or (pair %add_operator (address %owner) (address %operator) (nat %token_id))
-                     (pair %remove_operator (address %owner) (address %operator) (nat %token_id))))))) ;
+               (or %use_token
+                  (or (or (pair %balance_of
+                             (list %requests (pair (address %owner) (nat %token_id)))
+                             (contract %callback
+                                (list (pair (pair %request (address %owner) (nat %token_id)) (nat %balance)))))
+                          (pair %total_supply (nat %token_id) (contract %receiver nat)))
+                      (or (list %transfer
+                             (pair (address %from_) (list %txs (pair (address %to_) (nat %token_id) (nat %amount)))))
+                          (pair %update_metadata (nat %token_id) (map %token_info string bytes))))
+                  (list %update_operators
+                     (or (pair %add_operator (address %owner) (address %operator) (nat %token_id))
+                         (pair %remove_operator (address %owner) (address %operator) (nat %token_id)))))))) ;
   storage
     (pair (pair %storage
              (address %admin)
@@ -87,6 +100,15 @@
                          nat
                          (pair (nat %rate_f) (nat %precision_multiplier_f) (nat %reserves)))
                       (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f))
+                      (pair %strategy
+                         (option %strat_contract address)
+                         (map %configuration
+                            nat
+                            (pair (nat %des_reserves_rate_f)
+                                  (nat %delta_rate_f)
+                                  (nat %min_invest)
+                                  (nat %strategy_reserves)
+                                  (bool %is_updatable))))
                       (pair %staker_accumulator
                          (map %accumulator_f nat nat)
                          (map %total_fees nat nat)
@@ -111,7 +133,8 @@
           (big_map %metadata string bytes)
           (big_map %admin_lambdas nat bytes)
           (big_map %dex_lambdas nat bytes)
-          (big_map %token_lambdas nat bytes)) ;
+          (big_map %token_lambdas nat bytes)
+          (big_map %strat_lambdas nat bytes)) ;
   code { PUSH string "not-contract-admin" ;
          PUSH string "not-started" ;
          PUSH string "function-not-set" ;
@@ -144,7 +167,7 @@
                      UPDATE 30 ;
                      UPDATE 1 } }
                { DROP ; SWAP } }
-           { DROP ; SWAP } ;
+           { IF_LEFT { DROP ; SWAP } { DROP ; SWAP } } ;
          SWAP ;
          IF_LEFT
            { IF_LEFT
@@ -261,6 +284,15 @@
                                               nat
                                               (pair (nat %rate_f) (nat %precision_multiplier_f) (nat %reserves)))
                                            (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f))
+                                           (pair %strategy
+                                              (option %strat_contract address)
+                                              (map %configuration
+                                                 nat
+                                                 (pair (nat %des_reserves_rate_f)
+                                                       (nat %delta_rate_f)
+                                                       (nat %min_invest)
+                                                       (nat %strategy_reserves)
+                                                       (bool %is_updatable))))
                                            (pair %staker_accumulator
                                               (map %accumulator_f nat nat)
                                               (map %total_fees nat nat)
@@ -301,6 +333,15 @@
                                               nat
                                               (pair (nat %rate_f) (nat %precision_multiplier_f) (nat %reserves)))
                                            (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f))
+                                           (pair %strategy
+                                              (option %strat_contract address)
+                                              (map %configuration
+                                                 nat
+                                                 (pair (nat %des_reserves_rate_f)
+                                                       (nat %delta_rate_f)
+                                                       (nat %min_invest)
+                                                       (nat %strategy_reserves)
+                                                       (bool %is_updatable))))
                                            (pair %staker_accumulator
                                               (map %accumulator_f nat nat)
                                               (map %total_fees nat nat)
@@ -337,70 +378,45 @@
              DROP ;
              IF_LEFT
                { DIG 4 ;
+                 DROP ;
+                 PUSH string "no-address" ;
                  DUP 3 ;
                  CAR ;
-                 GET 30 ;
+                 GET 29 ;
+                 UNIT ;
+                 VIEW "dev_address" address ;
+                 IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                 PUSH string "not-developer" ;
+                 SWAP ;
+                 SENDER ;
+                 COMPARE ;
+                 EQ ;
                  IF { DROP } { FAILWITH } ;
                  DIG 3 ;
                  DUP 3 ;
-                 GET 7 ;
+                 GET 10 ;
                  DUP 3 ;
                  IF_LEFT
-                   { IF_LEFT
-                       { IF_LEFT { DROP ; PUSH nat 5 } { DROP ; PUSH nat 2 } }
-                       { IF_LEFT { DROP ; PUSH nat 3 } { DROP ; PUSH nat 4 } } }
-                   { IF_LEFT
-                       { IF_LEFT { DROP ; PUSH nat 1 } { DROP ; PUSH nat 6 } }
-                       { DROP ; PUSH nat 0 } } ;
+                   { IF_LEFT { DROP ; PUSH nat 0 } { DROP ; PUSH nat 1 } }
+                   { DROP ; PUSH nat 2 } ;
                  GET ;
                  IF_NONE { FAILWITH } { SWAP ; DROP } ;
                  DIG 3 ;
                  SWAP ;
                  UNPACK
                    (lambda
-                      (pair (or (or (or (pair %claim_referral
-                                           (or %token (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
-                                           (nat %amount))
-                                        (pair %divest
-                                           (nat %pool_id)
-                                           (map %min_amounts_out nat nat)
-                                           (nat %shares)
-                                           (timestamp %deadline)
-                                           (option %receiver address)))
-                                    (or (pair %divest_imbalanced
-                                           (nat %pool_id)
-                                           (map %amounts_out nat nat)
-                                           (nat %max_shares)
-                                           (timestamp %deadline)
-                                           (option %receiver address)
-                                           (option %referral address))
-                                        (pair %divest_one_coin
-                                           (nat %pool_id)
-                                           (nat %shares)
-                                           (nat %token_index)
-                                           (nat %min_amount_out)
-                                           (timestamp %deadline)
-                                           (option %receiver address)
-                                           (option %referral address))))
-                                (or (or (pair %invest
-                                           (nat %pool_id)
-                                           (nat %shares)
-                                           (map %in_amounts nat nat)
-                                           (timestamp %deadline)
-                                           (option %receiver address)
-                                           (option %referral address))
-                                        (or %stake
-                                           (pair %add (nat %pool_id) (nat %amount))
-                                           (pair %remove (nat %pool_id) (nat %amount))))
-                                    (pair %swap
+                      (pair (or (or (pair %connect_strategy (nat %pool_id) (option %strategy_contract address))
+                                    (pair %set_token_strategy
                                        (nat %pool_id)
-                                       (nat %idx_from)
-                                       (nat %idx_to)
-                                       (nat %amount)
-                                       (nat %min_amount_out)
-                                       (timestamp %deadline)
-                                       (option %receiver address)
-                                       (option %referral address))))
+                                       (nat %pool_token_id)
+                                       (nat %lending_market_id)
+                                       (nat %des_reserves_rate_f)
+                                       (nat %delta_rate_f)
+                                       (nat %min_invest)))
+                                (pair %set_token_strategy_update_flag
+                                   (nat %pool_id)
+                                   (nat %pool_token_id)
+                                   (bool %flag)))
                             (pair (address %admin)
                                   (address %default_referral)
                                   (set %managers address)
@@ -419,6 +435,15 @@
                                               nat
                                               (pair (nat %rate_f) (nat %precision_multiplier_f) (nat %reserves)))
                                            (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f))
+                                           (pair %strategy
+                                              (option %strat_contract address)
+                                              (map %configuration
+                                                 nat
+                                                 (pair (nat %des_reserves_rate_f)
+                                                       (nat %delta_rate_f)
+                                                       (nat %min_invest)
+                                                       (nat %strategy_reserves)
+                                                       (bool %is_updatable))))
                                            (pair %staker_accumulator
                                               (map %accumulator_f nat nat)
                                               (map %total_fees nat nat)
@@ -459,6 +484,15 @@
                                               nat
                                               (pair (nat %rate_f) (nat %precision_multiplier_f) (nat %reserves)))
                                            (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f))
+                                           (pair %strategy
+                                              (option %strat_contract address)
+                                              (map %configuration
+                                                 nat
+                                                 (pair (nat %des_reserves_rate_f)
+                                                       (nat %delta_rate_f)
+                                                       (nat %min_invest)
+                                                       (nat %strategy_reserves)
+                                                       (bool %is_updatable))))
                                            (pair %staker_accumulator
                                               (map %accumulator_f nat nat)
                                               (map %total_fees nat nat)
@@ -486,137 +520,331 @@
                  DIG 2 ;
                  PAIR ;
                  EXEC ;
-                 DUP ;
+                 UNPAIR ;
                  DUG 2 ;
-                 CDR ;
                  UPDATE 1 ;
                  SWAP ;
-                 CAR ;
                  PAIR }
-               { DIG 4 ;
-                 DUP 3 ;
-                 CAR ;
-                 GET 30 ;
-                 IF { DROP } { FAILWITH } ;
-                 DIG 3 ;
-                 DUP 3 ;
-                 GET 8 ;
-                 DUP 3 ;
-                 IF_LEFT
-                   { IF_LEFT
-                       { IF_LEFT { DROP ; PUSH nat 1 } { DROP ; PUSH nat 4 } }
-                       { IF_LEFT { DROP ; PUSH nat 0 } { DROP ; PUSH nat 3 } } }
-                   { DROP ; PUSH nat 2 } ;
-                 GET ;
-                 IF_NONE { FAILWITH } { SWAP ; DROP } ;
-                 DIG 3 ;
-                 SWAP ;
-                 UNPACK
-                   (lambda
-                      (pair (or (or (or (pair %balance_of
-                                           (list %requests (pair (address %owner) (nat %token_id)))
-                                           (contract %callback
-                                              (list (pair (pair %request (address %owner) (nat %token_id)) (nat %balance)))))
-                                        (pair %total_supply (nat %token_id) (contract %receiver nat)))
-                                    (or (list %transfer
-                                           (pair (address %from_) (list %txs (pair (address %to_) (nat %token_id) (nat %amount)))))
-                                        (pair %update_metadata (nat %token_id) (map %token_info string bytes))))
-                                (list %update_operators
-                                   (or (pair %add_operator (address %owner) (address %operator) (nat %token_id))
-                                       (pair %remove_operator (address %owner) (address %operator) (nat %token_id)))))
-                            (pair (pair %storage
-                                     (address %admin)
-                                     (address %default_referral)
-                                     (set %managers address)
-                                     (nat %pools_count)
-                                     (big_map %tokens
-                                        nat
-                                        (map nat (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))))
-                                     (big_map %pool_to_id bytes nat)
-                                     (big_map %pools
-                                        nat
-                                        (pair (nat %initial_A_f)
-                                              (timestamp %initial_A_time)
-                                              (nat %future_A_f)
-                                              (timestamp %future_A_time)
-                                              (map %tokens_info
-                                                 nat
-                                                 (pair (nat %rate_f) (nat %precision_multiplier_f) (nat %reserves)))
-                                              (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f))
-                                              (pair %staker_accumulator
-                                                 (map %accumulator_f nat nat)
-                                                 (map %total_fees nat nat)
-                                                 (nat %total_staked))
-                                              (nat %total_supply)))
-                                     (big_map %ledger (pair address nat) nat)
-                                     (big_map %allowances (pair address nat) (set address))
-                                     (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
-                                     (big_map %dev_rewards
-                                        (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
-                                        nat)
-                                     (big_map %referral_rewards
-                                        (pair address
-                                              (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
-                                        nat)
-                                     (big_map %stakers_balance
-                                        (pair address nat)
-                                        (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
-                                     (pair %quipu_token (address %token_address) (nat %token_id))
-                                     (address %factory_address)
-                                     (bool %started))
-                                  (big_map %metadata string bytes)
-                                  (big_map %admin_lambdas nat bytes)
-                                  (big_map %dex_lambdas nat bytes)
-                                  (big_map %token_lambdas nat bytes)))
-                      (pair (list operation)
-                            (pair (pair %storage
-                                     (address %admin)
-                                     (address %default_referral)
-                                     (set %managers address)
-                                     (nat %pools_count)
-                                     (big_map %tokens
-                                        nat
-                                        (map nat (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))))
-                                     (big_map %pool_to_id bytes nat)
-                                     (big_map %pools
-                                        nat
-                                        (pair (nat %initial_A_f)
-                                              (timestamp %initial_A_time)
-                                              (nat %future_A_f)
-                                              (timestamp %future_A_time)
-                                              (map %tokens_info
-                                                 nat
-                                                 (pair (nat %rate_f) (nat %precision_multiplier_f) (nat %reserves)))
-                                              (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f))
-                                              (pair %staker_accumulator
-                                                 (map %accumulator_f nat nat)
-                                                 (map %total_fees nat nat)
-                                                 (nat %total_staked))
-                                              (nat %total_supply)))
-                                     (big_map %ledger (pair address nat) nat)
-                                     (big_map %allowances (pair address nat) (set address))
-                                     (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
-                                     (big_map %dev_rewards
-                                        (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
-                                        nat)
-                                     (big_map %referral_rewards
-                                        (pair address
-                                              (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
-                                        nat)
-                                     (big_map %stakers_balance
-                                        (pair address nat)
-                                        (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
-                                     (pair %quipu_token (address %token_address) (nat %token_id))
-                                     (address %factory_address)
-                                     (bool %started))
-                                  (big_map %metadata string bytes)
-                                  (big_map %admin_lambdas nat bytes)
-                                  (big_map %dex_lambdas nat bytes)
-                                  (big_map %token_lambdas nat bytes)))) ;
-                 IF_NONE { FAILWITH } { SWAP ; DROP } ;
-                 DUG 2 ;
-                 PAIR ;
-                 EXEC } } } ;
+               { IF_LEFT
+                   { DIG 4 ;
+                     DUP 3 ;
+                     CAR ;
+                     GET 30 ;
+                     IF { DROP } { FAILWITH } ;
+                     DIG 3 ;
+                     DUP 3 ;
+                     GET 7 ;
+                     DUP 3 ;
+                     IF_LEFT
+                       { IF_LEFT
+                           { IF_LEFT { DROP ; PUSH nat 5 } { DROP ; PUSH nat 2 } }
+                           { IF_LEFT { DROP ; PUSH nat 3 } { DROP ; PUSH nat 4 } } }
+                       { IF_LEFT
+                           { IF_LEFT { DROP ; PUSH nat 1 } { DROP ; PUSH nat 6 } }
+                           { DROP ; PUSH nat 0 } } ;
+                     GET ;
+                     IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                     DIG 3 ;
+                     SWAP ;
+                     UNPACK
+                       (lambda
+                          (pair (or (or (or (pair %claim_referral
+                                               (or %token (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                                               (nat %amount))
+                                            (pair %divest
+                                               (nat %pool_id)
+                                               (map %min_amounts_out nat nat)
+                                               (nat %shares)
+                                               (timestamp %deadline)
+                                               (option %receiver address)))
+                                        (or (pair %divest_imbalanced
+                                               (nat %pool_id)
+                                               (map %amounts_out nat nat)
+                                               (nat %max_shares)
+                                               (timestamp %deadline)
+                                               (option %receiver address)
+                                               (option %referral address))
+                                            (pair %divest_one_coin
+                                               (nat %pool_id)
+                                               (nat %shares)
+                                               (nat %token_index)
+                                               (nat %min_amount_out)
+                                               (timestamp %deadline)
+                                               (option %receiver address)
+                                               (option %referral address))))
+                                    (or (or (pair %invest
+                                               (nat %pool_id)
+                                               (nat %shares)
+                                               (map %in_amounts nat nat)
+                                               (timestamp %deadline)
+                                               (option %receiver address)
+                                               (option %referral address))
+                                            (or %stake
+                                               (pair %add (nat %pool_id) (nat %amount))
+                                               (pair %remove (nat %pool_id) (nat %amount))))
+                                        (pair %swap
+                                           (nat %pool_id)
+                                           (nat %idx_from)
+                                           (nat %idx_to)
+                                           (nat %amount)
+                                           (nat %min_amount_out)
+                                           (timestamp %deadline)
+                                           (option %receiver address)
+                                           (option %referral address))))
+                                (pair (address %admin)
+                                      (address %default_referral)
+                                      (set %managers address)
+                                      (nat %pools_count)
+                                      (big_map %tokens
+                                         nat
+                                         (map nat (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))))
+                                      (big_map %pool_to_id bytes nat)
+                                      (big_map %pools
+                                         nat
+                                         (pair (nat %initial_A_f)
+                                               (timestamp %initial_A_time)
+                                               (nat %future_A_f)
+                                               (timestamp %future_A_time)
+                                               (map %tokens_info
+                                                  nat
+                                                  (pair (nat %rate_f) (nat %precision_multiplier_f) (nat %reserves)))
+                                               (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f))
+                                               (pair %strategy
+                                                  (option %strat_contract address)
+                                                  (map %configuration
+                                                     nat
+                                                     (pair (nat %des_reserves_rate_f)
+                                                           (nat %delta_rate_f)
+                                                           (nat %min_invest)
+                                                           (nat %strategy_reserves)
+                                                           (bool %is_updatable))))
+                                               (pair %staker_accumulator
+                                                  (map %accumulator_f nat nat)
+                                                  (map %total_fees nat nat)
+                                                  (nat %total_staked))
+                                               (nat %total_supply)))
+                                      (big_map %ledger (pair address nat) nat)
+                                      (big_map %allowances (pair address nat) (set address))
+                                      (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
+                                      (big_map %dev_rewards
+                                         (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                                         nat)
+                                      (big_map %referral_rewards
+                                         (pair address
+                                               (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                         nat)
+                                      (big_map %stakers_balance
+                                         (pair address nat)
+                                         (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
+                                      (pair %quipu_token (address %token_address) (nat %token_id))
+                                      (address %factory_address)
+                                      (bool %started)))
+                          (pair (list operation)
+                                (pair (address %admin)
+                                      (address %default_referral)
+                                      (set %managers address)
+                                      (nat %pools_count)
+                                      (big_map %tokens
+                                         nat
+                                         (map nat (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))))
+                                      (big_map %pool_to_id bytes nat)
+                                      (big_map %pools
+                                         nat
+                                         (pair (nat %initial_A_f)
+                                               (timestamp %initial_A_time)
+                                               (nat %future_A_f)
+                                               (timestamp %future_A_time)
+                                               (map %tokens_info
+                                                  nat
+                                                  (pair (nat %rate_f) (nat %precision_multiplier_f) (nat %reserves)))
+                                               (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f))
+                                               (pair %strategy
+                                                  (option %strat_contract address)
+                                                  (map %configuration
+                                                     nat
+                                                     (pair (nat %des_reserves_rate_f)
+                                                           (nat %delta_rate_f)
+                                                           (nat %min_invest)
+                                                           (nat %strategy_reserves)
+                                                           (bool %is_updatable))))
+                                               (pair %staker_accumulator
+                                                  (map %accumulator_f nat nat)
+                                                  (map %total_fees nat nat)
+                                                  (nat %total_staked))
+                                               (nat %total_supply)))
+                                      (big_map %ledger (pair address nat) nat)
+                                      (big_map %allowances (pair address nat) (set address))
+                                      (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
+                                      (big_map %dev_rewards
+                                         (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                                         nat)
+                                      (big_map %referral_rewards
+                                         (pair address
+                                               (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                         nat)
+                                      (big_map %stakers_balance
+                                         (pair address nat)
+                                         (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
+                                      (pair %quipu_token (address %token_address) (nat %token_id))
+                                      (address %factory_address)
+                                      (bool %started)))) ;
+                     IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                     DUP 3 ;
+                     CAR ;
+                     DIG 2 ;
+                     PAIR ;
+                     EXEC ;
+                     DUP ;
+                     DUG 2 ;
+                     CDR ;
+                     UPDATE 1 ;
+                     SWAP ;
+                     CAR ;
+                     PAIR }
+                   { DIG 4 ;
+                     DUP 3 ;
+                     CAR ;
+                     GET 30 ;
+                     IF { DROP } { FAILWITH } ;
+                     DIG 3 ;
+                     DUP 3 ;
+                     GET 9 ;
+                     DUP 3 ;
+                     IF_LEFT
+                       { IF_LEFT
+                           { IF_LEFT { DROP ; PUSH nat 1 } { DROP ; PUSH nat 4 } }
+                           { IF_LEFT { DROP ; PUSH nat 0 } { DROP ; PUSH nat 3 } } }
+                       { DROP ; PUSH nat 2 } ;
+                     GET ;
+                     IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                     DIG 3 ;
+                     SWAP ;
+                     UNPACK
+                       (lambda
+                          (pair (or (or (or (pair %balance_of
+                                               (list %requests (pair (address %owner) (nat %token_id)))
+                                               (contract %callback
+                                                  (list (pair (pair %request (address %owner) (nat %token_id)) (nat %balance)))))
+                                            (pair %total_supply (nat %token_id) (contract %receiver nat)))
+                                        (or (list %transfer
+                                               (pair (address %from_) (list %txs (pair (address %to_) (nat %token_id) (nat %amount)))))
+                                            (pair %update_metadata (nat %token_id) (map %token_info string bytes))))
+                                    (list %update_operators
+                                       (or (pair %add_operator (address %owner) (address %operator) (nat %token_id))
+                                           (pair %remove_operator (address %owner) (address %operator) (nat %token_id)))))
+                                (pair (pair %storage
+                                         (address %admin)
+                                         (address %default_referral)
+                                         (set %managers address)
+                                         (nat %pools_count)
+                                         (big_map %tokens
+                                            nat
+                                            (map nat (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))))
+                                         (big_map %pool_to_id bytes nat)
+                                         (big_map %pools
+                                            nat
+                                            (pair (nat %initial_A_f)
+                                                  (timestamp %initial_A_time)
+                                                  (nat %future_A_f)
+                                                  (timestamp %future_A_time)
+                                                  (map %tokens_info
+                                                     nat
+                                                     (pair (nat %rate_f) (nat %precision_multiplier_f) (nat %reserves)))
+                                                  (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f))
+                                                  (pair %strategy
+                                                     (option %strat_contract address)
+                                                     (map %configuration
+                                                        nat
+                                                        (pair (nat %des_reserves_rate_f)
+                                                              (nat %delta_rate_f)
+                                                              (nat %min_invest)
+                                                              (nat %strategy_reserves)
+                                                              (bool %is_updatable))))
+                                                  (pair %staker_accumulator
+                                                     (map %accumulator_f nat nat)
+                                                     (map %total_fees nat nat)
+                                                     (nat %total_staked))
+                                                  (nat %total_supply)))
+                                         (big_map %ledger (pair address nat) nat)
+                                         (big_map %allowances (pair address nat) (set address))
+                                         (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
+                                         (big_map %dev_rewards
+                                            (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                                            nat)
+                                         (big_map %referral_rewards
+                                            (pair address
+                                                  (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                            nat)
+                                         (big_map %stakers_balance
+                                            (pair address nat)
+                                            (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
+                                         (pair %quipu_token (address %token_address) (nat %token_id))
+                                         (address %factory_address)
+                                         (bool %started))
+                                      (big_map %metadata string bytes)
+                                      (big_map %admin_lambdas nat bytes)
+                                      (big_map %dex_lambdas nat bytes)
+                                      (big_map %token_lambdas nat bytes)
+                                      (big_map %strat_lambdas nat bytes)))
+                          (pair (list operation)
+                                (pair (pair %storage
+                                         (address %admin)
+                                         (address %default_referral)
+                                         (set %managers address)
+                                         (nat %pools_count)
+                                         (big_map %tokens
+                                            nat
+                                            (map nat (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))))
+                                         (big_map %pool_to_id bytes nat)
+                                         (big_map %pools
+                                            nat
+                                            (pair (nat %initial_A_f)
+                                                  (timestamp %initial_A_time)
+                                                  (nat %future_A_f)
+                                                  (timestamp %future_A_time)
+                                                  (map %tokens_info
+                                                     nat
+                                                     (pair (nat %rate_f) (nat %precision_multiplier_f) (nat %reserves)))
+                                                  (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f))
+                                                  (pair %strategy
+                                                     (option %strat_contract address)
+                                                     (map %configuration
+                                                        nat
+                                                        (pair (nat %des_reserves_rate_f)
+                                                              (nat %delta_rate_f)
+                                                              (nat %min_invest)
+                                                              (nat %strategy_reserves)
+                                                              (bool %is_updatable))))
+                                                  (pair %staker_accumulator
+                                                     (map %accumulator_f nat nat)
+                                                     (map %total_fees nat nat)
+                                                     (nat %total_staked))
+                                                  (nat %total_supply)))
+                                         (big_map %ledger (pair address nat) nat)
+                                         (big_map %allowances (pair address nat) (set address))
+                                         (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))
+                                         (big_map %dev_rewards
+                                            (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                                            nat)
+                                         (big_map %referral_rewards
+                                            (pair address
+                                                  (or (address %fa12) (pair %fa2 (address %token_address) (nat %token_id))))
+                                            nat)
+                                         (big_map %stakers_balance
+                                            (pair address nat)
+                                            (pair (nat %balance) (map %earnings nat (pair (nat %reward_f) (nat %former_f)))))
+                                         (pair %quipu_token (address %token_address) (nat %token_id))
+                                         (address %factory_address)
+                                         (bool %started))
+                                      (big_map %metadata string bytes)
+                                      (big_map %admin_lambdas nat bytes)
+                                      (big_map %dex_lambdas nat bytes)
+                                      (big_map %token_lambdas nat bytes)
+                                      (big_map %strat_lambdas nat bytes)))) ;
+                     IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                     DUG 2 ;
+                     PAIR ;
+                     EXEC } } } } ;
   view "calc_token_amount"
        (pair (nat %pool_id) (map %amounts nat nat) (bool %is_deposit))
        nat
@@ -856,7 +1084,7 @@
               IF_NONE { FAILWITH } { SWAP ; DROP } } ;
          SWAP ;
          DIG 2 ;
-         GET 14 ;
+         GET 16 ;
          DIG 2 ;
          MUL ;
          EDIV ;
@@ -918,16 +1146,19 @@
                PAIR ;
                GET ;
                IF_NONE {} { SWAP ; DROP } ;
-               DUP ;
-               CDR ;
+               SWAP ;
+               GET 15 ;
+               CAR ;
                MAP { UNPAIR ;
                      PUSH nat 0 ;
-                     DUP 5 ;
-                     GET 13 ;
-                     CAR ;
+                     PUSH nat 0 ;
+                     PAIR ;
+                     DUP 4 ;
+                     CDR ;
                      DIG 2 ;
                      GET ;
                      IF_NONE {} { SWAP ; DROP } ;
+                     SWAP ;
                      DUP 3 ;
                      CAR ;
                      MUL ;
@@ -943,8 +1174,6 @@
                      EDIV ;
                      IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
                      CAR } ;
-               DIG 2 ;
-               DROP ;
                SWAP ;
                CAR ;
                PAIR ;
@@ -1549,6 +1778,7 @@
                              timestamp
                              (map nat (pair nat nat nat))
                              (pair nat nat nat)
+                             (pair (option address) (map nat (pair nat nat nat nat bool)))
                              (pair (map nat nat) (map nat nat) nat)
                              nat)))
            nat
@@ -1951,7 +2181,7 @@
          CAR ;
          DUP 9 ;
          DUP 8 ;
-         GET 14 ;
+         GET 16 ;
          DUP 3 ;
          DUP 9 ;
          MUL ;
@@ -2121,7 +2351,7 @@
          PUSH string "low-total-supply" ;
          DIG 3 ;
          DIG 4 ;
-         GET 14 ;
+         GET 16 ;
          SUB ;
          ISNAT ;
          IF_NONE { FAILWITH } { SWAP ; DROP } ;
@@ -2151,7 +2381,7 @@
                SWAP ;
                DUP ;
                DUG 2 ;
-               GET 14 ;
+               GET 16 ;
                PUSH nat 1000000000000000000 ;
                DIG 2 ;
                GET 4 ;
@@ -2196,7 +2426,7 @@
          DIG 2 ;
          GET ;
          IF_NONE { FAILWITH } { SWAP ; DROP } ;
-         GET 14 } ;
+         GET 16 } ;
   view "get_balance"
        (list (pair (address %owner) (nat %token_id)))
        (list (pair (pair %request (address %owner) (nat %token_id)) (nat %balance)))
