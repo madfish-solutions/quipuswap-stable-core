@@ -15,17 +15,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup dependencies
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: "14"
+          node-version: "18"
           cache: 'yarn'
           cache-dependency-path: './yarn.lock'
-      - name: Install Git
-        run: sudo apt install git -y
       - name: Install modules
-        run: yarn install
+        run: yarn install --immutable --immutable-cache --check-cache
       - name: Compile contracts for tests
         run: yarn compile-for-test
       - name: Start sandbox and wait for initialization
@@ -39,21 +37,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup Node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: "14"
+          node-version: "18"
           cache: 'yarn'
           cache-dependency-path: './yarn.lock'
       - name: Set up Python
-        run: sudo apt install python pip
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
       - name: Install crypto libs
         run: sudo apt install libsodium-dev libsecp256k1-dev libgmp-dev
       - name: Install pytezos and pytest
         run: pip install pytezos pytest
       - name: Install node modules
-        run: yarn install
+        run: yarn install --immutable --immutable-cache --check-cache
       - name: Compile contracts
         run: yarn compile
       - name: Run scenario tests
