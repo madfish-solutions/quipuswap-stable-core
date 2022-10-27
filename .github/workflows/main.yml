@@ -25,7 +25,13 @@ jobs:
       - name: Install modules
         run: yarn install --immutable --immutable-cache --check-cache
       - name: Compile contracts and test
-        run: yarn compile-n-test
+        run: yarn compile-for-test
+      - name: Start sandbox and wait for initialization
+        run: yarn start-sandbox && sleep 20s
+      - name: Test the contracts
+        run: yarn test
+      - name: Stop sandbox
+        run: yarn stop-sandbox
   pytest:
     name: Pytest tests
     runs-on: ubuntu-latest
