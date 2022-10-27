@@ -28,6 +28,7 @@ export enum TezosProtocols {
   HANGZHOU = "hangzhou",
   ITHACA = "ithaca",
   JACARTA = "jacarta",
+  KATHMANDU = "kathmandu",
 }
 
 export declare type FlextesaTezosProtocols = {

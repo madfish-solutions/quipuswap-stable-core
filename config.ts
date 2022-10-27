@@ -11,7 +11,7 @@ export const config = {
     sandbox: {
       host: "http://localhost",
       port: 20000,
-      protocol: TezosProtocols.ITHACA,
+      protocol: TezosProtocols.KATHMANDU,
       genesisBlockHash: "random",
       defaultSignerSK: "edsk3QoqBuvdamxouPhin7swCvkQNgq4jP5KZPbwWNnwdZpSpJiEbq",
       accounts: {
@@ -33,7 +33,7 @@ export const config = {
       },
     },
     testnet: {
-      host: "https://ithacanet.ecadinfra.com",
+      host: "https://ghostnet.testnets.xyz",
       port: 443,
       faucet: null,
     },

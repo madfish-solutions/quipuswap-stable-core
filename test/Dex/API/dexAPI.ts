@@ -20,6 +20,7 @@ import { dexLambdas, tokenLambdas } from "../../storage/Functions";
 import admin_lambdas_comp from "../../../build/lambdas/test/Admin_lambdas.json";
 import dex_lambdas_comp from "../../../build/lambdas/test/Dex_lambdas.json";
 import dev_lambdas_comp from "../../../build/lambdas/test/Dev_lambdas.json";
+import strat_lambdas_comp from "../../../build/lambdas/test/Strategy_lambdas.json";
 import token_lambdas_comp from "../../../build/lambdas/test/Token_lambdas.json";
 import { defaultTokenId, TokenFA12, TokenFA2 } from "../../Token";
 import { DevEnabledContract } from "../../Developer/API/devAPI";
@@ -65,6 +66,13 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
         8,
         dex_lambdas_comp
       );
+      await setFunctionBatchCompilled(
+        tezos,
+        dexAddress,
+        "Strategy",
+        5,
+        strat_lambdas_comp
+      );
     }
     return dex;
   }
@@ -81,7 +89,13 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
   ): Promise<void> {
     this.storage = (await this.contract.storage()) as DexStorage;
     for (const key in maps) {
-      if (["dex_lambdas", "token_lambdas", "admin_lambdas"].includes(key))
+      if ([
+          "dex_lambdas",
+          "token_lambdas",
+          "admin_lambdas",
+          "strat_lambdas",
+        ].includes(key)
+      )
         continue;
       this.storage.storage[key] = await maps[key].reduce(
         async (prev, current) => {
@@ -102,7 +116,14 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
       );
     }
     for (const key in maps) {
-      if (!["dex_lambdas", "token_lambdas", "admin_lambdas"].includes(key))
+      if (
+        ![
+          "dex_lambdas",
+          "token_lambdas",
+          "admin_lambdas",
+          "strat_lambdas",
+        ].includes(key)
+      )
         continue;
       this.storage[key] = await maps[key].reduce(async (prev, current) => {
         try {

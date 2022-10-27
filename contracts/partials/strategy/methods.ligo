@@ -9,7 +9,7 @@
     const idx : nat = case p of [
     | Connect_strategy(_)               -> 0n
     | Set_token_strategy(_)             -> 1n
-    | Set_token_strategy_update_flag(_) -> 2n
+    | Set_token_strategy_rebalance(_)   -> 2n
     ];
 
     const lambda_bytes : bytes = unwrap(s.strat_lambdas[idx], Errors.Dex.unknown_func);

@@ -31,5 +31,6 @@ const dex_storage: DexStorage = {
   admin_lambdas: new MichelsonMap(),
   dex_lambdas: new MichelsonMap(),
   token_lambdas: new MichelsonMap(),
+  strat_lambdas: new MichelsonMap(),
 };
 export default dex_storage;

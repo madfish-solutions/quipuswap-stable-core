@@ -26,39 +26,57 @@
   },
   "scripts": {
     "cli": "ts-node ./scripts/cli.ts",
+    
     "help": "yarn cli --help",
     "start-sandbox": "yarn cli sandbox --up",
     "stop-sandbox": "yarn cli sandbox --down",
-    "setup-pre-compiled": "yarn cli compile -F tz -c dex4factory",
-    "compile": "yarn compile-contract -c dex && yarn compile-lambda-all && yarn compile-factory",
     "compile-contract": "yarn cli compile -F json",
     "compile-lambda": "yarn cli compile-lambda",
-    "compile-lambda-all": "yarn compile-lambda-admin && yarn compile-lambda-dex && yarn compile-lambda-dev && yarn compile-lambda-token && yarn compile-lambda-strategy",
+    
     "compile-lambda-standalone": "yarn -s compile-lambda -C ./contracts/main/dex.ligo",
+    "compile-dex-lambda-factory": "yarn -s compile-lambda -C ./contracts/main/dex4factory.ligo",
+    "compile-lambda-test": "yarn -s compile-lambda -C ./contracts/main/dex_test.ligo",
+    
+    "compile-lambda-all": "yarn compile-lambda-admin && yarn compile-lambda-dex && yarn compile-lambda-dev && yarn compile-lambda-token && yarn compile-lambda-strategy",
     "compile-lambda-dex": "yarn -s compile-lambda-standalone -T Dex -J ./test/lambdas/Dex_lambdas.json",
     "compile-lambda-dev": "yarn -s compile-lambda-standalone -T Dev -J ./test/lambdas/Dev_lambdas.json",
     "compile-lambda-token": " yarn -s compile-lambda-standalone -T Token -J ./test/lambdas/Token_lambdas.json",
-    "compile-lambda-strategy": " yarn -s compile-lambda-standalone -T Strategy -J ./test/lambdas/Strategy_lambdas.json",
     "compile-lambda-admin": "yarn -s compile-lambda-standalone -T Admin -J ./test/lambdas/Admin_lambdas.json",
-    "compile-factory": "yarn setup-pre-compiled && yarn compile-lambda-all-factory && yarn compile-contract -c factory && yarn cli compile-factory-lambda -F add_pool",
+    "compile-lambda-strategy": " yarn -s compile-lambda-standalone -T Strategy -J ./test/lambdas/Strategy_lambdas.json",
+
     "compile-lambda-all-factory": "yarn compile-lambda-admin-factory && yarn compile-lambda-dex-factory && yarn compile-lambda-token-factory && yarn compile-lambda-strategy-factory",
-    "compile-dex-lambda-factory": "yarn -s compile-lambda -C ./contracts/main/dex4factory.ligo",
     "compile-lambda-dex-factory": "yarn -s compile-dex-lambda-factory -T Dex -J ./test/lambdas/Dex_lambdas.json",
     "compile-lambda-token-factory": "yarn -s compile-dex-lambda-factory -T Token -J ./test/lambdas/Token_lambdas.json",
     "compile-lambda-admin-factory": "yarn -s compile-dex-lambda-factory -T Admin -J ./test/lambdas/Admin_lambdas.json",
     "compile-lambda-strategy-factory": " yarn -s compile-dex-lambda-factory -T Strategy -J ./test/lambdas/Strategy_lambdas.json",
-    "compile-for-test": "yarn compile-contract -c dex_test && yarn compile-lambda-all-test && yarn compile-factory",
-    "compile-lambda-test": "yarn -s compile-lambda -C ./contracts/main/dex_test.ligo",
+
     "compile-lambda-all-test": "yarn compile-lambda-admin-test && yarn compile-lambda-dex-test && yarn compile-lambda-dev-test && yarn compile-lambda-token-test && yarn compile-lambda-strategy-test",
     "compile-lambda-dex-test": "yarn -s compile-lambda-test -T Dex -J ./test/lambdas/Dex_lambdas.json",
     "compile-lambda-dev-test": "yarn -s compile-lambda-test -T Dev -J ./test/lambdas/Dev_lambdas.json",
     "compile-lambda-token-test": "yarn -s compile-lambda-test -T Token -J ./test/lambdas/Token_lambdas.json",
     "compile-lambda-admin-test": "yarn -s compile-lambda-test -T Admin -J ./test/lambdas/Admin_lambdas.json",
     "compile-lambda-strategy-test": " yarn -s compile-lambda-test -T Strategy -J ./test/lambdas/Strategy_lambdas.json",
+
+    "precompile-dex": "yarn compile-lambda-all",
+    "compile-dex": "yarn compile-contract -c dex",
+
+    "compile": "yarn compile-dex && yarn compile-factory",
     "recompile": "yarn clear-build && yarn compile-contract && yarn compile-lambda-all && yarn compile-factory",
+
+    "precompile-factory": "yarn cli compile -F tz -c dex4factory && yarn compile-lambda-all-factory && yarn cli compile-factory-lambda -F add_pool",
+    "compile-factory": "yarn compile-contract -c factory",
+
+    "precompile-for-test": "yarn compile-lambda-all-test",
+    "compile-for-test": "yarn compile-contract -c dex_test && yarn compile-factory",
+
     "migrate": "yarn cli migrate",
+
     "test": "jest",
-    "compile-n-test": "yarn compile-for-test && yarn start-sandbox && sleep 10 && yarn test && yarn stop-sandbox",
+
+    "precompile-n-test": "yarn compile-for-test && yarn start-sandbox && sleep 10",
+    "compile-n-test": "yarn test",
+    "postcompile-n-test": "yarn stop-sandbox",
+
     "clear-build": "rm -rf ./build",
     "lint": "eslint --ext .ts .",
     "fix": "eslint --ext .ts --fix ."

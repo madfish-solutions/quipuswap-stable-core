@@ -10,6 +10,7 @@ import dev_lambdas_comp from "../../../build/lambdas/test/Dev_lambdas.json";
 import dex_lambdas_comp from "../../../build/lambdas/test/Dex_lambdas.json";
 import token_lambdas_comp from "../../../build/lambdas/test/Token_lambdas.json";
 import admin_lambdas_comp from "../../../build/lambdas/test/Admin_lambdas.json";
+import strat_lambdas_comp from "../../../build/lambdas/test/Strategy_lambdas.json";
 
 import { accounts } from "../../../utils/constants";
 import { DexAPI as Dex, defaultDexStorage as storage } from "../API";

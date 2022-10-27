@@ -3,7 +3,7 @@ type strategy_storage_t is [@layout:comb] record[
   delta_rate_f        : nat;
   min_invest          : nat;
   strategy_reserves   : nat;
-  is_updatable        : bool;
+  is_rebalance        : bool;
 ];
 
 type strategy_full_storage_t is [@layout:comb] record [
@@ -39,4 +39,4 @@ type upd_strat_state_t  is [@layout:comb] record [
 type strategy_action_t is
 | Connect_strategy                of conn_strategy_param
 | Set_token_strategy              of conn_tok_strat_param
-| Set_token_strategy_update_flag  of tok_strat_upd_fl_param
+| Set_token_strategy_rebalance  of tok_strat_upd_fl_param

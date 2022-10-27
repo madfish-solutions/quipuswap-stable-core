@@ -54,7 +54,7 @@ function update_token_to_strategy_params(
           delta_rate_f        = params.delta_rate_f;
           min_invest          = params.min_invest;
           strategy_reserves   = 0n;
-          is_updatable        = True;
+          is_rebalance        = True;
         ]
       ];
       pool.strategy.configuration := strat_config;
@@ -64,20 +64,20 @@ function update_token_to_strategy_params(
   ]
  } with (operations, s)
 
-function set_updatable(
+function set_rebalance(
   const p               : strategy_action_t;
   var s                 : storage_t)
                         : return_t is
  block {
   var operations: list(operation) := Constants.no_operations;
   case p of [
-    | Set_token_strategy_update_flag(params) -> {
+    | Set_token_strategy_rebalance(params) -> {
       var pool : pool_t := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
       pool.strategy.configuration[params.pool_token_id] := unwrap(
           pool.strategy.configuration[params.pool_token_id],
           Errors.Strategy.unknown_token
         ) with record [
-          is_updatable = params.flag;
+          is_rebalance = params.flag;
       ];
       s.pools[params.pool_id] := pool;
     }

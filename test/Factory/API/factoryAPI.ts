@@ -16,6 +16,7 @@ import { FactoryStorage } from "./types";
 import admin_lambdas_comp from "../../../build/lambdas/factory/Admin_lambdas.json";
 import dex_lambdas_comp from "../../../build/lambdas/factory/Dex_lambdas.json";
 import token_lambdas_comp from "../../../build/lambdas/factory/Token_lambdas.json";
+import strat_lambdas_comp from "../../../build/lambdas/test/Strategy_lambdas.json";
 import { confirmOperation } from "../../../utils/confirmation";
 import BigNumber from "bignumber.js";
 import { defaultTokenId, TokenFA12, TokenFA2 } from "../../Token";
@@ -70,6 +71,13 @@ export class DexFactory implements DevEnabledContract {
       8,
       dex_lambdas_comp
     );
+    await setFunctionBatchCompilled(
+      tezos,
+      factoryAddress,
+      "Strategy",
+      5,
+      strat_lambdas_comp
+    );
     await factory.updateStorage();
     return factory;
   }
@@ -87,6 +95,7 @@ export class DexFactory implements DevEnabledContract {
           // "dev_lambdas",
           "token_lambdas",
           "admin_lambdas",
+          "strat_lambdas"
         ].includes(key)
       )
         continue;
@@ -114,6 +123,7 @@ export class DexFactory implements DevEnabledContract {
           // "dev_lambdas",
           "token_lambdas",
           "admin_lambdas",
+          "strat_lambdas"
         ].includes(key)
       )
         continue;

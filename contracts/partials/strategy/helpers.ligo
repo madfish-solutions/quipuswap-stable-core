@@ -86,7 +86,7 @@ function operate_with_strategy(
                         : list(operation) * strategy_storage_t is
   block {
     var ops := Constants.no_operations;
-    if strategy.is_updatable then {
+    if strategy.is_rebalance then {
       const new_s_reserves = calculate_desired_reserves(reserves, strategy);
       ops := update_strategy_reserves(
         token_pool_id,

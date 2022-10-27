@@ -51,6 +51,7 @@ const factoryDefaultStorage: FactoryStorage = {
   admin_lambdas: new MichelsonMap(),
   dex_lambdas: new MichelsonMap(),
   token_lambdas: new MichelsonMap(),
+  strat_lambdas: new MichelsonMap(),
   metadata: metadata,
 };
 
