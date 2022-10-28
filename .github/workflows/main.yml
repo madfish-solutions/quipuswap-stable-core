@@ -25,14 +25,14 @@ jobs:
       - name: Install modules
         run: yarn install --immutable --immutable-cache --check-cache
       - uses: actions/cache@v3
-        id: contracts-build-jest-cache
+        id: contracts-build
         with:
           path: |
             build
             contracts/compiled
-          key: ${{ runner.os }}-jest-${{ hashFiles('contracts/**/*.ligo') }}
+          key: compiled-test-contracts-${{ runner.os }}-jest-${{ hashFiles('contracts/**/*.ligo') }}
       - name: Compile contracts and test
-        if: steps.contracts-build-jest-cache.outputs.cache-hit != 'true'
+        if: steps.contracts-build.outputs.cache-hit != 'true'
         run: yarn compile-for-test
       - name: Start sandbox
         run: yarn start-sandbox
@@ -67,14 +67,14 @@ jobs:
       - name: Install node modules
         run: yarn install --immutable --immutable-cache --check-cache
       - uses: actions/cache@v3
-        id: contracts-build-pytest-cache
+        id: contracts-build
         with:
           path: |
             build
             contracts/compiled
-          key: ${{ runner.os }}-py-${{ hashFiles('contracts/**/*.ligo') }}
+          key: compiled-contracts-${{ runner.os }}-${{ hashFiles('contracts/**/*.ligo') }}
       - name: Compile contracts
-        if: steps.contracts-build-pytest-cache.outputs.cache-hit != 'true'
+        if: steps.contracts-build.outputs.cache-hit != 'true'
         run: yarn compile
       - name: Run scenario tests
         run: pytest -s -v
