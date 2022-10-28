@@ -31,7 +31,7 @@ jobs:
       - name: Wait for Sandbox endpoint
         uses: emilioschepis/wait-for-endpoint@v1.0.3
         with:
-          url: http://localhost:2000/chains/main/blocks/head
+          url: http://0.0.0.0:2000/chains/main/blocks/head
       - name: Test the contracts
         run: yarn test
       - name: Stop sandbox

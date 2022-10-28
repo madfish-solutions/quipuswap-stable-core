@@ -9,7 +9,7 @@ export const config = {
   preferredLigoFlavor: "pascaligo",
   networks: {
     sandbox: {
-      host: "http://localhost",
+      host: "http://0.0.0.0",
       port: 20000,
       protocol: TezosProtocols.KATHMANDU,
       genesisBlockHash: "random",
