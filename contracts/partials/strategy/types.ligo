@@ -17,9 +17,14 @@ type conn_strategy_param is [@layout:comb] record [
 ]
 
 type conn_tok_strat_param is [@layout:comb] record [
+  pool_id                       : pool_id_t;
+  pool_token_id                 : token_pool_idx_t;
+  lending_market_id             : nat;
+];
+
+type set_tok_strat_param is [@layout:comb] record [
   pool_id               : pool_id_t;
   pool_token_id         : token_pool_idx_t;
-  lending_market_id     : nat;
   des_reserves_rate_f   : nat;
   delta_rate_f          : nat;
   min_invest            : nat;
@@ -36,7 +41,21 @@ type upd_strat_state_t  is [@layout:comb] record [
   new_balance           : nat;
 ]
 
+type rebalance_param    is [@layout:comb] record [
+  pool_id               : pool_id_t;
+  pool_token_id         : nat;
+]
+
+type strat_upd_info_t   is [@layout:comb] record [
+  token                         : token_t;
+  pool_token_id                 : token_pool_idx_t;
+  lending_market_id             : nat;
+]
+
+
 type strategy_action_t is
 | Connect_strategy                of conn_strategy_param
-| Set_token_strategy              of conn_tok_strat_param
-| Set_token_strategy_rebalance  of tok_strat_upd_fl_param
+| Connect_token_strategy          of conn_tok_strat_param
+| Set_token_strategy              of set_tok_strat_param
+| Set_token_strategy_rebalance    of tok_strat_upd_fl_param
+| Rebalance                       of rebalance_param

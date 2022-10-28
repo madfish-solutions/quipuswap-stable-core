@@ -5,10 +5,18 @@
   },
   {
     "index": 1,
-    "name": "update_token_to_strategy_params"
+    "name": "connect_token_to_strategy"
   },
   {
     "index": 2,
+    "name": "update_token_strategy_params"
+  },
+  {
+    "index": 3,
     "name": "set_rebalance"
+  },
+  {
+    "index": 4,
+    "name": "strategy_rebalance"
   }
 ]
