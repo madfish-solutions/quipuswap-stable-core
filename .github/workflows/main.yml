@@ -27,7 +27,11 @@ jobs:
       - name: Compile contracts and test
         run: yarn compile-for-test
       - name: Start sandbox and wait for initialization
-        run: yarn start-sandbox && sleep 20s
+        run: yarn start-sandbox
+      - name: Wait For Endpoint
+        uses: emilioschepis/wait-for-endpoint@v1.0.3
+        with:
+          url: http://localhost:2000/chains/main/blocks/head
       - name: Test the contracts
         run: yarn test
       - name: Stop sandbox

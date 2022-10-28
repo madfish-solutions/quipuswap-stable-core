@@ -33,7 +33,7 @@ export const config = {
       },
     },
     testnet: {
-      host: "https://ghostnet.testnets.xyz",
+      host: "https://rpc.ghostnet.testnets.xyz",
       port: 443,
       faucet: null,
     },
