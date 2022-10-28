@@ -26,9 +26,9 @@ jobs:
         run: yarn install --immutable --immutable-cache --check-cache
       - name: Compile contracts and test
         run: yarn compile-for-test
-      - name: Start sandbox and wait for initialization
+      - name: Start sandbox
         run: yarn start-sandbox
-      - name: Wait For Endpoint
+      - name: Wait for Sandbox endpoint
         uses: emilioschepis/wait-for-endpoint@v1.0.3
         with:
           url: http://localhost:2000/chains/main/blocks/head
