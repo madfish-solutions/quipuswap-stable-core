@@ -144,10 +144,10 @@ export const startFlextesa = async (
 
   // Localhost is not a valid host for Docker
   const host =
-    options.host.includes("localhost") || options.host == "127.0.0.1"
+    options.host.includes("localhost") || options.host.includes("127.0.0.1")
       ? "0.0.0.0"
       : options.host;
-  const port = options.port;
+  const port = options.port || "20000";
 
   // Protocol "validity" checks
   const protocol =
@@ -165,7 +165,7 @@ export const startFlextesa = async (
     "--name",
     POD_NAME,
     "-p",
-    host + ":" + port + ":20000",
+    host + ":" + port,
     "--env",
     "flextesa_node_cors_origin=*",
     FLEXTESA_IMAGE,
