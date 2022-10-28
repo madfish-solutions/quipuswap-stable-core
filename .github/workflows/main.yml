@@ -30,7 +30,7 @@ jobs:
           path: |
             build
             contracts/compiled
-          key: ${{ runner.os }}-${{ hashFiles('contracts/**/*.ligo') }}
+          key: ${{ runner.os }}-jest-${{ hashFiles('contracts/**/*.ligo') }}
       - name: Compile contracts and test
         if: steps.contracts-build-jest-cache.outputs.cache-hit != 'true'
         run: yarn compile-for-test
@@ -67,14 +67,14 @@ jobs:
       - name: Install node modules
         run: yarn install --immutable --immutable-cache --check-cache
       - uses: actions/cache@v3
-        id: contracts-build-cache
+        id: contracts-build-pytest-cache
         with:
           path: |
             build
             contracts/compiled
-          key: ${{ runner.os }}-${{ hashFiles('contracts/**/*.ligo') }}
+          key: ${{ runner.os }}-py-${{ hashFiles('contracts/**/*.ligo') }}
       - name: Compile contracts
-        if: steps.contracts-build-cache.outputs.cache-hit != 'true'
+        if: steps.contracts-build-pytest-cache.outputs.cache-hit != 'true'
         run: yarn compile
       - name: Run scenario tests
         run: pytest -s -v
