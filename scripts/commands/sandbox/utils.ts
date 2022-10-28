@@ -165,7 +165,7 @@ export const startFlextesa = async (
     "--name",
     POD_NAME,
     "-p",
-    host + ":" + port,
+    port + ":20000",
     "--env",
     "flextesa_node_cors_origin=*",
     FLEXTESA_IMAGE,
