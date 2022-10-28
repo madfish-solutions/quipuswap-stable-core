@@ -24,14 +24,22 @@ jobs:
           cache-dependency-path: './yarn.lock'
       - name: Install modules
         run: yarn install --immutable --immutable-cache --check-cache
+      - uses: actions/cache@v3
+        id: contracts-build-jest-cache
+        with:
+          path: |
+            build
+            contracts/compiled
+          key: ${{ runner.os }}-${{ hashFiles('contracts/**/*.ligo') }}
       - name: Compile contracts and test
+        if: steps.contracts-build-jest-cache.outputs.cache-hit != 'true'
         run: yarn compile-for-test
       - name: Start sandbox
         run: yarn start-sandbox
       - name: Wait for Sandbox endpoint
         uses: emilioschepis/wait-for-endpoint@v1.0.3
         with:
-          url: http://0.0.0.0:2000/chains/main/blocks/head
+          url: http://localhost:2000/chains/main/blocks/head
       - name: Test the contracts
         run: yarn test
       - name: Stop sandbox
@@ -58,7 +66,15 @@ jobs:
         run: pip install pytezos pytest
       - name: Install node modules
         run: yarn install --immutable --immutable-cache --check-cache
+      - uses: actions/cache@v3
+        id: contracts-build-cache
+        with:
+          path: |
+            build
+            contracts/compiled
+          key: ${{ runner.os }}-${{ hashFiles('contracts/**/*.ligo') }}
       - name: Compile contracts
+        if: steps.contracts-build-cache.outputs.cache-hit != 'true'
         run: yarn compile
       - name: Run scenario tests
         run: pytest -s -v
