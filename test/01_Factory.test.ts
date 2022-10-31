@@ -39,16 +39,14 @@ describe("01. Dex Factory", () => {
     ref_f: new BigNumber("0"),
   };
   let factory: DexFactory;
-  let lambda: TezosAddress;
   let quipuToken: TokenFA2;
 
   beforeAll(
     async () =>
-      ({
-        factory,
-        quipuToken,
-        lambdaContractAddress: lambda,
-      } = await cases.before.setupFactoryEnvironment(tezos, developer_name))
+      ({ factory, quipuToken } = await cases.before.setupFactoryEnvironment(
+        tezos,
+        developer_name
+      ))
   );
 
   describe("1. Fee", () => {
@@ -109,8 +107,7 @@ describe("01. Dex Factory", () => {
         dex_case.pools.PoolAdmin.Fee.fees,
         true,
         quipuToken,
-        tezos,
-        lambda
+        tezos
       )));
 
     // eslint-disable-next-line jest/prefer-expect-assertions
@@ -207,7 +204,6 @@ describe("01. Dex Factory", () => {
               idx_map,
               new BigNumber(10).pow(2),
               amounts,
-              lambda,
               Tezos
             ),
           40000
@@ -263,7 +259,6 @@ describe("01. Dex Factory", () => {
           tokens,
           pool_id,
           developer_name,
-          lambda,
           Tezos
         ));
     });
@@ -324,7 +319,7 @@ describe("01. Dex Factory", () => {
     it("should deploy without QUIPU token fees", async () => {
       const init_balance: BigNumber = await quipuToken.contract.views
         .balance_of([{ owner: accounts.eve.pkh, token_id: "0" }])
-        .read(lambda);
+        .read();
 
       await cases.initPool.initializeExchangeSuccessCase(
         factory,
@@ -337,13 +332,12 @@ describe("01. Dex Factory", () => {
         zero_fees,
         true,
         quipuToken,
-        tezos,
-        lambda
+        tezos
       );
 
       const upd_balance: BigNumber = await quipuToken.contract.views
         .balance_of([{ owner: accounts.eve.pkh, token_id: "0" }])
-        .read(lambda);
+        .read();
       expect(init_balance[0].balance.toNumber()).toStrictEqual(
         upd_balance[0].balance.toNumber()
       );
@@ -401,8 +395,7 @@ describe("01. Dex Factory", () => {
         zero_fees,
         true,
         quipuToken,
-        tezos,
-        lambda
+        tezos
       ));
   });
 
@@ -450,8 +443,7 @@ describe("01. Dex Factory", () => {
         zero_fees,
         true,
         quipuToken,
-        tezos,
-        lambda
+        tezos
       ));
   });
 

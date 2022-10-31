@@ -8,8 +8,8 @@
   "author": "Illia Likhoshva <likhoshva@madfish.solutions> (https://www.madfish.solutions/)",
   "private": true,
   "dependencies": {
-    "@taquito/signer": "^11.1.0",
-    "@taquito/taquito": "^11.1.0",
+    "@taquito/signer": "^14.0.0",
+    "@taquito/taquito": "^14.0.0",
     "@types/jest": "^27.0.2",
     "chalk": "<5.0.0",
     "commander": "^8.3.0",

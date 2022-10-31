@@ -67,7 +67,7 @@ export class TokenFA12 implements Token {
     const operation = await this.contract.methods
       .transfer(from, to, amount)
       .send();
-    await confirmOperation(this.Tezos, operation.hash);
+    await operation.confirmation(2);
     return operation;
   }
 
@@ -77,7 +77,7 @@ export class TokenFA12 implements Token {
     tokenId = "0"
   ): Promise<TransactionOperation> {
     const operation = await this.contract.methods.approve(to, amount).send();
-    await confirmOperation(this.Tezos, operation.hash);
+    await operation.confirmation(2);
     return operation;
   }
 
@@ -88,7 +88,7 @@ export class TokenFA12 implements Token {
     const operation = await this.contract.methods
       .getBalance(owner, contract)
       .send();
-    await confirmOperation(this.Tezos, operation.hash);
+    await operation.confirmation(2);
     return operation;
   }
 
@@ -100,7 +100,7 @@ export class TokenFA12 implements Token {
     const operation = await this.contract.methods
       .getAllowance(owner, trusted, contract)
       .send();
-    await confirmOperation(this.Tezos, operation.hash);
+    await operation.confirmation(2);
     return operation;
   }
 
@@ -108,7 +108,7 @@ export class TokenFA12 implements Token {
     const operation = await this.contract.methods
       .getTotalSupply(null, contract)
       .send();
-    await confirmOperation(this.Tezos, operation.hash);
+    await operation.confirmation(2);
     return operation;
   }
 }

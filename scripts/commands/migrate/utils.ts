@@ -66,7 +66,7 @@ export async function migrate(
       .catch((e) => {
         throw e;
       });
-    await confirmOperation(tezos, operation.hash);
+      await operation.confirmation(2);
     artifacts.networks[network] = {
       [contract]: operation.contractAddress,
     };

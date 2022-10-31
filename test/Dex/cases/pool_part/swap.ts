@@ -52,7 +52,6 @@ export async function swapSuccessCase(
   idx_map: IndexMap,
   normalized_input: BigNumber,
   amounts: Map<string, BigNumber>,
-  lambdaContractAddress: string,
   Tezos: TezosToolkit
 ) {
   const config = await prepareProviderOptions(sender);
@@ -76,12 +75,12 @@ export async function swapSuccessCase(
   let init_in: BigNumber = await (tok_in instanceof TokenFA12
     ? t_in_ep(accounts[sender].pkh)
     : t_in_ep([{ owner: accounts[sender].pkh, token_id: "0" }])
-  ).read(lambdaContractAddress);
+  ).read();
 
   let init_out: BigNumber = await (tok_out instanceof TokenFA12
     ? t_out_ep(accounts[sender].pkh)
     : t_out_ep([{ owner: accounts[sender].pkh, token_id: "0" }])
-  ).read(lambdaContractAddress);
+  ).read();
 
   const in_amount = amounts.get(i);
   let min_out = amounts.get(j);
@@ -104,8 +103,7 @@ export async function swapSuccessCase(
     min_out,
     exp,
     accounts[sender].pkh,
-    referral,
-    Tezos
+    referral
   );
   await dex.updateStorage({ pools: [pool_id.toString()] });
   const upd_reserves =
@@ -147,11 +145,11 @@ export async function swapSuccessCase(
   let upd_in = await (tok_in instanceof TokenFA12
     ? t_in_ep(accounts[sender].pkh)
     : t_in_ep([{ owner: accounts[sender].pkh, token_id: "0" }])
-  ).read(lambdaContractAddress);
+  ).read();
   let upd_out = await (tok_out instanceof TokenFA12
     ? t_out_ep(accounts[sender].pkh)
     : t_out_ep([{ owner: accounts[sender].pkh, token_id: "0" }])
-  ).read(lambdaContractAddress);
+  ).read();
 
   expect(output.toNumber()).toBeGreaterThanOrEqual(min_out.toNumber());
 
@@ -295,7 +293,7 @@ export async function batchSwap(
       );
     }
     const op = await batch.send();
-    await confirmOperation(Tezos, op.hash);
+    await op.confirmation(2);
     console.debug(
       `[${chalk.bold.bgWhite.bgBlueBright(
         "BATCH"

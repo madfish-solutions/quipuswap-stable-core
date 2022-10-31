@@ -118,7 +118,7 @@ export async function bakeBlocks(count: number) {
       to: await Tezos.signer.publicKeyHash(),
       amount: 1,
     });
-    await confirmOperation(Tezos, operation.hash);
+    await operation.confirmation(2);
   }
 }
 
@@ -181,7 +181,7 @@ export async function setFunctionBatchCompilled(
     idx = idx + 1;
     if (idx % batchBy == 0 || idx == comp_funcs_map.length) {
       const batchOp = await batch.send();
-      await confirmOperation(tezos, batchOp.hash);
+      await batchOp.confirmation(2);
       console.debug(
         `[${chalk.bold.bgWhite.bgBlueBright(
           "BATCH"
@@ -211,7 +211,7 @@ export async function setFunctionCompilled(
       },
     });
     idx = idx + 1;
-    await confirmOperation(tezos, op.hash);
+    await op.confirmation(2);
   }
 }
 

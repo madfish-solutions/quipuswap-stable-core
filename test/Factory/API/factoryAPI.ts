@@ -42,7 +42,7 @@ export class DexFactory implements DevEnabledContract {
     const op = await factory.contract.methods
       .set_init_function(init_func_bytes)
       .send();
-    await confirmOperation(tezos, op.hash);
+    await op.confirmation(2);
     await setFunctionBatchCompilled(
       tezos,
       factoryAddress,
@@ -149,7 +149,7 @@ export class DexFactory implements DevEnabledContract {
     await this.updateStorage({});
     const operation = await this.contract.methods.set_dev_address(dev).send();
 
-    await confirmOperation(tezos, operation.hash);
+    await operation.confirmation(2);
     return operation;
   }
 
@@ -158,7 +158,7 @@ export class DexFactory implements DevEnabledContract {
     tezos: TezosToolkit
   ): Promise<TransactionOperation> {
     const operation = await this.contract.methods.set_dev_fee(fee).send();
-    await confirmOperation(tezos, operation.hash);
+    await operation.confirmation(2);
     return operation;
   }
   async setInitPrice(
@@ -166,7 +166,7 @@ export class DexFactory implements DevEnabledContract {
     tezos: TezosToolkit
   ): Promise<TransactionOperation> {
     const operation = await this.contract.methods.set_price(price).send();
-    await confirmOperation(tezos, operation.hash);
+    await operation.confirmation(2);
     return operation;
   }
   async setBurnRate(
@@ -174,7 +174,7 @@ export class DexFactory implements DevEnabledContract {
     tezos: TezosToolkit
   ): Promise<TransactionOperation> {
     const operation = await this.contract.methods.set_burn_rate(rate).send();
-    await confirmOperation(tezos, operation.hash);
+    await operation.confirmation(2);
     return operation;
   }
   async addRemWhitelist(
@@ -186,13 +186,13 @@ export class DexFactory implements DevEnabledContract {
     const operation = await this.contract.methods
       .set_whitelist(add, candidate)
       .send();
-    await confirmOperation(tezos, operation.hash);
+    await operation.confirmation(2);
     return operation;
   }
   async claimRewards(tezos: TezosToolkit): Promise<TransactionOperation> {
     await this.updateStorage({});
     const operation = await this.contract.methods.claim_rewards(null).send();
-    await confirmOperation(tezos, operation.hash);
+    await operation.confirmation(2);
     return operation;
   }
   async addPool(
@@ -266,13 +266,13 @@ export class DexFactory implements DevEnabledContract {
       fees,
     });
     const operation = await opr.send();
-    await confirmOperation(tezos, operation.hash);
+    await operation.confirmation(2);
     const inputs = new MichelsonMap();
     tokens_info.forEach((value, key) =>
       inputs.set(key, { token: input_tokens[key], value: value.reserves })
     );
     const op = await this.contract.methods.start_dex(inputs).send();
-    await confirmOperation(tezos, op.hash);
+    await op.confirmation(2);
     return operation;
   }
 }
