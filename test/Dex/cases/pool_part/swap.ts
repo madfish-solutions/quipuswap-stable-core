@@ -280,16 +280,18 @@ export async function batchSwap(
       let min_out = amounts.get(j);
       min_out = min_out.minus(min_out.multipliedBy(1).div(100));
       batch.withContractCall(
-        dex.contract.methods.swap(
-          poolId,
-          i,
-          j,
-          amounts.get(i),
-          min_out,
-          new BigNumber(exp.getTime()),
-          null,
-          ref
-        )
+        dex.contract.methodsObject.swap({
+          pool_id: poolId.toString(),
+          idx_from: i.toString(),
+          idx_to: j.toString(),
+          amount: amounts.get(i).toString(),
+          min_amount_out: min_out.toString(),
+          deadline: new BigNumber(exp.getTime())
+            .dividedToIntegerBy(1000)
+            .toString(),
+          receiver: null,
+          referral: ref,
+        })
       );
     }
     const op = await batch.send();

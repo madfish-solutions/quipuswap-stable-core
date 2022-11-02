@@ -435,8 +435,8 @@ describe("00. Standalone Dex", () => {
         });
         const tokens_map = dex.storage.storage.tokens[pool_id.toNumber()];
         const idx_map = mapTokensToIdx(tokens_map, tokens);
-        const USDtz_amt = amounts.get(idx_map.USDtz);
-        const in_amt = amounts.set(idx_map.USDtz, new BigNumber(0));
+        const USDtz_amt = amounts.get(idx_map.USDtz.toString());
+        const in_amt = amounts.set(idx_map.USDtz.toString(), new BigNumber(0));
         //min_shares = min_shares.multipliedBy(2).dividedToIntegerBy(3);
         await TPool.PoolInvest.investLiquiditySuccessCase(
           dex,
@@ -449,7 +449,7 @@ describe("00. Standalone Dex", () => {
           Tezos
         );
         const USDtz_in = new Map<string, BigNumber>().set(
-          idx_map.USDtz,
+          idx_map.USDtz.toString(),
           USDtz_amt
         );
         //min_shares = min_shares.dividedToIntegerBy(2);

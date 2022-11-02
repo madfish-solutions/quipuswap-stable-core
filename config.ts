@@ -38,7 +38,7 @@ export const config = {
       faucet: null,
     },
     mainnet: {
-      host: "https://mainnet-tezos.giganode.io",
+      host: "https://mainnet-node.madfish.solutions",
       port: 443,
     },
   },

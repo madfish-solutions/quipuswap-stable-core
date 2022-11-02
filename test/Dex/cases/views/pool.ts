@@ -37,7 +37,6 @@ export async function getTokenMapSuccessCase(
     FA12TokenType | FA2TokenType
   >;
   value.forEach((value, key) => {
-    console.error(key, value);
     if (key.toString() == idx_map.USDtz.toString()) {
       expect(tokens_map.USDtz.contract.address).toStrictEqual(
         (value as FA12TokenType).fa12
@@ -47,7 +46,6 @@ export async function getTokenMapSuccessCase(
         (value as FA12TokenType).fa12
       );
     } else {
-      console.error(value)
       expect(tokens_map.uUSD.contract.address).toStrictEqual(
         (value as FA2TokenType).fa2.token_address
       );

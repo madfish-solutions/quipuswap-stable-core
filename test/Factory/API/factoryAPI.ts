@@ -95,7 +95,7 @@ export class DexFactory implements DevEnabledContract {
           // "dev_lambdas",
           "token_lambdas",
           "admin_lambdas",
-          "strat_lambdas"
+          "strat_lambdas",
         ].includes(key)
       )
         continue;
@@ -123,7 +123,7 @@ export class DexFactory implements DevEnabledContract {
           // "dev_lambdas",
           "token_lambdas",
           "admin_lambdas",
-          "strat_lambdas"
+          "strat_lambdas",
         ].includes(key)
       )
         continue;
