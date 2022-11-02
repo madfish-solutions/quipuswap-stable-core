@@ -82,7 +82,7 @@ export async function setupTokenAmounts(
     if (contract_address) {
       for (const token in tokens) {
         if (contract_address == tokens[token].contract.address) {
-          amounts.set(k, inputs[token]);
+          amounts.set(k.toString(), inputs[token]);
         }
       }
     }

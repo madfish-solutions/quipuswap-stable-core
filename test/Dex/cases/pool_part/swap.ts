@@ -45,8 +45,8 @@ export async function swapSuccessCase(
   tokens: TokensMap,
   sender: AccountsLiteral,
   pool_id: BigNumber,
-  t_in,
-  t_to,
+  t_in: string,
+  t_to: string,
   exp: Date,
   referral: string,
   idx_map: IndexMap,
@@ -82,8 +82,8 @@ export async function swapSuccessCase(
     : t_out_ep([{ owner: accounts[sender].pkh, token_id: "0" }])
   ).read();
 
-  const in_amount = amounts.get(i);
-  let min_out = amounts.get(j);
+  const in_amount = amounts.get(i.toString());
+  let min_out = amounts.get(j.toString());
   min_out = min_out.minus(min_out.multipliedBy(1).div(100));
 
   console.debug(
@@ -109,7 +109,7 @@ export async function swapSuccessCase(
   const upd_reserves =
     dex.storage.storage.pools[pool_id.toString()].tokens_info;
   expect(upd_reserves.get(i.toString()).reserves).toStrictEqual(
-    init_reserves.get(i.toString()).reserves.plus(amounts.get(i))
+    init_reserves.get(i.toString()).reserves.plus(amounts.get(i.toString()))
   );
 
   // Get output from internal transaction
@@ -277,14 +277,14 @@ export async function batchSwap(
     for (const [t_in, t_out] of swap_routes) {
       const i = map_tokens_idx[t_in];
       const j = map_tokens_idx[t_out];
-      let min_out = amounts.get(j);
+      let min_out = amounts.get(j.toString());
       min_out = min_out.minus(min_out.multipliedBy(1).div(100));
       batch.withContractCall(
         dex.contract.methodsObject.swap({
           pool_id: poolId.toString(),
           idx_from: i.toString(),
           idx_to: j.toString(),
-          amount: amounts.get(i).toString(),
+          amount: amounts.get(i.toString()).toString(),
           min_amount_out: min_out.toString(),
           deadline: new BigNumber(exp.getTime())
             .dividedToIntegerBy(1000)
