@@ -5,7 +5,7 @@ function check_strategy_bounds(
   const delta_rate_f    : nat)
                         : unit is
   block {
-    const rate_f = reserves * Constants.precision / desired_reserves;
+    const rate_f = desired_reserves * Constants.precision / reserves;
     const in_upper_bound = rate_f < (desired_rate_f + delta_rate_f);
     const in_lower_bound = rate_f > nat_or_error(desired_rate_f - delta_rate_f, Errors.Math.nat_error);
   } with require(in_upper_bound and in_lower_bound, Errors.Strategy.out_of_delta_bounds)
@@ -35,66 +35,52 @@ function calculate_desired_reserves(
     Errors.Strategy.no_update_state_entrypoint
   );
 
-function update_strategy_reserves(
-  const token_pool_id   : token_pool_idx_t;
-  const token           : token_t;
-  const old_s_reserves  : nat;
-  const new_s_reserves  : nat;
-  const strat_contract  : address)
-                        : list(operation) is
-  block {
-    const upd_state_param : upd_strat_state_t = record[
-      pool_token_id = token_pool_id;
-      new_balance = new_s_reserves
-    ];
-    var before_ops := Constants.no_operations;
-    var after_ops := Constants.no_operations;
-    case is_nat(new_s_reserves - old_s_reserves) of [
-        Some(value) -> {
-          if value > 0n
-            then {
-              // send additional reserves to Yupana through Strategy
-              before_ops := typed_transfer(
-                  Tezos.self_address(unit),
-                  strat_contract,
-                  nat_or_error(new_s_reserves - old_s_reserves, Errors.Math.nat_error),
-                  token
-                ) # before_ops;
-            }
-        }
-      | None -> { // means that old_s_reserves > new_s_reserves, waiting for refiling from Strategy
-        // TODO: make lock flag before receiving tokens from strategy
-        after_ops := Constants.no_operations;
-      }
-    ];
-    const ops = concat_lists(
-      Tezos.transaction(
-        upd_state_param,
-        0mutez,
-        get_update_state_entrypoint(strat_contract)
-      ) # before_ops,
-      after_ops
-    )
-  } with ops
 
 function operate_with_strategy(
-  const token_pool_id   : token_pool_idx_t;
-  const token           : token_t;
-  const reserves        : nat;
-  const strategy_address: address;
-  var strategy          : strategy_storage_t)
-                        : list(operation) * strategy_storage_t is
+  const token_infos     : map(token_pool_idx_t, token_info_t);
+  const tokens_map_entry: option(tokens_map_t);
+  var strategy          : strategy_full_storage_t)
+                        : list(operation) * strategy_full_storage_t is
   block {
     var ops := Constants.no_operations;
-    if strategy.is_rebalance then {
-      const new_s_reserves = calculate_desired_reserves(reserves, strategy);
-      ops := update_strategy_reserves(
-        token_pool_id,
-        token,
-        strategy.strategy_reserves,
-        new_s_reserves,
-        strategy_address
-      );
-      strategy.strategy_reserves := new_s_reserves;
-    }
+    case strategy.strat_contract of [
+      Some(contract) -> {
+        var rebalance_params: upd_strat_state_t = nil;
+        var send_ops: list(operation) = nil;
+        for token_id -> info in map token_infos {
+          const config = unwrap(strategy.configuration[token_id], Errors.Strategy.unknown_token);
+          if config.is_rebalance then {
+            const new_s_reserves = calculate_desired_reserves(info.reserves, config);
+            rebalance_params := record[
+              pool_token_id = token_id;
+              new_balance = new_s_reserves
+            ] # rebalance_params;
+            case is_nat(new_s_reserves - config.strategy_reserves) of [
+              | Some(value) -> {
+                // send additional reserves to Yupana through Strategy
+                if value > 0n
+                then send_ops := typed_transfer(
+                    Tezos.self_address(),
+                    contract,
+                    value,
+                    token
+                  ) # send_ops;
+              }
+              _ -> skip
+            ];
+            config.strategy_reserves := new_s_reserves;
+          }
+          strategy.configuration[token_id] := config;
+        }
+        ops := concat_lists(
+          send_ops,
+          Tezos.transaction(
+            rebalance_params,
+            0mutez,
+            get_update_state_entrypoint(contract)
+          ) # ops
+        );
+      }
+    | None -> skip
+    ]
   } with (ops, strategy)
