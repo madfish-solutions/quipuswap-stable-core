@@ -75,10 +75,10 @@ module.exports = async (tezos: TezosToolkit, network: NetworkLiteral) => {
         fees: pair.fees,
       })
       .send();
-    await confirmOperation(tezos, op.hash);
+    await op.confirmation(2);
     console.log("Add_pool ", op.hash);
     op = await factory.methods.start_dex(inputs).send();
-    await confirmOperation(tezos, op.hash);
+    await op.confirmation(2);
     console.log("Start_dex ", op.hash);
     for (const index in poolData) {
       const value = pair.tokensInfo[index];
@@ -107,17 +107,17 @@ module.exports = async (tezos: TezosToolkit, network: NetworkLiteral) => {
       .executeView({ viewCaller: sender_addr });
     const dex = await tezos.contract.at(dex_address);
     op = await dex.methods.set_admin(process.env.ADMIN_ADDRESS).send();
-    await confirmOperation(tezos, op.hash);
+    await op.confirmation(2);
     console.log("Admin set ", process.env.ADMIN_ADDRESS);
     console.log(`Dex of ${pair.name} started`);
   }
   let operation = await factory.methods
     .set_whitelist(false, sender_addr)
     .send();
-  await confirmOperation(tezos, operation.hash);
+  await operation.confirmation(2);
   console.log("Removed from whitelist ", sender_addr);
   operation = await factory.methods
     .set_dev_address(process.env.ADMIN_ADDRESS)
     .send();
-  await confirmOperation(tezos, operation.hash);
+  await operation.confirmation(2);
 };

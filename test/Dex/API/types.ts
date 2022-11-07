@@ -34,7 +34,7 @@ export declare type TokenStrategyConfiguration = {
 
 export declare type StrategyStoreType = {
   strat_contract?: TezosAddress;
-  configuration: MichelsonMap<number, TokenStrategyConfiguration>;
+  configuration: MichelsonMap<string, TokenStrategyConfiguration>;
 };
 
 export declare type PairInfo = {

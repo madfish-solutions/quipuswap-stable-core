@@ -15,15 +15,12 @@ function connect_strategy(
   case p of [
     | Connect_strategy(params) -> {
       var pool : pool_t := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
-      function claim_reserves(
+      function check_reserves(
         const token_id: token_pool_idx_t;
         const config  : strategy_storage_t)
-                      : strategy_storage_t is
-          block {
-            if config.strategy_reserves > 0n
-              then skip// TODO: claim tokens back
-          } with config with record[strategy_reserves=0n];
-      pool.strategy.configuration := Map.map(claim_reserves, pool.strategy.configuration);
+                      : unit is
+        require(config.strategy_reserves = 0n, Errors.Strategy.unclaimed_reserves);
+      Map.iter(check_reserves, pool.strategy.configuration);
       pool.strategy.strat_contract := params.strategy_contract;
       s.pools[params.pool_id] := pool;
     }

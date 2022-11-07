@@ -23,17 +23,10 @@ export async function setupDexEnvironment(Tezos: TezosToolkit): Promise<{
   dex: Dex;
   tokens: TokensMap;
   quipuToken: TokenFA2;
-  lambdaContractAddress: string;
 }> {
   const config = await prepareProviderOptions("alice");
   Tezos.setProvider(config);
-  const op = await Tezos.contract.originate({
-    code: VIEW_LAMBDA.code,
-    storage: VIEW_LAMBDA.storage,
-  });
-  await confirmOperation(Tezos, op.hash);
   const quipuToken = await setupQuipuGovToken(Tezos);
-  const lambdaContractAddress = op.contractAddress;
   storage.storage.admin = accounts.alice.pkh;
   storage.storage.default_referral = accounts.bob.pkh;
   storage.storage.quipu_token = {
@@ -51,7 +44,7 @@ export async function setupDexEnvironment(Tezos: TezosToolkit): Promise<{
     code: dex_contract.michelson,
     storage: storage,
   });
-  await confirmOperation(Tezos, dex_op.hash);
+  await dex_op.confirmation(2);
   console.debug(
     `[${chalk.green("ORIGINATION")}] DEX`,
     chalk.bold.underline(dex_op.contractAddress)
@@ -59,5 +52,5 @@ export async function setupDexEnvironment(Tezos: TezosToolkit): Promise<{
   const dex = await Dex.init(Tezos, dex_op.contractAddress);
   await new Promise((r) => setTimeout(r, 2000));
   const tokens = await setupTrioTokens(dex, Tezos, true);
-  return { dex, tokens, quipuToken, lambdaContractAddress };
+  return { dex, tokens, quipuToken };
 }

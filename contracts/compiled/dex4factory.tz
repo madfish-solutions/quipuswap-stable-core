@@ -11,15 +11,19 @@
                        (pair %set_fees (nat %pool_id) (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f))))
                    (nat %stop_ramp_A))))
         (or (or %use_strategy
-               (or (pair %connect_strategy (nat %pool_id) (option %strategy_contract address))
-                   (pair %set_token_strategy
-                      (nat %pool_id)
-                      (nat %pool_token_id)
-                      (nat %lending_market_id)
-                      (nat %des_reserves_rate_f)
-                      (nat %delta_rate_f)
-                      (nat %min_invest)))
-               (pair %set_token_strategy_update_flag
+               (or (or (pair %connect_strategy (nat %pool_id) (option %strategy_contract address))
+                       (pair %connect_token_strategy
+                          (nat %pool_id)
+                          (nat %pool_token_id)
+                          (nat %lending_market_id)))
+                   (or (pair %rebalance (nat %pool_id) (nat %pool_token_id))
+                       (pair %set_token_strategy
+                          (nat %pool_id)
+                          (nat %pool_token_id)
+                          (nat %des_reserves_rate_f)
+                          (nat %delta_rate_f)
+                          (nat %min_invest))))
+               (pair %set_token_strategy_rebalance
                   (nat %pool_id)
                   (nat %pool_token_id)
                   (bool %flag)))
@@ -108,7 +112,7 @@
                                   (nat %delta_rate_f)
                                   (nat %min_invest)
                                   (nat %strategy_reserves)
-                                  (bool %is_updatable))))
+                                  (bool %is_rebalance))))
                       (pair %staker_accumulator
                          (map %accumulator_f nat nat)
                          (map %total_fees nat nat)
@@ -292,7 +296,7 @@
                                                        (nat %delta_rate_f)
                                                        (nat %min_invest)
                                                        (nat %strategy_reserves)
-                                                       (bool %is_updatable))))
+                                                       (bool %is_rebalance))))
                                            (pair %staker_accumulator
                                               (map %accumulator_f nat nat)
                                               (map %total_fees nat nat)
@@ -341,7 +345,7 @@
                                                        (nat %delta_rate_f)
                                                        (nat %min_invest)
                                                        (nat %strategy_reserves)
-                                                       (bool %is_updatable))))
+                                                       (bool %is_rebalance))))
                                            (pair %staker_accumulator
                                               (map %accumulator_f nat nat)
                                               (map %total_fees nat nat)
@@ -397,23 +401,29 @@
                  GET 10 ;
                  DUP 3 ;
                  IF_LEFT
-                   { IF_LEFT { DROP ; PUSH nat 0 } { DROP ; PUSH nat 1 } }
-                   { DROP ; PUSH nat 2 } ;
+                   { IF_LEFT
+                       { IF_LEFT { DROP ; PUSH nat 0 } { DROP ; PUSH nat 1 } }
+                       { IF_LEFT { DROP ; PUSH nat 4 } { DROP ; PUSH nat 2 } } }
+                   { DROP ; PUSH nat 3 } ;
                  GET ;
                  IF_NONE { FAILWITH } { SWAP ; DROP } ;
                  DIG 3 ;
                  SWAP ;
                  UNPACK
                    (lambda
-                      (pair (or (or (pair %connect_strategy (nat %pool_id) (option %strategy_contract address))
-                                    (pair %set_token_strategy
-                                       (nat %pool_id)
-                                       (nat %pool_token_id)
-                                       (nat %lending_market_id)
-                                       (nat %des_reserves_rate_f)
-                                       (nat %delta_rate_f)
-                                       (nat %min_invest)))
-                                (pair %set_token_strategy_update_flag
+                      (pair (or (or (or (pair %connect_strategy (nat %pool_id) (option %strategy_contract address))
+                                        (pair %connect_token_strategy
+                                           (nat %pool_id)
+                                           (nat %pool_token_id)
+                                           (nat %lending_market_id)))
+                                    (or (pair %rebalance (nat %pool_id) (nat %pool_token_id))
+                                        (pair %set_token_strategy
+                                           (nat %pool_id)
+                                           (nat %pool_token_id)
+                                           (nat %des_reserves_rate_f)
+                                           (nat %delta_rate_f)
+                                           (nat %min_invest))))
+                                (pair %set_token_strategy_rebalance
                                    (nat %pool_id)
                                    (nat %pool_token_id)
                                    (bool %flag)))
@@ -443,7 +453,7 @@
                                                        (nat %delta_rate_f)
                                                        (nat %min_invest)
                                                        (nat %strategy_reserves)
-                                                       (bool %is_updatable))))
+                                                       (bool %is_rebalance))))
                                            (pair %staker_accumulator
                                               (map %accumulator_f nat nat)
                                               (map %total_fees nat nat)
@@ -492,7 +502,7 @@
                                                        (nat %delta_rate_f)
                                                        (nat %min_invest)
                                                        (nat %strategy_reserves)
-                                                       (bool %is_updatable))))
+                                                       (bool %is_rebalance))))
                                            (pair %staker_accumulator
                                               (map %accumulator_f nat nat)
                                               (map %total_fees nat nat)
@@ -617,7 +627,7 @@
                                                            (nat %delta_rate_f)
                                                            (nat %min_invest)
                                                            (nat %strategy_reserves)
-                                                           (bool %is_updatable))))
+                                                           (bool %is_rebalance))))
                                                (pair %staker_accumulator
                                                   (map %accumulator_f nat nat)
                                                   (map %total_fees nat nat)
@@ -666,7 +676,7 @@
                                                            (nat %delta_rate_f)
                                                            (nat %min_invest)
                                                            (nat %strategy_reserves)
-                                                           (bool %is_updatable))))
+                                                           (bool %is_rebalance))))
                                                (pair %staker_accumulator
                                                   (map %accumulator_f nat nat)
                                                   (map %total_fees nat nat)
@@ -759,7 +769,7 @@
                                                               (nat %delta_rate_f)
                                                               (nat %min_invest)
                                                               (nat %strategy_reserves)
-                                                              (bool %is_updatable))))
+                                                              (bool %is_rebalance))))
                                                   (pair %staker_accumulator
                                                      (map %accumulator_f nat nat)
                                                      (map %total_fees nat nat)
@@ -814,7 +824,7 @@
                                                               (nat %delta_rate_f)
                                                               (nat %min_invest)
                                                               (nat %strategy_reserves)
-                                                              (bool %is_updatable))))
+                                                              (bool %is_rebalance))))
                                                   (pair %staker_accumulator
                                                      (map %accumulator_f nat nat)
                                                      (map %total_fees nat nat)

@@ -37,7 +37,7 @@ export async function setupFactoryEnvironment(
     code: VIEW_LAMBDA.code,
     storage: VIEW_LAMBDA.storage,
   });
-  await confirmOperation(Tezos, op.hash);
+  await op.confirmation(2);
   const quipuToken = await setupQuipuGovToken(Tezos);
   const lambdaContractAddress = op.contractAddress;
   storage.storage.dev_store = {

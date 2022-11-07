@@ -25,8 +25,10 @@ export async function rampASuccessCase(
   ft_time = new BigNumber(Date.now())
     .plus(ft_time.multipliedBy(1000))
     .dividedToIntegerBy(1000);
-  const op = await dex.contract.methods.ramp_A(pool_id, ft_a, ft_time).send();
-  await confirmOperation(Tezos, op.hash);
+  const op = await dex.contract.methods
+    .ramp_A(pool_id, ft_a.toString(), ft_time.toString())
+    .send();
+  await op.confirmation(2);
   await dex.updateStorage({ pools: [pool_id.toString()] });
   const upd: PairInfo = dex.storage.storage.pools[pool_id.toString()];
   const {
@@ -52,7 +54,7 @@ export async function stopRampASuccessCase(dex: Dex, pool_id: BigNumber) {
     initial_A_time: init_in_A_t,
   } = init;
   const op = await dex.contract.methods.stop_ramp_A(pool_id).send();
-  await confirmOperation(Tezos, op.hash);
+  await op.confirmation(2);
   await dex.updateStorage({ pools: [pool_id.toString()] });
   const upd: PairInfo = dex.storage.storage.pools[pool_id.toString()];
   const {

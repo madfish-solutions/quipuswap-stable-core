@@ -6,9 +6,7 @@ on:
       - main
       - develop
   pull_request:
-    branches:
-      - main
-      - develop
+    
 jobs:
   jest:
     name: Jest tests
@@ -40,6 +38,8 @@ jobs:
         uses: emilioschepis/wait-for-endpoint@v1.0.3
         with:
           url: http://localhost:20000/chains/main/blocks/head
+      - name: sleep for 10s
+        run: sleep 10s
       - name: Test the contracts
         run: yarn test
       - name: Stop sandbox
