@@ -45,7 +45,7 @@ type upd_strat_state_t  is list(upd_state_prm)
 
 type rebalance_param    is [@layout:comb] record [
   pool_id               : pool_id_t;
-  pool_token_id         : Set(nat);
+  pool_token_id         : set(nat);
 ]
 
 type strat_upd_info_t   is [@layout:comb] record [

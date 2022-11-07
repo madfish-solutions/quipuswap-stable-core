@@ -45,10 +45,10 @@ function operate_with_strategy(
     var ops := Constants.no_operations;
     case strategy.strat_contract of [
       Some(contract) -> {
-        var rebalance_params: upd_strat_state_t = nil;
-        var send_ops: list(operation) = nil;
+        var rebalance_params: upd_strat_state_t := nil;
+        var send_ops: list(operation) := nil;
         for token_id -> info in map token_infos {
-          const config = unwrap(strategy.configuration[token_id], Errors.Strategy.unknown_token);
+          var config := unwrap(strategy.configuration[token_id], Errors.Strategy.unknown_token);
           if config.is_rebalance then {
             const new_s_reserves = calculate_desired_reserves(info.reserves, config);
             rebalance_params := record[
@@ -60,18 +60,18 @@ function operate_with_strategy(
                 // send additional reserves to Yupana through Strategy
                 if value > 0n
                 then send_ops := typed_transfer(
-                    Tezos.self_address(),
+                    Tezos.self_address(unit),
                     contract,
                     value,
-                    token
+                    get_token_by_id(token_id, tokens_map_entry)
                   ) # send_ops;
               }
-              _ -> skip
+             | _ -> skip
             ];
             config.strategy_reserves := new_s_reserves;
-          }
+          };
           strategy.configuration[token_id] := config;
-        }
+        };
         ops := concat_lists(
           send_ops,
           Tezos.transaction(
