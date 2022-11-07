@@ -1076,11 +1076,11 @@ describe("00. Standalone Dex", () => {
             ),
           "not-developer"
         );
-        await failCase(
-          "eve",
-          async () => await dex.rebalance(pool_id, pool_token_id),
-          "not-developer"
-        );
+        // await failCase(
+        //   "eve",
+        //   async () => await dex.rebalance([{pool_id, [pool_token_id]}]),
+        //   "not-developer"
+        // );
       });
     });
   });

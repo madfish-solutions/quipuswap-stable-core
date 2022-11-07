@@ -16,7 +16,7 @@
                           (nat %pool_id)
                           (nat %pool_token_id)
                           (nat %lending_market_id)))
-                   (or (pair %rebalance (nat %pool_id) (nat %pool_token_id))
+                   (or (list %rebalance (pair (nat %pool_id) (set %pool_token_id nat)))
                        (pair %set_token_strategy
                           (nat %pool_id)
                           (nat %pool_token_id)
@@ -416,7 +416,7 @@
                                            (nat %pool_id)
                                            (nat %pool_token_id)
                                            (nat %lending_market_id)))
-                                    (or (pair %rebalance (nat %pool_id) (nat %pool_token_id))
+                                    (or (list %rebalance (pair (nat %pool_id) (set %pool_token_id nat)))
                                         (pair %set_token_strategy
                                            (nat %pool_id)
                                            (nat %pool_token_id)
