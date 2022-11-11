@@ -29,15 +29,9 @@ export async function setupFactoryEnvironment(
   factory: DexFactory;
   // tokens: TokensMap;
   quipuToken: TokenFA2;
-  lambdaContractAddress: string;
 }> {
   const config = await prepareProviderOptions(developer);
   Tezos.setProvider(config);
-  const op = await Tezos.contract.originate({
-    code: VIEW_LAMBDA.code,
-    storage: VIEW_LAMBDA.storage,
-  });
-  await op.confirmation(2);
   const quipuToken = await setupQuipuGovToken(Tezos);
   const lambdaContractAddress = op.contractAddress;
   storage.storage.dev_store = {
@@ -65,5 +59,5 @@ export async function setupFactoryEnvironment(
     chalk.bold.underline(fact_op.contractAddress)
   );
   const factory = await DexFactory.init(Tezos, fact_op.contractAddress);
-  return { factory, quipuToken, lambdaContractAddress };
+  return { factory, quipuToken };
 }

@@ -10,6 +10,12 @@
                         : address is
   s.storage.dev_store.dev_address
 
+[@view] function strategy_factory_address(
+  const _               : unit;
+  const s               : full_storage_t)
+                        : address is
+  s.storage.strategy_factory
+
 [@view] function get_pool(
   const params          : record [ tokens:set(token_t); deployer:address ];
   const s               : full_storage_t)

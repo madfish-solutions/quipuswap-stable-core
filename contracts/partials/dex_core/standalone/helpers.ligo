@@ -7,3 +7,8 @@ function get_dev_address(
   const s               : storage_t)
                         : address is
   s.dev_store.dev_address
+
+function get_strategy_factory(
+  const s               : storage_t)
+                        : address is
+  s.strategy_factory

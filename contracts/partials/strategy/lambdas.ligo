@@ -21,7 +21,14 @@ function connect_strategy(
                       : unit is
         require(config.strategy_reserves = 0n, Errors.Strategy.unclaimed_reserves);
       Map.iter(check_reserves, pool.strategy.configuration);
-      pool.strategy.strat_contract := params.strategy_contract;
+      pool.strategy.strat_contract := case params.strategy_contract of [
+        | Some(addr) -> {
+          const strategy_factory = get_strategy_factory(s);
+          const is_registered_strategy = get_is_registered(addr, strategy_factory);
+          require(is_registered_strategy, Errors.Strategy.not_registered);
+        } with params.strategy_contract
+        | None -> params.strategy_contract
+      ];
       s.pools[params.pool_id] := pool;
     }
     | _ -> unreachable(Unit)

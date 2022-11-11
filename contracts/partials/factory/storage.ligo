@@ -36,6 +36,7 @@ type inner_store_t      is [@layout:comb] record[
   quipu_token             : fa2_token_t;
   quipu_rewards           : nat;
   whitelist               : set(address);
+  strategy_factory        : address;
 ]
 
 type full_storage_t     is [@layout:comb] record [
@@ -50,6 +51,7 @@ type full_storage_t     is [@layout:comb] record [
 
 type use_factory_t      is
 | Set_whitelist           of set_man_param_t
+| Set_strategy_factory    of address
 | Set_burn_rate           of nat
 | Set_price               of nat
 | Claim_rewards           of unit

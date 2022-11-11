@@ -41,6 +41,13 @@ function calculate_desired_reserves(
   );
 
 
+[@inline] function get_is_registered(
+  const strategy_address: address;
+  const factory_address : address)
+                        : bool is
+  unwrap((Tezos.call_view("is_registered", strategy_address, factory_address): option(bool)), Errors.Strategy.no_is_registered)
+
+
 function operate_with_strategy(
   const token_infos     : map(token_pool_idx_t, token_info_t);
   const tokens_map_entry: option(tokens_map_t);
