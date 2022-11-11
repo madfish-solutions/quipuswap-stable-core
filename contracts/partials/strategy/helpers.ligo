@@ -85,8 +85,8 @@ function operate_with_strategy(
           };
           strategy.configuration[token_id] := config;
         };
-        ops := [
-          Tezos.transaction(prepare_params, 0mutez, get_prepare_entrypoint(contract)),
+        ops := list [
+          Tezos.transaction(prepare_params, 0mutez, get_prepare_entrypoint(contract));
           Tezos.transaction(rebalance_params, 0mutez, get_update_state_entrypoint(contract))
         ];
         ops := concat_lists(
