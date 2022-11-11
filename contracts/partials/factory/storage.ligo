@@ -24,7 +24,6 @@ type pool_init_param_t  is [@layout:comb] record [
   default_referral        : address;
   managers                : set(address);
   fees                    : fees_storage_t;
-  strategy                : option(address);
 ]
 
 type inner_store_t      is [@layout:comb] record[

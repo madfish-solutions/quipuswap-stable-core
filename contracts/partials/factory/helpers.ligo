@@ -114,7 +114,6 @@ function form_pool_storage(
   const tokens_info     : map(token_pool_idx_t, token_info_t);
   const a_constant      : nat;
   const fees            : fees_storage_t;
-  const strategy        : option(address);
   const default_referral: address;
   const managers        : set(address);
   const quipu_token     : fa2_token_t;
@@ -132,7 +131,7 @@ function form_pool_storage(
       tokens_info         = tokens_info;
       fee                 = fees;
       strategy            = record[
-        strat_contract      = strategy;
+        strat_contract      = (None: option(address));
         configuration       = (map[]: map(token_pool_idx_t, strategy_storage_t));
       ];
       staker_accumulator  = record [

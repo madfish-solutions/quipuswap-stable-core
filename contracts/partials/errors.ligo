@@ -61,6 +61,7 @@ module Factory is {
 module Strategy is {
   const out_of_delta_bounds       : string = "out-of-delta-bounds";
   const no_update_state_entrypoint: string = "no-update-state-EP";
+  const no_prepare_entrypoint     : string = "no-prepare-EP";
   const unknown_token             : string = "no-token-strategy-set";
   const unclaimed_reserves        : string = "strategy-unclaimed-reserves";
 }

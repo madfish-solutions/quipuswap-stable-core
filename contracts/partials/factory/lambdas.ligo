@@ -45,7 +45,6 @@ function add_pool(
         tokens_info,
         params.a_constant,
         params.fees,
-        params.strategy,
         params.default_referral,
         params.managers,
         s.storage.quipu_token,
