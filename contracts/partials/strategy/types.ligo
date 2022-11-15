@@ -11,6 +11,11 @@ type strategy_full_storage_t is [@layout:comb] record [
   configuration         : map(token_pool_idx_t, strategy_storage_t)
 ]
 
+type strat_pool_data_t is [@layout:comb] record[
+  pool_contract: address;
+  pool_id: nat;
+]
+
 type conn_strategy_param is [@layout:comb] record [
   pool_id               : pool_id_t;
   strategy_contract     : option(address);

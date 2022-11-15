@@ -67,4 +67,6 @@ module Strategy is {
   const no_prepare_entrypoint     : string = "no-prepare-EP";
   const unknown_token             : string = "no-token-strategy-set";
   const unclaimed_reserves        : string = "strategy-unclaimed-reserves";
+  const no_pool_data_view         : string = "no-pool-data-view";
+  const wrong_params              : string = "wrong-connect-params-strategy"
 }

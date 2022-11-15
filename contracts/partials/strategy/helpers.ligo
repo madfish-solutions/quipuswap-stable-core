@@ -40,12 +40,20 @@ function calculate_desired_reserves(
     Errors.Strategy.no_update_state_entrypoint
   );
 
+function check_strategy_pool_params(
+  const pool_id : nat;
+  const strategy: address): bool is 
+  block {
+    const expected: strat_pool_data_t = record[
+      pool_contract = Tezos.get_self_address();
+      pool_id = pool_id
+    ];
+    const reponse: strat_pool_data_t = unwrap(
+      (Tezos.call_view("get_pool_data", Unit, strategy): option(strat_pool_data_t)),
+      Errors.Strategy.wrong_params
+    );
+  } with response = expected
 
-[@inline] function get_is_registered(
-  const strategy_address: address;
-  const factory_address : address)
-                        : bool is
-  unwrap((Tezos.call_view("is_registered", strategy_address, factory_address): option(bool)), Errors.Strategy.no_is_registered)
 
 
 function operate_with_strategy(

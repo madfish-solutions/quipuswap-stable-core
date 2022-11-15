@@ -23,9 +23,10 @@ function connect_strategy(
       Map.iter(check_reserves, pool.strategy.configuration);
       pool.strategy.strat_contract := case params.strategy_contract of [
         | Some(addr) -> {
-          const strategy_factory = get_strategy_factory(s);
-          const is_registered_strategy = get_is_registered(addr, strategy_factory);
+          const is_registered_strategy = check_is_registered_strategy(addr, s);
+          const is_pool_params_correct = check_strategy_pool_params(params.pool_id, addr);
           require(is_registered_strategy, Errors.Strategy.not_registered);
+          require(is_pool_params_correct, Errors.Strategy.wrong_params);
         } with params.strategy_contract
         | None -> params.strategy_contract
       ];

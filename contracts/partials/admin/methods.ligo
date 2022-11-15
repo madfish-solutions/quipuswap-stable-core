@@ -10,6 +10,7 @@
 
     case p of [
     | Claim_developer(_) -> skip // Claim_developer has own inner check for developer address
+    | Set_strategy_factory(_)-> skip
     | _ -> require(Tezos.sender = s.storage.admin, Errors.Dex.not_contract_admin)
     ];
 
@@ -24,6 +25,7 @@
     | Set_default_referral(_) -> 6n
 #if !FACTORY
     | Add_pool(_)             -> 7n
+    | Set_strategy_factory(_) -> 8n
 #endif
     ];
 

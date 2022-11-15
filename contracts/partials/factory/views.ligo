@@ -10,11 +10,19 @@
                         : address is
   s.storage.dev_store.dev_address
 
-[@view] function strategy_factory_address(
-  const _               : unit;
-  const s               : full_storage_t)
-                        : address is
-  s.storage.strategy_factory
+[@view] function is_registered_strategy(
+  const strategy        : address;
+  const s               : storage_t)
+                        : bool is
+  block {
+    function check_strategy_factory(const accumulator: bool; const entry: address): bool is 
+      accumulator or unwrap(
+        (Tezos.call_view("is_registered", strategy, entry): option(bool)),
+        Errors.Factory.no_strategy_factory
+      )
+  } with Set.fold(check_strategy_factory, s.strategy_factory, False)
+
+
 
 [@view] function get_pool(
   const params          : record [ tokens:set(token_t); deployer:address ];

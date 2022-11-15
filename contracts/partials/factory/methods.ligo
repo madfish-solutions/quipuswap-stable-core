@@ -98,7 +98,7 @@ function use_factory(
     | Set_burn_rate(rate)         -> if rate <= Constants.burn_rate_precision
                                      then s.storage.burn_rate_f := rate
                                      else failwith(Errors.Factory.burn_rate_overflow)
-    | Set_strategy_factory(addr)  -> s.storage.strategy_factory := addr
+    | Set_strategy_factory(params)-> s.storage.strategy_factory := add_rem_candidate(params, s.storage.strategy_factory)
     | Set_price(price)            -> s.storage.init_price := price
     | Set_whitelist(params)       -> s.storage.whitelist := add_rem_candidate(params, s.storage.whitelist)
     | _                           -> skip

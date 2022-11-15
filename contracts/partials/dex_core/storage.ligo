@@ -85,7 +85,7 @@ type storage_t          is [@layout:comb] record [
   factory_address         : address;
   started                 : bool;
 #else
-  strategy_factory        : address;
+  strategy_factory        : set(address);
   dev_store               : dev_storage_t;
 #endif
 ]
