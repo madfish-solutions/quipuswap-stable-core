@@ -82,7 +82,7 @@ function add_pool(
   } with (operations, s)
 
 function set_strategy_factory(
-  const params          : admin_action_t;
+  const p               : admin_action_t;
   var   s               : storage_t)
                         : return_t is
   block {
@@ -91,7 +91,7 @@ function set_strategy_factory(
     | Set_strategy_factory(params) -> {
       const dev_address = get_dev_address(s);
       require(Tezos.sender = dev_address, Errors.Dex.not_developer);
-      s.strategy_factory = add_rem_candidate(params, s.storage.strategy_factory);
+      s.strategy_factory := add_rem_candidate(params, s.strategy_factory);
     }
     | _                 -> unreachable(Unit)
     ]

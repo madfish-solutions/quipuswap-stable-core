@@ -50,8 +50,8 @@ type full_storage_t     is [@layout:comb] record [
 ]
 
 type use_factory_t      is
-| Set_whitelist           of set_man_param_t
-| Set_strategy_factory    of address
+| Set_whitelist           of set_cand_param_t
+| Set_strategy_factory    of set_cand_param_t
 | Set_burn_rate           of nat
 | Set_price               of nat
 | Claim_rewards           of unit

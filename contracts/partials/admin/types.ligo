@@ -1,4 +1,4 @@
-type set_man_param_t    is [@layout:comb] record [
+type set_cand_param_t   is [@layout:comb] record [
   add                     : bool;
   candidate               : address;
 ]
@@ -24,7 +24,7 @@ type init_param_t       is [@layout:comb] record [
 #endif
 
 type admin_action_t     is
-| Add_rem_managers        of set_man_param_t
+| Add_rem_managers        of set_cand_param_t
 | Set_admin               of address
 | Claim_developer         of claim_by_token_param_t
 | Ramp_A                  of ramp_a_param_t
@@ -33,4 +33,5 @@ type admin_action_t     is
 | Set_default_referral    of address
 #if !FACTORY
 | Add_pool                of init_param_t          (* sets initial liquidity *)
+| Set_strategy_factory    of set_cand_param_t
 #endif

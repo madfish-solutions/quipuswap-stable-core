@@ -16,9 +16,9 @@ function connect_strategy(
     | Connect_strategy(params) -> {
       var pool : pool_t := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
       function check_reserves(
-        const token_id: token_pool_idx_t;
-        const config  : strategy_storage_t)
-                      : unit is
+        const _token_id : token_pool_idx_t;
+        const config    : strategy_storage_t)
+                        : unit is
         require(config.strategy_reserves = 0n, Errors.Strategy.unclaimed_reserves);
       Map.iter(check_reserves, pool.strategy.configuration);
       pool.strategy.strat_contract := case params.strategy_contract of [
@@ -109,7 +109,20 @@ function set_rebalance(
  block {
   var operations: list(operation) := Constants.no_operations;
   case p of [
-    | Rebalance(params) -> skip
+    | Rebalance(params) -> {
+      const pool : pool_t = unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
+      function map_ids(
+        const acc : map(token_pool_idx_t, token_info_t);
+        const i   : nat)
+                  : map(token_pool_idx_t, token_info_t) is
+        Map.add(i, get_token_info(i, pool.tokens_info), acc);
+      const infos = Set.fold(map_ids, params.pool_token_ids,(map[]: map(token_pool_idx_t, token_info_t)));
+      const (rebalance_ops, strategy_store) = operate_with_strategy(infos, s.tokens[params.pool_id], pool.strategy);
+      operations := rebalance_ops;
+      s.pools[params.pool_id] := pool with record[
+        strategy = strategy_store
+      ];
+    }
     | _ -> unreachable(Unit)
   ]
  } with (operations, s)

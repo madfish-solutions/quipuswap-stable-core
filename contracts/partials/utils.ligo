@@ -145,7 +145,7 @@
     ];
 
 [@inline] function add_rem_candidate(
-  const params          : set_man_param_t;
+  const params          : set_cand_param_t;
   var   whitelist       : set(address))
                         : set(address) is
   Set.update(params.candidate, params.add, whitelist)
