@@ -190,7 +190,7 @@ export const compileLambdas = async (
   json: string,
   contract: string,
   isDockerizedLigo = config.dockerizedLigo,
-  type: "Dex" | "Token" | "Permit" | "Admin" | "Dev"
+  type: "Dex" | "Token" | "Permit" | "Admin" | "Dev" | "Strategy"
 ) => {
   console.log(`Compiling ${contract} contract lambdas of ${type} type...\n`);
 
@@ -238,7 +238,7 @@ export const compileLambdas = async (
               { int: lambda.index.toString() },
             ],
           }
-        : JSON.parse(michelson).args[0].args[0].args[0];
+        : JSON.parse(michelson).args[0].args[0].args[0].args[0];
       res.push(bytes);
 
       console.log(
@@ -247,7 +247,7 @@ export const compileLambdas = async (
           "." +
           " ".repeat(4 - (lambda.index + 1).toString().length) +
           lambda.name +
-          " ".repeat(21 - lambda.name.length) +
+          " ".repeat(40 - lambda.name.length) +
           " successfully compiled."
       );
     }

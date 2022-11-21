@@ -33,8 +33,7 @@ export async function investLiquiditySuccessCase(
     min_shares,
     expiration,
     null,
-    referral,
-    Tezos
+    referral
   );
 
   await dex.updateStorage({

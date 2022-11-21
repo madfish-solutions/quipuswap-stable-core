@@ -6,30 +6,40 @@ on:
       - main
       - develop
   pull_request:
-    branches:
-      - main
-      - develop
+    
 jobs:
   jest:
     name: Jest tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup dependencies
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: "14"
+          node-version: "18"
           cache: 'yarn'
           cache-dependency-path: './yarn.lock'
-      - name: Install Git
-        run: sudo apt install git -y
       - name: Install modules
-        run: yarn install
-      - name: Compile contracts for tests
+        run: yarn install --immutable --immutable-cache --check-cache
+      - uses: actions/cache@v3
+        id: contracts-build
+        with:
+          path: |
+            build
+            contracts/compiled
+          key: compiled-test-contracts-${{ runner.os }}-jest-${{ hashFiles('contracts/**/*.ligo') }}
+      - name: Compile contracts and test
+        if: steps.contracts-build.outputs.cache-hit != 'true'
         run: yarn compile-for-test
-      - name: Start sandbox and wait for initialization
-        run: yarn start-sandbox && sleep 10s
+      - name: Start sandbox
+        run: yarn start-sandbox
+      - name: Wait for Sandbox endpoint
+        uses: emilioschepis/wait-for-endpoint@v1.0.3
+        with:
+          url: http://localhost:20000/chains/main/blocks/head
+      - name: sleep for 10s
+        run: sleep 10s
       - name: Test the contracts
         run: yarn test
       - name: Stop sandbox
@@ -39,22 +49,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup Node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: "14"
+          node-version: "18"
           cache: 'yarn'
           cache-dependency-path: './yarn.lock'
       - name: Set up Python
-        run: sudo apt install python pip
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
       - name: Install crypto libs
         run: sudo apt install libsodium-dev libsecp256k1-dev libgmp-dev
       - name: Install pytezos and pytest
         run: pip install pytezos pytest
       - name: Install node modules
-        run: yarn install
+        run: yarn install --immutable --immutable-cache --check-cache
+      - uses: actions/cache@v3
+        id: contracts-build
+        with:
+          path: |
+            build
+            contracts/compiled
+          key: compiled-contracts-${{ runner.os }}-${{ hashFiles('contracts/**/*.ligo') }}
       - name: Compile contracts
+        if: steps.contracts-build.outputs.cache-hit != 'true'
         run: yarn compile
       - name: Run scenario tests
         run: pytest -s -v

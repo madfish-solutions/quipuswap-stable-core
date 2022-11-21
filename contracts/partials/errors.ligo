@@ -18,7 +18,7 @@ module Dex is {
   const not_started               : string = "not-started";
   const pool_listed               : string = "pool-exist";
   const pool_not_listed           : string = "not-launched";
-  const reserves_drained            : string = "zero-reserves-when-positive-shares";
+  const reserves_drained          : string = "zero-reserves-when-positive-shares";
   const supply_drained            : string = "positive-reserves-when-zero-shares";
   const time_expired              : string = "time-expired";
   const timestamp_error           : string = "timestamp-error";
@@ -46,6 +46,7 @@ module FA2 is {
 module Math is {
   const nat_error                 : string = "value-not-natural";
   const ediv_error                : string = "ediv-error";
+  const percent_overflow          : string = "percent-overflow";
 }
 
 module Factory is {
@@ -55,4 +56,12 @@ module Factory is {
   const not_deployer              : string = "not-deployer-of-pool";
   const not_dex                   : string = "not-dex";
   const burn_rate_overflow        : string = "burn-rate-overflow";
+}
+
+module Strategy is {
+  const out_of_delta_bounds       : string = "out-of-delta-bounds";
+  const no_update_state_entrypoint: string = "no-update-state-EP";
+  const no_prepare_entrypoint     : string = "no-prepare-EP";
+  const unknown_token             : string = "no-token-strategy-set";
+  const unclaimed_reserves        : string = "strategy-unclaimed-reserves";
 }

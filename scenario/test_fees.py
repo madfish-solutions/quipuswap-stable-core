@@ -7,7 +7,7 @@ from constants import *
 from helpers import *
 
 from pytezos import ContractInterface, MichelsonRuntimeError
-from initial_storage import admin_lambdas, dex_lambdas, token_lambdas, dev_lambdas
+from initial_storage import admin_lambdas, dex_lambdas, token_lambdas, dev_lambdas, strat_lambdas
 
 class StableSwapTest(TestCase):
 
@@ -23,6 +23,7 @@ class StableSwapTest(TestCase):
         storage = cls.dex.storage.dummy()
         storage["token_lambdas"] = token_lambdas
         storage["dex_lambdas"] = dex_lambdas
+        storage["strat_lambdas"] = strat_lambdas
         storage["admin_lambdas"] = admin_lambdas
         storage["storage"]["admin"] = admin
         storage["storage"]["dev_store"]["dev_address"] = dev

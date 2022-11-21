@@ -8,7 +8,7 @@ from constants import *
 
 from pytezos import ContractInterface, pytezos, MichelsonRuntimeError
 from pytezos.context.mixin import ExecutionContext
-from initial_storage import admin_lambdas, dex_lambdas, token_lambdas
+from initial_storage import admin_lambdas, dex_lambdas, token_lambdas, strat_lambdas
 
 pair = {
     "token_a_type" : {
@@ -39,6 +39,7 @@ class TokenToTokenTransferTest(TestCase):
         storage = cls.dex.storage.dummy()
         storage["token_lambdas"] = token_lambdas
         storage["dex_lambdas"] = dex_lambdas
+        storage["strat_lambdas"] = strat_lambdas
         storage["admin_lambdas"] = admin_lambdas
         storage["storage"]["admin"] = admin
         cls.init_storage = storage

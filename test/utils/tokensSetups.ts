@@ -14,13 +14,13 @@ import chalk from "chalk";
 
 async function originateTokens(Tezos: TezosToolkit): Promise<TokensMap> {
   const kUSD = await Tezos.contract.originate(TokenInitValues.kUSD);
-  await confirmOperation(Tezos, kUSD.hash);
+  await kUSD.confirmation(2);
   console.debug(`[${chalk.green("ORIGINATION")}] kUSD`);
   const USDtz = await Tezos.contract.originate(TokenInitValues.USDtz);
-  await confirmOperation(Tezos, USDtz.hash);
+  await USDtz.confirmation(2);
   console.debug(`[${chalk.green("ORIGINATION")}] USDtz`);
   const uUSD = await Tezos.contract.originate(TokenInitValues.uUSD);
-  await confirmOperation(Tezos, uUSD.hash);
+  await uUSD.confirmation(2);
   console.debug(`[${chalk.green("ORIGINATION")}] uUSD`);
   return {
     kUSD: await TokenFA12.init(Tezos, kUSD.contractAddress),
@@ -82,7 +82,7 @@ export async function setupTokenAmounts(
     if (contract_address) {
       for (const token in tokens) {
         if (contract_address == tokens[token].contract.address) {
-          amounts.set(k, inputs[token]);
+          amounts.set(k.toString(), inputs[token]);
         }
       }
     }
@@ -94,6 +94,6 @@ export async function setupQuipuGovToken(
   Tezos: TezosToolkit
 ): Promise<TokenFA2> {
   const quipu = await Tezos.contract.originate(TokenInitValues.QUIPU);
-  await confirmOperation(Tezos, quipu.hash);
+  await quipu.confirmation(2);
   return await TokenFA2.init(Tezos, quipu.contractAddress);
 }

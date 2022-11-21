@@ -33,8 +33,7 @@ export async function initializeExchangeSuccessCase(
   },
   approve = false,
   quipuToken: TokenFA2,
-  tezos: TezosToolkit,
-  lambda: TezosAddress
+  tezos: TezosToolkit
 ) {
   const config = await prepareProviderOptions(sender);
   tezos.setProvider(config);
@@ -42,7 +41,7 @@ export async function initializeExchangeSuccessCase(
 
   const init_balance = await quipuToken.contract.views
     .balance_of([{ owner: sender_addr, token_id: "0" }])
-    .read(lambda);
+    .read();
 
   await factory.updateStorage({});
   const init_rew: BigNumber = factory.storage.storage.quipu_rewards;
@@ -72,7 +71,7 @@ export async function initializeExchangeSuccessCase(
   await factory.updateStorage({});
   const upd_balance: BigNumber = await quipuToken.contract.views
     .balance_of([{ owner: sender_addr, token_id: "0" }])
-    .read(lambda);
+    .read();
   const upd_rew: BigNumber = factory.storage.storage.quipu_rewards;
 
   expect(init_balance[0].balance.minus(price).toNumber()).toStrictEqual(

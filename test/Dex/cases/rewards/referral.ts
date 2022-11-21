@@ -18,7 +18,6 @@ export async function getReferralRewardsSuccessCase(
   pool_id: BigNumber,
   batchSwapTimes: number,
   referral: AccountsLiteral,
-  lambdaContractAddress: string,
   Tezos: TezosToolkit
 ) {
   {
@@ -40,13 +39,13 @@ export async function getReferralRewardsSuccessCase(
       });
     const initUSDtz = await tokens.USDtz.contract.views
       .getBalance(ref_address)
-      .read(lambdaContractAddress);
+      .read();
     const initkUSD = await tokens.kUSD.contract.views
       .getBalance(ref_address)
-      .read(lambdaContractAddress);
+      .read();
     const inituUSD = await tokens.uUSD.contract.views
       .balance_of([{ owner: ref_address, token_id: "0" }])
-      .read(lambdaContractAddress);
+      .read();
 
     const USDtzRewards = await ref_stor.get({
       0: ref_address,
@@ -82,10 +81,13 @@ export async function getReferralRewardsSuccessCase(
       kUSD: kUSDRewards,
       uUSD: uUSDRewards,
     };
-    let op = await dex.contract.methods
-      .claim_referral("fa12", tokens.USDtz.contract.address, USDtzRewards)
+    let op = await dex.contract.methodsObject
+      .claim_referral({
+        token: { fa12: tokens.USDtz.contract.address },
+        amount: USDtzRewards.toString(),
+      })
       .send();
-    await confirmOperation(Tezos, op.hash);
+    await op.confirmation(2);
     console.debug(`[${chalk.bgGreenBright.red("CLAIM")}:REFERRAL] USDtz`);
     await dex.updateStorage({ pools: [pool_id.toString()] });
     let upd_ref_stor = await dex.contract
@@ -98,10 +100,13 @@ export async function getReferralRewardsSuccessCase(
       1: { fa12: tokens.USDtz.contract.address },
     });
     expect(updUSDtzRewards.toNumber()).toBe(0);
-    op = await dex.contract.methods
-      .claim_referral("fa12", tokens.kUSD.contract.address, kUSDRewards)
+    op = await dex.contract.methodsObject
+      .claim_referral({
+        token: { fa12: tokens.kUSD.contract.address },
+        amount: kUSDRewards.toString(),
+      })
       .send();
-    await confirmOperation(Tezos, op.hash);
+    await op.confirmation(2);
     console.debug(`[${chalk.bgGreenBright.red("CLAIM")}:REFERRAL] kUSD`);
     await dex.updateStorage({ pools: [pool_id.toString()] });
     upd_ref_stor = await dex.contract.storage().then((storage: DexStorage) => {
@@ -112,15 +117,18 @@ export async function getReferralRewardsSuccessCase(
       1: { fa12: tokens.kUSD.contract.address },
     });
     expect(updkUSDRewards.toNumber()).toBe(0);
-    op = await dex.contract.methods
-      .claim_referral(
-        "fa2",
-        tokens.uUSD.contract.address,
-        new BigNumber(defaultTokenId),
-        uUSDRewards
-      )
+    op = await dex.contract.methodsObject
+      .claim_referral({
+        token: {
+          fa2: {
+            token_address: tokens.uUSD.contract.address,
+            token_id: new BigNumber(defaultTokenId).toString(),
+          },
+        },
+        amount: uUSDRewards.toString(),
+      })
       .send();
-    await confirmOperation(Tezos, op.hash);
+    await op.confirmation(2);
     console.debug(`[${chalk.bgGreenBright.red("CLAIM")}:REFERRAL] uUSD`);
     upd_ref_stor = await dex.contract.storage().then((storage: DexStorage) => {
       return storage.storage.referral_rewards;
@@ -137,13 +145,13 @@ export async function getReferralRewardsSuccessCase(
     expect(upduUSDRewards.toNumber()).toBe(0);
     const updUSDtz = await tokens.USDtz.contract.views
       .getBalance(ref_address)
-      .read(lambdaContractAddress);
+      .read();
     const updkUSD = await tokens.kUSD.contract.views
       .getBalance(ref_address)
-      .read(lambdaContractAddress);
+      .read();
     const upduUSD = await tokens.uUSD.contract.views
       .balance_of([{ owner: ref_address, token_id: "0" }])
-      .read(lambdaContractAddress);
+      .read();
     expect(updUSDtz.minus(initUSDtz).toNumber()).toStrictEqual(
       init_rewards.USDtz.toNumber()
     );

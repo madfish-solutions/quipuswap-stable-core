@@ -118,7 +118,7 @@ export async function bakeBlocks(count: number) {
       to: await Tezos.signer.publicKeyHash(),
       amount: 1,
     });
-    await confirmOperation(Tezos, operation.hash);
+    await operation.confirmation(2);
   }
 }
 
@@ -163,7 +163,7 @@ export async function setupLambdasToStorage(
 export async function setFunctionBatchCompilled(
   tezos: TezosToolkit,
   contract: TezosAddress,
-  type: "Dex" | "Token" | "Admin" | "Dev",
+  type: "Dex" | "Token" | "Admin" | "Dev" | "Strategy",
   batchBy: number,
   comp_funcs_map
 ) {
@@ -181,7 +181,7 @@ export async function setFunctionBatchCompilled(
     idx = idx + 1;
     if (idx % batchBy == 0 || idx == comp_funcs_map.length) {
       const batchOp = await batch.send();
-      await confirmOperation(tezos, batchOp.hash);
+      await batchOp.confirmation(2);
       console.debug(
         `[${chalk.bold.bgWhite.bgBlueBright(
           "BATCH"
@@ -197,7 +197,7 @@ export async function setFunctionBatchCompilled(
 export async function setFunctionCompilled(
   tezos: TezosToolkit,
   contract: TezosAddress,
-  type: "Dex" | "Token" | "Admin" | "Dev",
+  type: "Dex" | "Token" | "Admin" | "Dev" | "Strategy",
   comp_funcs_map
 ) {
   let idx = 0;
@@ -211,7 +211,7 @@ export async function setFunctionCompilled(
       },
     });
     idx = idx + 1;
-    await confirmOperation(tezos, op.hash);
+    await op.confirmation(2);
   }
 }
 

@@ -32,10 +32,14 @@ export async function harvestFromPoolSuccessCase(
       new BigNumber(0).toNumber()
     );
   });
-  const op = await dex.contract.methods
-    .stake("remove", pool_id, new BigNumber(0))
+  const op = await dex.contract.methodsObject
+    .stake({
+      remove: {
+        pool_id: pool_id,
+        amount: new BigNumber(0).toString(),
+      }})
     .send();
-  await confirmOperation(Tezos, op.hash);
+  await op.confirmation(2);
   await dex.updateStorage({ pools: [pool_id.toString()] });
   const upd_total_stake =
     dex.storage.storage.pools[pool_id.toNumber()].staker_accumulator

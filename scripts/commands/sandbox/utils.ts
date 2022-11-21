@@ -49,6 +49,11 @@ export const flextesaProtocols: FlextesaTezosProtocols = {
     prefix: "013-PtJakart",
     kind: "Jacarta",
   },
+  [TezosProtocols.KATHMANDU]: {
+    hash: "PtKathmankSpLLDALzWw7CGD2j2MtyveTwboEYokqUCP4a1LxMg",
+    prefix: "014-PtKathma",
+    kind: "Kathmandu",
+  },
 };
 
 export async function useSandbox(options: { up?: boolean; down?: boolean }) {
@@ -120,12 +125,12 @@ export const createProtocolParams = (
 };
 
 // Flextesa image
-const FLEXTESA_IMAGE = "oxheadalpha/flextesa:latest";
+const FLEXTESA_IMAGE = "oxheadalpha/flextesa:20221026";
 
 // Name for the running Docker image
 export const POD_NAME = "flextesa-sandbox";
 
-const defaultProtocol = TezosProtocols.ITHACA;
+const defaultProtocol = TezosProtocols.KATHMANDU;
 const defaultOptions: FlextesaOptions = config.networks.sandbox;
 
 export const startFlextesa = async (
@@ -138,8 +143,11 @@ export const startFlextesa = async (
   const options = Object.assign({}, defaultOptions, _options);
 
   // Localhost is not a valid host for Docker
-  const host = options.host.includes("localhost") ? "0.0.0.0" : options.host;
-  const port = options.port;
+  const host =
+    options.host.includes("localhost") || options.host.includes("127.0.0.1")
+      ? "0.0.0.0"
+      : options.host;
+  const port = options.port || "20000";
 
   // Protocol "validity" checks
   const protocol =
@@ -157,7 +165,7 @@ export const startFlextesa = async (
     "--name",
     POD_NAME,
     "-p",
-    host + ":" + port + ":20000",
+    port + ":20000",
     "--env",
     "flextesa_node_cors_origin=*",
     FLEXTESA_IMAGE,

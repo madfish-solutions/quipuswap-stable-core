@@ -31,17 +31,17 @@ export async function getTokenMapSuccessCase(
   idx_map: IndexMap
 ) {
   const value = (await dex.contract.contractViews
-    .get_token_map(pool_id)
+    .get_token_map(pool_id.toString())
     .executeView({ viewCaller: accounts["alice"].pkh })) as MichelsonMap<
     string,
     FA12TokenType | FA2TokenType
   >;
   value.forEach((value, key) => {
-    if (key == idx_map.USDtz) {
+    if (key.toString() == idx_map.USDtz.toString()) {
       expect(tokens_map.USDtz.contract.address).toStrictEqual(
         (value as FA12TokenType).fa12
       );
-    } else if (key == idx_map.kUSD) {
+    } else if (key.toString() == idx_map.kUSD.toString()) {
       expect(tokens_map.kUSD.contract.address).toStrictEqual(
         (value as FA12TokenType).fa12
       );
@@ -62,28 +62,26 @@ export async function getLPValueSuccessCase(
   dex.updateStorage({ pools: [pool_id.toString()] });
   const pool_info: PairInfo = dex.storage.storage.pools[pool_id.toString()];
   const tokens_info = pool_info.tokens_info;
-  const view_result = (await dex.contract.contractViews
-    .get_tok_per_share(pool_id)
-    .executeView({ viewCaller: accounts["alice"].pkh })) as MichelsonMap<
-    string,
-    BigNumber
-  >;
+  const view_result = await dex.contract.contractViews
+    .get_tok_per_share(pool_id.toString())
+    .executeView({ viewCaller: accounts["alice"].pkh });
   const pp_tks = {
     USDtz: null,
     kUSD: null,
     uUSD: null,
   };
   view_result.forEach((value, key) => {
-    const token_info = tokens_info.get(key);
+    const token_info = tokens_info.get(key.toString());
     const expected = token_info.reserves
       .multipliedBy(one_LP)
       .dividedToIntegerBy(pool_info.total_supply);
+    value = new BigNumber(value);
     expect(value.toNumber()).toStrictEqual(expected.toNumber());
-    if (key == map_tokens_idx.USDtz)
+    if (key.toString() == map_tokens_idx.USDtz)
       pp_tks.USDtz = value.dividedBy(decimals.USDtz);
-    else if (key == map_tokens_idx.kUSD)
+    else if (key.toString() == map_tokens_idx.kUSD)
       pp_tks.kUSD = value.dividedBy(decimals.kUSD);
-    else if (key == map_tokens_idx.uUSD)
+    else if (key.toString() == map_tokens_idx.uUSD)
       pp_tks.uUSD = value.dividedBy(decimals.uUSD);
   });
   console.debug(
@@ -128,10 +126,10 @@ export async function getDySuccessCase(
   const i = token_idxs.uUSD;
   const j = token_idxs.USDtz;
   const params = {
-    pool_id: pool_id,
-    i: i,
-    j: j,
-    dx: dx,
+    pool_id: pool_id.toString(),
+    i: i.toString(),
+    j: j.toString(),
+    dx: dx.toString(),
   };
   const dy = await dex.contract.contractViews
     .get_dy(params)

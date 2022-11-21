@@ -36,7 +36,6 @@ export async function getDeveloperRewardsDexSuccessCase(
   tokens: TokensMap,
   pool_id: BigNumber,
   developer: AccountsLiteral,
-  lambdaContractAddress: string,
   Tezos: TezosToolkit
 ) {
   const config = await prepareProviderOptions(developer);
@@ -53,13 +52,13 @@ export async function getDeveloperRewardsDexSuccessCase(
   });
   const initUSDtz = await tokens.USDtz.contract.views
     .getBalance(developer_address)
-    .read(lambdaContractAddress);
+    .read();
   const initkUSD = await tokens.kUSD.contract.views
     .getBalance(developer_address)
-    .read(lambdaContractAddress);
+    .read();
   const inituUSD = await tokens.uUSD.contract.views
     .balance_of([{ owner: developer_address, token_id: "0" }])
-    .read(lambdaContractAddress);
+    .read();
 
   const USDtzRewards = await dev_stor.get({
     fa12: tokens.USDtz.contract.address,
@@ -93,7 +92,7 @@ export async function getDeveloperRewardsDexSuccessCase(
   let op = await dex.contract.methods
     .claim_developer("fa12", tokens.USDtz.contract.address, USDtzRewards)
     .send();
-  await confirmOperation(Tezos, op.hash);
+  await op.confirmation(2);
   console.debug(`[${chalk.bgGreenBright.red("CLAIM")}:DEVELOPER] USDtz`);
   await dex.updateStorage({ pools: [pool_id.toString()] });
   let upd_dev_stor = await dex.contract
@@ -108,7 +107,7 @@ export async function getDeveloperRewardsDexSuccessCase(
   op = await dex.contract.methods
     .claim_developer("fa12", tokens.kUSD.contract.address, kUSDRewards)
     .send();
-  await confirmOperation(Tezos, op.hash);
+  await op.confirmation(2);
   console.debug(`[${chalk.bgGreenBright.red("CLAIM")}:DEVELOPER] kUSD`);
   await dex.updateStorage({ pools: [pool_id.toString()] });
   upd_dev_stor = await dex.contract.storage().then((storage: DexStorage) => {
@@ -126,7 +125,7 @@ export async function getDeveloperRewardsDexSuccessCase(
       uUSDRewards
     )
     .send();
-  await confirmOperation(Tezos, op.hash);
+  await op.confirmation(2);
   console.debug(`[${chalk.bgGreenBright.red("CLAIM")}:DEVELOPER] uUSD`);
   upd_dev_stor = await dex.contract.storage().then((storage: DexStorage) => {
     return storage.storage.dev_rewards;
@@ -140,13 +139,13 @@ export async function getDeveloperRewardsDexSuccessCase(
   expect(upduUSDRewards.toNumber()).toBe(0);
   const updUSDtz = await tokens.USDtz.contract.views
     .getBalance(developer_address)
-    .read(lambdaContractAddress);
+    .read();
   const updkUSD = await tokens.kUSD.contract.views
     .getBalance(developer_address)
-    .read(lambdaContractAddress);
+    .read();
   const upduUSD = await tokens.uUSD.contract.views
     .balance_of([{ owner: developer_address, token_id: "0" }])
-    .read(lambdaContractAddress);
+    .read();
   expect(updUSDtz.minus(initUSDtz).toNumber()).toStrictEqual(
     init_rewards.USDtz.toNumber()
   );

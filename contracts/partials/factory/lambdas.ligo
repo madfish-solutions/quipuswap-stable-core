@@ -49,7 +49,8 @@ function add_pool(
         params.managers,
         s.storage.quipu_token,
         s.admin_lambdas,
-        s.token_lambdas
+        s.token_lambdas,
+        s.strat_lambdas
       )
     );
     const pool_address = deploy.1;

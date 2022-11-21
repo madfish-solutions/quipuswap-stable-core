@@ -15,6 +15,7 @@ import dex_lambdas_comp from "../build/lambdas/Dex_lambdas.json";
 import dev_lambdas_comp from "../build/lambdas/Dev_lambdas.json";
 import token_lambdas_comp from "../build/lambdas/Token_lambdas.json";
 import admin_lambdas_comp from "../build/lambdas/Admin_lambdas.json";
+import strat_lambdas_comp from "../build/lambdas/Strategy_lambdas.json";
 import { Dex } from "../test/Dex/API/dexAPI";
 import { DevStorage } from "../test/Developer/API/storage";
 import chalk from "chalk";
@@ -37,7 +38,6 @@ module.exports = async (tezos: TezosToolkit, network: NetworkLiteral) => {
   storage.storage.dev_store.dev_lambdas = await setupLambdasToStorage(
     dev_lambdas_comp
   );
-
   const contractAddress: TezosAddress = await migrate(
     tezos,
     config.outputDirectory,
@@ -69,6 +69,13 @@ module.exports = async (tezos: TezosToolkit, network: NetworkLiteral) => {
     "Dex",
     8,
     dex_lambdas_comp
+  );
+  await setFunctionBatchCompilled(
+    tezos,
+    contractAddress,
+    "Strategy",
+    8,
+    strat_lambdas_comp
   );
   console.log(
     `DEX (${chalk.bold.bgRed.underline("standalone")}) is ${chalk.green(

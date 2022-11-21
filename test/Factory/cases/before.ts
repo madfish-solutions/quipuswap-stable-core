@@ -10,6 +10,7 @@ import dev_lambdas_comp from "../../../build/lambdas/test/Dev_lambdas.json";
 import dex_lambdas_comp from "../../../build/lambdas/test/Dex_lambdas.json";
 import token_lambdas_comp from "../../../build/lambdas/test/Token_lambdas.json";
 import admin_lambdas_comp from "../../../build/lambdas/test/Admin_lambdas.json";
+import strat_lambdas_comp from "../../../build/lambdas/test/Strategy_lambdas.json";
 import { defaultTokenId, TokenFA2 } from "../../Token";
 import { setupQuipuGovToken } from "../../utils/tokensSetups";
 import { accounts, dev_fee } from "../../../utils/constants";
@@ -36,7 +37,7 @@ export async function setupFactoryEnvironment(
     code: VIEW_LAMBDA.code,
     storage: VIEW_LAMBDA.storage,
   });
-  await confirmOperation(Tezos, op.hash);
+  await op.confirmation(2);
   const quipuToken = await setupQuipuGovToken(Tezos);
   const lambdaContractAddress = op.contractAddress;
   storage.storage.dev_store = {

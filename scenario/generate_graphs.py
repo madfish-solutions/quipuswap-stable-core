@@ -6,7 +6,7 @@ from constants import A_CONST
 from helpers import *
 
 from pytezos import ContractInterface, pytezos, MichelsonRuntimeError
-from initial_storage import admin_lambdas, dex_lambdas, token_lambdas
+from initial_storage import admin_lambdas, dex_lambdas, token_lambdas, start_lambdas
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker
@@ -40,6 +40,7 @@ class GraphDrawer:
         storage = cls.dex.storage.dummy()
         storage["token_lambdas"] = token_lambdas
         storage["dex_lambdas"] = dex_lambdas
+        storage["strat_lambdas"] = strat_lambdas
         storage["admin_lambdas"] = admin_lambdas
         storage["storage"]["admin"] = admin
         cls.init_storage = storage
