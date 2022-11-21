@@ -14,12 +14,12 @@ function calculate_desired_reserves(
                         : nat is
   block {
     const desired_reserves : nat = reserves * strat_token_conf.des_reserves_rate_f / Constants.precision;
-    require(check_strategy_bounds(
-      reserves,
-      desired_reserves,
-      strat_token_conf.des_reserves_rate_f,
-      strat_token_conf.delta_rate_f
-    ), Errors.Strategy.out_of_delta_bounds);
+    // require(check_strategy_bounds(
+    //   reserves,
+    //   desired_reserves,
+    //   strat_token_conf.des_reserves_rate_f,
+    //   strat_token_conf.delta_rate_f
+    // ), Errors.Strategy.out_of_delta_bounds);
   } with if desired_reserves > strat_token_conf.min_invest
           then desired_reserves
           else 0n
