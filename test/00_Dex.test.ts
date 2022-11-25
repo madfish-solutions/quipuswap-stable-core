@@ -1097,13 +1097,33 @@ describe("00. Standalone Dex", () => {
         ));
 
       it("should configure strategy for token to zero", async () =>
-        TStrategy.token.configureTokenStrategy.setStrategyParamsToZeroSuccessCase(
+        TStrategy.token.configureTokenStrategy
+          .setStrategyParamsToZeroSuccessCase(
+            dex,
+            pool_id,
+            new BigNumber(pool_ordering.kUSD)
+          )
+          .then(() =>
+            TStrategy.token.configureTokenStrategy.setStrategyParamsToZeroSuccessCase(
+              dex,
+              pool_id,
+              new BigNumber(pool_ordering.uUSD)
+            )
+          ));
+
+      it("should call manual rebalance after set to zero", async () =>
+        TStrategy.token.manualRebalanceToken.manualRebalanceSuccessCase(
           dex,
+          yupana,
+          strategy,
           pool_id,
-          new BigNumber(pool_ordering.kUSD)
+          new Set([
+            new BigNumber(pool_ordering.kUSD),
+            new BigNumber(pool_ordering.uUSD),
+          ])
         ));
 
-      it("should disconnect new strategy", async () =>
+      it("should disconnect strategy", async () =>
         TStrategy.connect.removeStrategyAddrSuccessCase(dex, pool_id));
     });
 

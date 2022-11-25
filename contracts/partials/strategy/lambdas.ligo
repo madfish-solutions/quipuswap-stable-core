@@ -132,7 +132,12 @@ function set_rebalance(
                   : map(token_pool_idx_t, token_info_t) is
         Map.add(i, get_token_info(i, pool.tokens_info), acc);
       const infos = Set.fold(map_ids, params.pool_token_ids, (map[]: map(token_pool_idx_t, token_info_t)));
-      const (rebalance_ops, strategy_store) = operate_with_strategy(infos, s.tokens[params.pool_id], pool.strategy);
+      const (rebalance_ops, strategy_store) = operate_with_strategy(
+        infos,
+        s.tokens[params.pool_id],
+        pool.strategy,
+        True
+      );
       operations := rebalance_ops;
       s.pools[params.pool_id] := pool with record[
         strategy = strategy_store

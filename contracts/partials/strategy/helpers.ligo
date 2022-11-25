@@ -61,24 +61,25 @@ function check_strategy_pool_params(
 function operate_with_strategy(
   const token_infos     : map(token_pool_idx_t, token_info_t);
   const tokens_map_entry: option(tokens_map_t);
-  var strategy          : strategy_full_storage_t)
+  var strategy          : strategy_full_storage_t;
+  const manual          : bool)
                         : list(operation) * strategy_full_storage_t is
   block {
     var ops := Constants.no_operations;
     case strategy.strat_contract of [
       Some(contract) -> {
-        var rebalance_params: upd_strat_state_t := nil;
-        var prepare_params: list(nat) := nil;
-        var send_ops: list(operation) := nil;
+        var rebalance_params: upd_strat_state_t := list[];
+        var prepare_params: list(nat) := list[];
+        var send_ops: list(operation) := list[];
         for token_id -> info in map token_infos {
           var config := unwrap(strategy.configuration[token_id], Errors.Strategy.unknown_token);
-          const need_rebalance = check_strategy_bounds(
+          const in_bounds = check_strategy_bounds(
             info.reserves,
             config.strategy_reserves,
             config.des_reserves_rate_f,
             config.delta_rate_f
           );
-          if config.is_rebalance and need_rebalance then {
+          if (config.is_rebalance or manual) and not in_bounds then {
             const new_s_reserves = calculate_desired_reserves(info.reserves, config);
             rebalance_params := record[
               pool_token_id = token_id;
@@ -102,11 +103,13 @@ function operate_with_strategy(
           };
           strategy.configuration[token_id] := config;
         };
+        require(List.size(rebalance_params) > 0n, Errors.Strategy.nothing_to_rebalance);
         ops := list [
           Tezos.transaction(prepare_params, 0mutez, get_prepare_entrypoint(contract));
           Tezos.transaction(rebalance_params, 0mutez, get_update_state_entrypoint(contract))
         ];
-        ops := concat_lists(
+        if List.size(send_ops) > 0n
+        then ops := concat_lists(
           send_ops,
           ops
         );
