@@ -85,6 +85,7 @@ export declare type DexMainStorage = {
   >;
   dev_store?: DevStorage;
   factory_address?: TezosAddress;
+  strategy_factory?: TezosAddress[];
 };
 
 export declare type DexStorage = {

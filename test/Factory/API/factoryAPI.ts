@@ -23,11 +23,12 @@ import { defaultTokenId, TokenFA12, TokenFA2 } from "../../Token";
 import { FeeType, TokenInfo } from "../../Dex/API/types";
 import fs from "fs";
 import { DevEnabledContract } from "../../Developer/API/devAPI";
+import { StrategyFactorySetter } from "../../Strategy/API/strategyFactoryMethod";
 const init_func_bytes = fs
   .readFileSync("./build/lambdas/factory/add_pool.txt")
   .toString();
 
-export class DexFactory implements DevEnabledContract {
+export class DexFactory implements DevEnabledContract, StrategyFactorySetter {
   public contract: ContractAbstraction<ContractProvider>;
   public storage: FactoryStorage;
 
@@ -274,5 +275,26 @@ export class DexFactory implements DevEnabledContract {
     const op = await this.contract.methods.start_dex(inputs).send();
     await op.confirmation(2);
     return operation;
+  }
+
+  async manageStrategyFactories(
+    strategy_factory: string,
+    add: boolean
+  ): Promise<TransactionOperation> {
+    const op = await this.contract.methods
+      .set_strategy_factory(add, strategy_factory)
+      .send();
+    await op.confirmation(2);
+    return op;
+  }
+  async addStrategyFactory(
+    strategy_factory: string
+  ): Promise<TransactionOperation> {
+    return this.manageStrategyFactories(strategy_factory, true);
+  }
+  async removeStrategyFactory(
+    strategy_factory: string
+  ): Promise<TransactionOperation> {
+    return this.manageStrategyFactories(strategy_factory, false);
   }
 }

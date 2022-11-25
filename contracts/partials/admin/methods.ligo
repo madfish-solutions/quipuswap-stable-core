@@ -10,7 +10,9 @@
 
     case p of [
     | Claim_developer(_) -> skip // Claim_developer has own inner check for developer address
+#if !FACTORY
     | Set_strategy_factory(_)-> skip
+#endif
     | _ -> require(Tezos.sender = s.storage.admin, Errors.Dex.not_contract_admin)
     ];
 

@@ -6,4 +6,9 @@ export const strategyCases = {
   connect: strategyConnect,
 };
 
-export default strategyCases;
+import * as before from "./before";
+
+export default {
+  before,
+  cases: strategyCases,
+};

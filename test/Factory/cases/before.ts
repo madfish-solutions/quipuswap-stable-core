@@ -33,7 +33,6 @@ export async function setupFactoryEnvironment(
   const config = await prepareProviderOptions(developer);
   Tezos.setProvider(config);
   const quipuToken = await setupQuipuGovToken(Tezos);
-  const lambdaContractAddress = op.contractAddress;
   storage.storage.dev_store = {
     dev_address: accounts[developer].pkh,
     dev_fee_f: new BigNumber(0),

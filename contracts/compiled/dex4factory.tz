@@ -16,7 +16,7 @@
                           (nat %pool_id)
                           (nat %pool_token_id)
                           (nat %lending_market_id)))
-                   (or (list %rebalance (pair (nat %pool_id) (set %pool_token_id nat)))
+                   (or (pair %rebalance (nat %pool_id) (set %pool_token_ids nat))
                        (pair %set_token_strategy
                           (nat %pool_id)
                           (nat %pool_token_id)
@@ -112,7 +112,8 @@
                                   (nat %delta_rate_f)
                                   (nat %min_invest)
                                   (nat %strategy_reserves)
-                                  (bool %is_rebalance))))
+                                  (bool %is_rebalance)
+                                  (bool %connected))))
                       (pair %staker_accumulator
                          (map %accumulator_f nat nat)
                          (map %total_fees nat nat)
@@ -296,7 +297,8 @@
                                                        (nat %delta_rate_f)
                                                        (nat %min_invest)
                                                        (nat %strategy_reserves)
-                                                       (bool %is_rebalance))))
+                                                       (bool %is_rebalance)
+                                                       (bool %connected))))
                                            (pair %staker_accumulator
                                               (map %accumulator_f nat nat)
                                               (map %total_fees nat nat)
@@ -345,7 +347,8 @@
                                                        (nat %delta_rate_f)
                                                        (nat %min_invest)
                                                        (nat %strategy_reserves)
-                                                       (bool %is_rebalance))))
+                                                       (bool %is_rebalance)
+                                                       (bool %connected))))
                                            (pair %staker_accumulator
                                               (map %accumulator_f nat nat)
                                               (map %total_fees nat nat)
@@ -416,7 +419,7 @@
                                            (nat %pool_id)
                                            (nat %pool_token_id)
                                            (nat %lending_market_id)))
-                                    (or (list %rebalance (pair (nat %pool_id) (set %pool_token_id nat)))
+                                    (or (pair %rebalance (nat %pool_id) (set %pool_token_ids nat))
                                         (pair %set_token_strategy
                                            (nat %pool_id)
                                            (nat %pool_token_id)
@@ -453,7 +456,8 @@
                                                        (nat %delta_rate_f)
                                                        (nat %min_invest)
                                                        (nat %strategy_reserves)
-                                                       (bool %is_rebalance))))
+                                                       (bool %is_rebalance)
+                                                       (bool %connected))))
                                            (pair %staker_accumulator
                                               (map %accumulator_f nat nat)
                                               (map %total_fees nat nat)
@@ -502,7 +506,8 @@
                                                        (nat %delta_rate_f)
                                                        (nat %min_invest)
                                                        (nat %strategy_reserves)
-                                                       (bool %is_rebalance))))
+                                                       (bool %is_rebalance)
+                                                       (bool %connected))))
                                            (pair %staker_accumulator
                                               (map %accumulator_f nat nat)
                                               (map %total_fees nat nat)
@@ -627,7 +632,8 @@
                                                            (nat %delta_rate_f)
                                                            (nat %min_invest)
                                                            (nat %strategy_reserves)
-                                                           (bool %is_rebalance))))
+                                                           (bool %is_rebalance)
+                                                           (bool %connected))))
                                                (pair %staker_accumulator
                                                   (map %accumulator_f nat nat)
                                                   (map %total_fees nat nat)
@@ -676,7 +682,8 @@
                                                            (nat %delta_rate_f)
                                                            (nat %min_invest)
                                                            (nat %strategy_reserves)
-                                                           (bool %is_rebalance))))
+                                                           (bool %is_rebalance)
+                                                           (bool %connected))))
                                                (pair %staker_accumulator
                                                   (map %accumulator_f nat nat)
                                                   (map %total_fees nat nat)
@@ -769,7 +776,8 @@
                                                               (nat %delta_rate_f)
                                                               (nat %min_invest)
                                                               (nat %strategy_reserves)
-                                                              (bool %is_rebalance))))
+                                                              (bool %is_rebalance)
+                                                              (bool %connected))))
                                                   (pair %staker_accumulator
                                                      (map %accumulator_f nat nat)
                                                      (map %total_fees nat nat)
@@ -824,7 +832,8 @@
                                                               (nat %delta_rate_f)
                                                               (nat %min_invest)
                                                               (nat %strategy_reserves)
-                                                              (bool %is_rebalance))))
+                                                              (bool %is_rebalance)
+                                                              (bool %connected))))
                                                   (pair %staker_accumulator
                                                      (map %accumulator_f nat nat)
                                                      (map %total_fees nat nat)
@@ -1788,7 +1797,7 @@
                              timestamp
                              (map nat (pair nat nat nat))
                              (pair nat nat nat)
-                             (pair (option address) (map nat (pair nat nat nat nat bool)))
+                             (pair (option address) (map nat (pair nat nat nat nat bool bool)))
                              (pair (map nat nat) (map nat nat) nat)
                              nat)))
            nat

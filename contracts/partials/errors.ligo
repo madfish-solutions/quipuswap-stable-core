@@ -62,11 +62,14 @@ module Factory is {
 module Strategy is {
   const out_of_delta_bounds       : string = "out-of-delta-bounds";
   const no_update_state_entrypoint: string = "no-update-state-EP";
+  const no_update_info_entrypoint : string = "no-update-info-EP";
   const not_registered            : string = "strategy-not-registered-on-factory";
   const no_is_registered          : string = "no-is-registered-view";
   const no_prepare_entrypoint     : string = "no-prepare-EP";
   const unknown_token             : string = "no-token-strategy-set";
   const unclaimed_reserves        : string = "strategy-unclaimed-reserves";
   const no_pool_data_view         : string = "no-pool-data-view";
-  const wrong_params              : string = "wrong-connect-params-strategy"
+  const no_connected_strategy     : string = "no-connected-strategy";
+  const wrong_params              : string = "wrong-connect-params-strategy";
+  const already_connected         : string = "token-strategy-connected";
 }

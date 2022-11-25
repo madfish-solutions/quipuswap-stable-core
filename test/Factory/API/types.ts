@@ -14,6 +14,7 @@ export declare type InnerFactoryStore = {
   quipu_rewards: BigNumber;
   whitelist: TezosAddress[];
   deployers: MichelsonMap<TezosAddress, TezosAddress>;
+  strategy_factory: TezosAddress[];
 };
 
 export declare type FactoryStorage = {

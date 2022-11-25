@@ -4,6 +4,7 @@ type strategy_storage_t is [@layout:comb] record[
   min_invest          : nat;
   strategy_reserves   : nat;
   is_rebalance        : bool;
+  connected           : bool;
 ];
 
 type strategy_full_storage_t is [@layout:comb] record [
