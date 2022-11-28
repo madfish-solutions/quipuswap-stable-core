@@ -12,9 +12,9 @@
 
 [@view] function is_registered_strategy(
   const strategy        : address;
-  const s               : storage_t)
+  const s               : full_storage_t)
                         : bool is
-  Set.fold(check_strategy_factory, s.storage.strategy_factory, False)
+  check_strategy_factory(strategy, s.storage.strategy_factory)
 
 
 

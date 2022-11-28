@@ -12,5 +12,5 @@ function check_is_registered_strategy(
   const strategy        : address;
   const s               : storage_t)
                         : bool is
-  Set.fold(check_strategy_factory, s.strategy_factory, False)
+  check_strategy_factory(strategy, s.strategy_factory)
 
