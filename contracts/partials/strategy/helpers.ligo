@@ -110,15 +110,17 @@ function operate_with_strategy(
           strategy.configuration[token_id] := config;
         };
         if List.size(rebalance_params) > 0n
-        then ops := list [
-          Tezos.transaction(prepare_params, 0mutez, get_prepare_entrypoint(contract));
-          Tezos.transaction(rebalance_params, 0mutez, get_update_state_entrypoint(contract))
-        ];
-        if List.size(send_ops) > 0n and List.size(ops) > 0n
-        then ops := concat_lists(
-          send_ops,
-          ops
-        );
+        then {
+          ops := list [
+            Tezos.transaction(prepare_params, 0mutez, get_prepare_entrypoint(contract));
+            Tezos.transaction(rebalance_params, 0mutez, get_update_state_entrypoint(contract))
+          ];
+          if List.size(send_ops) > 0n
+          then ops := concat_lists(
+            send_ops,
+            ops
+          );
+        }
       }
     | None -> skip
     ]
