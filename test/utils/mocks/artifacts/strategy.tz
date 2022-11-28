@@ -1,0 +1,651 @@
+{ parameter
+    (or (or (or %dev_part
+               (list %claim_rewards nat)
+               (pair %update_lending (address %lending_contract) (address %price_feed_contract)))
+            (or %dex_part
+               (pair %update_token_info
+                  (or %token (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                  (nat %pool_token_id)
+                  (nat %lending_market_id))
+               (list %update_token_state (pair (nat %pool_token_id) (nat %new_balance)))))
+        (list %prepare nat)) ;
+  storage
+    (pair (address %factory)
+          (pair %lending_data (address %lending_contract) (address %price_feed_contract))
+          (pair %pool_data (address %pool_contract) (nat %pool_id))
+          (map %token_map
+             nat
+             (pair (or %token (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                   (nat %lending_market_id)
+                   (nat %invested_tokens)
+                   (timestamp %upd_time)
+                   (bool %approved)
+                   (timestamp %prepared_time)))) ;
+  code { LAMBDA
+           (pair (pair (pair nat nat) address bool) bool)
+           nat
+           { UNPAIR ;
+             UNPAIR ;
+             UNPAIR ;
+             DIG 2 ;
+             UNPAIR ;
+             PUSH string "Lending has no suited convert view" ;
+             SWAP ;
+             DIG 5 ;
+             DIG 4 ;
+             DIG 5 ;
+             DIG 5 ;
+             PAIR 4 ;
+             VIEW "convert"
+                  (pair (nat %amount) (timestamp %interestUpdateTime) (timestamp %priceUpdateTime)) ;
+             IF_NONE { FAILWITH } { SWAP ; DROP } ;
+             CAR } ;
+         PUSH string "Factory has no suited dev_address view" ;
+         PUSH string "No Token yet" ;
+         PUSH string "Contract hasn't update_operators/approve entrypoint" ;
+         PUSH string "Contract has no transfer entrypoint" ;
+         PUSH string "'Update interest' and 'get price' for market should be called" ;
+         LAMBDA
+           (pair (option address) string)
+           address
+           { UNPAIR ; IF_NONE { FAILWITH } { SWAP ; DROP } } ;
+         LAMBDA
+           int
+           nat
+           { ISNAT ; IF_NONE { PUSH string "Value is not natural" ; FAILWITH } {} } ;
+         PUSH timestamp 946684800 ;
+         PUSH bool False ;
+         NOW ;
+         PUSH nat 0 ;
+         PUSH nat 0 ;
+         PUSH address "tz1ZZZZZZZZZZZZZZZZZZZZZZZZZZZZNkiRg" ;
+         LEFT (pair address nat) ;
+         PAIR 6 ;
+         DIG 9 ;
+         UNPAIR ;
+         SWAP ;
+         PUSH mutez 0 ;
+         AMOUNT ;
+         COMPARE ;
+         GT ;
+         IF { PUSH string "Sending XTZ not allowed here" ; FAILWITH } {} ;
+         SWAP ;
+         IF_LEFT
+           { IF_LEFT
+               { DIG 2 ;
+                 DIG 7 ;
+                 DROP 2 ;
+                 PUSH string "Only developer is allowed here" ;
+                 DUP 9 ;
+                 DUP 4 ;
+                 CAR ;
+                 UNIT ;
+                 VIEW "dev_address" address ;
+                 PAIR ;
+                 DUP 6 ;
+                 SWAP ;
+                 EXEC ;
+                 SENDER ;
+                 COMPARE ;
+                 EQ ;
+                 IF { DROP } { FAILWITH } ;
+                 IF_LEFT
+                   { SWAP ;
+                     NIL operation ;
+                     DUP 2 ;
+                     GET 6 ;
+                     PUSH bool True ;
+                     DUP 4 ;
+                     GET 3 ;
+                     CAR ;
+                     DUP 6 ;
+                     MAP { DUP 4 ; SWAP ; GET ; IF_NONE { DUP 11 ; FAILWITH } {} ; GET 3 } ;
+                     DIG 3 ;
+                     DROP ;
+                     PUSH string "Lending has no suited balanceOf view" ;
+                     DIG 2 ;
+                     DIG 3 ;
+                     DIG 3 ;
+                     MAP { SELF_ADDRESS ; PAIR } ;
+                     PAIR ;
+                     VIEW "balanceOf"
+                          (list (pair (pair %request (address %owner) (nat %token_id)) (nat %balance))) ;
+                     IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                     EMPTY_MAP nat nat ;
+                     SWAP ;
+                     ITER { SWAP ; DUP 2 ; CDR ; SOME ; DIG 2 ; CAR ; CDR ; UPDATE } ;
+                     DIG 3 ;
+                     ITER { DUP 9 ;
+                            DUP 5 ;
+                            GET 6 ;
+                            DUP 3 ;
+                            GET ;
+                            IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                            DUP 8 ;
+                            NOW ;
+                            DUP 3 ;
+                            GET 10 ;
+                            COMPARE ;
+                            EQ ;
+                            IF { DROP } { FAILWITH } ;
+                            PUSH nat 1 ;
+                            DUP 4 ;
+                            DIG 3 ;
+                            GET ;
+                            IF_NONE
+                              { PUSH string "No balance for token returned in balance response" ; FAILWITH }
+                              {} ;
+                            SUB ;
+                            DUP 6 ;
+                            SWAP ;
+                            EXEC ;
+                            PUSH bool True ;
+                            PUSH bool False ;
+                            DUP 7 ;
+                            GET 3 ;
+                            CAR ;
+                            PAIR ;
+                            DUP 4 ;
+                            GET 3 ;
+                            DIG 3 ;
+                            PAIR ;
+                            PAIR ;
+                            PAIR ;
+                            DUP 12 ;
+                            SWAP ;
+                            EXEC ;
+                            DUP 2 ;
+                            GET 5 ;
+                            SWAP ;
+                            SUB ;
+                            DUP 6 ;
+                            SWAP ;
+                            EXEC ;
+                            DIG 3 ;
+                            DUP 3 ;
+                            CAR ;
+                            DUP 3 ;
+                            PAIR ;
+                            DUP 6 ;
+                            CAR ;
+                            DUP 13 ;
+                            SWAP ;
+                            UNIT ;
+                            VIEW "dev_address" address ;
+                            PAIR ;
+                            DUP 9 ;
+                            SWAP ;
+                            EXEC ;
+                            SELF_ADDRESS ;
+                            DIG 2 ;
+                            UNPAIR ;
+                            SWAP ;
+                            IF_LEFT
+                              { DUP 13 ;
+                                SWAP ;
+                                CONTRACT %transfer (pair (address %from) (address %to) (nat %value)) ;
+                                IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                                PUSH mutez 0 ;
+                                DIG 2 ;
+                                DIG 4 ;
+                                PAIR ;
+                                DIG 3 ;
+                                PAIR ;
+                                TRANSFER_TOKENS }
+                              { DUP 13 ;
+                                DUP 2 ;
+                                CAR ;
+                                CONTRACT %transfer
+                                  (list (pair (address %from_) (list %txs (pair (address %to_) (nat %token_id) (nat %amount))))) ;
+                                IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                                PUSH mutez 0 ;
+                                NIL (pair address (list (pair address nat nat))) ;
+                                NIL (pair address nat nat) ;
+                                DIG 5 ;
+                                DIG 5 ;
+                                CDR ;
+                                DIG 7 ;
+                                PAIR 3 ;
+                                CONS ;
+                                DIG 4 ;
+                                PAIR ;
+                                CONS ;
+                                TRANSFER_TOKENS } ;
+                            CONS ;
+                            DUP 5 ;
+                            GET 3 ;
+                            CDR ;
+                            PUSH string "Lending has no suited redeem entrypoint" ;
+                            SWAP ;
+                            CONTRACT %redeem (pair (nat %tokenId) (nat %amount) (nat %minReceived)) ;
+                            IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                            PUSH mutez 0 ;
+                            DUP 4 ;
+                            DIG 4 ;
+                            DIG 5 ;
+                            GET 3 ;
+                            PAIR 3 ;
+                            TRANSFER_TOKENS ;
+                            CONS ;
+                            SWAP } ;
+                     DIG 3 ;
+                     DIG 4 ;
+                     DIG 5 ;
+                     DIG 6 ;
+                     DIG 7 ;
+                     DIG 8 ;
+                     DIG 9 ;
+                     DROP 8 }
+                   { DIG 2 ;
+                     DIG 3 ;
+                     DIG 4 ;
+                     DIG 5 ;
+                     DIG 6 ;
+                     DIG 7 ;
+                     DIG 8 ;
+                     DROP 7 ;
+                     UPDATE 3 ;
+                     NIL operation } }
+               { DIG 4 ;
+                 DIG 9 ;
+                 DROP 2 ;
+                 PUSH string "Only dex is allowed here" ;
+                 DUP 3 ;
+                 GET 5 ;
+                 CAR ;
+                 SENDER ;
+                 COMPARE ;
+                 EQ ;
+                 IF { DROP } { FAILWITH } ;
+                 IF_LEFT
+                   { DIG 3 ;
+                     DIG 4 ;
+                     DIG 5 ;
+                     DIG 6 ;
+                     DIG 7 ;
+                     DIG 8 ;
+                     DROP 6 ;
+                     SWAP ;
+                     PUSH string "Token already added" ;
+                     DUP 2 ;
+                     GET 6 ;
+                     DUP 4 ;
+                     GET 3 ;
+                     MEM ;
+                     NOT ;
+                     IF { DROP } { FAILWITH } ;
+                     DUP ;
+                     GET 6 ;
+                     DIG 3 ;
+                     DUP 4 ;
+                     CAR ;
+                     UPDATE 1 ;
+                     DUP 4 ;
+                     GET 4 ;
+                     UPDATE 3 ;
+                     DIG 3 ;
+                     GET 3 ;
+                     SWAP ;
+                     SOME ;
+                     SWAP ;
+                     UPDATE ;
+                     UPDATE 6 ;
+                     NIL operation }
+                   { DIG 2 ;
+                     DROP ;
+                     SWAP ;
+                     NIL operation ;
+                     EMPTY_MAP
+                       nat
+                       (pair (pair (or address (pair address nat)) nat nat timestamp bool timestamp) nat) ;
+                     DIG 3 ;
+                     ITER { DUP 9 ;
+                            DUP 5 ;
+                            GET 6 ;
+                            DUP 3 ;
+                            CAR ;
+                            GET ;
+                            IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                            DUP 7 ;
+                            NOW ;
+                            DUP 3 ;
+                            GET 10 ;
+                            COMPARE ;
+                            EQ ;
+                            IF { DROP } { FAILWITH } ;
+                            DUP ;
+                            GET 5 ;
+                            DUP 3 ;
+                            CDR ;
+                            SUB ;
+                            ISNAT ;
+                            IF_NONE
+                              { DUP 2 ;
+                                CDR ;
+                                DUP 2 ;
+                                GET 5 ;
+                                SUB ;
+                                DUP 7 ;
+                                SWAP ;
+                                EXEC ;
+                                DIG 4 ;
+                                DUP 3 ;
+                                CAR ;
+                                DUP 3 ;
+                                PAIR ;
+                                DUP 7 ;
+                                GET 5 ;
+                                CAR ;
+                                SELF_ADDRESS ;
+                                DIG 2 ;
+                                UNPAIR ;
+                                SWAP ;
+                                IF_LEFT
+                                  { DUP 13 ;
+                                    SWAP ;
+                                    CONTRACT %transfer (pair (address %from) (address %to) (nat %value)) ;
+                                    IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                                    PUSH mutez 0 ;
+                                    DIG 2 ;
+                                    DIG 4 ;
+                                    PAIR ;
+                                    DIG 3 ;
+                                    PAIR ;
+                                    TRANSFER_TOKENS }
+                                  { DUP 13 ;
+                                    DUP 2 ;
+                                    CAR ;
+                                    CONTRACT %transfer
+                                      (list (pair (address %from_) (list %txs (pair (address %to_) (nat %token_id) (nat %amount))))) ;
+                                    IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                                    PUSH mutez 0 ;
+                                    NIL (pair address (list (pair address nat nat))) ;
+                                    NIL (pair address nat nat) ;
+                                    DIG 5 ;
+                                    DIG 5 ;
+                                    CDR ;
+                                    DIG 7 ;
+                                    PAIR 3 ;
+                                    CONS ;
+                                    DIG 4 ;
+                                    PAIR ;
+                                    CONS ;
+                                    TRANSFER_TOKENS } ;
+                                CONS ;
+                                DUP 6 ;
+                                GET 3 ;
+                                CAR ;
+                                PUSH string "Lending has no suited redeem entrypoint" ;
+                                SWAP ;
+                                CONTRACT %redeem (pair (nat %tokenId) (nat %amount) (nat %minReceived)) ;
+                                IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                                PUSH mutez 0 ;
+                                DUP 4 ;
+                                DIG 4 ;
+                                DUP 6 ;
+                                GET 3 ;
+                                PAIR 3 ;
+                                TRANSFER_TOKENS ;
+                                CONS ;
+                                DUG 3 }
+                              { PUSH bool False ;
+                                PUSH bool True ;
+                                DUP 8 ;
+                                GET 3 ;
+                                CAR ;
+                                PAIR ;
+                                DUP 4 ;
+                                GET 3 ;
+                                DUP 4 ;
+                                PAIR ;
+                                PAIR ;
+                                PAIR ;
+                                DUP 13 ;
+                                SWAP ;
+                                EXEC ;
+                                PUSH nat 0 ;
+                                DUP 2 ;
+                                COMPARE ;
+                                GT ;
+                                PUSH nat 0 ;
+                                DUP 4 ;
+                                COMPARE ;
+                                GT ;
+                                AND ;
+                                IF { DIG 5 ;
+                                     DUP 7 ;
+                                     GET 3 ;
+                                     CAR ;
+                                     PUSH string "Lending has no suited mint entrypoint" ;
+                                     SWAP ;
+                                     CONTRACT %mint (pair (nat %tokenId) (nat %amount) (nat %minReceived)) ;
+                                     IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                                     PUSH mutez 0 ;
+                                     DIG 3 ;
+                                     DUP 5 ;
+                                     DUP 7 ;
+                                     GET 3 ;
+                                     PAIR 3 ;
+                                     TRANSFER_TOKENS ;
+                                     CONS ;
+                                     DUG 4 ;
+                                     DIG 3 ;
+                                     SWAP ;
+                                     DUP 3 ;
+                                     PAIR ;
+                                     DUP 4 ;
+                                     CAR ;
+                                     SWAP ;
+                                     SOME ;
+                                     SWAP ;
+                                     UPDATE ;
+                                     DUG 2 }
+                                   { DROP 2 } } ;
+                            DUP 5 ;
+                            DIG 5 ;
+                            GET 6 ;
+                            DIG 2 ;
+                            DUP 4 ;
+                            CDR ;
+                            UPDATE 5 ;
+                            NOW ;
+                            UPDATE 7 ;
+                            DIG 3 ;
+                            CAR ;
+                            SWAP ;
+                            SOME ;
+                            SWAP ;
+                            UPDATE ;
+                            UPDATE 6 ;
+                            DUG 2 } ;
+                     DIG 3 ;
+                     DIG 4 ;
+                     DIG 5 ;
+                     DIG 8 ;
+                     DROP 4 ;
+                     DUP 3 ;
+                     GET 3 ;
+                     CAR ;
+                     SWAP ;
+                     EMPTY_MAP nat bool ;
+                     NIL operation ;
+                     PAIR ;
+                     SWAP ;
+                     ITER { SWAP ;
+                            DUP 2 ;
+                            CDR ;
+                            DUP ;
+                            CAR ;
+                            GET 9 ;
+                            NOT ;
+                            IF { DUP 2 ;
+                                 DIG 2 ;
+                                 CAR ;
+                                 DUP 3 ;
+                                 CAR ;
+                                 CAR ;
+                                 DUP 4 ;
+                                 CDR ;
+                                 PAIR ;
+                                 DUP 6 ;
+                                 SELF_ADDRESS ;
+                                 DIG 2 ;
+                                 UNPAIR ;
+                                 SWAP ;
+                                 IF_LEFT
+                                   { DIG 2 ;
+                                     DROP ;
+                                     DUP 11 ;
+                                     SWAP ;
+                                     CONTRACT %approve (pair (address %spender) (nat %value)) ;
+                                     IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                                     PUSH mutez 0 ;
+                                     DIG 2 ;
+                                     DIG 3 ;
+                                     PAIR ;
+                                     TRANSFER_TOKENS }
+                                   { DUP 12 ;
+                                     DUP 2 ;
+                                     CAR ;
+                                     CONTRACT %update_operators
+                                       (list (or (pair %add_operator (address %owner) (address %operator) (nat %token_id))
+                                                 (pair %remove_operator (address %owner) (address %operator) (nat %token_id)))) ;
+                                     IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                                     PUSH mutez 0 ;
+                                     NIL (or (pair address address nat) (pair address address nat)) ;
+                                     PUSH nat 0 ;
+                                     DIG 5 ;
+                                     COMPARE ;
+                                     GT ;
+                                     IF { DIG 3 ; CDR ; DIG 5 ; DIG 5 ; PAIR 3 ; LEFT (pair address address nat) }
+                                        { DIG 3 ; CDR ; DIG 5 ; DIG 5 ; PAIR 3 ; RIGHT (pair address address nat) } ;
+                                     CONS ;
+                                     TRANSFER_TOKENS } ;
+                                 CONS ;
+                                 UPDATE 1 ;
+                                 SWAP }
+                               {} ;
+                            DUP ;
+                            CAR ;
+                            CAR ;
+                            IF_LEFT
+                              { SWAP ; DIG 3 ; DROP 3 }
+                              { DROP ;
+                                CAR ;
+                                GET 9 ;
+                                NOT ;
+                                IF { DUP ;
+                                     CDR ;
+                                     PUSH bool True ;
+                                     DIG 3 ;
+                                     CAR ;
+                                     SWAP ;
+                                     SOME ;
+                                     SWAP ;
+                                     UPDATE ;
+                                     UPDATE 2 }
+                                   { SWAP ; DROP } } } ;
+                     SWAP ;
+                     DIG 4 ;
+                     DROP 2 ;
+                     DUP ;
+                     CDR ;
+                     ITER { UNPAIR ;
+                            DUP 5 ;
+                            DUP 6 ;
+                            GET 6 ;
+                            DUP 8 ;
+                            DIG 7 ;
+                            GET 6 ;
+                            DUP 5 ;
+                            GET ;
+                            IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                            DIG 4 ;
+                            UPDATE 9 ;
+                            DIG 3 ;
+                            SWAP ;
+                            SOME ;
+                            SWAP ;
+                            UPDATE ;
+                            UPDATE 6 ;
+                            DUG 2 } ;
+                     DIG 3 ;
+                     DROP ;
+                     CAR ;
+                     NIL operation ;
+                     SWAP ;
+                     ITER { CONS } ;
+                     ITER { CONS } } } }
+           { DIG 2 ;
+             DIG 3 ;
+             DIG 4 ;
+             DIG 5 ;
+             DIG 6 ;
+             DIG 7 ;
+             DIG 9 ;
+             DIG 10 ;
+             DROP 8 ;
+             SWAP ;
+             NIL operation ;
+             EMPTY_SET nat ;
+             DIG 3 ;
+             ITER { DUP 5 ;
+                    DUP 5 ;
+                    GET 6 ;
+                    DUP 3 ;
+                    GET ;
+                    IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                    DIG 2 ;
+                    DUP 2 ;
+                    GET 3 ;
+                    PUSH bool True ;
+                    SWAP ;
+                    UPDATE ;
+                    DUG 2 ;
+                    DIG 3 ;
+                    DUP 5 ;
+                    GET 3 ;
+                    CAR ;
+                    PUSH string "Lending has no suited updateInterest entrypoint" ;
+                    SWAP ;
+                    CONTRACT %updateInterest nat ;
+                    IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                    PUSH mutez 0 ;
+                    DUP 4 ;
+                    GET 3 ;
+                    TRANSFER_TOKENS ;
+                    CONS ;
+                    DUG 3 ;
+                    DUP 5 ;
+                    DIG 5 ;
+                    GET 6 ;
+                    DIG 2 ;
+                    NOW ;
+                    UPDATE 10 ;
+                    DIG 3 ;
+                    SWAP ;
+                    SOME ;
+                    SWAP ;
+                    UPDATE ;
+                    UPDATE 6 ;
+                    DUG 2 } ;
+             DIG 3 ;
+             DROP ;
+             SWAP ;
+             DUP 3 ;
+             GET 3 ;
+             CDR ;
+             PUSH string "Lending's PriceFeed has no suited getPrice entrypoint" ;
+             SWAP ;
+             CONTRACT %getPrice (set nat) ;
+             IF_NONE { FAILWITH } { SWAP ; DROP } ;
+             PUSH mutez 0 ;
+             DIG 3 ;
+             TRANSFER_TOKENS ;
+             CONS } ;
+         PAIR } ;
+  view "get_pool_data"
+       unit
+       (pair (address %pool_contract) (nat %pool_id))
+       { CDR ; GET 5 } }
+

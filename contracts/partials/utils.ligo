@@ -145,7 +145,7 @@
     ];
 
 [@inline] function add_rem_candidate(
-  const params          : set_man_param_t;
+  const params          : set_cand_param_t;
   var   whitelist       : set(address))
                         : set(address) is
   Set.update(params.candidate, params.add, whitelist)
@@ -249,3 +249,16 @@ function get_tokens_from_param(
       }
       with result;
 
+function check_strategy_factory(
+  const strategy        : address;
+  const factories       : set(address))
+                        : bool is
+  block {
+    function call_check_view(
+      const accumulator : bool;
+      const entry       : address): bool is
+      accumulator or unwrap(
+        (Tezos.call_view("is_registered", strategy, entry): option(bool)),
+        Errors.Factory.no_strategy_factory
+      )
+  } with Set.fold(call_check_view, factories, False)

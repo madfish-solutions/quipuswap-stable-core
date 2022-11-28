@@ -95,14 +95,15 @@ function use_factory(
   block {
     require(Tezos.sender = s.storage.dev_store.dev_address, Errors.Dex.not_developer);
     case params of [
-    | Set_burn_rate(rate)   -> if rate <= Constants.burn_rate_precision
-                                then s.storage.burn_rate_f := rate
-                                else failwith(Errors.Factory.burn_rate_overflow)
-    | Set_price(price)      -> s.storage.init_price := price
-    | Set_whitelist(params) -> s.storage.whitelist := add_rem_candidate(params, s.storage.whitelist)
-    | _ -> skip
+    | Set_burn_rate(rate)         -> if rate <= Constants.burn_rate_precision
+                                     then s.storage.burn_rate_f := rate
+                                     else failwith(Errors.Factory.burn_rate_overflow)
+    | Set_strategy_factory(params)-> s.storage.strategy_factory := add_rem_candidate(params, s.storage.strategy_factory)
+    | Set_price(price)            -> s.storage.init_price := price
+    | Set_whitelist(params)       -> s.storage.whitelist := add_rem_candidate(params, s.storage.whitelist)
+    | _                           -> skip
     ]
   } with case params of [
-    | Claim_rewards -> claim_quipu(s)
-    | _ -> (Constants.no_operations, s)
+    | Claim_rewards               -> claim_quipu(s)
+    | _                           -> (Constants.no_operations, s)
     ]
