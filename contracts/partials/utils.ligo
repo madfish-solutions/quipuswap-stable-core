@@ -249,3 +249,11 @@ function get_tokens_from_param(
       }
       with result;
 
+function check_strategy_factory(
+  const accumulator : bool;
+  const entry       : address)
+                    : bool is
+  accumulator or unwrap(
+    (Tezos.call_view("is_registered", strategy, entry): option(bool)),
+    Errors.Factory.no_strategy_factory
+  )
