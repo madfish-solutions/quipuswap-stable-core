@@ -14,13 +14,7 @@
   const strategy        : address;
   const s               : full_storage_t)
                         : bool is
-  block {
-    function check_strategy_factory(const accumulator: bool; const entry: address): bool is 
-      accumulator or unwrap(
-        (Tezos.call_view("is_registered", strategy, entry): option(bool)),
-        Errors.Factory.no_strategy_factory
-      )
-  } with Set.fold(check_strategy_factory, s.storage.strategy_factory, False)
+  check_strategy_factory(strategy, s.storage.strategy_factory)
 
 
 
