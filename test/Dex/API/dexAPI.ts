@@ -67,7 +67,7 @@ export class Dex
         tezos,
         dexAddress,
         "Dex",
-        8,
+        5,
         dex_lambdas_comp
       );
       await setFunctionBatchCompilled(
