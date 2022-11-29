@@ -412,12 +412,18 @@ function add_liq(
       else operations;
 
     pool.total_supply := pool.total_supply + mint_amount;
+    const (rebalance_ops, strategy_store) = operate_with_strategy(
+      pool.tokens_info,
+      tokens[params.pool_id],
+      pool.strategy,
+      False
+    );
+    pool.strategy := strategy_store;
+    s.pools[params.pool_id] := pool;
 
     const receiver = unwrap_or(params.receiver, Tezos.sender);
     const user_key = (receiver, params.pool_id);
     const share = unwrap_or(s.ledger[user_key], 0n);
     const new_shares = share + mint_amount;
-
     s.ledger[user_key] := new_shares;
-    s.pools[params.pool_id] := pool;
-  } with record[ op = Map.fold(transfer_to_pool, params.inputs, Constants.no_operations); s = s ]
+  } with record[ op = Map.fold(transfer_to_pool, params.inputs, rebalance_ops); s = s ]

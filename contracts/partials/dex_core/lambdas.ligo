@@ -52,19 +52,30 @@ function swap(
       token_info_j.reserves := nat_or_error(token_info_j.reserves - after_fees.dy, Errors.Dex.no_liquidity);
       pool.tokens_info[i] := token_info_i;
       pool.tokens_info[j] := token_info_j;
-      s.pools[params.pool_id] := pool;
       operations := typed_transfer(
         Tezos.self_address,
         receiver,
         after_fees.dy,
         token_j
       ) # operations;
+      const rebalance = operate_with_strategy(
+        map[
+          i -> token_info_i;
+          j -> token_info_j
+        ],
+        s.tokens[params.pool_id],
+        pool.strategy,
+        False
+      );
+      operations := concat_lists(rebalance.0, operations);
       operations := typed_transfer(
         Tezos.sender,
         Tezos.self_address,
         dx,
         unwrap(tokens[i], Errors.Dex.no_token)
       ) # operations;
+      pool.strategy := rebalance.1;
+      s.pools[params.pool_id] := pool;
     }
     | _ -> unreachable(Unit)
     ]
@@ -142,6 +153,14 @@ function divest_liquidity(
       const res = Map.fold(divest_reserves, tokens, record [ tok_inf = pool.tokens_info; op = operations ]);
 
       pool.tokens_info := res.tok_inf;
+      const rebalance = operate_with_strategy(
+        pool.tokens_info,
+        s.tokens[params.pool_id],
+        pool.strategy,
+        False
+      );
+      operations := concat_lists(rebalance.0, operations);
+      pool.strategy := rebalance.1;
       pool.total_supply := nat_or_error(pool.total_supply - params.shares, Errors.Dex.low_total_supply);
 
       const key = (Tezos.sender, params.pool_id);
@@ -264,6 +283,14 @@ function divest_imbalanced(
         total_supply = nat_or_error(token_supply - burn_amount, Errors.Math.nat_error);
       ];
       check_shares_and_reserves(pool);
+      const rebalance = operate_with_strategy(
+        balanced.tokens_info,
+        s.tokens[params.pool_id],
+        pool.strategy,
+        False
+      );
+      operations := concat_lists(rebalance.0, operations);
+      pool.strategy := rebalance.1;
       s.pools[params.pool_id] := pool;
       s.ledger[(Tezos.sender, params.pool_id)] := new_shares;
     }
@@ -328,6 +355,22 @@ function divest_one_coin(
       pool.tokens_info[params.token_index] := info;
       pool.total_supply := result.ts;
       check_shares_and_reserves(pool);
+      const receiver = unwrap_or(params.receiver, Tezos.sender);
+
+      operations := typed_transfer(
+        Tezos.self_address,
+        receiver,
+        result.dy,
+        token
+      ) # operations;
+      const rebalance = operate_with_strategy(
+        map[ params.token_index -> info ],
+        s.tokens[params.pool_id],
+        pool.strategy,
+        False
+      );
+      operations := concat_lists(rebalance.0, operations);
+      pool.strategy := rebalance.1;
       s.pools[params.pool_id] := pool;
       const account_bal = unwrap_or(s.ledger[sender_key], 0n);
 
@@ -337,15 +380,6 @@ function divest_one_coin(
       const referral: address = unwrap_or(params.referral, s.default_referral);
 
       s.referral_rewards[(referral, token)] := unwrap_or(s.referral_rewards[(referral, token)], 0n) + ref_fee;
-
-      const receiver = unwrap_or(params.receiver, Tezos.sender);
-
-      operations := typed_transfer(
-        Tezos.self_address,
-        receiver,
-        result.dy,
-        token
-      ) # operations;
     }
     | _ -> unreachable(Unit)
     ];

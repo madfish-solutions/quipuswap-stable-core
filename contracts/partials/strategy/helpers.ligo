@@ -78,36 +78,43 @@ function operate_with_strategy(
         var prepare_params: list(nat) := list[];
         var send_ops: list(operation) := list[];
         for token_id -> info in map token_infos {
-          var config := unwrap(strategy.configuration[token_id], Errors.Strategy.unknown_token);
-          const in_bounds = check_strategy_bounds(
-            info.reserves,
-            config.strategy_reserves,
-            config.des_reserves_rate_f,
-            config.delta_rate_f
-          );
-          if (config.is_rebalance or manual) and not in_bounds then {
-            const new_s_reserves = calculate_desired_reserves(info.reserves, config);
-            rebalance_params := record[
-              pool_token_id = token_id;
-              new_balance = new_s_reserves
-            ] # rebalance_params;
-            prepare_params := token_id # prepare_params;
-            case is_nat(new_s_reserves - config.strategy_reserves) of [
-              | Some(value) -> {
-                // send additional reserves to Yupana through Strategy
-                if value > 0n
-                then send_ops := typed_transfer(
-                    Tezos.self_address,
-                    contract,
-                    value,
-                    get_token_by_id(token_id, tokens_map_entry)
-                  ) # send_ops;
-              }
-             | _ -> skip
-            ];
-            config.strategy_reserves := new_s_reserves;
-          };
-          strategy.configuration[token_id] := config;
+          case strategy.configuration[token_id] of [
+              Some(config) -> {
+                var new_s_reserves := config.strategy_reserves;
+                const in_bounds = check_strategy_bounds(
+                  info.reserves,
+                  config.strategy_reserves,
+                  config.des_reserves_rate_f,
+                  config.delta_rate_f
+                );
+                if (config.is_rebalance or manual) and not in_bounds
+                then {
+                  new_s_reserves := calculate_desired_reserves(info.reserves, config);
+                  rebalance_params := record[
+                    pool_token_id = token_id;
+                    new_balance = new_s_reserves
+                  ] # rebalance_params;
+                  prepare_params := token_id # prepare_params;
+                  case is_nat(new_s_reserves - config.strategy_reserves) of [
+                    | Some(value) -> {
+                      // send additional reserves to Yupana through Strategy
+                      if value > 0n
+                      then send_ops := typed_transfer(
+                            Tezos.self_address,
+                            contract,
+                            value,
+                            get_token_by_id(token_id, tokens_map_entry)
+                          ) # send_ops;
+                    }
+                    | _ -> skip
+                  ];
+                };
+                strategy.configuration[token_id] := config with record[
+                  strategy_reserves = new_s_reserves
+                ];
+            }
+            | _ -> skip
+          ]
         };
         if List.size(rebalance_params) > 0n
         then {
