@@ -48,8 +48,14 @@ async function autoRebalanceCheck(
     const on_strat = value.strategy_reserves;
     const full_res = pool.tokens_info.get(key).reserves;
     const expected_rate = value.des_reserves_rate_f.div("1e18");
+    const delta = value.delta_rate_f.div("1e18");
     const real_rate = on_strat.div(full_res);
-    expect(real_rate.toNumber()).toBeCloseTo(expected_rate.toNumber(), 9);
+    expect(real_rate.toNumber()).toBeLessThanOrEqual(
+      expected_rate.plus(delta).toNumber()
+    );
+    expect(real_rate.toNumber()).toBeGreaterThanOrEqual(
+      expected_rate.minus(delta).toNumber()
+    );
     console.debug(
       `[STRATEGY] Auto Rebalance [${key.toString()}] - full: ${full_res}, on strategy: ${on_strat} (${on_strat
         .div(full_res)
@@ -81,9 +87,9 @@ export async function swapRebalanceSuccessCase(
     .multipliedBy(conf_i.des_reserves_rate_f.plus(conf_i.delta_rate_f))
     .idiv("1e18")
     .plus(1_500_000);
-    console.debug(
-      `[STRATEGY] Auto Rebalance Swap [${route.i.toNumber()} - ${route.j.toNumber()}] - amt: ${amount_to_swap_to_slash.toNumber()}`
-    );
+  console.debug(
+    `[STRATEGY] Auto Rebalance Swap [${route.i.toNumber()} - ${route.j.toNumber()}] - amt: ${amount_to_swap_to_slash.toNumber()}`
+  );
   const operation = await dex.swap(
     pool_id,
     route.i,
@@ -115,7 +121,7 @@ export async function investRebalanceSuccessCase(
   );
 
   let in_amounts = new Map<string, BigNumber>();
-  console.debug(`[STRATEGY] Auto Rebalance invest`)
+  console.debug(`[STRATEGY] Auto Rebalance invest`);
 
   strategyStore.configuration.forEach((v, k) => {
     const reserves = pool.tokens_info.get(k).reserves;
@@ -124,7 +130,7 @@ export async function investRebalanceSuccessCase(
       .idiv("1e18")
       .plus(1_500_000);
     in_amounts = in_amounts.set(k, amount_to_slash);
-    console.debug(`[${k.toString()}] ${amount_to_slash.toString()}`)
+    console.debug(`[${k.toString()}] ${amount_to_slash.toString()}`);
   });
 
   const operation = await dex.investLiquidity(
@@ -156,7 +162,7 @@ export async function divestRebalanceSuccessCase(
   );
 
   let min_amounts = new Map<string, BigNumber>();
-  console.debug(`[STRATEGY] Auto Rebalance divest`)
+  console.debug(`[STRATEGY] Auto Rebalance divest`);
 
   strategyStore.configuration.forEach((v, k) => {
     const reserves = pool.tokens_info.get(k).reserves;
@@ -165,8 +171,7 @@ export async function divestRebalanceSuccessCase(
       .idiv("1e18")
       .minus(1_500_000);
     min_amounts = min_amounts.set(k, amount_to_slash);
-    console.debug(`[${k.toString()}] ${amount_to_slash.toString()}`)
-
+    console.debug(`[${k.toString()}] ${amount_to_slash.toString()}`);
   });
 
   const operation = await dex.divestLiquidity(
@@ -191,7 +196,7 @@ export async function divestOneRebalanceSuccessCase(
   const strategyStore = pool.strategy;
   expect(strategyStore.strat_contract).toBeDefined();
   await dex.rebalance(pool_id, new Set([i]));
-  console.debug(`[STRATEGY] Auto Rebalance divest one`)
+  console.debug(`[STRATEGY] Auto Rebalance divest one`);
   let min_amounts = new Map<string, BigNumber>();
   strategyStore.configuration.forEach((v, k) => {
     const reserves = pool.tokens_info.get(k).reserves;
@@ -200,7 +205,7 @@ export async function divestOneRebalanceSuccessCase(
       .idiv("1e18")
       .minus(1_500_000);
     min_amounts = min_amounts.set(k, amount_to_slash);
-    console.debug(`[${k.toString()}] ${amount_to_slash.toString()}`)
+    console.debug(`[${k.toString()}] ${amount_to_slash.toString()}`);
   });
 
   const operation = await dex.divestOneCoin(
@@ -231,7 +236,7 @@ export async function divestImbalanceRebalanceSuccessCase(
     pool_id,
     new Set(dex.storage.storage.tokens[pool_id.toString()].keys())
   );
-  console.debug(`[STRATEGY] Auto Rebalance divest imb`)
+  console.debug(`[STRATEGY] Auto Rebalance divest imb`);
   let min_amounts = new Map<string, BigNumber>();
   strategyStore.configuration.forEach((v, k) => {
     const reserves = pool.tokens_info.get(k).reserves;
@@ -240,7 +245,7 @@ export async function divestImbalanceRebalanceSuccessCase(
       .idiv("1e18")
       .minus(1_500_000);
     min_amounts = min_amounts.set(k, amount_to_slash);
-    console.debug(`[${k.toString()}] ${amount_to_slash.toString()}`)
+    console.debug(`[${k.toString()}] ${amount_to_slash.toString()}`);
   });
 
   const operation = await dex.divestImbalanced(
