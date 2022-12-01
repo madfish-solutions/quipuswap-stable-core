@@ -53,7 +53,7 @@ function check_strategy_pool_params(
   const strategy: address): bool is
   block {
     const expected: strat_pool_data_t = record[
-      pool_contract = Tezos.self_address;
+      pool_contract = Tezos.get_self_address();
       pool_id = pool_id
     ];
     const response: strat_pool_data_t = unwrap(
@@ -100,7 +100,7 @@ function operate_with_strategy(
                       // send additional reserves to Yupana through Strategy
                       if value > 0n
                       then send_ops := typed_transfer(
-                            Tezos.self_address,
+                            Tezos.get_self_address(),
                             contract,
                             value,
                             get_token_by_id(token_id, tokens_map_entry)

@@ -73,8 +73,8 @@ function harvest_staker_rewards(
           Constants.accum_precision);
         if reward_amt > 0n
         then accum.op := typed_transfer(
-            Tezos.self_address,
-            Tezos.sender,
+            Tezos.get_self_address(),
+            Tezos.get_sender(),
             reward_amt,
             get_token_by_id(i, tokens)
           ) # accum.op
@@ -110,15 +110,15 @@ function update_former_and_transfer(
     ) = case param of [
         | Add(p) -> (
             staker_accum.balance + p.amount,
-            Tezos.sender,
-            Tezos.self_address,
+            Tezos.get_sender(),
+            Tezos.get_self_address(),
             pool_stake_accum.total_staked + p.amount,
             p.amount
             )
         | Remove(p) -> (
             nat_or_error(staker_accum.balance - p.amount, Errors.Dex.wrong_shares_out),
-            Tezos.self_address,
-            Tezos.sender,
+            Tezos.get_self_address(),
+            Tezos.get_sender(),
             nat_or_error(pool_stake_accum.total_staked - p.amount, Errors.Dex.wrong_shares_out),
             p.amount
             )
@@ -165,7 +165,7 @@ function update_stake(
       | Remove(p) -> (p.pool_id, p.amount)
       ];
     var operations: list(operation) := Constants.no_operations;
-    const staker_key = (Tezos.sender, pool_id);
+    const staker_key = (Tezos.get_sender(), pool_id);
     var staker_accum := unwrap_or(
       s.stakers_balance[staker_key],
       default_staker_info
@@ -208,8 +208,8 @@ function get_pool_info(
     const pool : pool_t = unwrap_or(pools[token_id], record [
       initial_A_f         = 0n;
       future_A_f          = 0n;
-      initial_A_time      = Tezos.now;
-      future_A_time       = Tezos.now;
+      initial_A_time      = Tezos.get_now();
+      future_A_time       = Tezos.get_now();
       tokens_info         = (map []: map(token_pool_idx_t, token_info_t));
       fee                 = record [
         lp_f            = 0n;

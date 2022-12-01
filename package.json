@@ -6,6 +6,7 @@
   "bugs": "https://github.com/madfish-solutions/quipuswap-stable-core/issues",
   "description": "Token2Token DEX for equal-price tokens based on StableSwap algos on top of Tezos. This package installs dependencies for testing and deployment purposes",
   "author": "Illia Likhoshva <likhoshva@madfish.solutions> (https://www.madfish.solutions/)",
+  "license": "MIT",
   "private": true,
   "dependencies": {
     "@taquito/signer": "^14.0.0",

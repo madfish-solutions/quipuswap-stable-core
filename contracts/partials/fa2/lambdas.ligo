@@ -27,7 +27,7 @@ function update_token_metadata(
     var operations := Constants.no_operations;
     case p of [
     | Update_metadata(params) -> {
-      require(s.storage.managers contains Tezos.sender, Errors.Dex.not_manager);
+      require(s.storage.managers contains Tezos.get_sender(), Errors.Dex.not_manager);
       s.storage.token_metadata[params.token_id] := params
     }
     | _ -> unreachable(Unit)
