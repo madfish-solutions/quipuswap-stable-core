@@ -857,7 +857,7 @@ describe("00. Standalone Dex", () => {
     });
   });
 
-  describe("5 Test unstake QUIPU token from pool", () => {
+  describe("5. Test unstake QUIPU token from pool", () => {
     const output = new BigNumber(10).pow(7);
     let pool_id: BigNumber;
 
@@ -1088,12 +1088,57 @@ describe("00. Standalone Dex", () => {
           ])
         ));
 
+      it("should auto-rebalance when swap", async () =>
+        TStrategy.autoRebalance.swapRebalanceSuccessCase(
+          dex,
+          yupana,
+          strategy,
+          pool_id,
+          {
+            i: new BigNumber(pool_ordering.kUSD),
+            j: new BigNumber(pool_ordering.uUSD),
+          }
+        ));
+      
+        it("should auto-rebalance when invest", async () =>
+        TStrategy.autoRebalance.investRebalanceSuccessCase(
+          dex,
+          yupana,
+          strategy,
+          pool_id
+        ));
+
+      it("should auto-rebalance when divest imbalance", async () =>
+        TStrategy.autoRebalance.divestImbalanceRebalanceSuccessCase(
+          dex,
+          yupana,
+          strategy,
+          pool_id
+        ));
+
+      it("should auto-rebalance when divest one", async () =>
+        TStrategy.autoRebalance.divestOneRebalanceSuccessCase(
+          dex,
+          yupana,
+          strategy,
+          pool_id,
+          new BigNumber(pool_ordering.kUSD)
+        ));
+
       it("should set is rebalance flag for token", async () =>
         TStrategy.token.setStrategyRebalance.setIsRebalanceSuccessCase(
           dex,
           pool_id,
           new BigNumber(pool_ordering.kUSD),
           false
+        ))
+
+      it("should auto-rebalance when divest", async () =>
+        TStrategy.autoRebalance.divestRebalanceSuccessCase(
+          dex,
+          yupana,
+          strategy,
+          pool_id
         ));
 
       it("should configure strategy for token to zero", async () =>
