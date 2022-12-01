@@ -121,7 +121,7 @@ export async function investRebalanceSuccessCase(
     const reserves = pool.tokens_info.get(k).reserves;
     const amount_to_slash = reserves
       .multipliedBy(v.des_reserves_rate_f.plus(v.delta_rate_f))
-      .div("1e18")
+      .idiv("1e18")
       .plus(1_500_000);
     in_amounts = in_amounts.set(k, amount_to_slash);
     console.debug(`[${k.toString()}] ${amount_to_slash.toString()}`)
@@ -162,7 +162,7 @@ export async function divestRebalanceSuccessCase(
     const reserves = pool.tokens_info.get(k).reserves;
     const amount_to_slash = reserves
       .multipliedBy(v.des_reserves_rate_f.minus(v.delta_rate_f))
-      .div("1e18")
+      .idiv("1e18")
       .minus(1_500_000);
     min_amounts = min_amounts.set(k, amount_to_slash);
     console.debug(`[${k.toString()}] ${amount_to_slash.toString()}`)
@@ -197,7 +197,7 @@ export async function divestOneRebalanceSuccessCase(
     const reserves = pool.tokens_info.get(k).reserves;
     const amount_to_slash = reserves
       .multipliedBy(v.des_reserves_rate_f.minus(v.delta_rate_f))
-      .div("1e18")
+      .idiv("1e18")
       .minus(1_500_000);
     min_amounts = min_amounts.set(k, amount_to_slash);
     console.debug(`[${k.toString()}] ${amount_to_slash.toString()}`)
@@ -237,7 +237,7 @@ export async function divestImbalanceRebalanceSuccessCase(
     const reserves = pool.tokens_info.get(k).reserves;
     const amount_to_slash = reserves
       .multipliedBy(v.des_reserves_rate_f.minus(v.delta_rate_f))
-      .div("1e18")
+      .idiv("1e18")
       .minus(1_500_000);
     min_amounts = min_amounts.set(k, amount_to_slash);
     console.debug(`[${k.toString()}] ${amount_to_slash.toString()}`)
