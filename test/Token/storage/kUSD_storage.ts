@@ -8,15 +8,15 @@ const kUSDstorage = {
   administrator: aliceAddress,
   balances: MichelsonMap.fromLiteral({
     [aliceAddress]: {
-      balance: "1000000000000000000000000000000",
+      balance: "1000000000000000000000000000000000",
       approvals: MichelsonMap.fromLiteral({}),
     },
     [bobAddress]: {
-      balance: "1000000000000000000000000000000",
+      balance: "1000000000000000000000000000000000",
       approvals: MichelsonMap.fromLiteral({}),
     },
     [eveAddress]: {
-      balance: "1000000000000000000000000000000",
+      balance: "1000000000000000000000000000000000",
       approvals: MichelsonMap.fromLiteral({}),
     },
   }),

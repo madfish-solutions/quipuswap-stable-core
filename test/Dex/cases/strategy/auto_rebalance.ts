@@ -106,7 +106,8 @@ export async function investRebalanceSuccessCase(
   dex: Dex,
   yupana: Contract,
   strategy: Contract,
-  pool_id: BigNumber
+  pool_id: BigNumber,
+  amounts: Map<string, BigNumber>
 ) {
   await dex.updateStorage({
     pools: [pool_id.toString()],
@@ -121,22 +122,15 @@ export async function investRebalanceSuccessCase(
     new Set(dex.storage.storage.tokens[pool_id.toString()].keys())
   );
 
-  let in_amounts = new Map<string, BigNumber>();
   console.debug(`[STRATEGY] Auto Rebalance invest`);
 
-  strategyStore.configuration.forEach((v, k) => {
-    const reserves = pool.tokens_info.get(k).reserves;
-    const amount_to_slash = reserves
-      .multipliedBy(v.des_reserves_rate_f.plus(v.delta_rate_f))
-      .idiv("1e18")
-      .plus(1_500_000);
-    in_amounts = in_amounts.set(k, amount_to_slash);
-    console.debug(`[${k.toString()}] ${amount_to_slash.toString()}`);
+  amounts.forEach((v, k) => {
+    console.debug(`[${k.toString()}] ${v.toString()}`);
   });
 
   const operation = await dex.investLiquidity(
     pool_id,
-    in_amounts,
+    amounts,
     new BigNumber(1),
     new Date(Date.now() + 1000 * 60 * 60 * 24)
   );
@@ -166,8 +160,15 @@ export async function divestRebalanceSuccessCase(
 
   console.debug(`[STRATEGY] Auto Rebalance divest`);
 
-  min_amounts.forEach((v, k) => {
-    console.debug(`[${k.toString()}] ${v.toString()}`);
+  console.debug(`to burn ${shares.div("1e18").toString()} LPs`);
+  pool.tokens_info.forEach((info, key) => {
+    const rate = new BigNumber(10).pow(18).dividedBy(info.rate_f);
+    console.debug(
+      `Reserves\n\t\t${key}:\t${info.reserves
+        .dividedBy(rate)
+        .div(new BigNumber(10).pow(18))
+        .toFormat(10)}`
+    );
   });
 
   const operation = await dex.divestLiquidity(
@@ -196,7 +197,7 @@ export async function divestOneRebalanceSuccessCase(
   await dex.rebalance(pool_id, new Set([i]));
   console.debug(`[STRATEGY] Auto Rebalance divest one`);
   console.debug(
-    `[${i.toString()}] burn ${shares.toString()} LPs to min ${output.toString()}}`
+    `[${i.toString()}] burn ${shares.toString()} LPs to min ${output.toString()}`
   );
 
   const operation = await dex.divestOneCoin(

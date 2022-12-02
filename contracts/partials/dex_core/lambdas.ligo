@@ -374,7 +374,7 @@ function divest_one_coin(
       s.pools[params.pool_id] := pool;
       const account_bal = unwrap_or(s.ledger[sender_key], 0n);
 
-      s.ledger[sender_key] := unwrap(is_nat(account_bal - params.shares), Errors.FA2.insufficient_balance);
+      s.ledger[sender_key] := unwrap(is_nat(account_bal - params.shares), Errors.Dex.insufficient_lp);
       s.dev_rewards[token] := unwrap_or(s.dev_rewards[token], 0n) + dev_fee;
 
       const referral: address = unwrap_or(params.referral, s.default_referral);
