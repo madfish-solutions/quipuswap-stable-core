@@ -9,7 +9,7 @@ on:
 
 jobs:
   compile:
-    name: Compile contracts for tests
+    name: Compile contracts
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
