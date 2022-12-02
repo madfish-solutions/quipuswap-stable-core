@@ -962,7 +962,6 @@ describe("00. Standalone Dex", () => {
     let strategy: Contract;
     let yup_ordering: IndexMap;
     let pool_ordering: IndexMap;
-    
 
     beforeAll(async () => {
       pool_id = dex.storage.storage.pools_count.minus(new BigNumber(1));
@@ -1017,12 +1016,22 @@ describe("00. Standalone Dex", () => {
       beforeAll(async () => {
         ({ pool_id, min_amounts, idx_map } =
           await TPool.PoolDivest.setupMinTokenMapping(dex, tokens, outputs));
-        imb_amounts = new Map<string, BigNumber>();
-        imb_amounts.set(idx_map.USDtz, new BigNumber(0));
-        imb_amounts.set(idx_map.kUSD, outputs.kUSD);
-        imb_amounts.set(idx_map.uUSD, outputs.uUSD);
+        imb_amounts = new Map<string, BigNumber>()
+          .set(idx_map.USDtz, outputs.USDtz)
+          .set(idx_map.kUSD, new BigNumber(0))
+          .set(idx_map.uUSD, outputs.uUSD);
+        const invest_amt = new Map<string, BigNumber>()
+          .set(idx_map.USDtz, outputs.USDtz.multipliedBy("1e6"))
+          .set(idx_map.kUSD, outputs.kUSD.multipliedBy("1e6"))
+          .set(idx_map.uUSD, outputs.uUSD.multipliedBy("1e6"));
         const config = await prepareProviderOptions("bob");
         Tezos.setProvider(config);
+        await dex.investLiquidity(
+          pool_id,
+          invest_amt,
+          new BigNumber(1),
+          new Date(Date.now() + 1000 * 60 * 60 * 24)
+        );
       });
 
       const test_factory = "tz1ZZZZZZZZZZZZZZZZZZZZZZZZZZZZNkiRg";
@@ -1130,8 +1139,8 @@ describe("00. Standalone Dex", () => {
             j: new BigNumber(pool_ordering.uUSD),
           }
         ));
-      
-        it("should auto-rebalance when invest", async () =>
+
+      it("should auto-rebalance when invest", async () =>
         TStrategy.autoRebalance.investRebalanceSuccessCase(
           dex,
           yupana,
@@ -1144,7 +1153,9 @@ describe("00. Standalone Dex", () => {
           dex,
           yupana,
           strategy,
-          pool_id
+          pool_id,
+          imb_amounts,
+          amount_in
         ));
 
       it("should auto-rebalance when divest one", async () =>
@@ -1153,7 +1164,9 @@ describe("00. Standalone Dex", () => {
           yupana,
           strategy,
           pool_id,
-          new BigNumber(pool_ordering.kUSD)
+          new BigNumber(pool_ordering.kUSD),
+          outputs.kUSD,
+          amount_in.idiv(3)
         ));
 
       it("should set is rebalance flag for token", async () =>
@@ -1162,14 +1175,16 @@ describe("00. Standalone Dex", () => {
           pool_id,
           new BigNumber(pool_ordering.kUSD),
           false
-        ))
+        ));
 
       it("should auto-rebalance when divest", async () =>
         TStrategy.autoRebalance.divestRebalanceSuccessCase(
           dex,
           yupana,
           strategy,
-          pool_id
+          pool_id,
+          min_amounts,
+          amount_in
         ));
 
       it("should configure strategy for token to zero", async () =>
