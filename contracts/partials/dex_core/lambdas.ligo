@@ -125,7 +125,7 @@ function divest_liquidity(
       require(params.shares =/= 0n, Errors.Dex.zero_in);
 
       var   pool          : pool_t := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
-      const receiver = unwrap_or(params.receiver, Tezos.get_sender());
+      // const receiver = unwrap_or(params.receiver, Tezos.get_sender());
       const total_supply  : nat = pool.total_supply;
 
       function divest_reserves(
