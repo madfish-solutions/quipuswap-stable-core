@@ -962,6 +962,7 @@ describe("00. Standalone Dex", () => {
     let strategy: Contract;
     let yup_ordering: IndexMap;
     let pool_ordering: IndexMap;
+    
 
     beforeAll(async () => {
       pool_id = dex.storage.storage.pools_count.minus(new BigNumber(1));
@@ -989,7 +990,37 @@ describe("00. Standalone Dex", () => {
     });
 
     describe("as a developer", () => {
+      let min_amounts: Map<string, BigNumber>;
+      let imb_amounts: Map<string, BigNumber>;
+      const normalized: BigNumber = new BigNumber(10).pow(3); // 3K
+      const min_out_amount: BigNumber = decimals.kUSD
+        .multipliedBy(normalized)
+        .multipliedBy(3)
+        .minus(
+          decimals.kUSD
+            .multipliedBy(normalized)
+            .multipliedBy(3)
+            .multipliedBy(3)
+            .dividedBy(100)
+        ); // 3K kUSD tokens - 3% (slippage)
+      const outputs: AmountsMap = {
+        kUSD: decimals.kUSD.multipliedBy(normalized),
+        uUSD: decimals.uUSD.multipliedBy(normalized),
+        USDtz: decimals.USDtz.multipliedBy(normalized),
+      };
+      const amount_in = new BigNumber(10)
+        .pow(18)
+        .multipliedBy(normalized)
+        .multipliedBy(3); // 3K LP tokens
+      let idx_map: IndexMap;
+
       beforeAll(async () => {
+        ({ pool_id, min_amounts, idx_map } =
+          await TPool.PoolDivest.setupMinTokenMapping(dex, tokens, outputs));
+        imb_amounts = new Map<string, BigNumber>();
+        imb_amounts.set(idx_map.USDtz, new BigNumber(0));
+        imb_amounts.set(idx_map.kUSD, outputs.kUSD);
+        imb_amounts.set(idx_map.uUSD, outputs.uUSD);
         const config = await prepareProviderOptions("bob");
         Tezos.setProvider(config);
       });

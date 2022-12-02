@@ -6,6 +6,7 @@ import {
 } from "@taquito/rpc";
 import Dex from "../../API";
 import { PairInfo } from "../../API/types";
+import { setupTokenAmounts } from "../../../utils/tokensSetups";
 
 async function autoRebalanceCheck(
   dex: Dex,
@@ -146,7 +147,9 @@ export async function divestRebalanceSuccessCase(
   dex: Dex,
   yupana: Contract,
   strategy: Contract,
-  pool_id: BigNumber
+  pool_id: BigNumber,
+  min_amounts: Map<string, BigNumber>,
+  shares: BigNumber
 ) {
   await dex.updateStorage({
     pools: [pool_id.toString()],
@@ -161,23 +164,16 @@ export async function divestRebalanceSuccessCase(
     new Set(dex.storage.storage.tokens[pool_id.toString()].keys())
   );
 
-  let min_amounts = new Map<string, BigNumber>();
   console.debug(`[STRATEGY] Auto Rebalance divest`);
 
-  strategyStore.configuration.forEach((v, k) => {
-    const reserves = pool.tokens_info.get(k).reserves;
-    const amount_to_slash = reserves
-      .multipliedBy(v.des_reserves_rate_f.minus(v.delta_rate_f))
-      .idiv("1e18")
-      .minus(1_500_000);
-    min_amounts = min_amounts.set(k, amount_to_slash);
-    console.debug(`[${k.toString()}] ${amount_to_slash.toString()}`);
+  min_amounts.forEach((v, k) => {
+    console.debug(`[${k.toString()}] ${v.toString()}`);
   });
 
   const operation = await dex.divestLiquidity(
     pool_id,
     min_amounts,
-    new BigNumber(1_000_000_000),
+    shares,
     new Date(Date.now() + 1000 * 60 * 60 * 24)
   );
   await autoRebalanceCheck(dex, yupana, strategy, pool_id, operation);
@@ -188,7 +184,9 @@ export async function divestOneRebalanceSuccessCase(
   yupana: Contract,
   strategy: Contract,
   pool_id: BigNumber,
-  i: BigNumber
+  i: BigNumber,
+  output: BigNumber,
+  shares: BigNumber
 ) {
   await dex.updateStorage({ pools: [pool_id.toString()] });
   const pool: PairInfo = dex.storage.storage.pools[pool_id.toString()];
@@ -197,22 +195,15 @@ export async function divestOneRebalanceSuccessCase(
   expect(strategyStore.strat_contract).toBeDefined();
   await dex.rebalance(pool_id, new Set([i]));
   console.debug(`[STRATEGY] Auto Rebalance divest one`);
-  let min_amounts = new Map<string, BigNumber>();
-  strategyStore.configuration.forEach((v, k) => {
-    const reserves = pool.tokens_info.get(k).reserves;
-    const amount_to_slash = reserves
-      .multipliedBy(v.des_reserves_rate_f.minus(v.delta_rate_f))
-      .idiv("1e18")
-      .minus(1_500_000);
-    min_amounts = min_amounts.set(k, amount_to_slash);
-    console.debug(`[${k.toString()}] ${amount_to_slash.toString()}`);
-  });
+  console.debug(
+    `[${i.toString()}] burn ${shares.toString()} LPs to min ${output.toString()}}`
+  );
 
   const operation = await dex.divestOneCoin(
     pool_id,
-    new BigNumber(100_000_000),
+    shares,
     i,
-    new BigNumber(1),
+    output,
     new Date(Date.now() + 1000 * 60 * 60 * 24)
   );
   await autoRebalanceCheck(dex, yupana, strategy, pool_id, operation);
@@ -222,7 +213,9 @@ export async function divestImbalanceRebalanceSuccessCase(
   dex: Dex,
   yupana: Contract,
   strategy: Contract,
-  pool_id: BigNumber
+  pool_id: BigNumber,
+  outputs: Map<string, BigNumber>,
+  shares: BigNumber
 ) {
   await dex.updateStorage({
     pools: [pool_id.toString()],
@@ -237,21 +230,13 @@ export async function divestImbalanceRebalanceSuccessCase(
     new Set(dex.storage.storage.tokens[pool_id.toString()].keys())
   );
   console.debug(`[STRATEGY] Auto Rebalance divest imb`);
-  let min_amounts = new Map<string, BigNumber>();
-  strategyStore.configuration.forEach((v, k) => {
-    const reserves = pool.tokens_info.get(k).reserves;
-    const amount_to_slash = reserves
-      .multipliedBy(v.des_reserves_rate_f.minus(v.delta_rate_f))
-      .idiv("1e18")
-      .minus(1_500_000);
-    min_amounts = min_amounts.set(k, amount_to_slash);
-    console.debug(`[${k.toString()}] ${amount_to_slash.toString()}`);
+  outputs.forEach((v, k) => {
+    console.debug(`[${k.toString()}] ${v.toString()}`);
   });
-
   const operation = await dex.divestImbalanced(
     pool_id,
-    new Map().set("0", 1_000_000).set("1", 1_000_000).set("2", 1_000_000),
-    new BigNumber(100_000_000),
+    outputs,
+    shares,
     new Date(Date.now() + 1000 * 60 * 60 * 24)
   );
   await autoRebalanceCheck(dex, yupana, strategy, pool_id, operation);
