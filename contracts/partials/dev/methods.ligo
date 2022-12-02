@@ -5,7 +5,7 @@
                         : dev_storage_t is
   block {
 
-    require(Tezos.sender = s.dev_address, Errors.Dex.not_developer);
+    require(Tezos.get_sender() = s.dev_address, Errors.Dex.not_developer);
 
     const idx : nat = case p of [
     | Set_dev_address(_)  -> 0n

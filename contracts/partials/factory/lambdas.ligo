@@ -22,7 +22,7 @@ function add_pool(
     const result: tmp_tokens_map_t = Set.fold(get_tokens_from_param, params.input_tokens, default_tmp_tokens);
 
     const tokens : tokens_map_t = result.tokens;
-    const pool_key : bytes = pack_pool_key(Tezos.sender, tokens);
+    const pool_key : bytes = pack_pool_key(Tezos.get_sender(), tokens);
     check_pool(pool_key, s.storage.pool_to_address);
 
     function set_reserves(

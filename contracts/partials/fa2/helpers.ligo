@@ -3,7 +3,7 @@
   const from_account    : address;
   const allowances      : set(address))
                         : unit is
-  require(from_account = Tezos.sender or (allowances contains Tezos.sender), Errors.FA2.not_operator);
+  require(from_account = Tezos.get_sender() or (allowances contains Tezos.get_sender()), Errors.FA2.not_operator);
 
 [@inline] function get_allowances(
   const key             : address * pool_id_t;
@@ -48,7 +48,7 @@
     | Remove_operator(param) -> (param, False)
     ];
     require(param.operator =/= param.owner, Errors.FA2.owner_as_operator);
-    require(Tezos.sender = param.owner, Errors.FA2.not_owner);
+    require(Tezos.get_sender() = param.owner, Errors.FA2.not_owner);
     require(param.token_id < s.storage.pools_count, Errors.Dex.pool_not_listed);
 
     const owner_key = (param.owner, param.token_id);

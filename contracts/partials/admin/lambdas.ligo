@@ -42,10 +42,10 @@ function ramp_A(
     case p of [
     | Ramp_A(params) -> {
         require((params.future_A > 0n) and (params.future_A <= Constants.max_a), Errors.Dex.a_limit);
-        require(params.future_time >= Tezos.now + Constants.min_ramp_time, Errors.Dex.timestamp_error); // dev: insufficient time
+        require(params.future_time >= Tezos.get_now() + Constants.min_ramp_time, Errors.Dex.timestamp_error); // dev: insufficient time
         var pool : pool_t := unwrap(s.pools[params.pool_id], Errors.Dex.pool_not_listed);
 
-        require(Tezos.now >= pool.initial_A_time + Constants.min_ramp_time, Errors.Dex.timestamp_error);
+        require(Tezos.get_now() >= pool.initial_A_time + Constants.min_ramp_time, Errors.Dex.timestamp_error);
 
         const initial_A_f: nat = get_A(
           pool.initial_A_time,
@@ -62,7 +62,7 @@ function ramp_A(
         s.pools[params.pool_id] := pool with record [
         initial_A_f = initial_A_f;
         future_A_f = future_A_f;
-        initial_A_time = Tezos.now;
+        initial_A_time = Tezos.get_now();
         future_A_time = params.future_time;
       ];
       }
@@ -88,8 +88,8 @@ function stop_ramp_A(
       s.pools[pool_id] := pool with record [
         initial_A_f = current_A_f;
         future_A_f = current_A_f;
-        initial_A_time = Tezos.now;
-        future_A_time = Tezos.now;
+        initial_A_time = Tezos.get_now();
+        future_A_time = Tezos.get_now();
       ];
     }
     | _ -> unreachable(Unit)
@@ -125,7 +125,7 @@ function claim_dev(
     | Claim_developer(params) -> {
       require(params.amount > 0n, Errors.Dex.zero_in);
       const dev_address = get_dev_address(s);
-      require(Tezos.sender = dev_address, Errors.Dex.not_developer);
+      require(Tezos.get_sender() = dev_address, Errors.Dex.not_developer);
 
       const bal = unwrap_or(s.dev_rewards[params.token], 0n);
 
@@ -133,7 +133,7 @@ function claim_dev(
 
 
       operations := typed_transfer(
-        Tezos.self_address,
+        Tezos.get_self_address(),
         dev_address,
         params.amount,
         params.token
