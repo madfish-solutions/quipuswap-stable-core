@@ -20,7 +20,7 @@ jobs:
           path: |
             build
             contracts/compiled
-          key: compiled-contracts-${{ runner.os }}-jest-${{ hashFiles('contracts/**/*.ligo') }}
+          key: compiled-contracts-${{ runner.os }}-${{ hashFiles('contracts/**/*.ligo') }}
       - name: Setup dependencies
         uses: actions/setup-node@v3
         with:
