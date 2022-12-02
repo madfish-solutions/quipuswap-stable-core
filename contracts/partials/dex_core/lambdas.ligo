@@ -139,12 +139,12 @@ function divest_liquidity(
           const value = token_info.reserves * params.shares / total_supply;
           require(value >= min_amount_out, Errors.Dex.high_min_out);
           require(value =/= 0n, Errors.Dex.dust_out);
-          accum.op := typed_transfer(
-            Tezos.get_self_address(),
-            receiver,
-            value,
-            entry.1
-          ) # accum.op;
+          // accum.op := typed_transfer(
+          //   Tezos.get_self_address(),
+          //   receiver,
+          //   value,
+          //   entry.1
+          // ) # accum.op;
           token_info.reserves := nat_or_error(token_info.reserves - value, Errors.Dex.low_reserves);
           accum.tok_inf[entry.0] := token_info;
         } with accum;

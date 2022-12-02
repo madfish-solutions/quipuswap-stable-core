@@ -20,6 +20,7 @@ async function autoRebalanceCheck(
   const internals = (
     operation.results[0] as OperationContentsAndResultTransaction
   ).metadata.internal_operation_results;
+  console.debug(internals);
   expect(
     internals.find(
       (x) =>
