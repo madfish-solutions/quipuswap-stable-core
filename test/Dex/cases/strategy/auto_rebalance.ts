@@ -1,12 +1,8 @@
 import BigNumber from "bignumber.js";
-import { TezosToolkit, Contract, TransactionOperation } from "@taquito/taquito";
-import {
-  OperationContentsAndResultTransaction,
-  InternalOperationResult,
-} from "@taquito/rpc";
+import { Contract, TransactionOperation } from "@taquito/taquito";
+import { OperationContentsAndResultTransaction } from "@taquito/rpc";
 import Dex from "../../API";
 import { PairInfo } from "../../API/types";
-import { setupTokenAmounts } from "../../../utils/tokensSetups";
 
 async function autoRebalanceCheck(
   dex: Dex,
@@ -16,11 +12,10 @@ async function autoRebalanceCheck(
   operation: TransactionOperation
 ) {
   await dex.updateStorage({ pools: [pool_id.toString()] });
-  const pool = dex.storage.storage.pools[pool_id.toString()];
+  const pool: PairInfo = dex.storage.storage.pools[pool_id.toString()];
   const internals = (
     operation.results[0] as OperationContentsAndResultTransaction
   ).metadata.internal_operation_results;
-  console.debug(internals);
   expect(
     internals.find(
       (x) =>
@@ -52,16 +47,18 @@ async function autoRebalanceCheck(
     const expected_rate = value.des_reserves_rate_f.div("1e18");
     const delta = value.delta_rate_f.div("1e18");
     const real_rate = on_strat.div(full_res);
-    expect(real_rate.toNumber()).toBeLessThanOrEqual(
-      expected_rate.plus(delta).toNumber()
-    );
-    expect(real_rate.toNumber()).toBeGreaterThanOrEqual(
-      expected_rate.minus(delta).toNumber()
-    );
+    if (value.is_rebalance) {
+      expect(real_rate.toNumber()).toBeLessThanOrEqual(
+        expected_rate.plus(delta).toNumber()
+      );
+      expect(real_rate.toNumber()).toBeGreaterThanOrEqual(
+        expected_rate.minus(delta).toNumber()
+      );
+    }
     console.debug(
       `[STRATEGY] Auto Rebalance [${key.toString()}] - full: ${full_res}, on strategy: ${on_strat} (${on_strat
         .div(full_res)
-        .multipliedBy(100)}%)`
+        .multipliedBy(100)}%). Auto rebalance enabled: ${value.is_rebalance}`
     );
   });
 }
@@ -89,9 +86,7 @@ export async function swapRebalanceSuccessCase(
     .multipliedBy(conf_i.des_reserves_rate_f.plus(conf_i.delta_rate_f))
     .idiv("1e18")
     .plus(1_500_000);
-  console.debug(
-    `[STRATEGY] Auto Rebalance Swap [${route.i.toNumber()} - ${route.j.toNumber()}] - amt: ${amount_to_swap_to_slash.toNumber()}`
-  );
+  console.debug(`[STRATEGY] Auto Rebalance Swap`);
   const operation = await dex.swap(
     pool_id,
     route.i,
@@ -125,10 +120,6 @@ export async function investRebalanceSuccessCase(
 
   console.debug(`[STRATEGY] Auto Rebalance invest`);
 
-  amounts.forEach((v, k) => {
-    console.debug(`[${k.toString()}] ${v.toString()}`);
-  });
-
   const operation = await dex.investLiquidity(
     pool_id,
     amounts,
@@ -161,17 +152,6 @@ export async function divestRebalanceSuccessCase(
 
   console.debug(`[STRATEGY] Auto Rebalance divest`);
 
-  console.debug(`to burn ${shares.div("1e18").toString()} LPs`);
-  pool.tokens_info.forEach((info, key) => {
-    const rate = new BigNumber(10).pow(18).dividedBy(info.rate_f);
-    console.debug(
-      `Reserves\n\t\t${key}:\t${info.reserves
-        .dividedBy(rate)
-        .div(new BigNumber(10).pow(18))
-        .toFormat(10)}`
-    );
-  });
-
   const operation = await dex.divestLiquidity(
     pool_id,
     min_amounts,
@@ -197,10 +177,6 @@ export async function divestOneRebalanceSuccessCase(
   expect(strategyStore.strat_contract).toBeDefined();
   await dex.rebalance(pool_id, new Set([i]));
   console.debug(`[STRATEGY] Auto Rebalance divest one`);
-  console.debug(
-    `[${i.toString()}] burn ${shares.toString()} LPs to min ${output.toString()}`
-  );
-
   const operation = await dex.divestOneCoin(
     pool_id,
     shares,
@@ -232,9 +208,6 @@ export async function divestImbalanceRebalanceSuccessCase(
     new Set(dex.storage.storage.tokens[pool_id.toString()].keys())
   );
   console.debug(`[STRATEGY] Auto Rebalance divest imb`);
-  outputs.forEach((v, k) => {
-    console.debug(`[${k.toString()}] ${v.toString()}`);
-  });
   const operation = await dex.divestImbalanced(
     pool_id,
     outputs,
