@@ -159,7 +159,7 @@ function divest_liquidity(
         pool.strategy,
         False
       );
-      operations := concat_lists(rebalance.0, operations);
+      operations := concat_lists(rebalance.0, res.op);
       pool.strategy := rebalance.1;
       pool.total_supply := nat_or_error(pool.total_supply - params.shares, Errors.Dex.low_total_supply);
 
@@ -168,7 +168,6 @@ function divest_liquidity(
 
       s.ledger[key] := nat_or_error(share - params.shares, Errors.Dex.insufficient_lp);
       s.pools[params.pool_id] := pool;
-      operations := res.op;
     }
     | _                 -> unreachable(Unit)
     ]

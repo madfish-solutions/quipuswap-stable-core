@@ -1203,7 +1203,7 @@ describe("00. Standalone Dex", () => {
           strategy,
           pool_id,
           min_amounts,
-          new BigNumber(lp_balance_response[0].balance).minus("1000000")
+          lp_balance_response[0].balance
         );
       });
 
