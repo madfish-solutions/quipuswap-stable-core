@@ -159,7 +159,7 @@ function divest_liquidity(
         pool.strategy,
         False
       );
-      operations := concat_lists(rebalance.0, operations);
+      operations := concat_lists(rebalance.0, res.op);
       pool.strategy := rebalance.1;
       pool.total_supply := nat_or_error(pool.total_supply - params.shares, Errors.Dex.low_total_supply);
 
@@ -168,7 +168,6 @@ function divest_liquidity(
 
       s.ledger[key] := nat_or_error(share - params.shares, Errors.Dex.insufficient_lp);
       s.pools[params.pool_id] := pool;
-      operations := res.op;
     }
     | _                 -> unreachable(Unit)
     ]
@@ -374,7 +373,7 @@ function divest_one_coin(
       s.pools[params.pool_id] := pool;
       const account_bal = unwrap_or(s.ledger[sender_key], 0n);
 
-      s.ledger[sender_key] := unwrap(is_nat(account_bal - params.shares), Errors.FA2.insufficient_balance);
+      s.ledger[sender_key] := unwrap(is_nat(account_bal - params.shares), Errors.Dex.insufficient_lp);
       s.dev_rewards[token] := unwrap_or(s.dev_rewards[token], 0n) + dev_fee;
 
       const referral: address = unwrap_or(params.referral, s.default_referral);

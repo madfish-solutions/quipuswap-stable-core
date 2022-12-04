@@ -12,7 +12,7 @@ ledger.set(
     token_id: defaultTokenId,
     owner: aliceAddress,
   },
-  "1000000000000000000000000"
+  "1000000000000000000000000000"
 );
 // eslint-disable-next-line jest/require-hook
 ledger.set(
@@ -20,7 +20,7 @@ ledger.set(
     token_id: defaultTokenId,
     owner: bobAddress,
   },
-  "1000000000000000000000000"
+  "1000000000000000000000000000"
 );
 // eslint-disable-next-line jest/require-hook
 ledger.set(
@@ -28,7 +28,7 @@ ledger.set(
     token_id: defaultTokenId,
     owner: eveAddress,
   },
-  "1000000000000000000000000"
+  "1000000000000000000000000000"
 );
 const admins = new MichelsonMap();
 // eslint-disable-next-line jest/require-hook
