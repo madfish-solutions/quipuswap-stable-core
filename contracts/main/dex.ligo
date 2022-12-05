@@ -17,6 +17,7 @@
 #include "../partials/dex_core/storage.ligo"
 #include "../partials/admin/types.ligo"
 #include "../partials/dex_core/types.ligo"
+#include "../partials/dex_core/events.ligo"
 (* Helpers and functions *)
 #include "../partials/utils.ligo"
 #if FACTORY

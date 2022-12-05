@@ -4,7 +4,7 @@ function transfer_ep(
     var s               : full_storage_t)
                         : full_return_t is
   case p of [
-  | Transfer(params)  -> (Constants.no_operations, List.fold(iterate_transfer, params, s))
+  | Transfer(params)  -> List.fold(iterate_transfer, params, (Constants.no_operations, s))
   | _                 -> unreachable(Unit)
   ]
 

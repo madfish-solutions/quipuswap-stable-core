@@ -342,7 +342,7 @@ function add_liq(
     const init_tokens_info = pool.tokens_info;
     const d0 = get_D_mem(init_tokens_info, amp_f);
     const token_supply = pool.total_supply;
-
+    const referral = unwrap_or(params.referral, s.default_referral);
     function add_inputs(
       const key         : token_pool_idx_t;
       var token_info    : token_info_t)
@@ -370,7 +370,7 @@ function add_liq(
         unwrap(s.tokens[params.pool_id], Errors.Dex.pool_not_listed),
         pool.fee,
         get_dev_fee(s),
-        unwrap_or(params.referral, s.default_referral),
+        referral,
         record [
           dev_rewards = s.dev_rewards;
           referral_rewards = s.referral_rewards;
@@ -413,6 +413,7 @@ function add_liq(
 
     pool.total_supply := pool.total_supply + mint_amount;
     const (rebalance_ops, strategy_store) = operate_with_strategy(
+      params.pool_id,
       pool.tokens_info,
       tokens[params.pool_id],
       pool.strategy,
@@ -426,4 +427,11 @@ function add_liq(
     const share = unwrap_or(s.ledger[user_key], 0n);
     const new_shares = share + mint_amount;
     s.ledger[user_key] := new_shares;
-  } with record[ op = Map.fold(transfer_to_pool, params.inputs, rebalance_ops); s = s ]
+    const event_params: invest_event_t = record[
+      pool_id = params.pool_id;
+      inputs = params.inputs;
+      shares_minted = mint_amount;
+      receiver = receiver;
+      referral = referral;
+    ];
+  } with record[ op = emit_event(InvestEvent(event_params)) # Map.fold(transfer_to_pool, params.inputs, rebalance_ops); s = s ]

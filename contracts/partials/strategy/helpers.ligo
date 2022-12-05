@@ -65,6 +65,7 @@ function check_strategy_pool_params(
 
 
 function operate_with_strategy(
+  const pool_id         : pool_id_t;
   const token_infos     : map(token_pool_idx_t, token_info_t);
   const tokens_map_entry: option(tokens_map_t);
   var strategy          : strategy_full_storage_t;
@@ -118,15 +119,21 @@ function operate_with_strategy(
         };
         if List.size(rebalance_params) > 0n
         then {
+           const event_params: rebalance_event_t = record[
+            pool_id = pool_id;
+            rebalanced_tokens = prepare_params;
+            token_infos = strategy.configuration
+          ];
           ops := list [
             Tezos.transaction(prepare_params, 0mutez, get_prepare_entrypoint(contract));
-            Tezos.transaction(rebalance_params, 0mutez, get_update_state_entrypoint(contract))
+            Tezos.transaction(rebalance_params, 0mutez, get_update_state_entrypoint(contract));
           ];
           if List.size(send_ops) > 0n
           then ops := concat_lists(
             send_ops,
             ops
           );
+          ops := emit_event(RebalanceEvent(event_params)) # ops;
         }
       }
     | None -> skip
