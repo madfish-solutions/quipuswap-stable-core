@@ -60,21 +60,21 @@ export class Dex
         tezos,
         dexAddress,
         "Token",
-        5,
+        3,
         token_lambdas_comp
       );
       await setFunctionBatchCompilled(
         tezos,
         dexAddress,
         "Dex",
-        5,
+        3,
         dex_lambdas_comp
       );
       await setFunctionBatchCompilled(
         tezos,
         dexAddress,
         "Strategy",
-        5,
+        3,
         strat_lambdas_comp
       );
     }
