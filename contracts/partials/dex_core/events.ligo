@@ -52,12 +52,6 @@ type transfer_event_t   is [@layout:comb] record [
   txs                     : list(txs_event_t)
 ]
 
-type rebalance_event_t is [@layout:comb] record [
-  pool_id                 : pool_id_t;
-  rebalanced_tokens       : list(token_pool_idx_t);
-  token_infos             : map(token_pool_idx_t, strategy_storage_t)
-]
-
 type event_t            is 
 | TransferEvent           of transfer_event_t
 | InvestEvent             of invest_event_t
@@ -65,7 +59,6 @@ type event_t            is
 | DivestEvent             of divest_event_t
 | DivestOneEvent          of divest_one_event_t
 | DivestImbalanceEvent    of divest_imb_event_t
-| RebalanceEvent          of rebalance_event_t
 
 [@inline] function emit_event(
   const p               : event_t)
@@ -77,5 +70,4 @@ type event_t            is
     | DivestEvent(params) -> Tezos.emit("%divest", params)
     | DivestOneEvent(params) -> Tezos.emit("%divest_one", params)
     | DivestImbalanceEvent(params) -> Tezos.emit("%divest_imbalance", params)
-    | RebalanceEvent(params) -> Tezos.emit("%rebalance", params)
   ];

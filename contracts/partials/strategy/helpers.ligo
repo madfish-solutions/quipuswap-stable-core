@@ -119,11 +119,6 @@ function operate_with_strategy(
         };
         if List.size(rebalance_params) > 0n
         then {
-           const event_params: rebalance_event_t = record[
-            pool_id = pool_id;
-            rebalanced_tokens = prepare_params;
-            token_infos = strategy.configuration
-          ];
           ops := list [
             Tezos.transaction(prepare_params, 0mutez, get_prepare_entrypoint(contract));
             Tezos.transaction(rebalance_params, 0mutez, get_update_state_entrypoint(contract));
@@ -133,7 +128,6 @@ function operate_with_strategy(
             send_ops,
             ops
           );
-          ops := emit_event(RebalanceEvent(event_params)) # ops;
         }
       }
     | None -> skip
