@@ -67,7 +67,7 @@ export class Dex
         tezos,
         dexAddress,
         "Dex",
-        8,
+        5,
         dex_lambdas_comp
       );
       await setFunctionBatchCompilled(
@@ -261,16 +261,14 @@ export class Dex
   ): Promise<TransactionOperation> {
     const in_amounts = new MichelsonMap();
     tokenAmounts.forEach((value, key) => {
-      in_amounts.set(key, value);
+      in_amounts.set(key, value.toString());
     });
     const operation = await this.contract.methodsObject
       .invest({
         pool_id: poolId.toString(),
         shares: minShares.toString(),
         in_amounts: in_amounts,
-        deadline: new BigNumber(expiration.getTime())
-          .dividedToIntegerBy(1000)
-          .toString(),
+        deadline: expiration.toISOString(),
         receiver: receiver,
         referral: referral,
       })

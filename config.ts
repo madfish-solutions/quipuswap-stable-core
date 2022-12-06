@@ -5,7 +5,7 @@ dotenv.config();
 
 export const config = {
   repoName: "quipuswap-stable-core",
-  ligoVersion: "0.41.0",
+  ligoVersion: "0.56.0",
   preferredLigoFlavor: "pascaligo",
   networks: {
     sandbox: {

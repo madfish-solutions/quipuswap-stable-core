@@ -13,7 +13,7 @@
 #if !FACTORY
     | Set_strategy_factory(_)-> skip
 #endif
-    | _ -> require(Tezos.sender = s.storage.admin, Errors.Dex.not_contract_admin)
+    | _ -> require(Tezos.get_sender() = s.storage.admin, Errors.Dex.not_contract_admin)
     ];
 
     const idx : nat = case p of [

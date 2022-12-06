@@ -69,7 +69,7 @@ export class DexFactory implements DevEnabledContract, StrategyFactorySetter {
       tezos,
       factoryAddress,
       "Dex",
-      8,
+      5,
       dex_lambdas_comp
     );
     await setFunctionBatchCompilled(

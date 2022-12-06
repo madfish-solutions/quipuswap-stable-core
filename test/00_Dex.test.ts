@@ -857,7 +857,7 @@ describe("00. Standalone Dex", () => {
     });
   });
 
-  describe("5 Test unstake QUIPU token from pool", () => {
+  describe("5. Test unstake QUIPU token from pool", () => {
     const output = new BigNumber(10).pow(7);
     let pool_id: BigNumber;
 
@@ -989,9 +989,56 @@ describe("00. Standalone Dex", () => {
     });
 
     describe("as a developer", () => {
+      let min_amounts: Map<string, BigNumber>;
+      let invest_amounts: Map<string, BigNumber>;
+      let imb_amounts: Map<string, BigNumber>;
+      const normalized: BigNumber = new BigNumber(10).pow(3); // 3K
+      const min_out_amount: BigNumber = decimals.kUSD
+        .multipliedBy(normalized)
+        .multipliedBy("1e6")
+        .multipliedBy(3)
+        .minus(
+          decimals.kUSD
+            .multipliedBy(normalized)
+            .multipliedBy("1e6")
+            .multipliedBy(3)
+            .dividedBy(100)
+        );
+      const outputs: AmountsMap = {
+        kUSD: decimals.kUSD.multipliedBy(normalized),
+        uUSD: decimals.uUSD.multipliedBy(normalized),
+        USDtz: decimals.USDtz.multipliedBy(normalized),
+      };
+      const amount_in = new BigNumber(10)
+        .pow(18)
+        .multipliedBy(normalized)
+        .multipliedBy(2)
+        .multipliedBy("1e6");
+      let idx_map: IndexMap;
+
       beforeAll(async () => {
+        ({ pool_id, min_amounts, idx_map } =
+          await TPool.PoolDivest.setupMinTokenMapping(dex, tokens, outputs));
+        imb_amounts = new Map<string, BigNumber>()
+          .set(idx_map.USDtz, outputs.USDtz.multipliedBy("1e5").multipliedBy(5))
+          .set(idx_map.kUSD, new BigNumber(0))
+          .set(idx_map.uUSD, outputs.uUSD.multipliedBy("1e5").multipliedBy(5));
+        invest_amounts = new Map<string, BigNumber>()
+          .set(idx_map.USDtz, outputs.USDtz.multipliedBy("1e6"))
+          .set(idx_map.kUSD, outputs.kUSD.multipliedBy("1e6"))
+          .set(idx_map.uUSD, outputs.uUSD.multipliedBy("1e6"));
+        min_amounts = new Map<string, BigNumber>()
+          .set(idx_map.USDtz, new BigNumber(1))
+          .set(idx_map.kUSD, new BigNumber(1))
+          .set(idx_map.uUSD, new BigNumber(1));
         const config = await prepareProviderOptions("bob");
         Tezos.setProvider(config);
+        await dex.investLiquidity(
+          pool_id,
+          invest_amounts,
+          new BigNumber(1),
+          new Date(Date.now() + 1000 * 60 * 60 * 24)
+        );
       });
 
       const test_factory = "tz1ZZZZZZZZZZZZZZZZZZZZZZZZZZZZNkiRg";
@@ -1022,8 +1069,8 @@ describe("00. Standalone Dex", () => {
             pool_id,
             new BigNumber(pool_ordering.kUSD),
             new BigNumber("0.3").multipliedBy("1e18"),
-            new BigNumber("0.05").multipliedBy("1e18"),
-            new BigNumber("300").multipliedBy("1e6")
+            new BigNumber("0.005").multipliedBy("1e18"),
+            new BigNumber("300").multipliedBy(decimals.kUSD)
           )
           .then(() =>
             TStrategy.token.configureTokenStrategy.setStrategyParamsSuccessCase(
@@ -1031,8 +1078,8 @@ describe("00. Standalone Dex", () => {
               pool_id,
               new BigNumber(pool_ordering.uUSD),
               new BigNumber("0.15").multipliedBy("1e18"),
-              new BigNumber("0.03").multipliedBy("1e18"),
-              new BigNumber("1500").multipliedBy("1e6")
+              new BigNumber("0.003").multipliedBy("1e18"),
+              new BigNumber("1500").multipliedBy(decimals.uUSD)
             )
           ));
 
@@ -1088,6 +1135,48 @@ describe("00. Standalone Dex", () => {
           ])
         ));
 
+      it("should auto-rebalance when swap", async () =>
+        TStrategy.autoRebalance.swapRebalanceSuccessCase(
+          dex,
+          yupana,
+          strategy,
+          pool_id,
+          {
+            i: new BigNumber(pool_ordering.kUSD),
+            j: new BigNumber(pool_ordering.uUSD),
+          }
+        ));
+
+      it("should auto-rebalance when invest", async () =>
+        TStrategy.autoRebalance.investRebalanceSuccessCase(
+          dex,
+          yupana,
+          strategy,
+          pool_id,
+          invest_amounts
+        ));
+
+      it("should auto-rebalance when divest imbalance", async () =>
+        TStrategy.autoRebalance.divestImbalanceRebalanceSuccessCase(
+          dex,
+          yupana,
+          strategy,
+          pool_id,
+          imb_amounts,
+          amount_in
+        ));
+
+      it("should auto-rebalance when divest one", async () =>
+        TStrategy.autoRebalance.divestOneRebalanceSuccessCase(
+          dex,
+          yupana,
+          strategy,
+          pool_id,
+          new BigNumber(pool_ordering.kUSD),
+          outputs.kUSD.multipliedBy("1e5").multipliedBy(5),
+          min_out_amount
+        ));
+
       it("should set is rebalance flag for token", async () =>
         TStrategy.token.setStrategyRebalance.setIsRebalanceSuccessCase(
           dex,
@@ -1095,6 +1184,28 @@ describe("00. Standalone Dex", () => {
           new BigNumber(pool_ordering.kUSD),
           false
         ));
+
+      it("should auto-rebalance when divest", async () => {
+        const sender = await Tezos.signer.publicKeyHash();
+        const request: { owner: TezosAddress; token_id: number } = {
+          owner: sender,
+          token_id: pool_id.toNumber(),
+        };
+        const lp_balance_response: {
+          request: typeof request;
+          balance: BigNumber;
+        }[] = await dex.contract.contractViews
+          .get_balance([request])
+          .executeView({ viewCaller: sender });
+        await TStrategy.autoRebalance.divestRebalanceSuccessCase(
+          dex,
+          yupana,
+          strategy,
+          pool_id,
+          min_amounts,
+          lp_balance_response[0].balance
+        );
+      });
 
       it("should configure strategy for token to zero", async () =>
         TStrategy.token.configureTokenStrategy

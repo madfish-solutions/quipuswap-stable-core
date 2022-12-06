@@ -67,7 +67,7 @@ module.exports = async (tezos: TezosToolkit, network: NetworkLiteral) => {
     tezos,
     contractAddress,
     "Dex",
-    8,
+    5,
     dex_lambdas_comp
   );
   await setFunctionBatchCompilled(

@@ -5,7 +5,7 @@
                         : full_return_t is
   block {
     const dev_address = get_dev_address(s.storage);
-    require(Tezos.sender = dev_address, Errors.Dex.not_developer);
+    require(Tezos.get_sender() = dev_address, Errors.Dex.not_developer);
     const idx : nat = case p of [
     | Connect_strategy(_)               -> 0n
     | Connect_token_strategy(_)         -> 1n
