@@ -133,7 +133,6 @@ function set_rebalance(
         Map.add(i, get_token_info(i, pool.tokens_info), acc);
       const infos = Set.fold(map_ids, params.pool_token_ids, (map[]: map(token_pool_idx_t, token_info_t)));
       const (rebalance_ops, strategy_store) = operate_with_strategy(
-        params.pool_id,
         infos,
         s.tokens[params.pool_id],
         pool.strategy,

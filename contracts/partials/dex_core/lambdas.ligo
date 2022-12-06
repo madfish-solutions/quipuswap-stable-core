@@ -59,7 +59,6 @@ function swap(
         token_j
       ) # operations;
       const rebalance = operate_with_strategy(
-        params.pool_id,
         map[
           i -> token_info_i;
           j -> token_info_j
@@ -165,7 +164,6 @@ function divest_liquidity(
       const res = Map.fold(divest_reserves, tokens, record [ tok_inf = pool.tokens_info; op = operations; outs = (map[]: map(token_pool_idx_t, nat)) ]);
       pool.tokens_info := res.tok_inf;
       const rebalance = operate_with_strategy(
-        params.pool_id,
         pool.tokens_info,
         s.tokens[params.pool_id],
         pool.strategy,
@@ -306,7 +304,6 @@ function divest_imbalanced(
       ];
       check_shares_and_reserves(pool);
       const rebalance = operate_with_strategy(
-        params.pool_id,
         balanced.tokens_info,
         s.tokens[params.pool_id],
         pool.strategy,
@@ -396,7 +393,6 @@ function divest_one_coin(
         token
       ) # operations;
       const rebalance = operate_with_strategy(
-        params.pool_id,
         map[ params.token_index -> info ],
         s.tokens[params.pool_id],
         pool.strategy,

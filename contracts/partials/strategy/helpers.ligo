@@ -65,7 +65,6 @@ function check_strategy_pool_params(
 
 
 function operate_with_strategy(
-  const pool_id         : pool_id_t;
   const token_infos     : map(token_pool_idx_t, token_info_t);
   const tokens_map_entry: option(tokens_map_t);
   var strategy          : strategy_full_storage_t;

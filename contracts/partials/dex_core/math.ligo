@@ -413,7 +413,6 @@ function add_liq(
 
     pool.total_supply := pool.total_supply + mint_amount;
     const (rebalance_ops, strategy_store) = operate_with_strategy(
-      params.pool_id,
       pool.tokens_info,
       tokens[params.pool_id],
       pool.strategy,
