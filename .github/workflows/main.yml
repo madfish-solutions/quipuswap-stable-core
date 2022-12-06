@@ -6,9 +6,60 @@ on:
       - main
       - develop
   pull_request:
-    
+
 jobs:
+  compile:
+    name: Compile contracts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        id: contracts-build
+        with:
+          path: |
+            build
+            contracts/compiled
+          key: compiled-contracts-${{ runner.os }}-${{ hashFiles('contracts/**/*.ligo') }}
+      - name: Setup dependencies
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+          cache: 'yarn'
+          cache-dependency-path: './yarn.lock'
+      - name: Install modules
+        if: steps.contracts-build.outputs.cache-hit != 'true'
+        run: yarn install --immutable --immutable-cache --check-cache
+      - name: Compile contracts and test
+        if: steps.contracts-build.outputs.cache-hit != 'true'
+        run: yarn compile
+  compile-test:
+    name: Compile contracts for tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        id: contracts-build
+        with:
+          path: |
+            build
+            contracts/compiled
+          key: compiled-test-contracts-${{ runner.os }}-jest-${{ hashFiles('contracts/**/*.ligo') }}
+      - name: Setup dependencies
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+          cache: 'yarn'
+          cache-dependency-path: './yarn.lock'
+      - name: Install modules
+        if: steps.contracts-build.outputs.cache-hit != 'true'
+        run: yarn install --immutable --immutable-cache --check-cache
+      - name: Compile contracts and test
+        if: steps.contracts-build.outputs.cache-hit != 'true'
+        run: yarn compile-for-test
   jest:
+    needs: compile-test
     name: Jest tests
     runs-on: ubuntu-latest
     steps:
@@ -29,9 +80,6 @@ jobs:
             build
             contracts/compiled
           key: compiled-test-contracts-${{ runner.os }}-jest-${{ hashFiles('contracts/**/*.ligo') }}
-      - name: Compile contracts and test
-        if: steps.contracts-build.outputs.cache-hit != 'true'
-        run: yarn compile-for-test
       - name: Start sandbox
         run: yarn start-sandbox
       - name: Wait for Sandbox endpoint
@@ -45,27 +93,14 @@ jobs:
       - name: Stop sandbox
         run: yarn stop-sandbox
   pytest:
+    needs: compile
     name: Pytest tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: "18"
-          cache: 'yarn'
-          cache-dependency-path: './yarn.lock'
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
       - name: Install crypto libs
         run: sudo apt install libsodium-dev libsecp256k1-dev libgmp-dev
-      - name: Install pytezos and pytest
-        run: pip install pytezos pytest
-      - name: Install node modules
-        run: yarn install --immutable --immutable-cache --check-cache
       - uses: actions/cache@v3
         id: contracts-build
         with:
@@ -73,9 +108,13 @@ jobs:
             build
             contracts/compiled
           key: compiled-contracts-${{ runner.os }}-${{ hashFiles('contracts/**/*.ligo') }}
-      - name: Compile contracts
-        if: steps.contracts-build.outputs.cache-hit != 'true'
-        run: yarn compile
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+      - name: Install pytezos and pytest
+        run: pip install -r scenario/requirements.txt
       - name: Run scenario tests
         run: pytest -s -v
 

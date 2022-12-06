@@ -1,0 +1,2 @@
+pytezos==3.7.2
+pytest==7.2.0
