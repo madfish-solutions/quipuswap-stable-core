@@ -1,6 +1,9 @@
 import BigNumber from "bignumber.js";
-import { Contract, TransactionOperation } from "@taquito/taquito";
-import { OperationContentsAndResultTransaction } from "@taquito/rpc";
+import { Contract, OpKind, TransactionOperation } from "@taquito/taquito";
+import {
+  OperationContentsAndResultTransaction,
+  InternalOperationResult,
+} from "@taquito/rpc";
 import Dex from "../../API";
 import { PairInfo } from "../../API/types";
 
@@ -16,10 +19,12 @@ async function autoRebalanceCheck(
   const internals = (
     operation.results[0] as OperationContentsAndResultTransaction
   ).metadata.internal_operation_results;
+  console.debug(internals);
   expect(
     internals.find(
-      (x) =>
-        x.parameters.entrypoint === "prepare" &&
+      (x: InternalOperationResult) =>
+        x.kind === OpKind.TRANSACTION &&
+        x.parameters?.entrypoint === "prepare" &&
         x.destination == strategy.address &&
         x.source === dex.contract.address
     )
@@ -27,7 +32,8 @@ async function autoRebalanceCheck(
   expect(
     internals.find(
       (x) =>
-        x.parameters.entrypoint === "update_token_state" &&
+        x.kind === OpKind.TRANSACTION &&
+        x.parameters?.entrypoint === "update_token_state" &&
         x.destination == strategy.address &&
         x.source === dex.contract.address
     )
@@ -35,8 +41,9 @@ async function autoRebalanceCheck(
   internals
     .filter(
       (x) =>
-        (x.parameters.entrypoint === "redeem" ||
-          x.parameters.entrypoint === "mint") &&
+        x.kind === OpKind.TRANSACTION &&
+        (x.parameters?.entrypoint === "redeem" ||
+          x.parameters?.entrypoint === "mint") &&
         x.destination === yupana.address &&
         x.source === strategy.address
     )

@@ -62,21 +62,21 @@ export class DexFactory implements DevEnabledContract, StrategyFactorySetter {
       tezos,
       factoryAddress,
       "Token",
-      5,
+      3,
       token_lambdas_comp
     );
     await setFunctionBatchCompilled(
       tezos,
       factoryAddress,
       "Dex",
-      5,
+      3,
       dex_lambdas_comp
     );
     await setFunctionBatchCompilled(
       tezos,
       factoryAddress,
       "Strategy",
-      5,
+      3,
       strat_lambdas_comp
     );
     await factory.updateStorage();

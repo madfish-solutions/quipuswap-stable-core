@@ -1,5 +1,5 @@
 import BigNumber from "bignumber.js";
-import { TezosToolkit, Contract } from "@taquito/taquito";
+import { TezosToolkit, Contract, OpKind } from "@taquito/taquito";
 import {
   OperationContentsAndResultTransaction,
   InternalOperationResult,
@@ -29,7 +29,8 @@ export async function manualRebalanceSuccessCase(
   expect(
     internals.find(
       (x) =>
-        x.parameters.entrypoint === "prepare" &&
+        x.kind === OpKind.TRANSACTION &&
+        x.parameters?.entrypoint === "prepare" &&
         x.destination == strategy.address &&
         x.source === dex.contract.address
     )
@@ -37,7 +38,8 @@ export async function manualRebalanceSuccessCase(
   expect(
     internals.find(
       (x) =>
-        x.parameters.entrypoint === "update_token_state" &&
+        x.kind === OpKind.TRANSACTION &&
+        x.parameters?.entrypoint === "update_token_state" &&
         x.destination == strategy.address &&
         x.source === dex.contract.address
     )
@@ -45,8 +47,9 @@ export async function manualRebalanceSuccessCase(
   internals
     .filter(
       (x) =>
-        (x.parameters.entrypoint === "redeem" ||
-          x.parameters.entrypoint === "mint") &&
+        x.kind === OpKind.TRANSACTION &&
+        (x.parameters?.entrypoint === "redeem" ||
+          x.parameters?.entrypoint === "mint") &&
         x.destination === yupana.address &&
         x.source === strategy.address
     )

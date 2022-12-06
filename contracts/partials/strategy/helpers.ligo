@@ -120,7 +120,7 @@ function operate_with_strategy(
         then {
           ops := list [
             Tezos.transaction(prepare_params, 0mutez, get_prepare_entrypoint(contract));
-            Tezos.transaction(rebalance_params, 0mutez, get_update_state_entrypoint(contract))
+            Tezos.transaction(rebalance_params, 0mutez, get_update_state_entrypoint(contract));
           ];
           if List.size(send_ops) > 0n
           then ops := concat_lists(
