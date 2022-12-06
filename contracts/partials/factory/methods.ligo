@@ -20,17 +20,17 @@ function start_dex_func(
       )
     );
     const pool_address = unwrap(
-      s.storage.pool_to_address[pack_pool_key(Tezos.sender, tokens)],
+      s.storage.pool_to_address[pack_pool_key(Tezos.get_sender(), tokens)],
       Errors.Factory.pool_not_listed
     );
-    const param = record [
+    const param: invest_param_t = (record [
         pool_id    = 0n;
         shares     = 1n;
         in_amounts = amounts;
-        deadline = Tezos.now + 300;
-        receiver = Some(Tezos.sender);
+        deadline = Tezos.get_now() + 300;
+        receiver = Some(Tezos.get_sender());
         referral = (None: option(address));
-      ];
+      ]: invest_param_t);
     var operations: list(operation) := list[
       set_lambd_dex(s.dex_lambdas, pool_address);
       unfreeze_dex(pool_address);
@@ -41,11 +41,11 @@ function start_dex_func(
       const input       : nat * nat)
                         : list(operation) is
       block {
-        const token = unwrap(tokens[input.0], Errors.Dex.wrong_index);
+        const token: token_t = unwrap(tokens[input.0], Errors.Dex.wrong_index);
         case token of [
         | Fa2(_) -> operations := concat_lists(operations, list[
           typed_approve(
-            Tezos.self_address,
+            Tezos.get_self_address(),
             pool_address,
             0n,
             token
@@ -56,14 +56,14 @@ function start_dex_func(
         if input.1 > 0n
         then {
           operations := typed_approve(
-            Tezos.self_address,
+            Tezos.get_self_address(),
             pool_address,
             input.1,
             token
           ) # operations;
           operations := typed_transfer(
-            Tezos.sender,
-            Tezos.self_address,
+            Tezos.get_sender(),
+            Tezos.get_self_address(),
             input.1,
             token
           ) # operations;
@@ -79,7 +79,7 @@ function claim_quipu(
   block {
     const operations = list[
       typed_transfer(
-        Tezos.self_address,
+        Tezos.get_self_address(),
         s.storage.dev_store.dev_address,
         s.storage.quipu_rewards,
         Fa2(s.storage.quipu_token)
@@ -93,16 +93,17 @@ function use_factory(
   var s                 : full_storage_t)
                         : fact_return_t is
   block {
-    require(Tezos.sender = s.storage.dev_store.dev_address, Errors.Dex.not_developer);
+    require(Tezos.get_sender() = s.storage.dev_store.dev_address, Errors.Dex.not_developer);
     case params of [
-    | Set_burn_rate(rate)   -> if rate <= Constants.burn_rate_precision
-                                then s.storage.burn_rate_f := rate
-                                else failwith(Errors.Factory.burn_rate_overflow)
-    | Set_price(price)      -> s.storage.init_price := price
-    | Set_whitelist(params) -> s.storage.whitelist := add_rem_candidate(params, s.storage.whitelist)
-    | _ -> skip
+    | Set_burn_rate(rate)         -> if rate <= Constants.burn_rate_precision
+                                     then s.storage.burn_rate_f := rate
+                                     else failwith(Errors.Factory.burn_rate_overflow)
+    | Set_strategy_factory(params)-> s.storage.strategy_factory := add_rem_candidate(params, s.storage.strategy_factory)
+    | Set_price(price)            -> s.storage.init_price := price
+    | Set_whitelist(params)       -> s.storage.whitelist := add_rem_candidate(params, s.storage.whitelist)
+    | _                           -> skip
     ]
   } with case params of [
-    | Claim_rewards -> claim_quipu(s)
-    | _ -> (Constants.no_operations, s)
+    | Claim_rewards               -> claim_quipu(s)
+    | _                           -> (Constants.no_operations, s)
     ]

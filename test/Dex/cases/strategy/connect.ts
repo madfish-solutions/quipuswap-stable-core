@@ -42,5 +42,4 @@ export async function removeStrategyAddrSuccessCase(
   expect(updatedStrat).toBeNull();
 
   // TODO: Remove liquidity from old Strategy checks
-
 }

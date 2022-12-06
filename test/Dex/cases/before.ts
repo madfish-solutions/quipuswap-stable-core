@@ -40,6 +40,7 @@ export async function setupDexEnvironment(Tezos: TezosToolkit): Promise<{
   storage.storage.dev_store.dev_lambdas = await setupLambdasToStorage(
     dev_lambdas_comp
   );
+  storage.storage.strategy_factory = [];
   const dex_op = await Tezos.contract.originate({
     code: dex_contract.michelson,
     storage: storage,

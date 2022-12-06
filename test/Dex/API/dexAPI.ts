@@ -24,8 +24,12 @@ import strat_lambdas_comp from "../../../build/lambdas/test/Strategy_lambdas.jso
 import token_lambdas_comp from "../../../build/lambdas/test/Token_lambdas.json";
 import { defaultTokenId, TokenFA12, TokenFA2 } from "../../Token";
 import { DevEnabledContract } from "../../Developer/API/devAPI";
+import { StrategyFactorySetter } from "../../Strategy/API/strategyFactoryMethod";
 
-export class Dex extends TokenFA2 implements DevEnabledContract {
+export class Dex
+  extends TokenFA2
+  implements DevEnabledContract, StrategyFactorySetter
+{
   public contract: ContractAbstraction<ContractProvider>;
   public storage: DexStorage;
 
@@ -49,7 +53,7 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
         tezos,
         dexAddress,
         "Admin",
-        8,
+        9,
         admin_lambdas_comp
       );
       await setFunctionBatchCompilled(
@@ -63,7 +67,7 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
         tezos,
         dexAddress,
         "Dex",
-        8,
+        5,
         dex_lambdas_comp
       );
       await setFunctionBatchCompilled(
@@ -257,16 +261,14 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
   ): Promise<TransactionOperation> {
     const in_amounts = new MichelsonMap();
     tokenAmounts.forEach((value, key) => {
-      in_amounts.set(key, value);
+      in_amounts.set(key, value.toString());
     });
     const operation = await this.contract.methodsObject
       .invest({
         pool_id: poolId.toString(),
         shares: minShares.toString(),
         in_amounts: in_amounts,
-        deadline: new BigNumber(expiration.getTime())
-          .dividedToIntegerBy(1000)
-          .toString(),
+        deadline: expiration.toISOString(),
         receiver: receiver,
         referral: referral,
       })
@@ -446,11 +448,14 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
 
   async rebalance(
     poolId: BigNumber,
-    poolTokenId: BigNumber
+    poolTokenIds: Set<BigNumber>
   ): Promise<TransactionOperation> {
     await this.updateStorage({});
     const operation = await this.contract.methods
-      .rebalance(poolId.toString(), poolTokenId.toString())
+      .rebalance(
+        poolId.toString(),
+        Array.from(poolTokenIds).map((x) => x.toNumber())
+      )
       .send();
 
     await operation.confirmation(2);
@@ -460,8 +465,8 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
 
   manualRebalanceStrategy = (
     poolId: BigNumber,
-    poolTokenId: BigNumber
-  ): Promise<TransactionOperation> => this.rebalance(poolId, poolTokenId);
+    poolTokenIds: Set<BigNumber>
+  ): Promise<TransactionOperation> => this.rebalance(poolId, poolTokenIds);
 
   async connectTokenStrategy(
     poolId: BigNumber,
@@ -469,12 +474,12 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
     lendingMarketId: BigNumber
   ): Promise<TransactionOperation> {
     await this.updateStorage({});
-    const operation = await this.contract.methods
-      .connect_token_strategy(
-        poolId.toString(),
-        poolTokenId.toString(),
-        lendingMarketId.toString()
-      )
+    const operation = await this.contract.methodsObject
+      .connect_token_strategy({
+        pool_id: poolId.toString(),
+        pool_token_id: poolTokenId.toString(),
+        lending_market_id: lendingMarketId.toString(),
+      })
       .send();
 
     await operation.confirmation(2);
@@ -540,5 +545,26 @@ export class Dex extends TokenFA2 implements DevEnabledContract {
     const operation = await token.methods.approve(address, tokenAmount).send();
     await operation.confirmation(2);
     return operation;
+  }
+
+  async manageStrategyFactories(
+    strategy_factory: string,
+    add: boolean
+  ): Promise<TransactionOperation> {
+    const op = await this.contract.methods
+      .set_strategy_factory(add, strategy_factory)
+      .send();
+    await op.confirmation(2);
+    return op;
+  }
+  async addStrategyFactory(
+    strategy_factory: string
+  ): Promise<TransactionOperation> {
+    return this.manageStrategyFactories(strategy_factory, true);
+  }
+  async removeStrategyFactory(
+    strategy_factory: string
+  ): Promise<TransactionOperation> {
+    return this.manageStrategyFactories(strategy_factory, false);
   }
 }

@@ -26,6 +26,7 @@ const dex_storage: DexStorage = {
       dev_lambdas: new MichelsonMap(),
     },
     factory_address: null as TezosAddress,
+    strategy_factory: null as TezosAddress[],
   },
   metadata: new MichelsonMap(),
   admin_lambdas: new MichelsonMap(),

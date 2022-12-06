@@ -8,20 +8,20 @@ const USDtzstorage = {
   admin: aliceAddress,
   ledger: MichelsonMap.fromLiteral({
     [aliceAddress]: {
-      balance: "10000000000000",
+      balance: "10000000000000000",
       approvals: MichelsonMap.fromLiteral({}),
     },
     [bobAddress]: {
-      balance: "10000000000000",
+      balance: "10000000000000000",
       approvals: MichelsonMap.fromLiteral({}),
     },
     [eveAddress]: {
-      balance: "10000000000000",
+      balance: "10000000000000000",
       approvals: MichelsonMap.fromLiteral({}),
     },
   }),
   paused: false,
-  totalSupply: "3000000000000",
+  totalSupply: "3000000000000000",
 };
 
 export default USDtzstorage;

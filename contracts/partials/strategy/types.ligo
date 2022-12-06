@@ -4,11 +4,17 @@ type strategy_storage_t is [@layout:comb] record[
   min_invest          : nat;
   strategy_reserves   : nat;
   is_rebalance        : bool;
+  connected           : bool;
 ];
 
 type strategy_full_storage_t is [@layout:comb] record [
   strat_contract        : option(address);
   configuration         : map(token_pool_idx_t, strategy_storage_t)
+]
+
+type strat_pool_data_t is [@layout:comb] record[
+  pool_contract: address;
+  pool_id: nat;
 ]
 
 type conn_strategy_param is [@layout:comb] record [
@@ -45,7 +51,7 @@ type upd_strat_state_t  is list(upd_state_prm)
 
 type rebalance_param    is [@layout:comb] record [
   pool_id               : pool_id_t;
-  pool_token_id         : set(nat);
+  pool_token_ids        : set(nat);
 ]
 
 type strat_upd_info_t   is [@layout:comb] record [
@@ -60,4 +66,4 @@ type strategy_action_t is
 | Connect_token_strategy          of conn_tok_strat_param
 | Set_token_strategy              of set_tok_strat_param
 | Set_token_strategy_rebalance    of tok_strat_upd_fl_param
-| Rebalance                       of list(rebalance_param)
+| Rebalance                       of rebalance_param

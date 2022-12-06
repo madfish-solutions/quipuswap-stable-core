@@ -60,8 +60,8 @@ function add_pool(
       const pool = pool_i with record [
         initial_A_f     = params.a_constant * Constants.a_precision;
         future_A_f      = params.a_constant * Constants.a_precision;
-        initial_A_time  = Tezos.now;
-        future_A_time   = Tezos.now;
+        initial_A_time  = Tezos.get_now();
+        future_A_time   = Tezos.get_now();
         tokens_info     = tokens_info;
         fee             = params.fees;
       ];
@@ -72,10 +72,26 @@ function add_pool(
         pool            = pool;
         inputs          = inputs;
         min_mint_amount = 1n;
-        receiver        = Some(Tezos.sender)
+        receiver        = Some(Tezos.get_sender())
       ], s);
       operations := res.op;
       s := res.s;
+    }
+    | _                 -> unreachable(Unit)
+    ]
+  } with (operations, s)
+
+function set_strategy_factory(
+  const p               : admin_action_t;
+  var   s               : storage_t)
+                        : return_t is
+  block {
+    var operations: list(operation) := Constants.no_operations;
+    case p of [
+    | Set_strategy_factory(params) -> {
+      const dev_address = get_dev_address(s);
+      require(Tezos.get_sender() = dev_address, Errors.Dex.not_developer);
+      s.strategy_factory := add_rem_candidate(params, s.strategy_factory);
     }
     | _                 -> unreachable(Unit)
     ]

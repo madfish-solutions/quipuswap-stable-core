@@ -51,7 +51,7 @@
   var s                 : full_storage_t)
                         : option(bytes) is
   block {
-    require(Tezos.sender = s.storage.dev_store.dev_address, Errors.Dex.not_developer);
+    require(Tezos.get_sender() = s.storage.dev_store.dev_address, Errors.Dex.not_developer);
     case s.init_func of [
     | Some(_) -> failwith(Errors.Dex.func_set)
     | None -> skip
@@ -84,18 +84,18 @@ function manage_startup_charges(
   var quipu_rewards     : nat)
                         : record [ ops: list(operation); rewards: nat ] is
   block {
-    if not (wl contains Tezos.sender)
+    if not (wl contains Tezos.get_sender())
     then {
       const to_burn = price * burn_rate_f / Constants.burn_rate_precision;
       const to_factory = abs(price - to_burn);
       operations := typed_transfer(
-        Tezos.sender,
-        Tezos.self_address,
+        Tezos.get_sender(),
+        Tezos.get_self_address(),
         to_factory,
         Fa2(quipu_token)
       ) # operations;
       operations := typed_transfer(
-        Tezos.sender,
+        Tezos.get_sender(),
         Constants.burn_address,
         to_burn,
         Fa2(quipu_token)
@@ -123,11 +123,11 @@ function form_pool_storage(
                         : pool_f_storage_t is
   block {
     const default_token_id = 0n;
-    const pool = record [
+    const pool: pool_t = (record [
       initial_A_f         = a_constant * Constants.a_precision;
       future_A_f          = a_constant * Constants.a_precision;
-      initial_A_time      = Tezos.now;
-      future_A_time       = Tezos.now;
+      initial_A_time      = Tezos.get_now();
+      future_A_time       = Tezos.get_now();
       tokens_info         = tokens_info;
       fee                 = fees;
       strategy            = record[
@@ -140,10 +140,10 @@ function form_pool_storage(
                               total_staked  = 0n;
                             ];
       total_supply        = 0n;
-    ];
+    ]: pool_t);
 
-    const pool_storage: storage_t = record[
-      admin               = Tezos.sender;
+    const pool_storage: storage_t = (record[
+      admin               = Tezos.get_sender();
       default_referral    = default_referral;
       managers            = managers;
       pools_count         = 1n;
@@ -162,10 +162,10 @@ function form_pool_storage(
       referral_rewards    = (big_map[]: big_map((address * token_t), nat));
       stakers_balance     = (big_map[]: big_map((address * pool_id_t), staker_info_t));
       quipu_token         = quipu_token;
-      factory_address     = Tezos.self_address;
+      factory_address     = Tezos.get_self_address();
       started             = False;
-    ];
-  } with record [
+    ]: storage_t);
+  } with (record [
       storage       = pool_storage;
       metadata      = big_map[
                       "" -> 0x74657a6f732d73746f726167653a646578;
@@ -175,4 +175,4 @@ function form_pool_storage(
       dex_lambdas   = (big_map[]: big_map(nat, bytes)); // too large for injection in one operation
       token_lambdas = t_lambdas;
       strat_lambdas = s_lambdas;
-    ]
+    ]: pool_f_storage_t)

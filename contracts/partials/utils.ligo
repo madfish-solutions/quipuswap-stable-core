@@ -145,7 +145,7 @@
     ];
 
 [@inline] function add_rem_candidate(
-  const params          : set_man_param_t;
+  const params          : set_cand_param_t;
   var   whitelist       : set(address))
                         : set(address) is
   Set.update(params.candidate, params.add, whitelist)
@@ -170,7 +170,7 @@
 [@inline] function check_deadline(
   const exp             : timestamp)
                         : unit is
-  require(exp >= Tezos.now, Errors.Dex.time_expired);
+  require(exp >= Tezos.get_now(), Errors.Dex.time_expired);
 
 function set_func_or_fail(
   const params          : set_lambda_func_t;
@@ -221,10 +221,10 @@ function get_token_by_id(
 
 #if FACTORY
 #if !INSIDE_DEX
-    require(Tezos.sender = s.storage.dev_store.dev_address, Errors.Dex.not_developer);
+    require(Tezos.get_sender() = s.storage.dev_store.dev_address, Errors.Dex.not_developer);
 #endif
 #else
-    require(Tezos.sender = s.storage.admin, Errors.Dex.not_contract_admin);
+    require(Tezos.get_sender() = s.storage.admin, Errors.Dex.not_contract_admin);
 #endif
     case f_type of [
     | FAdmin  -> s.admin_lambdas := set_func_or_fail(params, Constants.admin_func_count,  s.admin_lambdas)
@@ -249,3 +249,16 @@ function get_tokens_from_param(
       }
       with result;
 
+function check_strategy_factory(
+  const strategy        : address;
+  const factories       : set(address))
+                        : bool is
+  block {
+    function call_check_view(
+      const accumulator : bool;
+      const entry       : address): bool is
+      accumulator or unwrap(
+        (Tezos.call_view("is_registered", strategy, entry): option(bool)),
+        Errors.Factory.no_strategy_factory
+      )
+  } with Set.fold(call_check_view, factories, False)

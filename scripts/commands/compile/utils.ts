@@ -96,11 +96,12 @@ const _compileFile = async (
       "-e",
       "main",
       "--protocol",
-      "ithaca"
+      "lima"
     );
     if (format === "json") args.push("--michelson-format", "json");
 
     console.debug(`\t🔥 Compiling with LIGO (${ligoVersion})...`);
+    console.debug(args.reduce((p, c) => p + " " + c, ""));
     const ligo = spawn(ligo_executable, args, {});
 
     ligo.on("close", async () => {
@@ -219,14 +220,19 @@ export const compileLambdas = async (
     for (const lambda of lambdas) {
       let func;
       if (factory_path) {
-        if (lambda.name == "add_pool" && factory_path) continue;
+        if (
+          (lambda.name == "add_pool" ||
+            lambda.name == "set_strategy_factory") &&
+          factory_path
+        )
+          continue;
         func = `Bytes.pack(${lambda.name})`;
       } else {
         func = `Set_${type.toLowerCase()}_function(record [index=${
           lambda.index
         }n; func=Bytes.pack(${lambda.name})])`;
       }
-      const params = `'${func}' --michelson-format json --init-file ${init_file} --protocol ithaca`;
+      const params = `'${func}' --michelson-format json --init-file ${init_file} --protocol lima`;
       const command = `${ligo} ${ligo_command} ${config.preferredLigoFlavor} ${params}`;
       const michelson = execSync(command, { maxBuffer: 1024 * 500 }).toString();
 
@@ -292,7 +298,7 @@ export const compileFactoryLambda = (
   const init_file = `$PWD/${config.contractsDirectory}/factory.ligo`;
   try {
     const func = `Bytes.pack(${lambda})`;
-    const params = `'${func}' --michelson-format json --init-file ${init_file} --protocol ithaca`;
+    const params = `'${func}' --michelson-format json --init-file ${init_file} --protocol lima`;
     const command = `${ligo} ${ligo_command} ${config.preferredLigoFlavor} ${params}`;
     const michelson = execSync(command, { maxBuffer: 1024 * 1000 }).toString();
     console.log(lambda + " successfully compiled.");
