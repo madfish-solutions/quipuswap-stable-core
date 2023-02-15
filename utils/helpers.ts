@@ -10,6 +10,8 @@ import BigNumber from "bignumber.js";
 import chalk from "chalk";
 export const tezPrecision = 1e6;
 
+export declare type LambdaType = "Dex" | "Token" | "Admin" | "Dev" | "Strategy";
+
 function stringLiteralArray<T extends string>(a: T[]) {
   return a;
 }
@@ -163,7 +165,7 @@ export async function setupLambdasToStorage(
 export async function setFunctionBatchCompilled(
   tezos: TezosToolkit,
   contract: TezosAddress,
-  type: "Dex" | "Token" | "Admin" | "Dev" | "Strategy",
+  type: LambdaType,
   batchBy: number,
   comp_funcs_map
 ) {
@@ -197,7 +199,7 @@ export async function setFunctionBatchCompilled(
 export async function setFunctionCompilled(
   tezos: TezosToolkit,
   contract: TezosAddress,
-  type: "Dex" | "Token" | "Admin" | "Dev" | "Strategy",
+  type: LambdaType,
   comp_funcs_map
 ) {
   let idx = 0;
