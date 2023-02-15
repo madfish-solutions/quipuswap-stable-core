@@ -84,7 +84,7 @@ export class TokenFA2 implements Token {
       ])
       .send();
 
-    await confirmOperation(this.Tezos, operation.hash);
+    await operation.confirmation(2);
     return operation;
   }
 
@@ -115,7 +115,7 @@ export class TokenFA2 implements Token {
     const operation = await this.contract.methods
       .balance_of({ requests, contract })
       .send();
-    await confirmOperation(this.Tezos, operation.hash);
+    await operation.confirmation(2);
     return operation;
   }
 
@@ -123,7 +123,7 @@ export class TokenFA2 implements Token {
     const operation = await this.contract.methods
       .token_metadata_registry(receiver)
       .send();
-    await confirmOperation(this.Tezos, operation.hash);
+    await operation.confirmation(2);
     return operation;
   }
 
@@ -146,7 +146,7 @@ export class TokenFA2 implements Token {
         })
       )
       .send();
-    await confirmOperation(this.Tezos, operation.hash);
+    await operation.confirmation(2);
     return operation;
   }
 }

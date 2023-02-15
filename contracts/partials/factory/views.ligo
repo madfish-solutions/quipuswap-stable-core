@@ -10,8 +10,16 @@
                         : address is
   s.storage.dev_store.dev_address
 
+[@view] function is_registered_strategy(
+  const strategy        : address;
+  const s               : full_storage_t)
+                        : bool is
+  check_strategy_factory(strategy, s.storage.strategy_factory)
+
+
+
 [@view] function get_pool(
-  const params          : record [ tokens:set(token_t); deployer:address ];
+  const params          : record[ tokens: set(token_t); deployer:address ];
   const s               : full_storage_t)
                         : option(address) is
   block {

@@ -24,6 +24,19 @@ export declare type TokenInfo = {
   reserves: BigNumber;
 };
 
+export declare type TokenStrategyConfiguration = {
+  des_reserves_rate_f: BigNumber;
+  delta_rate_f: BigNumber;
+  min_invest: BigNumber;
+  strategy_reserves: BigNumber;
+  is_rebalance: boolean;
+};
+
+export declare type StrategyStoreType = {
+  strat_contract?: TezosAddress;
+  configuration: MichelsonMap<string, TokenStrategyConfiguration>;
+};
+
 export declare type PairInfo = {
   initial_A_f: BigNumber;
   initial_A_time: Date;
@@ -32,6 +45,7 @@ export declare type PairInfo = {
   tokens_info: MichelsonMap<string, TokenInfo>;
 
   fee: FeeType;
+  strategy: StrategyStoreType;
   staker_accumulator: {
     accumulator_f: MichelsonMap<string, BigNumber>;
     total_staked: BigNumber;
@@ -71,6 +85,7 @@ export declare type DexMainStorage = {
   >;
   dev_store?: DevStorage;
   factory_address?: TezosAddress;
+  strategy_factory?: TezosAddress[];
 };
 
 export declare type DexStorage = {
@@ -79,6 +94,7 @@ export declare type DexStorage = {
   admin_lambdas: MichelsonMap<string, BytesString>;
   dex_lambdas: MichelsonMap<string, BytesString>;
   token_lambdas: MichelsonMap<string, BytesString>;
+  strat_lambdas: MichelsonMap<string, BytesString>;
 };
 
 export declare type RewardsType = {

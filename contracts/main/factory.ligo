@@ -4,6 +4,7 @@
 #define FACTORY
 #include "../partials/fa12/types.ligo"
 #include "../partials/fa2/types.ligo"
+#include "../partials/strategy/types.ligo"
 #include "../partials/dex_core/storage.ligo"
 #include "../partials/admin/types.ligo"
 #include "../partials/dex_core/types.ligo"
@@ -24,12 +25,13 @@ function main(
                         : fact_return_t is
   block {
     case p of [
-    | Set_init_function(params)   -> s.init_func          := set_init_function(params, s)
-    | Set_dev_function(params)    -> s                    := set_function(FDev,    params, s)
-    | Set_admin_function(params)  -> s                    := set_function(FAdmin,  params, s)
-    | Set_dex_function(params)    -> s                    := set_function(FDex,    params, s)
-    | Set_token_function(params)  -> s                    := set_function(FToken,  params, s)
-    | Use_dev(params)             -> s.storage.dev_store  := call_dev(params, s.storage.dev_store)
+    | Set_init_function(params)     -> s.init_func          := set_init_function(params, s)
+    | Set_dev_function(params)      -> s                    := set_function(FDev,    params, s)
+    | Set_admin_function(params)    -> s                    := set_function(FAdmin,  params, s)
+    | Set_dex_function(params)      -> s                    := set_function(FDex,    params, s)
+    | Set_token_function(params)    -> s                    := set_function(FToken,  params, s)
+    | Set_strategy_function(params) -> s                    := set_function(FStrat, params, s)
+    | Use_dev(params)               -> s.storage.dev_store  := call_dev(params, s.storage.dev_store)
     | _ -> skip
     ]
   } with case p of [

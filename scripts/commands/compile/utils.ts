@@ -1,4 +1,4 @@
-import { getLigo } from "../../../utils/helpers";
+import { getLigo, LambdaType } from "../../../utils/helpers";
 import config from "../../../config";
 import fs from "fs";
 import path from "path";
@@ -96,11 +96,12 @@ const _compileFile = async (
       "-e",
       "main",
       "--protocol",
-      "ithaca"
+      "lima"
     );
     if (format === "json") args.push("--michelson-format", "json");
 
     console.debug(`\t🔥 Compiling with LIGO (${ligoVersion})...`);
+    console.debug(args.reduce((p, c) => p + " " + c, ""));
     const ligo = spawn(ligo_executable, args, {});
 
     ligo.on("close", async () => {
@@ -185,25 +186,24 @@ export const compile = async (options) => {
   }
 };
 
+function getLambdasFiles() {
+  return fs
+    .readdirSync(config.lambdasDir)
+    .filter((file) => file.endsWith(".json"))
+    .map((file) => path.join(config.lambdasDir, file));
+}
+
 // Run LIGO compiler
 export const compileLambdas = async (
-  json: string,
   contract: string,
   isDockerizedLigo = config.dockerizedLigo,
-  type: "Dex" | "Token" | "Permit" | "Admin" | "Dev"
+  json?: string
 ) => {
-  console.log(`Compiling ${contract} contract lambdas of ${type} type...\n`);
-
   const test_path = contract.toLowerCase().includes("test");
   const factory_path = contract.toLowerCase().includes("factory");
   const ligo = isDockerizedLigo
     ? `docker run -v $PWD:$PWD --rm -i -w $PWD ligolang/ligo:${config.ligoVersion}`
     : config.ligoLocalPath;
-  const pwd = execSync("echo $PWD").toString();
-  const lambdas = JSON.parse(
-    fs.readFileSync(`${pwd.slice(0, pwd.length - 1)}/${json}`).toString()
-  );
-  const res = [];
   const version = !isDockerizedLigo
     ? execSync(`${ligo} version -version`).toString()
     : config.ligoVersion;
@@ -215,60 +215,90 @@ export const compileLambdas = async (
     ligo_command = "compile expression";
   }
   const init_file = `$PWD/${contract}`;
-  try {
+
+  const lambdaFiles = json ? [json] : getLambdasFiles();
+  const queue: { file: string; func: string; index: number; type: string }[] =
+    [];
+  for (const file of lambdaFiles) {
+    const type = file
+      .slice(file.lastIndexOf("/") + 1, file.length)
+      .split("_")[0];
+
+    const lambdas = JSON.parse(fs.readFileSync(file).toString());
     for (const lambda of lambdas) {
-      let func;
-      if (factory_path) {
-        if (lambda.name == "add_pool" && factory_path) continue;
-        func = `Bytes.pack(${lambda.name})`;
-      } else {
-        func = `Set_${type.toLowerCase()}_function(record [index=${
-          lambda.index
-        }n; func=Bytes.pack(${lambda.name})])`;
-      }
-      const params = `'${func}' --michelson-format json --init-file ${init_file} --protocol ithaca`;
-      const command = `${ligo} ${ligo_command} ${config.preferredLigoFlavor} ${params}`;
-      const michelson = execSync(command, { maxBuffer: 1024 * 500 }).toString();
+      if (
+        factory_path &&
+        (lambda.name == "add_pool" ||
+          lambda.name == "set_strategy_factory" ||
+          type.toLowerCase() == "dev")
+      )
+        continue;
 
-      const bytes = factory_path
-        ? {
-            prim: "Pair",
-            args: [
-              { bytes: JSON.parse(michelson).bytes },
-              { int: lambda.index.toString() },
-            ],
-          }
-        : JSON.parse(michelson).args[0].args[0].args[0];
-      res.push(bytes);
+      const func = `Bytes.pack(${lambda.name})`;
+      queue.push({ file, func, index: lambda.index, type });
+    }
+  }
+  const funcs = queue.map((q) => q.func).join(";");
+  const types: string = [
+    ...queue.reduce((set, q) => set.add(q.type), new Set()),
+  ].join(",");
+  console.log(
+    `Compiling ${contract} contract lambdas of ${types} type${types.includes(",") ? "s" : ""
+    }...\n`
+  );
+  let michelson: string;
+  try {
+    const params = `--michelson-format json --init-file ${init_file} --protocol lima`;
 
-      console.log(
-        lambda.index +
-          1 +
-          "." +
-          " ".repeat(4 - (lambda.index + 1).toString().length) +
-          lambda.name +
-          " ".repeat(21 - lambda.name.length) +
-          " successfully compiled."
-      );
-    }
-    let out_path = "/lambdas";
-    if (test_path) {
-      out_path += "/test";
-    }
-    if (factory_path) {
-      out_path += "/factory";
-    }
-    if (!fs.existsSync(`${config.outputDirectory + out_path}`)) {
-      fs.mkdirSync(`${config.outputDirectory + out_path}`, { recursive: true });
-    }
-    const json_file_path = json.split("/");
-    const file_name = json_file_path[json_file_path.length - 1];
-    const save_path = `${config.outputDirectory + out_path}/${file_name}`;
-    fs.writeFileSync(save_path, JSON.stringify(res));
-    console.log(`Saved to ${save_path}`);
+    const command = `${ligo} ${ligo_command} ${config.preferredLigoFlavor} 'list [${funcs}]' ${params}`;
+    michelson = execSync(command, {
+      maxBuffer: 2048 * 2048,
+    }).toString();
   } catch (e) {
     console.error(e);
+    throw e;
   }
+  console.log("Compiled successfully");
+  const compiledBytesMap = JSON.parse(michelson).map(
+    (comp_res: { bytes: string }, idx: number) => {
+      const file = queue[idx].file.slice(
+        queue[idx].file.lastIndexOf("/") + 1,
+        queue[idx].file.length
+      );
+      return { ...queue[idx], file, bytes: comp_res.bytes };
+    }
+  );
+  const outputs = new Map();
+  for (const entry of compiledBytesMap) {
+    const bytes = {
+      prim: "Pair",
+      args: [{ bytes: entry.bytes }, { int: entry.index.toString() }],
+    };
+    if (outputs.has(entry.file))
+      outputs.set(entry.file, [...outputs.get(entry.file), bytes]);
+    else outputs.set(entry.file, [bytes]);
+  }
+  outputs.forEach((val, filename) => {
+    try {
+      let out_path = "/lambdas";
+      if (test_path) {
+        out_path += "/test";
+      }
+      if (factory_path) {
+        out_path += "/factory";
+      }
+      if (!fs.existsSync(`${config.outputDirectory + out_path}`)) {
+        fs.mkdirSync(`${config.outputDirectory + out_path}`, {
+          recursive: true,
+        });
+      }
+      const save_path = `${config.outputDirectory + out_path}/${filename}`;
+      fs.writeFileSync(save_path, JSON.stringify(val));
+      console.log(`Saved to ${save_path}`);
+    } catch (e) {
+      console.error(e);
+    }
+  });
 };
 
 export const compileFactoryLambda = (
@@ -292,7 +322,7 @@ export const compileFactoryLambda = (
   const init_file = `$PWD/${config.contractsDirectory}/factory.ligo`;
   try {
     const func = `Bytes.pack(${lambda})`;
-    const params = `'${func}' --michelson-format json --init-file ${init_file} --protocol ithaca`;
+    const params = `'${func}' --michelson-format json --init-file ${init_file} --protocol lima`;
     const command = `${ligo} ${ligo_command} ${config.preferredLigoFlavor} ${params}`;
     const michelson = execSync(command, { maxBuffer: 1024 * 1000 }).toString();
     console.log(lambda + " successfully compiled.");

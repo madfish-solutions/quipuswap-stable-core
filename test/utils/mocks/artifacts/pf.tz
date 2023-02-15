@@ -1,0 +1,43 @@
+{ parameter
+    (or (or (unit %default) (set %getPrice nat))
+        (pair %setPrice (nat %token_id) (nat %price))) ;
+  storage (pair (address %yToken) (big_map %prices nat nat)) ;
+  code { UNPAIR ;
+         IF_LEFT
+           { IF_LEFT
+               { DROP 2 ; PUSH string "42" ; FAILWITH }
+               { DUP 2 ;
+                 NIL operation ;
+                 DIG 2 ;
+                 ITER { SWAP ;
+                        PUSH string "wrong Yupana pCb entrypoint" ;
+                        DUP 5 ;
+                        CAR ;
+                        CONTRACT %priceCallback (pair (nat %tokenId) (nat %amount)) ;
+                        IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                        PUSH mutez 0 ;
+                        DUP 6 ;
+                        CDR ;
+                        DUP 5 ;
+                        GET ;
+                        IF_NONE { PUSH nat 1000000 } {} ;
+                        DIG 4 ;
+                        PAIR ;
+                        TRANSFER_TOKENS ;
+                        CONS } ;
+                 DIG 2 ;
+                 DROP ;
+                 PAIR } }
+           { DUP 2 ;
+             DIG 2 ;
+             CDR ;
+             DUP 3 ;
+             CDR ;
+             SOME ;
+             DIG 3 ;
+             CAR ;
+             UPDATE ;
+             UPDATE 2 ;
+             NIL operation ;
+             PAIR } } }
+

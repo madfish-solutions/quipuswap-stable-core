@@ -47,7 +47,7 @@ based on the argument type.
   var s                 : full_storage_t)
                         : full_storage_t is
   block {
-    assert(Tezos.sender = s.storage.factory_address);
+    assert(Tezos.get_sender() = s.storage.factory_address);
     case p of [
     | Copy_dex_function(lambda)   -> s.dex_lambdas := lambda
     | Freeze -> s.storage.started := not s.storage.started

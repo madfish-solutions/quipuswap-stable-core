@@ -1,4 +1,4 @@
-type func_entry_t       is FAdmin | FDex | FToken | FDev
+type func_entry_t       is FAdmin | FDex | FToken | FDev | FStrat
 
 type staker_info_req_t  is [@layout:comb] record [
   user                    : address;
@@ -149,6 +149,7 @@ type factory_action_t   is
 
 type full_action_t      is
 | Use_admin               of admin_action_t
+| Use_strategy            of strategy_action_t
 | User_action             of user_action_t
 #if !FACTORY
 | Use_dev                 of dev_action_t
@@ -159,6 +160,7 @@ type full_action_t      is
 | Set_token_function      of set_lambda_func_t
 (*  sets the FA function, is used before the whole system is launched *)
 | Set_dev_function        of set_lambda_func_t
+| Set_strategy_function   of set_lambda_func_t
 #else
 | Factory_action          of factory_action_t
 #endif

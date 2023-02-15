@@ -23,9 +23,9 @@ function get_A(
                         : nat is
   block {
     var a := a1;
-    if Tezos.now < t1
+    if Tezos.get_now() < t1
     then {
-      const t_num = nat_or_error(Tezos.now - t0, Errors.Dex.timestamp_error);
+      const t_num = nat_or_error(Tezos.get_now() - t0, Errors.Dex.timestamp_error);
       const t_den = nat_or_error(t1 - t0, Errors.Dex.timestamp_error);
       const diff = abs(a1 - a0);
       const value = diff * t_num / t_den;
@@ -342,7 +342,7 @@ function add_liq(
     const init_tokens_info = pool.tokens_info;
     const d0 = get_D_mem(init_tokens_info, amp_f);
     const token_supply = pool.total_supply;
-
+    const referral = unwrap_or(params.referral, s.default_referral);
     function add_inputs(
       const key         : token_pool_idx_t;
       var token_info    : token_info_t)
@@ -370,7 +370,7 @@ function add_liq(
         unwrap(s.tokens[params.pool_id], Errors.Dex.pool_not_listed),
         pool.fee,
         get_dev_fee(s),
-        unwrap_or(params.referral, s.default_referral),
+        referral,
         record [
           dev_rewards = s.dev_rewards;
           referral_rewards = s.referral_rewards;
@@ -404,20 +404,33 @@ function add_liq(
                         : list(operation) is
       if input.1 > 0n
       then typed_transfer(
-        Tezos.sender,
-        Tezos.self_address,
+        Tezos.get_sender(),
+        Tezos.get_self_address(),
         input.1,
         get_token_by_id(input.0, tokens[params.pool_id])
       ) # operations
       else operations;
 
     pool.total_supply := pool.total_supply + mint_amount;
+    const (rebalance_ops, strategy_store) = operate_with_strategy(
+      pool.tokens_info,
+      tokens[params.pool_id],
+      pool.strategy,
+      False
+    );
+    pool.strategy := strategy_store;
+    s.pools[params.pool_id] := pool;
 
-    const receiver = unwrap_or(params.receiver, Tezos.sender);
+    const receiver = unwrap_or(params.receiver, Tezos.get_sender());
     const user_key = (receiver, params.pool_id);
     const share = unwrap_or(s.ledger[user_key], 0n);
     const new_shares = share + mint_amount;
-
     s.ledger[user_key] := new_shares;
-    s.pools[params.pool_id] := pool;
-  } with record[ op = Map.fold(transfer_to_pool, params.inputs, Constants.no_operations); s = s ]
+    const event_params: invest_event_t = record[
+      pool_id = params.pool_id;
+      inputs = params.inputs;
+      shares_minted = mint_amount;
+      receiver = receiver;
+      referral = referral;
+    ];
+  } with record[ op = emit_event(InvestEvent(event_params)) # Map.fold(transfer_to_pool, params.inputs, rebalance_ops); s = s ]

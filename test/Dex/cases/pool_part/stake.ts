@@ -23,7 +23,7 @@ export async function stakeToPoolSuccessCase(
     .then((balance) => balance.get([staker, pool_id.toString()]))
     .then((value) => (value ? value.balance : new BigNumber(0)));
   const op = await dex.contract.methods.stake("add", pool_id, input).send();
-  await confirmOperation(Tezos, op.hash);
+  await op.confirmation(2);
   await dex.updateStorage({ pools: [pool_id.toString()] });
   const upd_total_stake =
     dex.storage.storage.pools[pool_id.toNumber()].staker_accumulator
@@ -59,7 +59,7 @@ export async function unstakeFromPoolSuccessCase(
     .then((balance) => balance.get([staker, pool_id.toString()]))
     .then((value) => (value ? value.balance : new BigNumber(0)));
   const op = await dex.contract.methods.stake("remove", pool_id, output).send();
-  await confirmOperation(Tezos, op.hash);
+  await op.confirmation(2);
   await dex.updateStorage({ pools: [pool_id.toString()] });
   const upd_total_stake =
     dex.storage.storage.pools[pool_id.toNumber()].staker_accumulator

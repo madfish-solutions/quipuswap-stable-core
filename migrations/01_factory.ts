@@ -9,6 +9,7 @@ import {
 } from "../utils/helpers";
 import { validateAddress, validateContractAddress } from "@taquito/utils";
 import dev_lambdas_comp from "../build/lambdas/Dev_lambdas.json";
+import strat_lambdas_comp from "../build/lambdas/Strategy_lambdas.json";
 import { DexFactoryAPI as DexFactory } from "../test/Factory/API";
 import chalk from "chalk";
 import storage from "../storage/factory";
@@ -34,6 +35,7 @@ module.exports = async (tezos: TezosToolkit, network: NetworkLiteral) => {
   storage.storage.dev_store.dev_lambdas = await setupLambdasToStorage(
     dev_lambdas_comp
   );
+  storage.strat_lambdas = await setupLambdasToStorage(strat_lambdas_comp);
   const contractAddress: TezosAddress = await migrate(
     tezos,
     config.outputDirectory,
@@ -44,8 +46,6 @@ module.exports = async (tezos: TezosToolkit, network: NetworkLiteral) => {
   console.log(
     `Factory contract: ${chalk.bgYellow.bold.redBright(contractAddress)}`
   );
-  const dex_f: DexFactory = await DexFactory.init(tezos, contractAddress);
-  await dex_f.setDevAddress(process.env.ADMIN_ADDRESS, tezos);
   console.log(
     `Factory is ${chalk.green(
       "online"

@@ -47,10 +47,12 @@ const factoryDefaultStorage: FactoryStorage = {
     quipu_rewards: new BigNumber("0"),
     whitelist: [] as TezosAddress[],
     deployers: new MichelsonMap(),
+    strategy_factory: "tz1ZZZZZZZZZZZZZZZZZZZZZZZZZZZZNkiRg",
   } as InnerFactoryStore,
   admin_lambdas: new MichelsonMap(),
   dex_lambdas: new MichelsonMap(),
   token_lambdas: new MichelsonMap(),
+  strat_lambdas: new MichelsonMap(),
   metadata: metadata,
 };
 

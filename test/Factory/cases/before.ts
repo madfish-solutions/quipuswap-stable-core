@@ -10,6 +10,7 @@ import dev_lambdas_comp from "../../../build/lambdas/test/Dev_lambdas.json";
 import dex_lambdas_comp from "../../../build/lambdas/test/Dex_lambdas.json";
 import token_lambdas_comp from "../../../build/lambdas/test/Token_lambdas.json";
 import admin_lambdas_comp from "../../../build/lambdas/test/Admin_lambdas.json";
+import strat_lambdas_comp from "../../../build/lambdas/test/Strategy_lambdas.json";
 import { defaultTokenId, TokenFA2 } from "../../Token";
 import { setupQuipuGovToken } from "../../utils/tokensSetups";
 import { accounts, dev_fee } from "../../../utils/constants";
@@ -28,17 +29,10 @@ export async function setupFactoryEnvironment(
   factory: DexFactory;
   // tokens: TokensMap;
   quipuToken: TokenFA2;
-  lambdaContractAddress: string;
 }> {
   const config = await prepareProviderOptions(developer);
   Tezos.setProvider(config);
-  const op = await Tezos.contract.originate({
-    code: VIEW_LAMBDA.code,
-    storage: VIEW_LAMBDA.storage,
-  });
-  await confirmOperation(Tezos, op.hash);
   const quipuToken = await setupQuipuGovToken(Tezos);
-  const lambdaContractAddress = op.contractAddress;
   storage.storage.dev_store = {
     dev_address: accounts[developer].pkh,
     dev_fee_f: new BigNumber(0),
@@ -64,5 +58,5 @@ export async function setupFactoryEnvironment(
     chalk.bold.underline(fact_op.contractAddress)
   );
   const factory = await DexFactory.init(Tezos, fact_op.contractAddress);
-  return { factory, quipuToken, lambdaContractAddress };
+  return { factory, quipuToken };
 }

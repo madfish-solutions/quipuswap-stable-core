@@ -26,10 +26,12 @@ const dex_storage: DexStorage = {
       dev_lambdas: new MichelsonMap(),
     },
     factory_address: null as TezosAddress,
+    strategy_factory: null as TezosAddress[],
   },
   metadata: new MichelsonMap(),
   admin_lambdas: new MichelsonMap(),
   dex_lambdas: new MichelsonMap(),
   token_lambdas: new MichelsonMap(),
+  strat_lambdas: new MichelsonMap(),
 };
 export default dex_storage;

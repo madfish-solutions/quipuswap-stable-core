@@ -23,7 +23,7 @@ type pool_init_param_t  is [@layout:comb] record [
   tokens_info             : map(token_pool_idx_t, token_prec_info_t);
   default_referral        : address;
   managers                : set(address);
-  fees                    : fees_storage_t
+  fees                    : fees_storage_t;
 ]
 
 type inner_store_t      is [@layout:comb] record[
@@ -36,6 +36,7 @@ type inner_store_t      is [@layout:comb] record[
   quipu_token             : fa2_token_t;
   quipu_rewards           : nat;
   whitelist               : set(address);
+  strategy_factory        : set(address);
 ]
 
 type full_storage_t     is [@layout:comb] record [
@@ -43,12 +44,14 @@ type full_storage_t     is [@layout:comb] record [
   admin_lambdas           : big_map(nat, bytes); (* map with admin-related functions code *)
   dex_lambdas             : big_map(nat, bytes); (* map with exchange-related functions code *)
   token_lambdas           : big_map(nat, bytes); (* map with token-related functions code *)
+  strat_lambdas           : big_map(nat, bytes); (* map with strategy-related functions code *)
   init_func               : option(bytes);
   metadata                : big_map(string, bytes); (* TZIP-16 metadata *)
 ]
 
 type use_factory_t      is
-| Set_whitelist           of set_man_param_t
+| Set_whitelist           of set_cand_param_t
+| Set_strategy_factory    of set_cand_param_t
 | Set_burn_rate           of nat
 | Set_price               of nat
 | Claim_rewards           of unit
@@ -60,6 +63,8 @@ type fact_action_t      is
 | Set_dev_function        of set_lambda_func_t
 | Set_admin_function      of set_lambda_func_t
 (*  sets the admin specific function, is used before the whole system is launched *)
+| Set_strategy_function   of set_lambda_func_t
+(*  sets the strategy connectors functions, is used before the whole system is launched *)
 | Set_dex_function        of set_lambda_func_t
 (*  sets the dex specific function, is used before the whole system is launched *)
 | Set_token_function      of set_lambda_func_t

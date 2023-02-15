@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { compile, compileFactoryLambda, compileLambdas } from "./utils";
 import config from "../../../config";
+import { LambdaType } from "../../../utils/helpers";
 
 export const addCompileCommand = (program: Command) => {
   program
@@ -35,14 +36,13 @@ export const addCompileLambdaCommand = (program: Command) => {
   program
     .command("compile-lambda")
     .description("compile lambdas for the specified contract")
-    .requiredOption("-T, --type <type>", "Type of contracts lambdas")
-    .requiredOption(
-      "-J, --json <json>",
-      "input file relative path (with lambdas indexes and names)"
-    )
     .requiredOption(
       "-C, --contract <contract>",
       "input file realtive path (with lambdas Ligo code)"
+    )
+    .option(
+      "-J, --json <json>",
+      "input file relative path (with lambdas indexes and names)"
     )
     .option("-d, --docker", "Run compiler in Docker", config.dockerizedLigo)
     .option(
@@ -51,9 +51,10 @@ export const addCompileLambdaCommand = (program: Command) => {
       !config.dockerizedLigo
     )
     .showHelpAfterError(true)
-    .action(async (argv) => {
-      compileLambdas(argv.json, argv.contract, argv.docker, argv.type);
-    });
+    .action(
+      async (argv: { json?: string; contract: string; docker: boolean }) =>
+        compileLambdas(argv.contract, argv.docker, argv.json)
+    );
 };
 
 export const addCompileFactoryLambda = (program: Command) => {

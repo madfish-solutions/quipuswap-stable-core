@@ -24,6 +24,7 @@ token_e = ("fa12", token_e_address)
 factory = "KT1LzyPS8rN375tC31WPAVHaQ4HyBvTSLwBu"
 quipu_token = "KT1LzyPS8rN375tC31WPAVHaQ4HyBvTSLwBu"
 price_feed = "KT1Qf46j2x37sAN4t2MKRQRVt9gc4FZ5duMs"
+strategy_address = "KT1TxqZ8QtKvLu3V3JH7Gx58n7Co8pgtpQU5"
 
 fee_collector = "tz1MDhGTfMQjtMYFXeasKzRWzkQKPtXEkSEw"
 dummy_sig = "sigY3oZknG7z2N9bj5aWVtdZBakTviKnwbSYTecbbT2gwQDrnLRNhP5KDcLroggq71AjXWkx27nSLfS8rodS4DYn14FyueS5"

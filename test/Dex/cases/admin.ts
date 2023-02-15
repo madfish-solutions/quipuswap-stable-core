@@ -8,6 +8,10 @@ export {
   setDevAddrSuccessCase,
   setDevFeeSuccessCase,
 } from "../../Developer/cases";
+export {
+  addStrategyFactorySuccessCase,
+  removeStrategyFactorySuccessCase,
+} from "../../Strategy/cases";
 
 export async function setAdminSuccessCase(
   dex: Dex,
@@ -24,7 +28,7 @@ export async function setAdminSuccessCase(
   expect(admin).not.toStrictEqual(initAdmin);
 
   expect(sender_address).toStrictEqual(initAdmin);
-  await dex.setAdmin(admin, Tezos);
+  await dex.setAdmin(admin);
 
   await dex.updateStorage({});
   const updatedAdmin = dex.storage.storage.admin;
@@ -46,7 +50,7 @@ export async function updateManagersSuccessCase(
   // initManagers includes manager if want to remove and not includes if add
   expect(initManagers.includes(manager)).not.toBe(add);
 
-  await dex.addRemManager(add, manager, Tezos);
+  await dex.addRemManager(add, manager);
 
   await dex.updateStorage({});
   const updatedManagers = dex.storage.storage.managers;
@@ -66,7 +70,7 @@ export async function setDefaultRefSuccessCase(
   const initRef = dex.storage.storage.default_referral;
   expect(ref).not.toStrictEqual(initRef);
 
-  await dex.setDefaultReferral(ref, Tezos);
+  await dex.setDefaultReferral(ref);
 
   await dex.updateStorage({});
   const updatedDev = dex.storage.storage.default_referral;

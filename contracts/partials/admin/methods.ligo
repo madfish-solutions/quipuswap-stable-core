@@ -10,7 +10,10 @@
 
     case p of [
     | Claim_developer(_) -> skip // Claim_developer has own inner check for developer address
-    | _ -> require(Tezos.sender = s.storage.admin, Errors.Dex.not_contract_admin)
+#if !FACTORY
+    | Set_strategy_factory(_)-> skip
+#endif
+    | _ -> require(Tezos.get_sender() = s.storage.admin, Errors.Dex.not_contract_admin)
     ];
 
     const idx : nat = case p of [
@@ -24,6 +27,7 @@
     | Set_default_referral(_) -> 6n
 #if !FACTORY
     | Add_pool(_)             -> 7n
+    | Set_strategy_factory(_) -> 8n
 #endif
     ];
 
