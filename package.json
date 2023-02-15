@@ -33,24 +33,24 @@
     "compile-contract": "yarn cli compile -F json",
 
     "compile-lambda-standalone": "yarn -s cli compile-lambda -C ./contracts/main/dex.ligo",
-    "compile-lambda-dex": "yarn -s compile-lambda-standalone -T Dex -J ./contract_lambdas/Dex_lambdas.json",
-    "compile-lambda-dev": "yarn -s compile-lambda-standalone -T Dev -J ./contract_lambdas/Dev_lambdas.json",
-    "compile-lambda-token": " yarn -s compile-lambda-standalone -T Token -J ./contract_lambdas/Token_lambdas.json",
-    "compile-lambda-admin": "yarn -s compile-lambda-standalone -T Admin -J ./contract_lambdas/Admin_lambdas.json",
-    "compile-lambda-strategy": " yarn -s compile-lambda-standalone -T Strategy -J ./contract_lambdas/Strategy_lambdas.json",
+    "compile-lambda-dex": "yarn -s compile-lambda-standalone -J ./contract_lambdas/Dex_lambdas.json",
+    "compile-lambda-dev": "yarn -s compile-lambda-standalone -J ./contract_lambdas/Dev_lambdas.json",
+    "compile-lambda-token": " yarn -s compile-lambda-standalone -J ./contract_lambdas/Token_lambdas.json",
+    "compile-lambda-admin": "yarn -s compile-lambda-standalone -J ./contract_lambdas/Admin_lambdas.json",
+    "compile-lambda-strategy": " yarn -s compile-lambda-standalone -J ./contract_lambdas/Strategy_lambdas.json",
 
     "compile-lambda-factory": "yarn -s cli compile-lambda -C ./contracts/main/dex4factory.ligo",
-    "compile-lambda-dex-factory": "yarn -s compile-lambda-factory -T Dex -J ./contract_lambdas/Dex_lambdas.json",
-    "compile-lambda-token-factory": "yarn -s compile-lambda-factory -T Token -J ./contract_lambdas/Token_lambdas.json",
-    "compile-lambda-admin-factory": "yarn -s compile-lambda-factory -T Admin -J ./contract_lambdas/Admin_lambdas.json",
-    "compile-lambda-strategy-factory": " yarn -s compile-lambda-factory -T Strategy -J ./contract_lambdas/Strategy_lambdas.json",
+    "compile-lambda-dex-factory": "yarn -s compile-lambda-factory -J ./contract_lambdas/Dex_lambdas.json",
+    "compile-lambda-token-factory": "yarn -s compile-lambda-factory -J ./contract_lambdas/Token_lambdas.json",
+    "compile-lambda-admin-factory": "yarn -s compile-lambda-factory -J ./contract_lambdas/Admin_lambdas.json",
+    "compile-lambda-strategy-factory": " yarn -s compile-lambda-factory -J ./contract_lambdas/Strategy_lambdas.json",
 
     "compile-lambda-test": "yarn -s cli compile-lambda -C ./contracts/main/dex_test.ligo",
-    "compile-lambda-dex-test": "yarn -s compile-lambda-test -T Dex -J ./contract_lambdas/Dex_lambdas.json",
-    "compile-lambda-dev-test": "yarn -s compile-lambda-test -T Dev -J ./contract_lambdas/Dev_lambdas.json",
-    "compile-lambda-token-test": "yarn -s compile-lambda-test -T Token -J ./contract_lambdas/Token_lambdas.json",
-    "compile-lambda-admin-test": "yarn -s compile-lambda-test -T Admin -J ./contract_lambdas/Admin_lambdas.json",
-    "compile-lambda-strategy-test": " yarn -s compile-lambda-test -T Strategy -J ./contract_lambdas/Strategy_lambdas.json",
+    "compile-lambda-dex-test": "yarn -s compile-lambda-test -J ./contract_lambdas/Dex_lambdas.json",
+    "compile-lambda-dev-test": "yarn -s compile-lambda-test -J ./contract_lambdas/Dev_lambdas.json",
+    "compile-lambda-token-test": "yarn -s compile-lambda-test -J ./contract_lambdas/Token_lambdas.json",
+    "compile-lambda-admin-test": "yarn -s compile-lambda-test -J ./contract_lambdas/Admin_lambdas.json",
+    "compile-lambda-strategy-test": " yarn -s compile-lambda-test -J ./contract_lambdas/Strategy_lambdas.json",
 
     "precompile-dex": "yarn compile-lambda-standalone",
     "compile-dex": "yarn compile-contract -c dex",
@@ -66,7 +66,7 @@
 
     "migrate": "yarn cli migrate",
     "test": "jest",
-    
+
     "precompile-n-test": "yarn compile-for-test && yarn start-sandbox && sleep 10",
     "compile-n-test": "yarn test",
     "postcompile-n-test": "yarn stop-sandbox",

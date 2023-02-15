@@ -40,7 +40,6 @@ export const addCompileLambdaCommand = (program: Command) => {
       "-C, --contract <contract>",
       "input file realtive path (with lambdas Ligo code)"
     )
-    .option("-T, --type <type>", "Type of contracts lambdas")
     .option(
       "-J, --json <json>",
       "input file relative path (with lambdas indexes and names)"
@@ -53,12 +52,8 @@ export const addCompileLambdaCommand = (program: Command) => {
     )
     .showHelpAfterError(true)
     .action(
-      async (argv: {
-        type?: LambdaType;
-        json?: string;
-        contract: string;
-        docker: boolean;
-      }) => compileLambdas(argv.contract, argv.docker, argv.type, argv.json)
+      async (argv: { json?: string; contract: string; docker: boolean }) =>
+        compileLambdas(argv.contract, argv.docker, argv.json)
     );
 };
 
