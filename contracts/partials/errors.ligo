@@ -73,4 +73,6 @@ module Strategy is {
   const wrong_params              : string = "wrong-connect-params-strategy";
   const already_connected         : string = "token-strategy-connected";
   const nothing_to_rebalance      : string = "nothing-to-rebalance";
+  const no_deposit_view           : string = "no-deposit-view";
+  const no_should_rebalance_view  : string = "no-should-rebalance-view";
 }

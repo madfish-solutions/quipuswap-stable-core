@@ -412,13 +412,13 @@ function add_liq(
       else operations;
 
     pool.total_supply := pool.total_supply + mint_amount;
-    const (rebalance_ops, strategy_store) = operate_with_strategy(
-      pool.tokens_info,
-      tokens[params.pool_id],
-      pool.strategy,
-      False
-    );
-    pool.strategy := strategy_store;
+    const rebalance_ops = case check_rebalansing_strategy(
+            pool.strategy,
+            map_reserves(pool.tokens_info)
+          ) of [
+        | Some(op) -> op # Constants.no_operations
+        | None -> Constants.no_operations
+      ];
     s.pools[params.pool_id] := pool;
 
     const receiver = unwrap_or(params.receiver, Tezos.get_sender());

@@ -23,6 +23,13 @@ type init_param_t       is [@layout:comb] record [
 ]
 #endif
 
+type approve_spending_param_t is [@layout:comb] record [
+  pool_id                 : nat;
+  token_id                : nat;
+  spender                 : address;
+  amount                  : nat;
+]
+
 type admin_action_t     is
 | Add_rem_managers        of set_cand_param_t
 | Set_admin               of address
@@ -31,6 +38,7 @@ type admin_action_t     is
 | Stop_ramp_A             of nat
 | Set_fees                of set_fee_param_t
 | Set_default_referral    of address
+| Approve_spending        of approve_spending_param_t
 #if !FACTORY
 | Add_pool                of init_param_t          (* sets initial liquidity *)
 | Set_strategy_factory    of set_cand_param_t

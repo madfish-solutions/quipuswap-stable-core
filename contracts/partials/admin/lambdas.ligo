@@ -143,3 +143,24 @@ function claim_dev(
     ]
   } with (operations, s)
 
+(* [Dis-]Approve spending of pool tokens *)
+function approve_spending(
+  const p               : admin_action_t;
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    var operations: list(operation) := Constants.no_operations;
+    case p of [
+    | Approve_spending(params) -> {
+      const tokens : tokens_map_t = unwrap(s.tokens[params.pool_id], Errors.Dex.pool_not_listed);
+
+      operations := typed_approve(
+        Tezos.get_self_address(),
+        params.spender,
+        params.amount,
+        unwrap(tokens[params.token_id], Errors.Dex.wrong_index)
+      ) # operations;
+    }
+    | _ -> unreachable(Unit)
+    ]
+  } with (operations, s)

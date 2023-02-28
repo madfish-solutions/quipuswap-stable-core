@@ -2,31 +2,21 @@
     (or (or (or %factory_action (big_map %copy_dex_function nat bytes) (unit %freeze))
             (or %use_admin
                (or (or (pair %add_rem_managers (bool %add) (address %candidate))
-                       (pair %claim_developer
-                          (or %token (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                       (pair %approve_spending
+                          (nat %pool_id)
+                          (nat %token_id)
+                          (address %spender)
                           (nat %amount)))
-                   (or (pair %ramp_A (nat %pool_id) (nat %future_A) (timestamp %future_time))
-                       (address %set_admin)))
-               (or (or (address %set_default_referral)
-                       (pair %set_fees (nat %pool_id) (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f))))
-                   (nat %stop_ramp_A))))
+                   (or (pair %claim_developer
+                          (or %token (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                          (nat %amount))
+                       (pair %ramp_A (nat %pool_id) (nat %future_A) (timestamp %future_time))))
+               (or (or (address %set_admin) (address %set_default_referral))
+                   (or (pair %set_fees (nat %pool_id) (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f)))
+                       (nat %stop_ramp_A)))))
         (or (or %use_strategy
-               (or (or (pair %connect_strategy (nat %pool_id) (option %strategy_contract address))
-                       (pair %connect_token_strategy
-                          (nat %pool_id)
-                          (nat %pool_token_id)
-                          (nat %lending_market_id)))
-                   (or (pair %rebalance (nat %pool_id) (set %pool_token_ids nat))
-                       (pair %set_token_strategy
-                          (nat %pool_id)
-                          (nat %pool_token_id)
-                          (nat %des_reserves_rate_f)
-                          (nat %delta_rate_f)
-                          (nat %min_invest))))
-               (pair %set_token_strategy_rebalance
-                  (nat %pool_id)
-                  (nat %pool_token_id)
-                  (bool %flag)))
+               (pair %connect_strategy (nat %pool_id) (option %strategy_contract address))
+               (pair %rebalance (nat %pool_id) (set %pool_token_ids nat)))
             (or %user_action
                (or %use_dex
                   (or (or (pair %claim_referral
@@ -104,16 +94,7 @@
                          nat
                          (pair (nat %rate_f) (nat %precision_multiplier_f) (nat %reserves)))
                       (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f))
-                      (pair %strategy
-                         (option %strat_contract address)
-                         (map %configuration
-                            nat
-                            (pair (nat %des_reserves_rate_f)
-                                  (nat %delta_rate_f)
-                                  (nat %min_invest)
-                                  (nat %strategy_reserves)
-                                  (bool %is_rebalance)
-                                  (bool %connected))))
+                      (option %strategy address)
                       (pair %staker_accumulator
                          (map %accumulator_f nat nat)
                          (map %total_fees nat nat)
@@ -194,8 +175,6 @@
                              COMPARE ;
                              EQ ;
                              IF { DROP } { FAILWITH } }
-                           { DIG 5 ; DROP 2 } }
-                       { IF_LEFT
                            { DROP ;
                              DIG 4 ;
                              DUP 3 ;
@@ -204,7 +183,9 @@
                              SENDER ;
                              COMPARE ;
                              EQ ;
-                             IF { DROP } { FAILWITH } }
+                             IF { DROP } { FAILWITH } } }
+                       { IF_LEFT
+                           { DIG 5 ; DROP 2 }
                            { DROP ;
                              DIG 4 ;
                              DUP 3 ;
@@ -234,25 +215,35 @@
                              COMPARE ;
                              EQ ;
                              IF { DROP } { FAILWITH } } }
-                       { DROP ;
-                         DIG 4 ;
-                         DUP 3 ;
-                         CAR ;
-                         CAR ;
-                         SENDER ;
-                         COMPARE ;
-                         EQ ;
-                         IF { DROP } { FAILWITH } } } ;
+                       { IF_LEFT
+                           { DROP ;
+                             DIG 4 ;
+                             DUP 3 ;
+                             CAR ;
+                             CAR ;
+                             SENDER ;
+                             COMPARE ;
+                             EQ ;
+                             IF { DROP } { FAILWITH } }
+                           { DROP ;
+                             DIG 4 ;
+                             DUP 3 ;
+                             CAR ;
+                             CAR ;
+                             SENDER ;
+                             COMPARE ;
+                             EQ ;
+                             IF { DROP } { FAILWITH } } } } ;
                  DUP 2 ;
                  GET 5 ;
                  DUP 2 ;
                  IF_LEFT
                    { IF_LEFT
-                       { IF_LEFT { DROP ; PUSH nat 0 } { DROP ; PUSH nat 2 } }
-                       { IF_LEFT { DROP ; PUSH nat 3 } { DROP ; PUSH nat 1 } } }
+                       { IF_LEFT { DROP ; PUSH nat 0 } { DROP ; PUSH nat 7 } }
+                       { IF_LEFT { DROP ; PUSH nat 2 } { DROP ; PUSH nat 3 } } }
                    { IF_LEFT
-                       { IF_LEFT { DROP ; PUSH nat 6 } { DROP ; PUSH nat 5 } }
-                       { DROP ; PUSH nat 4 } } ;
+                       { IF_LEFT { DROP ; PUSH nat 1 } { DROP ; PUSH nat 6 } }
+                       { IF_LEFT { DROP ; PUSH nat 5 } { DROP ; PUSH nat 4 } } } ;
                  GET ;
                  IF_NONE { DIG 3 ; FAILWITH } { DIG 4 ; DROP } ;
                  DIG 3 ;
@@ -260,14 +251,18 @@
                  UNPACK
                    (lambda
                       (pair (or (or (or (pair %add_rem_managers (bool %add) (address %candidate))
-                                        (pair %claim_developer
-                                           (or %token (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                                        (pair %approve_spending
+                                           (nat %pool_id)
+                                           (nat %token_id)
+                                           (address %spender)
                                            (nat %amount)))
-                                    (or (pair %ramp_A (nat %pool_id) (nat %future_A) (timestamp %future_time))
-                                        (address %set_admin)))
-                                (or (or (address %set_default_referral)
-                                        (pair %set_fees (nat %pool_id) (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f))))
-                                    (nat %stop_ramp_A)))
+                                    (or (pair %claim_developer
+                                           (or %token (address %fa12) (pair %fa2 (address %token_address) (nat %token_id)))
+                                           (nat %amount))
+                                        (pair %ramp_A (nat %pool_id) (nat %future_A) (timestamp %future_time))))
+                                (or (or (address %set_admin) (address %set_default_referral))
+                                    (or (pair %set_fees (nat %pool_id) (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f)))
+                                        (nat %stop_ramp_A))))
                             (address %admin)
                             (address %default_referral)
                             (set %managers address)
@@ -286,16 +281,7 @@
                                         nat
                                         (pair (nat %rate_f) (nat %precision_multiplier_f) (nat %reserves)))
                                      (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f))
-                                     (pair %strategy
-                                        (option %strat_contract address)
-                                        (map %configuration
-                                           nat
-                                           (pair (nat %des_reserves_rate_f)
-                                                 (nat %delta_rate_f)
-                                                 (nat %min_invest)
-                                                 (nat %strategy_reserves)
-                                                 (bool %is_rebalance)
-                                                 (bool %connected))))
+                                     (option %strategy address)
                                      (pair %staker_accumulator
                                         (map %accumulator_f nat nat)
                                         (map %total_fees nat nat)
@@ -336,16 +322,7 @@
                                         nat
                                         (pair (nat %rate_f) (nat %precision_multiplier_f) (nat %reserves)))
                                      (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f))
-                                     (pair %strategy
-                                        (option %strat_contract address)
-                                        (map %configuration
-                                           nat
-                                           (pair (nat %des_reserves_rate_f)
-                                                 (nat %delta_rate_f)
-                                                 (nat %min_invest)
-                                                 (nat %strategy_reserves)
-                                                 (bool %is_rebalance)
-                                                 (bool %connected))))
+                                     (option %strategy address)
                                      (pair %staker_accumulator
                                         (map %accumulator_f nat nat)
                                         (map %total_fees nat nat)
@@ -399,33 +376,15 @@
                  DUP 2 ;
                  GET 10 ;
                  DUP 2 ;
-                 IF_LEFT
-                   { IF_LEFT
-                       { IF_LEFT { DROP ; PUSH nat 0 } { DROP ; PUSH nat 1 } }
-                       { IF_LEFT { DROP ; PUSH nat 4 } { DROP ; PUSH nat 2 } } }
-                   { DROP ; PUSH nat 3 } ;
+                 IF_LEFT { DROP ; PUSH nat 0 } { DROP ; PUSH nat 2 } ;
                  GET ;
                  IF_NONE { DIG 3 ; FAILWITH } { DIG 4 ; DROP } ;
                  DIG 3 ;
                  SWAP ;
                  UNPACK
                    (lambda
-                      (pair (or (or (or (pair %connect_strategy (nat %pool_id) (option %strategy_contract address))
-                                        (pair %connect_token_strategy
-                                           (nat %pool_id)
-                                           (nat %pool_token_id)
-                                           (nat %lending_market_id)))
-                                    (or (pair %rebalance (nat %pool_id) (set %pool_token_ids nat))
-                                        (pair %set_token_strategy
-                                           (nat %pool_id)
-                                           (nat %pool_token_id)
-                                           (nat %des_reserves_rate_f)
-                                           (nat %delta_rate_f)
-                                           (nat %min_invest))))
-                                (pair %set_token_strategy_rebalance
-                                   (nat %pool_id)
-                                   (nat %pool_token_id)
-                                   (bool %flag)))
+                      (pair (or (pair %connect_strategy (nat %pool_id) (option %strategy_contract address))
+                                (pair %rebalance (nat %pool_id) (set %pool_token_ids nat)))
                             (address %admin)
                             (address %default_referral)
                             (set %managers address)
@@ -444,16 +403,7 @@
                                         nat
                                         (pair (nat %rate_f) (nat %precision_multiplier_f) (nat %reserves)))
                                      (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f))
-                                     (pair %strategy
-                                        (option %strat_contract address)
-                                        (map %configuration
-                                           nat
-                                           (pair (nat %des_reserves_rate_f)
-                                                 (nat %delta_rate_f)
-                                                 (nat %min_invest)
-                                                 (nat %strategy_reserves)
-                                                 (bool %is_rebalance)
-                                                 (bool %connected))))
+                                     (option %strategy address)
                                      (pair %staker_accumulator
                                         (map %accumulator_f nat nat)
                                         (map %total_fees nat nat)
@@ -494,16 +444,7 @@
                                         nat
                                         (pair (nat %rate_f) (nat %precision_multiplier_f) (nat %reserves)))
                                      (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f))
-                                     (pair %strategy
-                                        (option %strat_contract address)
-                                        (map %configuration
-                                           nat
-                                           (pair (nat %des_reserves_rate_f)
-                                                 (nat %delta_rate_f)
-                                                 (nat %min_invest)
-                                                 (nat %strategy_reserves)
-                                                 (bool %is_rebalance)
-                                                 (bool %connected))))
+                                     (option %strategy address)
                                      (pair %staker_accumulator
                                         (map %accumulator_f nat nat)
                                         (map %total_fees nat nat)
@@ -621,16 +562,7 @@
                                             nat
                                             (pair (nat %rate_f) (nat %precision_multiplier_f) (nat %reserves)))
                                          (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f))
-                                         (pair %strategy
-                                            (option %strat_contract address)
-                                            (map %configuration
-                                               nat
-                                               (pair (nat %des_reserves_rate_f)
-                                                     (nat %delta_rate_f)
-                                                     (nat %min_invest)
-                                                     (nat %strategy_reserves)
-                                                     (bool %is_rebalance)
-                                                     (bool %connected))))
+                                         (option %strategy address)
                                          (pair %staker_accumulator
                                             (map %accumulator_f nat nat)
                                             (map %total_fees nat nat)
@@ -671,16 +603,7 @@
                                             nat
                                             (pair (nat %rate_f) (nat %precision_multiplier_f) (nat %reserves)))
                                          (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f))
-                                         (pair %strategy
-                                            (option %strat_contract address)
-                                            (map %configuration
-                                               nat
-                                               (pair (nat %des_reserves_rate_f)
-                                                     (nat %delta_rate_f)
-                                                     (nat %min_invest)
-                                                     (nat %strategy_reserves)
-                                                     (bool %is_rebalance)
-                                                     (bool %connected))))
+                                         (option %strategy address)
                                          (pair %staker_accumulator
                                             (map %accumulator_f nat nat)
                                             (map %total_fees nat nat)
@@ -763,16 +686,7 @@
                                                nat
                                                (pair (nat %rate_f) (nat %precision_multiplier_f) (nat %reserves)))
                                             (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f))
-                                            (pair %strategy
-                                               (option %strat_contract address)
-                                               (map %configuration
-                                                  nat
-                                                  (pair (nat %des_reserves_rate_f)
-                                                        (nat %delta_rate_f)
-                                                        (nat %min_invest)
-                                                        (nat %strategy_reserves)
-                                                        (bool %is_rebalance)
-                                                        (bool %connected))))
+                                            (option %strategy address)
                                             (pair %staker_accumulator
                                                (map %accumulator_f nat nat)
                                                (map %total_fees nat nat)
@@ -819,16 +733,7 @@
                                                nat
                                                (pair (nat %rate_f) (nat %precision_multiplier_f) (nat %reserves)))
                                             (pair %fee (nat %lp_f) (nat %stakers_f) (nat %ref_f))
-                                            (pair %strategy
-                                               (option %strat_contract address)
-                                               (map %configuration
-                                                  nat
-                                                  (pair (nat %des_reserves_rate_f)
-                                                        (nat %delta_rate_f)
-                                                        (nat %min_invest)
-                                                        (nat %strategy_reserves)
-                                                        (bool %is_rebalance)
-                                                        (bool %connected))))
+                                            (option %strategy address)
                                             (pair %staker_accumulator
                                                (map %accumulator_f nat nat)
                                                (map %total_fees nat nat)
@@ -958,7 +863,7 @@
                        timestamp
                        (map nat (pair nat nat nat))
                        (pair nat nat nat)
-                       (pair (option address) (map nat (pair nat nat nat nat bool bool)))
+                       (option address)
                        (pair (map nat nat) (map nat nat) nat)
                        nat))
            nat

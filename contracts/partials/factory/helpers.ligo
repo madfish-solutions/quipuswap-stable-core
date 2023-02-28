@@ -130,10 +130,7 @@ function form_pool_storage(
       future_A_time       = Tezos.get_now();
       tokens_info         = tokens_info;
       fee                 = fees;
-      strategy            = record[
-        strat_contract      = (None: option(address));
-        configuration       = (map[]: map(token_pool_idx_t, strategy_storage_t));
-      ];
+      strategy            = (None: option(address));
       staker_accumulator  = record [
                               accumulator_f = (map []: map(token_pool_idx_t, nat));
                               total_fees    = (map []: map(token_pool_idx_t, nat));

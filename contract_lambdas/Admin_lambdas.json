@@ -29,10 +29,14 @@
   },
   {
     "index": 7,
-    "name": "add_pool"
+    "name": "approve_spending"
   },
   {
     "index": 8,
+    "name": "add_pool"
+  },
+  {
+    "index": 9,
     "name": "set_strategy_factory"
   }
 ]
