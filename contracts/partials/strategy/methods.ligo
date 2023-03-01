@@ -8,7 +8,7 @@
     require(Tezos.get_sender() = dev_address, Errors.Dex.not_developer);
     const idx : nat = case p of [
     | Connect_strategy(_)               -> 0n
-    | Rebalance(_)                      -> 2n
+    | Rebalance(_)                      -> 1n
     ];
 
     const lambda_bytes : bytes = unwrap(s.strat_lambdas[idx], Errors.Dex.unknown_func);
