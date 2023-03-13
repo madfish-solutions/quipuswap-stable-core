@@ -57,12 +57,12 @@ function check_strategy_pool_params(
       and match_tokens;
   } with match
 
-function get_should_rebalance(
+function is_strategy_enabled(
   const strategy: address;
   const tokens  : map(token_pool_idx_t, nat))
                 : bool is
   unwrap(
-      (Tezos.call_view("should_rebalance", tokens, strategy): option(bool)),
+      (Tezos.call_view("rebalance_enabled", tokens, strategy): option(bool)),
       Errors.Strategy.no_should_rebalance_view
     )
 
@@ -82,12 +82,12 @@ function operate_with_strategy(
   )
 
 
-function check_rebalansing_strategy(
+function check_rebalancing_strategy(
   const strategy            : option(address);
   const tokens_to_rebalance : map(token_pool_idx_t, nat))
                             : option(operation) is
   case strategy of [
-    | Some(strategy) -> if get_should_rebalance(strategy, tokens_to_rebalance)
+    | Some(strategy) -> if is_strategy_enabled(strategy, tokens_to_rebalance)
         then Some(operate_with_strategy(
             tokens_to_rebalance,
             strategy,

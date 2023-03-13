@@ -412,7 +412,7 @@ function add_liq(
       else operations;
 
     pool.total_supply := pool.total_supply + mint_amount;
-    const rebalance_ops = case check_rebalansing_strategy(
+    const rebalance_ops = case check_rebalancing_strategy(
             pool.strategy,
             map_reserves(pool.tokens_info)
           ) of [
