@@ -19,17 +19,25 @@ import { AmountsMap, IndexMap, TokensMap } from "./utils/types";
 import { TokenFA12, TokenFA2 } from "./Token";
 import { defaultTokenId } from "./Token/token";
 import { Contract } from "@taquito/taquito";
+import { tas } from "./Strategy/API/type-aliases";
+import { StrategyContractType } from "./Strategy/API/strategy.types";
+import { StrategyFactoryContractType } from "./Strategy/API/strategy_factory.types";
 
 describe("00. Standalone Dex", () => {
   const aliceAddress: TezosAddress = accounts.alice.pkh;
   const bobAddress: TezosAddress = accounts.bob.pkh;
   const eveAddress: TezosAddress = accounts.eve.pkh;
 
-  const new_admin = eveAddress;
-  const new_dev = bobAddress;
-  const manager = aliceAddress;
-  const staker = bobAddress;
-  const referral = eveAddress;
+  const developerName = "bob",
+    adminName = "eve",
+    managerName = "alice",
+    stakerName = "bob",
+    referralName = "eve";
+  const new_admin = accounts[adminName].pkh;
+  const new_dev = accounts[developerName].pkh;
+  const manager = accounts[managerName].pkh;
+  const staker = accounts[stakerName].pkh;
+  const referral = accounts[referralName].pkh;
 
   let tokens: TokensMap;
 
@@ -958,34 +966,82 @@ describe("00. Standalone Dex", () => {
     let pool_id: BigNumber;
     let yupana: Contract;
     let price_feed: Contract;
-    let strategy_factory: Contract;
-    let strategy: Contract;
+    let strategy_factory: StrategyFactoryContractType;
+    let strategy: StrategyContractType;
     let yup_ordering: IndexMap;
     let pool_ordering: IndexMap;
 
     beforeAll(async () => {
-      pool_id = dex.storage.storage.pools_count.minus(new BigNumber(1));
-      await dex.updateStorage({ tokens: [pool_id.toString()] });
+      const config = await prepareProviderOptions(developerName);
+      Tezos.setProvider(config);
       ({
         yupana,
         ordering: yup_ordering,
         price_feed,
       } = await TInit.setupYupanaMocks(tokens, Tezos));
-      ({ strategy_factory, strategy } = await TInit.originateStrategy(
-        dex,
-        pool_id,
-        yupana,
-        price_feed,
-        Tezos
-      ));
+      await dex.updateStorage();
+      pool_id = dex.storage.storage.pools_count.minus(new BigNumber(1));
+      await dex.updateStorage({ tokens: [pool_id.toString()] });
       pool_ordering = mapTokensToIdx(
         dex.storage.storage.tokens[pool_id.toString()],
         tokens
       );
+      ({ strategy_factory, strategy } = await TInit.originateStrategy(
+        dex,
+        pool_id,
+        pool_ordering,
+        yupana,
+        yup_ordering,
+        Tezos
+      ));
+      await tokens.kUSD.transfer(
+        new BigNumber(0),
+        new_dev,
+        strategy.address,
+        new BigNumber("1")
+      );
+      await (
+        await strategy.methods
+          .approve_token([
+            {
+              pool_token_id: tas.nat(pool_ordering.kUSD.toString()),
+              spender: tas.address(yupana.address),
+              amount: tas.nat(new BigNumber("10").pow(256).toString()),
+            },
+            {
+              pool_token_id: tas.nat(pool_ordering.uUSD.toString()),
+              spender: tas.address(yupana.address),
+              amount: tas.nat(new BigNumber("10").pow(256).toString()),
+            },
+          ])
+          .send()
+      ).confirmation();
       // eslint-disable-next-line jest/no-standalone-expect
       await expect(strategy.storage()).resolves.toMatchObject({
         factory: strategy_factory.address,
       });
+      const configUser = await prepareProviderOptions(adminName);
+      Tezos.setProvider(configUser);
+      const appoveDexTokens = await Tezos.contract
+        .batch()
+        .withContractCall(
+          dex.contract.methods.approve_spending(
+            pool_id,
+            pool_ordering.kUSD,
+            strategy.address,
+            new BigNumber("1e256").toString()
+          )
+        )
+        .withContractCall(
+          dex.contract.methods.approve_spending(
+            pool_id,
+            pool_ordering.uUSD,
+            strategy.address,
+            new BigNumber("1e256")
+          )
+        )
+        .send();
+      await appoveDexTokens.confirmation();
     });
 
     describe("as a developer", () => {
@@ -1017,6 +1073,8 @@ describe("00. Standalone Dex", () => {
       let idx_map: IndexMap;
 
       beforeAll(async () => {
+        const config = await prepareProviderOptions("bob");
+        Tezos.setProvider(config);
         ({ pool_id, min_amounts, idx_map } =
           await TPool.PoolDivest.setupMinTokenMapping(dex, tokens, outputs));
         imb_amounts = new Map<string, BigNumber>()
@@ -1031,8 +1089,6 @@ describe("00. Standalone Dex", () => {
           .set(idx_map.USDtz, new BigNumber(1))
           .set(idx_map.kUSD, new BigNumber(1))
           .set(idx_map.uUSD, new BigNumber(1));
-        const config = await prepareProviderOptions("bob");
-        Tezos.setProvider(config);
         await dex.investLiquidity(
           pool_id,
           invest_amounts,
@@ -1051,76 +1107,11 @@ describe("00. Standalone Dex", () => {
       it("should connect new strategy factory", async () =>
         TMng.addStrategyFactorySuccessCase(dex, strategy_factory.address));
 
-      it("should fail when set rebalance flag to non cofigured token", async () =>
-        failCase(
-          "bob",
-          dex.setTokenStrategyRebalance(
-            pool_id,
-            new BigNumber(pool_ordering.kUSD),
-            false
-          ),
-          "no-token-strategy-set"
-        ));
-
-      it("should configure new strategy for token", async () =>
-        TStrategy.token.configureTokenStrategy
-          .setStrategyParamsSuccessCase(
-            dex,
-            pool_id,
-            new BigNumber(pool_ordering.kUSD),
-            new BigNumber("0.3").multipliedBy("1e18"),
-            new BigNumber("0.005").multipliedBy("1e18"),
-            new BigNumber("300").multipliedBy(decimals.kUSD)
-          )
-          .then(() =>
-            TStrategy.token.configureTokenStrategy.setStrategyParamsSuccessCase(
-              dex,
-              pool_id,
-              new BigNumber(pool_ordering.uUSD),
-              new BigNumber("0.15").multipliedBy("1e18"),
-              new BigNumber("0.003").multipliedBy("1e18"),
-              new BigNumber("1500").multipliedBy(decimals.uUSD)
-            )
-          ));
-
-      it("should fail connect token to NO strategy", async () =>
-        TStrategy.token.connectTokenToStrategy.connectTokenStrategyFailCaseNoStrategy(
-          dex,
-          pool_id,
-          new BigNumber(pool_ordering.kUSD),
-          new BigNumber(yup_ordering.kUSD)
-        ));
-
       it("should connect new strategy", async () =>
         TStrategy.connect.setStrategyAddrSuccessCase(
           dex,
           pool_id,
           strategy.address
-        ));
-
-      it("should connect token to strategy", async () =>
-        TStrategy.token.connectTokenToStrategy
-          .connectTokenStrategySuccessCase(
-            dex,
-            pool_id,
-            new BigNumber(pool_ordering.kUSD),
-            new BigNumber(yup_ordering.kUSD)
-          )
-          .then(() =>
-            TStrategy.token.connectTokenToStrategy.connectTokenStrategySuccessCase(
-              dex,
-              pool_id,
-              new BigNumber(pool_ordering.uUSD),
-              new BigNumber(yup_ordering.uUSD)
-            )
-          ));
-
-      it("should fail connect same token to strategy", async () =>
-        TStrategy.token.connectTokenToStrategy.connectTokenStrategyFailCaseAdded(
-          dex,
-          pool_id,
-          new BigNumber(pool_ordering.kUSD),
-          new BigNumber(yup_ordering.kUSD)
         ));
 
       it("should call manual rebalance", async () =>
@@ -1177,14 +1168,6 @@ describe("00. Standalone Dex", () => {
           min_out_amount
         ));
 
-      it("should set is rebalance flag for token", async () =>
-        TStrategy.token.setStrategyRebalance.setIsRebalanceSuccessCase(
-          dex,
-          pool_id,
-          new BigNumber(pool_ordering.kUSD),
-          false
-        ));
-
       it("should auto-rebalance when divest", async () => {
         const sender = await Tezos.signer.publicKeyHash();
         const request: { owner: TezosAddress; token_id: number } = {
@@ -1207,32 +1190,41 @@ describe("00. Standalone Dex", () => {
         );
       });
 
-      it("should configure strategy for token to zero", async () =>
-        TStrategy.token.configureTokenStrategy
-          .setStrategyParamsToZeroSuccessCase(
-            dex,
-            pool_id,
-            new BigNumber(pool_ordering.kUSD)
+      it("should call manual rebalance after set to zero", async () =>
+        Tezos.contract
+          .batch()
+          .withContractCall(
+            strategy.methodsObject.update_token_config({
+              pool_token_id: tas.nat(pool_ordering.kUSD),
+              desired_reserves_rate_f: tas.nat(0),
+              delta_rate_f: tas.nat(0),
+              min_invest: tas.nat(0),
+              enabled: true,
+            })
           )
+          .withContractCall(
+            strategy.methodsObject.update_token_config({
+              pool_token_id: tas.nat(pool_ordering.uUSD),
+              desired_reserves_rate_f: tas.nat(0),
+              delta_rate_f: tas.nat(0),
+              min_invest: tas.nat(0),
+              enabled: true,
+            })
+          )
+          .send()
+          .then((op) => op.confirmation())
           .then(() =>
-            TStrategy.token.configureTokenStrategy.setStrategyParamsToZeroSuccessCase(
+            TStrategy.token.manualRebalanceToken.manualRebalanceSuccessCase(
               dex,
+              yupana,
+              strategy,
               pool_id,
-              new BigNumber(pool_ordering.uUSD)
+              new Set([
+                new BigNumber(pool_ordering.kUSD),
+                new BigNumber(pool_ordering.uUSD),
+              ])
             )
           ));
-
-      it("should call manual rebalance after set to zero", async () =>
-        TStrategy.token.manualRebalanceToken.manualRebalanceSuccessCase(
-          dex,
-          yupana,
-          strategy,
-          pool_id,
-          new Set([
-            new BigNumber(pool_ordering.kUSD),
-            new BigNumber(pool_ordering.uUSD),
-          ])
-        ));
 
       it("should disconnect strategy", async () =>
         TStrategy.connect.removeStrategyAddrSuccessCase(dex, pool_id));
@@ -1248,39 +1240,7 @@ describe("00. Standalone Dex", () => {
       it("should fail when non-developer call the stategy EP", async () => {
         await failCase(
           "eve",
-          async () =>
-            await dex.setTokenStrategyRebalance(
-              pool_id,
-              new BigNumber(pool_ordering.kUSD),
-              false
-            ),
-          "not-developer"
-        );
-        await failCase(
-          "eve",
           async () => await dex.connectStrategy(pool_id, strategy.address),
-          "not-developer"
-        );
-        await failCase(
-          "eve",
-          async () =>
-            await dex.connectTokenStrategy(
-              pool_id,
-              new BigNumber(pool_ordering.kUSD),
-              new BigNumber(0)
-            ),
-          "not-developer"
-        );
-        await failCase(
-          "eve",
-          async () =>
-            await dex.setTokenStrategy(
-              pool_id,
-              new BigNumber(pool_ordering.kUSD),
-              new BigNumber("0.3").multipliedBy("1e18"),
-              new BigNumber("0.05").multipliedBy("1e18"),
-              new BigNumber("300").multipliedBy("1e6")
-            ),
           "not-developer"
         );
         const set = new Set([new BigNumber(pool_ordering.kUSD)]);

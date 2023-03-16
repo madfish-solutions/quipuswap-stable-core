@@ -21,10 +21,6 @@
            (pair (option (contract (list (pair address (list (pair address nat nat)))))) string)
            (contract (list (pair address (list (pair address nat nat)))))
            { UNPAIR ; IF_NONE { FAILWITH } { SWAP ; DROP } } ;
-         LAMBDA
-           int
-           nat
-           { ISNAT ; IF_NONE { PUSH string "Value is not natural" ; FAILWITH } {} } ;
          PUSH nat 1000000 ;
          PUSH string "No market on lending" ;
          LAMBDA
@@ -44,7 +40,7 @@
              DUP 2 ;
              GET 3 ;
              GET ;
-             IF_NONE { PUSH string "No Token yet" ; FAILWITH } {} ;
+             IF_NONE { PUSH string "No Token yet1" ; FAILWITH } {} ;
              DUP ;
              GET 11 ;
              DUP 3 ;
@@ -111,16 +107,14 @@
              PAIR 3 } ;
          DUP 3 ;
          APPLY ;
-         DIG 6 ;
+         DIG 5 ;
          UNPAIR ;
          SWAP ;
          NIL operation ;
          DIG 2 ;
          IF_LEFT
            { IF_LEFT
-               { DIG 6 ;
-                 DROP ;
-                 IF_LEFT
+               { IF_LEFT
                    { DIG 4 ;
                      DUP 4 ;
                      GET 3 ;
@@ -297,38 +291,31 @@
                      COMPARE ;
                      EQ ;
                      IF { DROP } { FAILWITH } ;
-                     PUSH string "TIMEOUT" ;
-                     DUP 2 ;
-                     GET 5 ;
-                     NOW ;
-                     COMPARE ;
-                     EQ ;
-                     IF { DROP } { FAILWITH } ;
                      DUP 4 ;
                      DIG 4 ;
                      GET 3 ;
                      DUP 3 ;
-                     DUP 8 ;
-                     DUP 6 ;
+                     PUSH string "Low TOTAL SUPPLY" ;
+                     DUP 9 ;
+                     DUP 7 ;
                      GET 3 ;
                      MUL ;
-                     DUP 5 ;
+                     DUP 6 ;
                      GET 9 ;
                      SUB ;
-                     DUP 10 ;
-                     SWAP ;
-                     EXEC ;
+                     ISNAT ;
+                     IF_NONE { FAILWITH } { SWAP ; DROP } ;
                      UPDATE 9 ;
-                     DIG 7 ;
-                     DUP 6 ;
+                     PUSH string "Low LIQUIDITY" ;
+                     DIG 8 ;
+                     DUP 7 ;
                      GET 3 ;
                      MUL ;
-                     DUP 5 ;
+                     DUP 6 ;
                      GET 11 ;
                      SUB ;
-                     DUP 9 ;
-                     SWAP ;
-                     EXEC ;
+                     ISNAT ;
+                     IF_NONE { FAILWITH } { SWAP ; DROP } ;
                      UPDATE 11 ;
                      DUP 5 ;
                      CAR ;
@@ -363,9 +350,9 @@
                      UNPAIR ;
                      SWAP ;
                      IF_LEFT
-                       { DIG 10 ;
+                       { DIG 9 ;
                          DROP ;
-                         DIG 10 ;
+                         DIG 9 ;
                          SWAP ;
                          CONTRACT %transfer (pair (address %from) (address %to) (nat %value)) ;
                          IF_NONE { FAILWITH } { SWAP ; DROP } ;
@@ -376,13 +363,13 @@
                          DIG 3 ;
                          PAIR ;
                          TRANSFER_TOKENS }
-                       { DIG 11 ;
+                       { DIG 10 ;
                          DUP 2 ;
                          CAR ;
                          CONTRACT %transfer
                            (list (pair (address %from_) (list %txs (pair (address %to_) (nat %token_id) (nat %amount))))) ;
                          PAIR ;
-                         DIG 11 ;
+                         DIG 10 ;
                          SWAP ;
                          EXEC ;
                          PUSH mutez 0 ;
@@ -403,20 +390,20 @@
                      DUP 5 ;
                      DUP 6 ;
                      CAR ;
-                     DIG 3 ;
+                     PUSH string "Low shares balance" ;
+                     DIG 4 ;
                      CAR ;
-                     DIG 6 ;
+                     DIG 7 ;
                      CAR ;
-                     DUP 6 ;
+                     DUP 7 ;
                      CAR ;
-                     DUP 6 ;
+                     DUP 7 ;
                      PAIR ;
                      GET ;
                      IF_NONE { PUSH nat 0 } {} ;
                      SUB ;
-                     DIG 6 ;
-                     SWAP ;
-                     EXEC ;
+                     ISNAT ;
+                     IF_NONE { FAILWITH } { SWAP ; DROP } ;
                      DIG 4 ;
                      CAR ;
                      DIG 4 ;
@@ -430,8 +417,7 @@
                      DIG 5 ;
                      DIG 6 ;
                      DIG 7 ;
-                     DIG 8 ;
-                     DROP 5 ;
+                     DROP 4 ;
                      DUP 3 ;
                      DUP 4 ;
                      GET 3 ;
@@ -456,8 +442,7 @@
              DIG 5 ;
              DIG 6 ;
              DIG 7 ;
-             DIG 8 ;
-             DROP 5 ;
+             DROP 4 ;
              IF_LEFT
                { DIG 3 ; DROP ; DIG 2 ; SWAP ; UPDATE 4 }
                { DUP 3 ;
@@ -518,7 +503,7 @@
          DUP 2 ;
          GET 3 ;
          GET ;
-         IF_NONE { PUSH string "No Token yet" ; FAILWITH } {} ;
+         IF_NONE { PUSH string "No Token yet1" ; FAILWITH } {} ;
          DUP ;
          GET 11 ;
          DUP 3 ;
