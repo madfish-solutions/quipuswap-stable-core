@@ -25,9 +25,10 @@
     | Stop_ramp_A(_)          -> 4n
     | Set_fees(_)             -> 5n
     | Set_default_referral(_) -> 6n
+    | Approve_spending(_)     -> 7n
 #if !FACTORY
-    | Add_pool(_)             -> 7n
-    | Set_strategy_factory(_) -> 8n
+    | Add_pool(_)             -> 8n
+    | Set_strategy_factory(_) -> 9n
 #endif
     ];
 

@@ -216,10 +216,7 @@ function get_pool_info(
         ref_f           = 0n;
         stakers_f       = 0n;
       ];
-      strategy            = record [
-        strat_contract  = (None: option(address));
-        configuration   = (map []: map(token_pool_idx_t, strategy_storage_t));
-      ];
+      strategy            = (None: option(address));
       staker_accumulator  = record [
         accumulator_f       = (map []: map(token_pool_idx_t, nat));
         total_fees          = (map []: map(token_pool_idx_t, nat));
@@ -250,3 +247,8 @@ function check_shares_and_reserves(
     else if pool.total_supply > 0n and reserves_sum = 0n
       then failwith(Errors.Dex.reserves_drained)
     else Unit;
+
+[@inline] function map_reserves(
+  const tokens_info     : map(token_pool_idx_t, token_info_t))
+                        : map(token_pool_idx_t, nat) is
+  Map.map(function (const _:token_pool_idx_t; const v: token_info_t) is v.reserves, tokens_info);

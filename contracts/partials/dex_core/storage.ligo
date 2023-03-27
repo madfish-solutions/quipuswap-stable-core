@@ -49,7 +49,7 @@ type pool_t             is [@layout:comb] record [
   tokens_info             : map(token_pool_idx_t, token_info_t);
   fee                     : fees_storage_t;
 
-  strategy                : strategy_full_storage_t;
+  strategy                : option(address);
 
   staker_accumulator      : staker_accum_t;
 
