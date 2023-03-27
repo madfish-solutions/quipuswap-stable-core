@@ -49,7 +49,7 @@ export class DexFactory implements DevEnabledContract, StrategyFactorySetter {
       factoryAddress,
       "Admin",
       8,
-      admin_lambdas_comp.filter((value) => value.args[1].int !== "7")
+      admin_lambdas_comp.filter((value) => value.args[1].int !== "8")
     );
     // await setFunctionBatchCompilled(
     //   tezos,

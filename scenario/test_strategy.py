@@ -11,6 +11,7 @@ from helpers import *
 from pytezos import ContractInterface, MichelsonRuntimeError
 from initial_storage import admin_lambdas, dex_lambdas, token_lambdas, strat_lambdas, dev_lambdas
 
+# Tests of Strategy moved to strategy repo as mockup client
 class DexStrategyTest(TestCase):
 
     @classmethod
@@ -37,83 +38,6 @@ class DexStrategyTest(TestCase):
 
         cls.init_storage = storage
 
-    def test_set_token_params(self):
-        chain = LocalChain(storage=self.init_storage)
-
-        add_pool = self.dex.add_pool(100_000, [token_a, token_b], form_pool_rates(1_000_000, 1_000_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
-        chain.execute(add_pool, sender=admin)
-        pool_id = 0
-
-        rates = {
-            0: {
-                "des_reserves_rate_f": Decimal("0.3") * Decimal("1e18"),
-                "delta_rate_f": Decimal("0.05") * Decimal("1e18"),
-                "min_invest": 30000
-            },
-            1: {
-                "des_reserves_rate_f": Decimal("0.2")  * Decimal("1e18"),
-                "delta_rate_f": Decimal("0.02")  * Decimal("1e18"),
-                "min_invest": 10000
-            }
-        }
-
-        for token_pool_id, config in rates.items():
-            set_strat = self.dex.set_token_strategy(
-                pool_id,
-                token_pool_id,
-                int(config['des_reserves_rate_f']),
-                int(config['delta_rate_f']),
-                config['min_invest'])
-            res = chain.execute(set_strat, sender=dev)
-            conneced_config = res.storage['storage']['pools'][pool_id]['strategy']['configuration'][token_pool_id]
-            self.assertEqual(conneced_config,
-                {
-                    "is_rebalance": True,
-                    "strategy_reserves": 0,
-                    "connected": False,
-                    **config
-                })
-            
-    def test_set_token_rebalance_flag(self):
-        chain = LocalChain(storage=self.init_storage)
-
-        add_pool = self.dex.add_pool(100_000, [token_a, token_b], form_pool_rates(1_000_000, 1_000_000), { "lp_f": 0, "stakers_f": 0, "ref_f": 0})
-        chain.execute(add_pool, sender=admin)
-        pool_id = 0
-        token_pool_id = 0
-        config = {
-            "des_reserves_rate_f": Decimal("0.3") * Decimal("1e18"),
-            "delta_rate_f": Decimal("0.05") * Decimal("1e18"),
-            "min_invest": 30000
-        }
-        set_strat = self.dex.set_token_strategy(
-                pool_id,
-                token_pool_id,
-                int(config['des_reserves_rate_f']),
-                int(config['delta_rate_f']),
-                config['min_invest'])
-        res = chain.execute(set_strat, sender=dev)
-        conneced_config = res.storage['storage']['pools'][pool_id]['strategy']['configuration'][token_pool_id]
-        self.assertEqual(conneced_config,
-                {
-                    "is_rebalance": True,
-                    "strategy_reserves": 0,
-                    "connected": False,
-                    **config
-                })
-        set_reb = self.dex.set_token_strategy_rebalance(
-                pool_id,
-                token_pool_id,
-                False)
-        res = chain.execute(set_reb, sender=dev)
-        conneced_config = res.storage['storage']['pools'][pool_id]['strategy']['configuration'][token_pool_id]
-        self.assertEqual(conneced_config,
-            {
-                "is_rebalance": False,
-                "strategy_reserves": 0,
-                "connected": False,
-                **config
-            })
     
     def test_connect_strategy(self):
         pytest.skip("Can't simulate intercontract on-chain view calls")

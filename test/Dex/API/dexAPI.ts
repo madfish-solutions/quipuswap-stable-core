@@ -397,55 +397,6 @@ export class Dex
     return operation;
   }
 
-  async setTokenStrategy(
-    poolId: BigNumber,
-    poolTokenId: BigNumber,
-    desiredReservesRate_f: BigNumber,
-    deltaRate_f: BigNumber,
-    minInvestment: BigNumber
-  ): Promise<TransactionOperation> {
-    await this.updateStorage({});
-    const operation = await this.contract.methodsObject
-      .set_token_strategy({
-        pool_id: poolId.toString(),
-        pool_token_id: poolTokenId.toString(),
-        des_reserves_rate_f: desiredReservesRate_f.toString(),
-        delta_rate_f: deltaRate_f.toString(),
-        min_invest: minInvestment.toString(),
-      })
-      .send();
-
-    await operation.confirmation(2);
-    // await confirmOperation(tezos, operation.hash);
-    return operation;
-  }
-
-  async setTokenStrategyRebalance(
-    poolId: BigNumber,
-    poolTokenId: BigNumber,
-    flag: boolean
-  ): Promise<TransactionOperation> {
-    await this.updateStorage({});
-    const operation = await this.contract.methods
-      .set_token_strategy_rebalance(
-        poolId.toString(),
-        poolTokenId.toString(),
-        flag
-      )
-      .send();
-
-    await operation.confirmation(2);
-    // await confirmOperation(tezos, operation.hash);
-    return operation;
-  }
-
-  setIsRebalanceStrategy = (
-    poolId: BigNumber,
-    poolTokenId: BigNumber,
-    flag: boolean
-  ): Promise<TransactionOperation> =>
-    this.setTokenStrategyRebalance(poolId, poolTokenId, flag);
-
   async rebalance(
     poolId: BigNumber,
     poolTokenIds: Set<BigNumber>
@@ -467,25 +418,6 @@ export class Dex
     poolId: BigNumber,
     poolTokenIds: Set<BigNumber>
   ): Promise<TransactionOperation> => this.rebalance(poolId, poolTokenIds);
-
-  async connectTokenStrategy(
-    poolId: BigNumber,
-    poolTokenId: BigNumber,
-    lendingMarketId: BigNumber
-  ): Promise<TransactionOperation> {
-    await this.updateStorage({});
-    const operation = await this.contract.methodsObject
-      .connect_token_strategy({
-        pool_id: poolId.toString(),
-        pool_token_id: poolTokenId.toString(),
-        lending_market_id: lendingMarketId.toString(),
-      })
-      .send();
-
-    await operation.confirmation(2);
-    // await confirmOperation(tezos, operation.hash);
-    return operation;
-  }
 
   async setFees(
     pool_id: BigNumber,
@@ -519,8 +451,7 @@ export class Dex
     address: string
   ): Promise<TransactionOperation> {
     await this.updateStorage();
-    const token = await this.Tezos.contract.at(tokenAddress);
-    const operation = await token.methods
+    const operation = await this.contract.methods
       .update_operators([
         {
           [tokenAmount ? "add_operator" : "remove_operator"]: {
@@ -532,6 +463,21 @@ export class Dex
       ])
       .send();
     await operation.confirmation(2);
+    return operation;
+  }
+
+  async approveUnderlying(
+    poolId: BigNumber,
+    tokenId: BigNumber,
+    spender: string,
+    amount: BigNumber
+    
+  ): Promise<TransactionOperation> {
+    await this.updateStorage();
+    const operation = await this.contract.methods
+      .approve_spending(poolId, tokenId, spender, amount)
+      .send();
+    await operation.confirmation();
     return operation;
   }
 

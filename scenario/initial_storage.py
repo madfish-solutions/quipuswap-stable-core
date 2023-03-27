@@ -13,8 +13,8 @@ def parse_lambdas(path):
 
     return lambdas
 
-admin_lambdas = parse_lambdas("./build/lambdas/Admin_lambdas.json")
-dex_lambdas = parse_lambdas("./build/lambdas/Dex_lambdas.json")
-token_lambdas = parse_lambdas("./build/lambdas/Token_lambdas.json")
-dev_lambdas = parse_lambdas("./build/lambdas/Dev_lambdas.json")
-strat_lambdas = parse_lambdas("./build/lambdas/Strategy_lambdas.json")
+admin_lambdas = parse_lambdas(os.path.normpath(os.path.dirname(__file__) + "/../build/lambdas/Admin_lambdas.json"))
+dex_lambdas = parse_lambdas(os.path.normpath(os.path.dirname(__file__) + "/../build/lambdas/Dex_lambdas.json"))
+token_lambdas = parse_lambdas(os.path.normpath(os.path.dirname(__file__) + "/../build/lambdas/Token_lambdas.json"))
+dev_lambdas = parse_lambdas(os.path.normpath(os.path.dirname(__file__) + "/../build/lambdas/Dev_lambdas.json"))
+strat_lambdas = parse_lambdas(os.path.normpath(os.path.dirname(__file__) + "/../build/lambdas/Strategy_lambdas.json"))

@@ -82,7 +82,7 @@ function operate_with_strategy(
   )
 
 
-function check_rebalansing_strategy(
+function check_rebalancing_strategy(
   const strategy            : option(address);
   const tokens_to_rebalance : map(token_pool_idx_t, nat))
                             : option(operation) is

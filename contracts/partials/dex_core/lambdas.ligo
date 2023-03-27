@@ -64,7 +64,7 @@ function swap(
       ) # operations;
 
       // check and rebalance if needed before sending to user (operations stack, reverse ordering)
-      operations := case check_rebalansing_strategy(
+      operations := case check_rebalancing_strategy(
             pool.strategy,
             map [
               i -> token_info_i.reserves;
@@ -171,7 +171,7 @@ function divest_liquidity(
       const tokens : tokens_map_t = unwrap(s.tokens[params.pool_id], Errors.Dex.pool_not_listed);
       const res = Map.fold(divest_reserves, tokens, record [ tok_inf = pool.tokens_info; op = operations; outs = (map[]: map(token_pool_idx_t, nat)) ]);
       pool.tokens_info := res.tok_inf;
-      operations := case check_rebalansing_strategy(
+      operations := case check_rebalancing_strategy(
             pool.strategy,
             map_reserves(pool.tokens_info)
           ) of [
@@ -308,7 +308,7 @@ function divest_imbalanced(
         total_supply = nat_or_error(token_supply - burn_amount, Errors.Math.nat_error);
       ];
       check_shares_and_reserves(pool);
-      operations := case check_rebalansing_strategy(
+      operations := case check_rebalancing_strategy(
             pool.strategy,
             map_reserves(balanced.tokens_info)
           ) of [
@@ -394,7 +394,7 @@ function divest_one_coin(
         result.dy,
         token
       ) # operations;
-      operations := case check_rebalansing_strategy(
+      operations := case check_rebalancing_strategy(
             pool.strategy,
             map [params.token_index -> info.reserves]
           ) of [
