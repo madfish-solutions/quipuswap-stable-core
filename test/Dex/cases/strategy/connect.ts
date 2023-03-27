@@ -11,15 +11,14 @@ export async function setStrategyAddrSuccessCase(
   await dex.updateStorage({ pools: [pool_id.toString()] });
   let pool: PairInfo = dex.storage.storage.pools[pool_id.toString()];
   expect(pool).toBeDefined();
-  const strategyStore = pool.strategy;
-  const initStrat = strategyStore.strat_contract;
+  const initStrat = pool.strategy;
   expect(strategy).not.toStrictEqual(initStrat);
 
   await dex.connectStrategy(pool_id, strategy);
 
   await dex.updateStorage({ pools: [pool_id.toString()] });
   pool = dex.storage.storage.pools[pool_id.toString()];
-  const updatedStrat = pool.strategy.strat_contract;
+  const updatedStrat = pool.strategy;
   expect(strategy).toStrictEqual(updatedStrat);
 }
 
@@ -30,15 +29,14 @@ export async function removeStrategyAddrSuccessCase(
   await dex.updateStorage({ pools: [pool_id.toString()] });
   let pool: PairInfo = dex.storage.storage.pools[pool_id.toString()];
   expect(pool).toBeDefined();
-  const strategyStore = pool.strategy;
-  const initStrat = strategyStore.strat_contract;
+  const initStrat = pool.strategy;
   expect(initStrat).not.toBeNull();
 
   await dex.connectStrategy(pool_id, null);
 
   await dex.updateStorage({ pools: [pool_id.toString()] });
   pool = dex.storage.storage.pools[pool_id.toString()];
-  const updatedStrat = pool.strategy.strat_contract;
+  const updatedStrat = pool.strategy;
   expect(updatedStrat).toBeNull();
 
   // TODO: Remove liquidity from old Strategy checks

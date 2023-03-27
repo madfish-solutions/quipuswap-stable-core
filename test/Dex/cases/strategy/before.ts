@@ -8,6 +8,11 @@ import { BigNumber } from "bignumber.js";
 import { IndexMap, TokensMap } from "../../../utils/types";
 import { getMichelsonCode } from "../../../utils/mocks/getMichelsonCode";
 import { Dex } from "../../API/dexAPI";
+import { DexStorage } from "../../API/types";
+import { StrategyContractType } from "../../../Strategy/API/strategy.types";
+import { tas, TokenType } from "../../../Strategy/API/type-aliases";
+import { decimals } from "../../../../utils/constants";
+import { StrategyFactoryContractType } from "../../../Strategy/API/strategy_factory.types";
 
 export async function setupYupanaMocks(
   tokens: TokensMap,
@@ -132,40 +137,45 @@ export async function setupYupanaMocks(
 export async function originateStrategy(
   dex: Dex,
   pool_id: BigNumber,
+  pool_ordering: IndexMap,
   yupana: Contract,
-  price_feed: Contract,
+  yupana_ordering: IndexMap,
   Tezos: TezosToolkit
 ): Promise<{
-  strategy_factory: Contract;
-  strategy: Contract;
+  strategy_factory: StrategyFactoryContractType;
+  strategy: StrategyContractType;
 }> {
   const dev_address = await Tezos.signer.publicKeyHash();
-  const strategy_factory_origination = await Tezos.contract.originate({
-    code: getMichelsonCode("strategy_factory"),
-    storage: {
-      dev: {
-        dev_address: dev_address,
-        temp_dev_address: null,
+  const strategy_factory_origination =
+    await Tezos.contract.originate<StrategyFactoryContractType>({
+      code: getMichelsonCode("strategy_factory"),
+      storage: {
+        dev: {
+          dev_address: tas.address(dev_address),
+          temp_dev_address: null,
+        },
+        deployed_strategies: tas.bigMap([]),
+        connected_pools: tas.bigMap([]),
+        lending_contract: tas.address(yupana.address),
       },
-      deployed_strategies: new MichelsonMap(),
-      connected_pools: new MichelsonMap(),
-    },
-  });
+    });
   await strategy_factory_origination.confirmation(1);
   const strategy_factory = await strategy_factory_origination.contract();
+  const dexStore = (await dex.contract.storage()) as DexStorage;
+  const token_map = await dexStore.storage.tokens.get(pool_id.toString());
   console.debug("[STRATEGY] Strategy Factory: ", strategy_factory.address);
   const poolInfo = {
-    pool_contract: dex.contract.address,
-    pool_id: pool_id,
+    pool_contract: tas.address(dex.contract.address),
+    pool_id: tas.nat(pool_id),
+    token_map: tas.map(
+      [...token_map.entries()].map(([key, value]) => ({
+        key: tas.nat(key),
+        value: value as TokenType,
+      }))
+    ),
   };
   const deploy_strategy_request = await strategy_factory.methodsObject
-    .deploy_strategy({
-      pool_info: poolInfo,
-      lending_data: {
-        lending_contract: yupana.address,
-        price_feed_contract: price_feed.address,
-      },
-    })
+    .deploy_strategy(poolInfo)
     .send();
   await deploy_strategy_request.confirmation(2);
   const deployed_strategy = (
@@ -175,12 +185,52 @@ export async function originateStrategy(
     ).metadata.internal_operation_results[0]
       .result as OperationResultOrigination
   ).originated_contracts[0];
-  const strategy = await Tezos.contract.at(deployed_strategy);
+  const strategy = await Tezos.contract.at<StrategyContractType>(
+    deployed_strategy
+  );
   console.debug(
     "[STRATEGY] Deployed Strategy for ",
     poolInfo.pool_contract + `[${poolInfo.pool_id.toString()}]`,
     " is ",
     strategy.address
   );
+  await (
+    await Tezos.contract
+      .batch()
+      .withContractCall(
+        strategy.methodsObject.connect_token_to_lending({
+          pool_token_id: tas.nat(pool_ordering.uUSD),
+          lending_market_id: tas.nat(yupana_ordering.uUSD),
+        })
+      )
+      .withContractCall(
+        strategy.methodsObject.connect_token_to_lending({
+          pool_token_id: tas.nat(pool_ordering.kUSD),
+          lending_market_id: tas.nat(yupana_ordering.kUSD),
+        })
+      )
+      .withContractCall(
+        strategy.methodsObject.update_token_config({
+          pool_token_id: tas.nat(pool_ordering.kUSD),
+          desired_reserves_rate_f: tas.nat(tas.nat("0.3").multipliedBy("1e18")),
+          delta_rate_f: tas.nat(tas.nat("0.005").multipliedBy("1e18")),
+          min_invest: tas.nat(tas.nat("300").multipliedBy(decimals.kUSD)),
+          enabled: true,
+        })
+      )
+      .withContractCall(
+        strategy.methodsObject.update_token_config({
+          pool_token_id: tas.nat(pool_ordering.uUSD),
+          desired_reserves_rate_f: tas.nat(
+            tas.nat("0.15").multipliedBy("1e18")
+          ),
+          delta_rate_f: tas.nat(tas.nat("0.003").multipliedBy("1e18")),
+          min_invest: tas.nat(tas.nat("500").multipliedBy(decimals.uUSD)),
+          enabled: true,
+        })
+      )
+      .send()
+  ).confirmation();
+  console.debug("[STRATEGY] Config set, approved, connected.");
   return { strategy_factory, strategy };
 }

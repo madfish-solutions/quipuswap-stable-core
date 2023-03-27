@@ -376,7 +376,7 @@
                  DUP 2 ;
                  GET 10 ;
                  DUP 2 ;
-                 IF_LEFT { DROP ; PUSH nat 0 } { DROP ; PUSH nat 2 } ;
+                 IF_LEFT { DROP ; PUSH nat 0 } { DROP ; PUSH nat 1 } ;
                  GET ;
                  IF_NONE { DIG 3 ; FAILWITH } { DIG 4 ; DROP } ;
                  DIG 3 ;

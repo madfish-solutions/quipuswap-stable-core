@@ -45,7 +45,7 @@ export declare type PairInfo = {
   tokens_info: MichelsonMap<string, TokenInfo>;
 
   fee: FeeType;
-  strategy: StrategyStoreType;
+  strategy?: string;
   staker_accumulator: {
     accumulator_f: MichelsonMap<string, BigNumber>;
     total_staked: BigNumber;
